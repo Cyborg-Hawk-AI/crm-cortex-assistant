@@ -1,0 +1,292 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --muted: 215 16% 90%;
+    --muted-foreground: 215 25% 40%;
+    --popover: 210 40% 98%;
+    --popover-foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --primary: 173 80% 40%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --accent: 176 80% 67%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 346 84% 61%;
+    --destructive-foreground: 210 40% 98%;
+    --ring: 173 80% 40%;
+    --radius: 0.75rem;
+    
+    /* Neon Colors - Light Theme */
+    --neon-red: 346 84% 61%;
+    --neon-purple: 265 90% 65%;
+    --neon-blue: 206 95% 50%;
+    --neon-aqua: 181 100% 50%;
+    --neon-green: 142 100% 68%;
+    --neon-yellow: 41 100% 70%;
+    
+    /* Alert Colors */
+    --alert-red: 346 84% 61%;
+    --alert-orange: 25 95% 65%;
+    --alert-yellow: 41 100% 70%;
+    --alert-green: 142 70% 45%;
+    --alert-blue: 199 98% 48%;
+  }
+
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+    --muted: 223 47% 11%;
+    --muted-foreground: 215.4 16.3% 56.9%;
+    --popover: 224 71% 4%;
+    --popover-foreground: 215 20.2% 65.1%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 47.4% 11.2%;
+    --border: 216 34% 17%;
+    --input: 216 34% 17%;
+    --primary: 142.1 70.6% 45.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 222.2 47.4% 11.2%;
+    --secondary-foreground: 210 40% 98%;
+    --accent: 216 34% 17%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 92% 38%;
+    --destructive-foreground: 210 40% 98%;
+    --ring: 142.1 76.2% 36.3%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    background-image: radial-gradient(circle at 50% 50%, hsl(var(--background)) 0%, hsl(210, 40%, 95%) 100%);
+  }
+}
+
+@layer components {
+  .markdown-content h1 {
+    @apply text-2xl font-bold my-4;
+  }
+  .markdown-content h2 {
+    @apply text-xl font-bold my-3;
+  }
+  .markdown-content h3 {
+    @apply text-lg font-bold my-2;
+  }
+  .markdown-content p {
+    @apply my-2;
+  }
+  .markdown-content ul {
+    @apply list-disc list-inside my-2 ml-2;
+  }
+  .markdown-content ol {
+    @apply list-decimal list-inside my-2 ml-2;
+  }
+  .markdown-content pre {
+    @apply bg-secondary/50 p-3 rounded-md overflow-x-auto my-2;
+  }
+  .markdown-content code {
+    @apply font-mono bg-secondary/50 px-1 rounded-sm;
+  }
+  .markdown-content pre code {
+    @apply bg-transparent p-0;
+  }
+  .markdown-content blockquote {
+    @apply border-l-4 border-primary/50 pl-4 italic my-2;
+  }
+  .markdown-content a {
+    @apply text-primary underline;
+  }
+  .markdown-content table {
+    @apply w-full border-collapse my-2;
+  }
+  .markdown-content th, .markdown-content td {
+    @apply border border-border p-2;
+  }
+  .markdown-content th {
+    @apply bg-secondary/50;
+  }
+  
+  /* Engineering Command Center Components */
+  .command-card {
+    @apply bg-white rounded-lg border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300;
+  }
+  
+  .action-button {
+    @apply bg-gradient-to-r from-neon-aqua to-neon-aqua/80 text-foreground font-medium px-4 py-2 rounded-md shadow-md hover:shadow-[0_0_12px_rgba(0,247,239,0.5)] hover:brightness-110 transition-all duration-300;
+  }
+  
+  .tab-button {
+    @apply px-4 py-2 rounded-md transition-colors;
+  }
+  
+  .tab-button.active {
+    @apply bg-white shadow-md;
+  }
+  
+  .ai-message {
+    @apply bg-gradient-to-r from-neon-purple to-neon-purple/80 text-white p-4 rounded-lg shadow-md;
+  }
+  
+  .user-message {
+    @apply bg-gradient-to-r from-neon-aqua to-neon-aqua/80 text-foreground p-4 rounded-lg shadow-md;
+  }
+  
+  .status-badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+  
+  .pulse-border {
+    animation: pulseBorder 2s infinite;
+  }
+  
+  .missions-card {
+    @apply bg-white border border-gray-200 rounded-lg shadow-md hover:shadow-lg transition-all p-4;
+  }
+  
+  .mindboard-card {
+    @apply bg-white border border-gray-200 rounded-lg shadow-md hover:shadow-lg transition-all p-4;
+  }
+  
+  .syncup-card {
+    @apply bg-white border border-gray-200 rounded-lg shadow-md hover:shadow-lg transition-all p-4;
+  }
+  
+  .actionbot-card {
+    @apply bg-gradient-to-r from-white to-gray-50 border border-neon-purple/20 rounded-lg shadow-md hover:shadow-[0_0_15px_rgba(168,85,247,0.3)] transition-all;
+  }
+}
+
+@layer utilities {
+  .loading-dots::after {
+    content: '.';
+    animation: loading-dots 1.5s infinite;
+  }
+
+  @keyframes loading-dots {
+    0%, 20% { content: '.'; }
+    40% { content: '..'; }
+    60% { content: '...'; }
+    90%, 100% { content: ''; }
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  .animate-blink {
+    animation: blink 0.8s infinite;
+  }
+  
+  /* Add glow effects */
+  .glow-text {
+    text-shadow: 0 0 10px currentColor;
+  }
+  
+  .glow-border {
+    box-shadow: 0 0 5px 1px currentColor;
+  }
+  
+  .neon-glow-purple {
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.6);
+  }
+  
+  .neon-glow-aqua {
+    box-shadow: 0 0 10px rgba(0, 247, 239, 0.6);
+  }
+  
+  .neon-glow-green {
+    box-shadow: 0 0 10px rgba(182, 255, 93, 0.6);
+  }
+  
+  .neon-glow-red {
+    box-shadow: 0 0 10px rgba(244, 63, 94, 0.6);
+  }
+  
+  /* Add subtle accent line to cards and sections */
+  .accent-line {
+    position: relative;
+  }
+  
+  .accent-line::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, hsl(var(--primary)), transparent);
+    border-radius: var(--radius) 0 0 var(--radius);
+  }
+  
+  /* Add grid pattern background */
+  .grid-pattern {
+    background-image: 
+      linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+  
+  /* Animation for streaming AI responses */
+  @keyframes typingCursor {
+    0%, 100% { border-color: transparent }
+    50% { border-color: hsl(var(--neon-purple)) }
+  }
+  
+  .typing-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 14px;
+    background: hsl(var(--neon-purple));
+    margin-left: 2px;
+    animation: typingCursor 0.8s infinite;
+  }
+  
+  @keyframes pulseBorder {
+    0%, 100% {
+      border-color: rgba(168, 85, 247, 0.7);
+    }
+    50% {
+      border-color: rgba(168, 85, 247, 0.3);
+    }
+  }
+  
+  .hover-scale {
+    transition: transform 0.2s ease;
+  }
+  
+  .hover-scale:hover {
+    transform: scale(1.03);
+  }
+  
+  /* Progress bar animation for tasks */
+  @keyframes fillProgress {
+    from { width: 0; }
+    to { width: var(--progress-width); }
+  }
+  
+  .animate-progress {
+    animation: fillProgress 1s ease-out forwards;
+  }
+  
+  /* Enhanced avatar border */
+  .avatar-border {
+    border: 2px solid transparent;
+    background: linear-gradient(white, white) padding-box,
+                linear-gradient(to right, hsl(var(--neon-aqua)), hsl(var(--neon-purple))) border-box;
+  }
+}
