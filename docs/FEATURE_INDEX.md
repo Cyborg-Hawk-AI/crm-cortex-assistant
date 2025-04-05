@@ -205,3 +205,108 @@ The application uses a Supabase PostgreSQL database with tables for:
 - Custom hooks for feature-specific functionality
 
 Last Updated: 2023-06-15
+
+## Block Editor Enhancements
+
+### Shift+Enter for To-do Lists and Lists
+- **Feature**: Pressing Shift+Enter in a to-do, bullet, or numbered list creates a new item below
+- **Behavior**:
+  - Creates a new block of the same type immediately below the current one
+  - Preserves indentation level and parent-child relationships
+  - Maintains focus at the beginning of the new block
+  - Inherits properties like assignee, due date, priority, and status
+- **UI/UX**:
+  - Smooth scrolling to the new block
+  - No UI jumps or flickers during transition
+  - Natural cursor positioning
+  - Preserves all relevant block properties
+
+### Block Creation and Focus Management
+- **Automatic Block Creation**:
+  - Creates a text block when clicking on empty editor
+  - Maintains proper focus and selection
+  - Preserves scroll position
+- **Focus Handling**:
+  - Automatic focus on newly created blocks
+  - Proper cursor positioning
+  - Smooth transitions between blocks
+
+### Keyboard Navigation
+- **Arrow Keys**: Navigate between blocks
+- **Enter**: Create new block below
+- **Shift+Enter**: Create new list item or insert line break
+- **Backspace**: Remove empty blocks
+- **Tab/Shift+Tab**: Indent/unindent blocks
+- **Ctrl+Shift+Arrow**: Reorder blocks
+
+### Block Type Conversion
+- **Markdown Shortcuts**:
+  - `#` → Heading 1
+  - `##` → Heading 2
+  - `###` → Heading 3
+  - `-` → Bullet List
+  - `1.` → Numbered List
+  - `[]` → To-do
+- **Slash Commands**:
+  - `/text` → Text Block
+  - `/h1` → Heading 1
+  - `/h2` → Heading 2
+  - `/h3` → Heading 3
+  - `/todo` → To-do
+  - `/bullet` → Bullet List
+  - `/numbered` → Numbered List
+  - And more...
+
+### Rich Text Support
+- **Paste Handling**:
+  - Preserves formatting when pasting content
+  - Converts HTML to Markdown and back
+  - Sanitizes content for security
+- **Content Types**:
+  - Text blocks with rich formatting
+  - Headings with proper styling
+  - To-do lists with checkboxes
+  - Bullet and numbered lists
+  - Code blocks with syntax highlighting
+  - And more...
+
+### UI/UX Polish
+- **Block Controls**:
+  - Hover to reveal block actions
+  - Drag handle for reordering
+  - Delete and duplicate options
+- **Insert Block UI**:
+  - "+" button appears between blocks
+  - Smooth hover transitions
+  - Proper positioning
+- **Visual Feedback**:
+  - Selected block highlighting
+  - Focus indicators
+  - Smooth animations
+
+### Code Editor Integration
+- **Monaco Editor**:
+  - Syntax highlighting
+  - Line numbers
+  - Proper indentation
+  - Code-specific keyboard shortcuts
+  - Custom styling
+
+## Recent Updates
+- Added Shift+Enter support for to-do lists and bulleted lists
+- Enhanced block creation with proper focus management
+- Improved keyboard navigation and shortcuts
+- Added rich text paste support
+- Enhanced block selector menu positioning
+- Added smooth scrolling and transitions
+- Improved type safety and error handling
+
+## Planned Features
+- [ ] Real-time collaboration
+- [ ] Block templates
+- [ ] Advanced formatting options
+- [ ] Block version history
+- [ ] Custom block types
+- [ ] Block comments
+- [ ] Block linking
+- [ ] Block search and filtering
