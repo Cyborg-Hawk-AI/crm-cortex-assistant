@@ -1,113 +1,144 @@
+# Action.it - Modern CRM & Productivity Platform
 
-# Action.it - AI-Powered CRM and Ticket Management
+Action.it is a comprehensive CRM and productivity platform that combines task management, note-taking, and communication tools into a single, intuitive interface. Built with modern web technologies, it offers a seamless experience for managing contacts, tasks, meetings, and knowledge.
 
-Action.it is a comprehensive AI-powered CRM and ticket management system that integrates with various services like Notion to enhance productivity and streamline workflow.
+## 🚀 Features
 
-## Features
+### Core Features
+- **Task Management**: Full task and subtask system with assignees, due dates, and status tracking
+- **Contact Management**: Comprehensive contact database with custom fields and activity history
+- **Meeting Management**: Schedule and manage meetings with attendee tracking
+- **Knowledge Management**: Rich text editor with Notion-like block editing
+- **Chat Assistant**: AI-powered chat system with specialized assistants
+- **Scratchpad Notes**: Quick note-taking with persistent storage
 
-### AI Assistant Integration
-- Multiple specialized AI assistants (Code, Documentation, Security, Customer Service, etc.)
-- Real-time AI chat with context awareness
-- Task linking and context sharing with AI assistants
-- Natural language processing for task creation, meeting scheduling, and more
+### Mindboard (Knowledge Management)
+- **Hierarchical Organization**: Mindboards → Sections → Pages → Blocks
+- **Rich Content Types**: Text, headings, to-do lists, code blocks, images, and more
+- **Intuitive Editing**: 
+  - Shift+Enter for list continuation
+  - Markdown shortcuts
+  - Slash commands
+  - Rich text paste support
+- **Smart Navigation**: Keyboard shortcuts, block selection, and smooth scrolling
 
-### Task Management
-- Create, view, and manage tasks
-- Link tasks to contacts, meetings, and conversations
-- Set priorities, due dates, and assign tasks to team members
-- Tag and categorize tasks for better organization
+### Integrations
+- **Notion**: Sync tasks and notes with Notion workspaces
+- **Supabase**: Secure database backend with real-time capabilities
+- **OpenAI**: AI-powered chat and assistance
 
-### Meeting Management
-- Schedule meetings with multiple attendees
-- Link meetings to tasks and contacts
-- Set agenda, duration, and meeting links
-- Calendar integration (via Notion and other services)
-
-### Contact Management
-- Maintain a comprehensive contact database
-- Associate contacts with tasks and meetings
-- Track communication history
-- Tag and categorize contacts
-
-### Notion Integration
-- Sync tasks, notes, and meetings with Notion
-- Search Notion content directly from the app
-- Import Notion database content
-
-### Data Model
-
-The application uses a comprehensive data model that includes:
-
-- **Conversations**: Track chat threads between users and AI assistants
-- **Chat Messages**: Individual messages within conversations
-- **Tasks**: Actionable items with status, priority, due dates
-- **Contacts**: Customer and stakeholder information
-- **Meetings**: Scheduled events with attendees and agendas
-- **Notes**: Context and information linked to tasks and meetings
-- **Activities**: Audit log of all actions within the system
-
-## Technical Architecture
+## 🛠️ Technology Stack
 
 ### Frontend
-- React with TypeScript
-- Tailwind CSS for styling
-- Shadcn UI components
-- Framer Motion for animations
-- React Query for data fetching and caching
+- **React**: Modern UI framework
+- **TypeScript**: Type-safe development
+- **Tailwind CSS**: Utility-first styling
+- **Shadcn/UI**: Beautiful, accessible components
+- **Framer Motion**: Smooth animations
+- **Monaco Editor**: Code block editing
 
 ### Backend
-- Supabase for database, authentication, and storage
-- PostgreSQL database with RLS policies
-- OpenAI integration for AI assistants
+- **Supabase**: Authentication, database, and real-time features
+- **PostgreSQL**: Robust data storage
+- **OpenAI API**: AI capabilities
 
-### Authentication
-- Supabase Auth for user management
-- Row-level security for data access control
+## 📦 Installation
 
-### API Integration
-- OpenAI API for AI assistant capabilities
-- Notion API for document and task integration
-- Optional integrations with other services (Salesforce, Freshservice, etc.)
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/action.it.git
+   cd action.it
+   ```
 
-## Development Setup
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-### Prerequisites
-- Node.js 14+
-- npm or yarn
-- Supabase account
-- OpenAI API key
+3. Set up environment variables:
+   ```bash
+   cp .env.example .env.local
+   ```
+   Fill in your Supabase and OpenAI credentials.
 
-### Configuration
-1. Deploy the SQL schema to your Supabase instance
-2. Add your OpenAI API key to Supabase secrets
-3. Configure the OpenAI assistants in the assistants table
-4. Connect your Notion workspace (optional)
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
-### Environment Variables
-- OPENAI_API_KEY: Your OpenAI API key
-- SUPABASE_URL: Your Supabase project URL
-- SUPABASE_ANON_KEY: Your Supabase anonymous key
-- NOTION_API_KEY: Your Notion API key (optional)
+## 🏗️ Architecture
 
-## Deployment
+### Database Schema
+The application uses a PostgreSQL database with tables for:
+- `conversations` & `chat_messages`
+- `tasks` & `subtasks`
+- `contacts`
+- `meetings` & `meeting_attendees`
+- `notes`
+- `activities` (audit log)
+- `assistants` (OpenAI configurations)
+- `user_settings`
+- `app_configuration`
 
-The application can be deployed to any static hosting service, with Supabase providing the backend functionality.
+### State Management
+- **React Query**: Server state management
+- **React Context**: Auth and application state
+- **Custom Hooks**: Feature-specific functionality
 
-## Extending the Application
+## 🎯 Key Components
 
-### Adding New Assistants
-Add new assistant configurations to the assistants table in Supabase, including:
-- Assistant ID
-- Name
-- Description
-- Capabilities
-- OpenAI Assistant ID
+### Block Editor
+- **Rich Text Editing**: Support for multiple content types
+- **Keyboard Navigation**: Intuitive shortcuts and commands
+- **Focus Management**: Smart cursor positioning
+- **UI Polish**: Smooth transitions and visual feedback
 
-### Custom Integrations
-The application is designed to be extended with additional integrations:
-1. Create a new integration module in `src/integrations/[provider]/`
-2. Implement the required API functions
-3. Add UI components to configure and use the integration
+### Task Management
+- **Hierarchical Tasks**: Support for subtasks
+- **Assignment System**: Team collaboration
+- **Due Date Tracking**: Calendar integration
+- **Status Updates**: Progress tracking
 
-## License
-This project is licensed under the MIT License.
+### Chat System
+- **Multiple Assistants**: Specialized AI helpers
+- **Conversation History**: Persistent chat storage
+- **Real-time Updates**: Live message delivery
+- **Context Awareness**: Smart response generation
+
+## 🔧 Development
+
+### Code Style
+- TypeScript for type safety
+- ESLint for code quality
+- Prettier for formatting
+- Husky for git hooks
+
+### Testing
+- Jest for unit tests
+- React Testing Library for components
+- Cypress for end-to-end tests
+
+## 📝 Documentation
+
+- [Feature Index](docs/FEATURE_INDEX.md): Comprehensive feature documentation
+- [API Reference](docs/API.md): API endpoints and usage
+- [Component Guide](docs/COMPONENTS.md): UI component documentation
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [Supabase](https://supabase.io) for the backend infrastructure
+- [OpenAI](https://openai.com) for AI capabilities
+- [Shadcn/UI](https://ui.shadcn.com) for beautiful components
+- [Tailwind CSS](https://tailwindcss.com) for styling
