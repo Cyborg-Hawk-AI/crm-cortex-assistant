@@ -110,7 +110,7 @@ interface UpdateBlockParams {
 
 export function Mindboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [pagesOpen, setPagesOpen] = useState(false);
+  const [pagesOpen, setPagesOpen] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [currentEntity, setCurrentEntity] = useState<{ id: string, type: string, title: string }>({ id: '', type: '', title: '' });
@@ -578,7 +578,7 @@ export function Mindboard() {
     <div className="flex h-full bg-background">
       {/* Mindboard Sidebar */}
       <div className={cn(
-        "w-64 border-r bg-background h-full transition-all duration-300",
+        "fixed left-0 w-64 border-r bg-background h-full transition-all duration-300 z-10",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <ScrollArea className="h-full">
@@ -610,7 +610,7 @@ export function Mindboard() {
       {/* Main Content */}
       <div className={cn(
         "flex-1 flex flex-col h-full transition-all duration-300",
-        sidebarOpen ? "ml-0" : "ml-0"
+        sidebarOpen ? "ml-64" : "ml-0"
       )}>
         {/* MindSection Tabs */}
         <div className="border-b">
