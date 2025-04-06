@@ -1,74 +1,117 @@
 # Action.it - Internal Documentation
 
 ## Overview
-Action.it is a comprehensive productivity and collaboration platform built with modern web technologies. This documentation is for internal use and provides detailed information about the system architecture, features, and development guidelines.
+Action.it is a comprehensive productivity platform that combines task management, knowledge organization, and AI assistance into a unified workspace. Built with modern web technologies, it provides a seamless experience for managing tasks, notes, meetings, and team collaboration.
 
 ## Tech Stack
-- **Frontend**: React, TypeScript, Tailwind CSS, Shadcn/UI
+- **Frontend**: React 18, TypeScript, Tailwind CSS, Shadcn/UI
 - **Backend**: Supabase (PostgreSQL, Auth, Storage)
 - **AI Integration**: OpenAI API
 - **External Integrations**: Notion API
 - **Development Tools**: Vite, ESLint, Prettier
+- **State Management**: React Query, React Context
+- **UI Framework**: Shadcn/UI with Tailwind CSS
+- **Animation**: Framer Motion
+- **Date Handling**: date-fns
+- **Markdown**: marked, turndown
+- **Code Editor**: Monaco Editor
 
 ## Core Features
 
-### Authentication & User Management
-- Supabase-based authentication system
-- User profiles and team management
-- Role-based access control
-- Secure password management
+### Mindboards Knowledge Management
+A powerful knowledge management system that provides a flexible and intuitive way to organize and work with information.
 
-### Dashboard & Navigation
-- Real-time status overview
-- Activity feed and alerts
-- Responsive navigation system
-- Quick access to key features
+#### Key Components
+1. **Block-Based Editor**
+   - Rich text editing with multiple block types
+   - Markdown support and shortcuts
+   - Real-time formatting
+   - Drag-and-drop reordering
 
-### Task & Project Management
-- Hierarchical task organization
-- Subtask support
-- Due dates and priorities
-- Assignment and tracking
-- Integration with Notion
+2. **Block Types**
+   - Text blocks with rich formatting
+   - To-do lists with checkboxes
+   - Headings (H1, H2, H3)
+   - Bullet and numbered lists
+   - Code blocks with syntax highlighting
+   - Media blocks (images, files, embeds)
 
-### Mindboard Knowledge Management
-- Hierarchical organization (Mindboards > Sections > Pages > Blocks)
-- Rich content types:
-  - Text blocks with formatting
-  - To-do lists with checkboxes
-  - Headings and lists
-  - Code blocks with syntax highlighting
-  - Media blocks (images, files, embeds)
-- Advanced editing features:
-  - Keyboard shortcuts and navigation
-  - Block type conversion
-  - Rich text paste support
-  - Smooth UI transitions
-  - Focus management
+3. **Navigation & Organization**
+   - Hierarchical structure (Mindboards > Sections > Pages)
+   - Collapsible sidebar
+   - Section tabs
+   - Page list with search
+   - Recent pages
 
-### Meeting Management
-- Calendar integration
-- Attendee management
-- Meeting notes and follow-ups
-- Quick action buttons
+4. **Editing Features**
+   - Keyboard shortcuts
+   - Slash commands
+   - Markdown shortcuts
+   - Block type conversion
+   - Property inheritance
+   - Focus management
 
-### Contact Management
-- Customer/contact profiles
-- Interaction history
-- Team assignment
-- Integration with tasks
+5. **UI/UX Features**
+   - Responsive design
+   - Visual feedback
+   - Smooth transitions
+   - Touch support
+   - Loading states
 
-### Chat Assistant
-- AI-powered conversations
-- Multiple specialized assistants
-- Conversation history
-- Context-aware responses
+#### Technical Implementation
+- **Components**:
+  - `Mindboard.tsx`: Main container
+  - `BlockEditor.tsx`: Rich text editor
+  - `BlockRenderer.tsx`: Block rendering
+  - `PageList.tsx`: Page management
+  - `SectionTabs.tsx`: Section navigation
+  - `MindboardSidebar.tsx`: Sidebar
+  - `NoteCanvas.tsx`: Note canvas
+  - `NotebookSidebar.tsx`: Notebook navigation
 
-### Scratchpad Notes
-- Quick note-taking
-- Notebook organization
-- Rich text support
-- Real-time saving
+- **State Management**:
+  - React Query for data
+  - Context for UI state
+  - Local state for editing
+  - Optimistic updates
+
+- **Performance**:
+  - Virtual scrolling
+  - Lazy loading
+  - Caching strategies
+  - Debounced updates
+
+- **Security**:
+  - Content sanitization
+  - Access control
+  - Data validation
+  - Error handling
+
+#### Recent Enhancements
+- Shift+Enter support for lists
+- Improved block creation
+- Enhanced keyboard navigation
+- Rich text paste support
+- UI/UX polish
+
+#### Planned Features
+- Real-time collaboration
+- Block templates
+- Advanced formatting
+- Version history
+- Custom block types
+- Block comments
+- Block linking
+- Search and filtering
+
+### Other Core Features
+- **Authentication & User Management**: Secure user authentication and profile management
+- **Dashboard & Navigation**: Real-time status overview and quick access to features
+- **Task & Project Management**: Hierarchical task organization with subtasks
+- **Meeting Management**: Calendar integration and attendee management
+- **Contact Management**: Customer/contact profiles and interaction history
+- **Chat Assistant**: AI-powered conversations with specialized assistants
+- **Scratchpad Notes**: Quick note-taking with rich text support
 
 ## Development Guidelines
 
@@ -162,8 +205,8 @@ Key tables include:
 ## Getting Started
 
 ### Prerequisites
-- Node.js 18+
-- PostgreSQL 14+
+- Node.js 16+
+- npm or yarn
 - Supabase account
 - OpenAI API key
 

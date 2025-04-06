@@ -158,53 +158,133 @@ Description: Custom UI components built on Shadcn/UI with Tailwind CSS.
 
 Last Updated: 2023-06-15
 
-## Feature: Mindboard
-Description: Hierarchical knowledge management system with mindboards, sections, pages, and blocks. Supports nested organization and rich content types.
+## Feature: Mindboards Knowledge Management System
 
-### Primary Files:
-- src/components/mindboard/Mindboard.tsx
-- src/components/mindboard/MindboardSidebar.tsx
-- src/components/mindboard/SectionTabs.tsx
-- src/components/mindboard/PageList.tsx
-- src/components/mindboard/BlockEditor.tsx
-- src/components/mindboard/BlockRenderer.tsx
-- src/hooks/useMindboard.tsx
-- src/api/mindboard.ts
-- src/utils/types.ts (Mindboard, MindSection, MindPage, MindBlock types)
+### Core Components
+- **Mindboard.tsx**: Main container component for the mindboard feature
+- **BlockEditor.tsx**: Rich text editor with block-based editing
+- **BlockRenderer.tsx**: Component for rendering different block types
+- **PageList.tsx**: Navigation and management of pages
+- **SectionTabs.tsx**: Section organization and navigation
+- **MindboardSidebar.tsx**: Sidebar navigation and tools
+- **NoteCanvas.tsx**: Canvas for note-taking and organization
+- **NotebookSidebar.tsx**: Notebook-specific navigation
 
-### Features:
-- Mindboard: Top-level workspace (like a notebook)
-- MindSection: Logical groupings inside a Mindboard (like tabs)
-- MindPage: Documents within a section (can nest as subpages)
-- MindBlock: Individual content units inside a MindPage
-- Rich content types: text, todo, image, file, code, audio, video, embed
-- Collapsible sidebar for mindboard navigation
-- Section tabs for easy section switching
-- Page list with create/edit/delete functionality
-- Block editor with multiple content type support
+### Block Types
+1. **Text Blocks**
+   - Rich text formatting
+   - Markdown support
+   - Paste handling with formatting preservation
+   - Keyboard shortcuts
 
-Last Updated: 2024-03-05
+2. **To-do Lists**
+   - Checkbox functionality
+   - Shift+Enter for new items
+   - Property inheritance
+   - Indentation support
 
-## Architecture Notes
+3. **Headings**
+   - Three levels (H1, H2, H3)
+   - Markdown shortcuts (#, ##, ###)
+   - Consistent styling
 
-### Database Schema
-The application uses a Supabase PostgreSQL database with tables for:
-- conversations & chat_messages
-- tasks & subtasks
-- contacts
-- meetings & meeting_attendees
-- notes
-- activities (audit log)
-- assistants (OpenAI assistant configurations)
-- user_settings
-- app_configuration
+4. **Lists**
+   - Bullet points
+   - Numbered lists
+   - Nested items
+   - Indentation controls
 
-### State Management
-- React Query for server state management
-- React Context for auth and application state
-- Custom hooks for feature-specific functionality
+5. **Code Blocks**
+   - Syntax highlighting
+   - Language selection
+   - Monaco editor integration
+   - Copy functionality
 
-Last Updated: 2023-06-15
+6. **Media Blocks**
+   - Image support
+   - File attachments
+   - Embed support
+   - Preview functionality
+
+### Editing Features
+1. **Keyboard Navigation**
+   - Arrow keys for block navigation
+   - Enter/Shift+Enter for new blocks
+   - Tab/Shift+Tab for indentation
+   - Backspace for block deletion
+
+2. **Block Creation**
+   - Automatic block creation
+   - Slash commands (/text, /todo, etc.)
+   - Markdown shortcuts
+   - "+" button insertion
+
+3. **Block Management**
+   - Drag and drop reordering
+   - Block type conversion
+   - Property inheritance
+   - Focus management
+
+4. **Rich Text Support**
+   - HTML to Markdown conversion
+   - Markdown to HTML rendering
+   - Format preservation
+   - Sanitized content
+
+### UI/UX Features
+1. **Navigation**
+   - Hierarchical organization
+   - Quick navigation
+   - Search functionality
+   - Recent pages
+
+2. **Visual Feedback**
+   - Block selection
+   - Focus indicators
+   - Hover effects
+   - Loading states
+
+3. **Responsive Design**
+   - Mobile support
+   - Resizable panels
+   - Adaptive layouts
+   - Touch interactions
+
+### Technical Implementation
+1. **State Management**
+   - React Query for data
+   - Context for UI state
+   - Local state for editing
+   - Optimistic updates
+
+2. **Performance**
+   - Virtual scrolling
+   - Lazy loading
+   - Caching strategies
+   - Debounced updates
+
+3. **Security**
+   - Content sanitization
+   - Access control
+   - Data validation
+   - Error handling
+
+### Recent Enhancements
+- Shift+Enter support for lists
+- Improved block creation
+- Enhanced keyboard navigation
+- Rich text paste support
+- UI/UX polish
+
+### Planned Features
+- [ ] Real-time collaboration
+- [ ] Block templates
+- [ ] Advanced formatting
+- [ ] Version history
+- [ ] Custom block types
+- [ ] Block comments
+- [ ] Block linking
+- [ ] Search and filtering
 
 ## Block Editor Enhancements
 
@@ -291,6 +371,27 @@ Last Updated: 2023-06-15
   - Proper indentation
   - Code-specific keyboard shortcuts
   - Custom styling
+
+## Architecture Notes
+
+### Database Schema
+The application uses a Supabase PostgreSQL database with tables for:
+- conversations & chat_messages
+- tasks & subtasks
+- contacts
+- meetings & meeting_attendees
+- notes
+- activities (audit log)
+- assistants (OpenAI assistant configurations)
+- user_settings
+- app_configuration
+
+### State Management
+- React Query for server state management
+- React Context for auth and application state
+- Custom hooks for feature-specific functionality
+
+Last Updated: 2023-06-15
 
 ## Recent Updates
 - Added Shift+Enter support for to-do lists and bulleted lists
