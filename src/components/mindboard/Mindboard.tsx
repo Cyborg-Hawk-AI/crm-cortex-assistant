@@ -526,13 +526,14 @@ export function Mindboard() {
     parentId?: string
   ) => {
     if (!activePageId) return;
-    await createBlock({
+    const newBlock = await createBlock({
       pageId: activePageId,
       contentType: type,
       content,
       position,
       properties: parentId ? { parent_block_id: parentId } : undefined
     });
+    return newBlock.id;
   };
   
   const handleUpdateBlock = async (

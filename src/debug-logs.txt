@@ -1,0 +1,169 @@
+" BlockEditor.tsx:392:12
+👋 Block blur: 
+Object { blockId: "910f947b-c8bc-45b1-b7b8-4f9b0b75a7f6", content: "block 6", currentPosition: 2 }
+BlockEditor.tsx:418:16
+📦 Rendering block in list: 
+Object { id: "8aa9f095-ec57-4ab3-8fd2-fc0959a39620", index: 0, position: 1, type: "text" }
+BlockEditor.tsx:649:20
+🎨 Rendering block: 
+Object { id: "8aa9f095-ec57-4ab3-8fd2-fc0959a39620", type: "text", position: 1, content: {…} }
+BlockEditor.tsx:392:12
+📦 Rendering block in list: 
+Object { id: "e0b7a688-40ca-4ccc-ae9c-be8fdc07c55f", index: 1, position: 2, type: "text" }
+BlockEditor.tsx:649:20
+🎨 Rendering block: 
+Object { id: "e0b7a688-40ca-4ccc-ae9c-be8fdc07c55f", type: "text", position: 2, content: {…} }
+BlockEditor.tsx:392:12
+📦 Rendering block in list: 
+Object { id: "910f947b-c8bc-45b1-b7b8-4f9b0b75a7f6", index: 2, position: 2, type: "text" }
+BlockEditor.tsx:649:20
+🎨 Rendering block: 
+Object { id: "910f947b-c8bc-45b1-b7b8-4f9b0b75a7f6", type: "text", position: 2, content: {…} }
+BlockEditor.tsx:392:12
+📦 Rendering block in list: 
+Object { id: "5965ca02-6763-4f63-92a4-14a6346fd973", index: 3, position: 2, type: "text" }
+BlockEditor.tsx:649:20
+🎨 Rendering block: 
+Object { id: "5965ca02-6763-4f63-92a4-14a6346fd973", type: "text", position: 2, content: {…} }
+BlockEditor.tsx:392:12
+📦 Rendering block in list: 
+Object { id: "41b945f9-c8c1-4c54-9f02-bded9364ddaa", index: 4, position: 3, type: "text" }
+BlockEditor.tsx:649:20
+🎨 Rendering block: 
+Object { id: "41b945f9-c8c1-4c54-9f02-bded9364ddaa", type: "text", position: 3, content: {…} }
+BlockEditor.tsx:392:12
+📦 Rendering block in list: 
+Object { id: "bc0ec95a-cf24-4ecb-9b6a-7a7f567668dc", index: 5, position: 9, type: "text" }
+BlockEditor.tsx:649:20
+🎨 Rendering block: 
+Object { id: "bc0ec95a-cf24-4ecb-9b6a-7a7f567668dc", type: "text", position: 9, content: {…} }
+BlockEditor.tsx:392:12
+📦 Rendering block in list: 
+Object { id: "827a5c4e-bf43-42c9-9829-aefc5028fae3", index: 6, position: 9, type: "text" }
+BlockEditor.tsx:649:20
+🎨 Rendering block: 
+Object { id: "827a5c4e-bf43-42c9-9829-aefc5028fae3", type: "text", position: 9, content: {…} }
+BlockEditor.tsx:392:12
+📦 Rendering block in list: 
+Object { id: "24cba359-f27e-4275-a071-38e69beb3675", index: 7, position: 9, type: "text" }
+BlockEditor.tsx:649:20
+🎨 Rendering block: 
+Object { id: "24cba359-f27e-4275-a071-38e69beb3675", type: "text", position: 9, content: {…} }
+BlockEditor.tsx:392:12
+📦 Rendering block in list: 
+Object { id: "63d1c2f8-34ac-499b-b91f-47362e2ee7e6", index: 8, position: 10, type: "text" }
+BlockEditor.tsx:649:20
+🎨 Rendering block: 
+Object { id: "63d1c2f8-34ac-499b-b91f-47362e2ee7e6", type: "text", position: 10, content: {…} }
+BlockEditor.tsx:392:12
+📦 Rendering block in list: 
+Object { id: "8aa9f095-ec57-4ab3-8fd2-fc0959a39620", index: 0, position: 1, type: "text" }
+BlockEditor.tsx:649:20
+🎨 Rendering block: 
+Object { id: "8aa9f095-ec57-4ab3-8fd2-fc0959a39620", type: "text", position: 1, content: {…} }
+BlockEditor.tsx:392:12
+📦 Rendering block in list: 
+Object { id: "e0b7a688-40ca-4ccc-ae9c-be8fdc07c55f", index: 1, position: 2, type: "text" }
+BlockEditor.tsx:649:20
+🎨 Rendering block: 
+Object { id: "e0b7a688-40ca-4ccc-ae9c-be8fdc07c55f", type: "text", position: 2, content: {…} }
+BlockEditor.tsx:392:12
+📦 Rendering block in list: 
+Object { id: "910f947b-c8bc-45b1-b7b8-4f9b0b75a7f6", index: 2, position: 2, type: "text" }
+BlockEditor.tsx:649:20
+🎨 Rendering block: 
+Object { id: "910f947b-c8bc-45b1-b7b8-4f9b0b75a7f6", type: "text", position: 2, content: {…} }
+BlockEditor.tsx:392:12
+📦 Rendering block in list: 
+Object { id: "5965ca02-6763-4f63-92a4-14a6346fd973", index: 3, position: 2, type: "text" }
+BlockEditor.tsx:649:20
+🎨 Rendering block: 
+Object { id: "5965ca02-6763-4f63-92a4-14a6346fd973", type: "text", position: 2, content: {…} }
+BlockEditor.tsx:392:12
+📦 Rendering block in list: 
+Object { id: "41b945f9-c8c1-4c54-9f02-bded9364ddaa", index: 4, position: 3, type: "text" }
+BlockEditor.tsx:649:20
+🎨 Rendering block: 
+Object { id: "41b945f9-c8c1-4c54-9f02-bded9364ddaa", type: "text", position: 3, content: {…} }
+BlockEditor.tsx:392:12
+📦 Rendering block in list: 
+Object { id: "bc0ec95a-cf24-4ecb-9b6a-7a7f567668dc", index: 5, position: 9, type: "text" }
+BlockEditor.tsx:649:20
+🎨 Rendering block: 
+Object { id: "bc0ec95a-cf24-4ecb-9b6a-7a7f567668dc", type: "text", position: 9, content: {…} }
+BlockEditor.tsx:392:12
+📦 Rendering block in list: 
+Object { id: "827a5c4e-bf43-42c9-9829-aefc5028fae3", index: 6, position: 9, type: "text" }
+BlockEditor.tsx:649:20
+🎨 Rendering block: 
+Object { id: "827a5c4e-bf43-42c9-9829-aefc5028fae3", type: "text", position: 9, content: {…} }
+BlockEditor.tsx:392:12
+📦 Rendering block in list: 
+Object { id: "24cba359-f27e-4275-a071-38e69beb3675", index: 7, position: 9, type: "text" }
+BlockEditor.tsx:649:20
+🎨 Rendering block: 
+Object { id: "24cba359-f27e-4275-a071-38e69beb3675", type: "text", position: 9, content: {…} }
+BlockEditor.tsx:392:12
+📦 Rendering block in list: 
+Object { id: "63d1c2f8-34ac-499b-b91f-47362e2ee7e6", index: 8, position: 10, type: "text" }
+BlockEditor.tsx:649:20
+🎨 Rendering block: 
+Object { id: "63d1c2f8-34ac-499b-b91f-47362e2ee7e6", type: "text", position: 10, content: {…} }
+BlockEditor.tsx:392:12
+📦 Rendering block in list: 
+Object { id: "8aa9f095-ec57-4ab3-8fd2-fc0959a39620", index: 0, position: 1, type: "text" }
+BlockEditor.tsx:649:20
+🎨 Rendering block: 
+Object { id: "8aa9f095-ec57-4ab3-8fd2-fc0959a39620", type: "text", position: 1, content: {…} }
+BlockEditor.tsx:392:12
+📦 Rendering block in list: 
+Object { id: "e0b7a688-40ca-4ccc-ae9c-be8fdc07c55f", index: 1, position: 2, type: "text" }
+BlockEditor.tsx:649:20
+🎨 Rendering block: 
+Object { id: "e0b7a688-40ca-4ccc-ae9c-be8fdc07c55f", type: "text", position: 2, content: {…} }
+BlockEditor.tsx:392:12
+📦 Rendering block in list: 
+Object { id: "910f947b-c8bc-45b1-b7b8-4f9b0b75a7f6", index: 2, position: 2, type: "text" }
+BlockEditor.tsx:649:20
+🎨 Rendering block: 
+Object { id: "910f947b-c8bc-45b1-b7b8-4f9b0b75a7f6", type: "text", position: 2, content: {…} }
+BlockEditor.tsx:392:12
+📦 Rendering block in list: 
+Object { id: "5965ca02-6763-4f63-92a4-14a6346fd973", index: 3, position: 2, type: "text" }
+BlockEditor.tsx:649:20
+🎨 Rendering block: 
+Object { id: "5965ca02-6763-4f63-92a4-14a6346fd973", type: "text", position: 2, content: {…} }
+BlockEditor.tsx:392:12
+📦 Rendering block in list: 
+Object { id: "41b945f9-c8c1-4c54-9f02-bded9364ddaa", index: 4, position: 3, type: "text" }
+BlockEditor.tsx:649:20
+🎨 Rendering block: 
+Object { id: "41b945f9-c8c1-4c54-9f02-bded9364ddaa", type: "text", position: 3, content: {…} }
+BlockEditor.tsx:392:12
+📦 Rendering block in list: 
+Object { id: "bc0ec95a-cf24-4ecb-9b6a-7a7f567668dc", index: 5, position: 9, type: "text" }
+BlockEditor.tsx:649:20
+🎨 Rendering block: 
+Object { id: "bc0ec95a-cf24-4ecb-9b6a-7a7f567668dc", type: "text", position: 9, content: {…} }
+BlockEditor.tsx:392:12
+📦 Rendering block in list: 
+Object { id: "827a5c4e-bf43-42c9-9829-aefc5028fae3", index: 6, position: 9, type: "text" }
+BlockEditor.tsx:649:20
+🎨 Rendering block: 
+Object { id: "827a5c4e-bf43-42c9-9829-aefc5028fae3", type: "text", position: 9, content: {…} }
+BlockEditor.tsx:392:12
+📦 Rendering block in list: 
+Object { id: "24cba359-f27e-4275-a071-38e69beb3675", index: 7, position: 9, type: "text" }
+BlockEditor.tsx:649:20
+🎨 Rendering block: 
+Object { id: "24cba359-f27e-4275-a071-38e69beb3675", type: "text", position: 9, content: {…} }
+BlockEditor.tsx:392:12
+📦 Rendering block in list: 
+Object { id: "63d1c2f8-34ac-499b-b91f-47362e2ee7e6", index: 8, position: 10, type: "text" }
+BlockEditor.tsx:649:20
+🎨 Rendering block: 
+Object { id: "63d1c2f8-34ac-499b-b91f-47362e2ee7e6", type: "text", position: 10, content: {…} }
+BlockEditor.tsx:392:12
+🔍 BlockEditor State Update: 
+Object { selectedBlock: "e0b7a688-40ca-4ccc-ae9c-be8fdc07c55f", draggedBlock: null, hoveredBlock: null, editingContent: {…}, blocksCount: 9, blocks: (9) […] }
+BlockEditor.tsx:69:12
