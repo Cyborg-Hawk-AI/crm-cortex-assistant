@@ -12,6 +12,11 @@
 #   1) ./push.sh "Fixed block ordering" QA
 #      - Commits with the message "Fixed block ordering"
 #        and pushes to the 'QA' branch.
+
+#   1) ./push.sh "production-bug-fix" main
+#      - Commits with the message "production-bug-fix"
+#        and pushes to the 'main' branch. THIS WILL BE 
+#        THE PRODUCTION BRANCH.
 #
 #   2) ./push.sh "Minor text updates"
 #      - Commits with the message "Minor text updates"

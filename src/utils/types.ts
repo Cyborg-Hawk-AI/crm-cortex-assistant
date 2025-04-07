@@ -306,6 +306,14 @@ export interface MindBlock {
     due_date?: string;
     priority?: 'low' | 'medium' | 'high';
     status?: string;
+    // New properties for BlockNote integration
+    textAlignment?: 'left' | 'center' | 'right' | 'justify';
+    backgroundColor?: string;
+    textColor?: string;
+    bold?: boolean;
+    italic?: boolean;
+    underline?: boolean;
+    strike?: boolean;
   };
   position?: number;
   parent_block_id?: string; // For nesting blocks
