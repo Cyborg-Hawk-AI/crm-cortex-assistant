@@ -11,6 +11,18 @@ export function useMissionTasks(missionId: string | null) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Get current user ID for task creation
+  const {
+    data: currentUserId,
+    isLoading: loadingUserId
+  } = useQuery({
+    queryKey: ['current-user-id'],
+    queryFn: async () => {
+      const { data } = await supabase.auth.getSession();
+      return data.session?.user.id || null;
+    }
+  });
+
   // Validate the missionId exists in the database
   const {
     data: missionExists,
@@ -47,10 +59,12 @@ export function useMissionTasks(missionId: string | null) {
     queryFn: async () => {
       if (!missionId) return [];
       
+      // Instead of using reporter_id as mission ID, we'll use parent_task_id
+      // to reference subtasks, and for top-level tasks, we'll store mission ID in a tag
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .eq('reporter_id', missionId)
+        .filter('tags', 'cs', `{"mission:${missionId}"}`)
         .order('created_at', { ascending: true });
         
       if (error) throw error;
@@ -62,9 +76,10 @@ export function useMissionTasks(missionId: string | null) {
   const createTask = useMutation({
     mutationFn: async (params: { title: string; parentTaskId: string | null }) => {
       if (!missionId) throw new Error('No mission ID provided');
+      if (!currentUserId) throw new Error('User not authenticated');
       
       // Verify the mission exists before attempting to create a task
-      if (!missionExists) {
+      if (!missionExists && !params.parentTaskId) {
         throw new Error('The referenced mission does not exist');
       }
       
@@ -72,9 +87,11 @@ export function useMissionTasks(missionId: string | null) {
         title: params.title,
         status: 'open',
         priority: 'medium',
-        reporter_id: missionId,
+        reporter_id: currentUserId, // Use current user ID as the reporter
         parent_task_id: params.parentTaskId,
         due_date: dueDate,
+        // Store mission ID in tags array to query related tasks
+        tags: params.parentTaskId ? [] : [`mission:${missionId}`],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -283,13 +300,14 @@ export function useMissionTasks(missionId: string | null) {
   return {
     tasks,
     subtasks,
-    isLoading: isLoading || checkingMission,
+    isLoading: isLoading || checkingMission || loadingUserId,
     error,
     newTaskTitle,
     setNewTaskTitle,
     dueDate,
     setDueDate,
     missionExists,
+    currentUserId,
     createTask: (title: string, parentTaskId: string | null) => 
       createTask.mutate({ title, parentTaskId }),
     updateTaskStatus: (taskId: string, status: string) => 

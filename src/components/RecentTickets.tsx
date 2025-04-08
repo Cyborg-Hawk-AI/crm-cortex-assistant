@@ -41,12 +41,22 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
       
       if (error || !data) {
         console.error("Error validating mission ID:", error);
-        toast({
-          title: "Error",
-          description: "The selected mission could not be found",
-          variant: "destructive"
-        });
-        return;
+        // Check if we should allow mission ID without validation
+        // This lets us use the mission ID even if it's not a task itself
+        const { data: tasksRelatedToMission } = await supabase
+          .from('tasks')
+          .select('id')
+          .filter('tags', 'cs', `{"mission:${missionId}"}`) // Check if any task has this mission tag
+          .limit(1);
+
+        if (!tasksRelatedToMission || tasksRelatedToMission.length === 0) {
+          toast({
+            title: "Error",
+            description: "The selected mission could not be found",
+            variant: "destructive"
+          });
+          return;
+        }
       }
       
       setSelectedMissionId(missionId);

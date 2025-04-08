@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Check, Circle, Clock, AlertCircle, Plus, Trash2, Calendar, ChevronRight, ChevronDown, Edit2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
@@ -31,6 +32,7 @@ export function TaskList({ missionId }: TaskListProps) {
     tasks,
     isLoading,
     missionExists,
+    currentUserId,
     createTask,
     updateTaskStatus,
     updateTaskTitle,
@@ -48,10 +50,11 @@ export function TaskList({ missionId }: TaskListProps) {
 
   const handleCreateTask = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!missionExists) {
+    
+    if (!currentUserId) {
       toast({
         title: "Error",
-        description: "Cannot create tasks for this mission. The mission ID does not exist in the database.",
+        description: "You need to be signed in to create tasks.",
         variant: "destructive"
       });
       return;
@@ -279,11 +282,11 @@ export function TaskList({ missionId }: TaskListProps) {
     );
   }
 
-  if (!missionExists) {
+  if (!currentUserId) {
     return (
       <div className="p-4 text-center">
-        <p className="text-[#64748B] mb-2">Cannot load tasks for this mission.</p>
-        <p className="text-[#64748B] text-sm">The mission ID does not exist in the database or cannot be referenced.</p>
+        <p className="text-[#64748B] mb-2">You need to be signed in to view and manage tasks.</p>
+        <p className="text-[#64748B] text-sm">Please sign in to continue.</p>
       </div>
     );
   }
