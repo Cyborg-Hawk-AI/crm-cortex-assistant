@@ -96,12 +96,12 @@ export function TaskList({ missionId }: TaskListProps) {
     return (
       <div className="space-y-2">
         {[1, 2, 3].map((index) => (
-          <div key={index} className="p-3 border border-gray-200 rounded-md">
+          <div key={index} className="p-3 border border-[#3A4D62] rounded-md bg-[#1C2A3A]">
             <div className="flex items-start">
-              <Skeleton className="h-5 w-5 mt-0.5 mr-2 rounded-full" />
+              <Skeleton className="h-5 w-5 mt-0.5 mr-2 rounded-full bg-[#3A4D62]" />
               <div className="flex-1">
-                <Skeleton className="h-5 w-3/4 mb-2" />
-                <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="h-5 w-3/4 mb-2 bg-[#3A4D62]" />
+                <Skeleton className="h-4 w-1/2 bg-[#3A4D62]" />
               </div>
             </div>
           </div>
@@ -116,7 +116,7 @@ export function TaskList({ missionId }: TaskListProps) {
         <p className="text-sm text-red-500">Error loading tasks: {error.message}</p>
         <Button 
           variant="outline" 
-          className="mt-2" 
+          className="mt-2 border-[#3A4D62] text-[#F1F5F9]" 
           onClick={() => window.location.reload()}
         >
           Retry
@@ -140,7 +140,7 @@ export function TaskList({ missionId }: TaskListProps) {
           placeholder="Add new task..."
           value={newTaskTitle}
           onChange={(e) => setNewTaskTitle(e.target.value)}
-          className="flex-1"
+          className="flex-1 bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]"
         />
         <Button 
           type="submit" 
@@ -152,8 +152,8 @@ export function TaskList({ missionId }: TaskListProps) {
       </form>
 
       {tasks.length === 0 ? (
-        <div className="p-6 text-center border border-dashed rounded-md">
-          <p className="text-sm text-muted-foreground">No tasks yet. Create your first task above.</p>
+        <div className="p-6 text-center border border-[#3A4D62] border-dashed rounded-md bg-[#1C2A3A]/50">
+          <p className="text-sm text-[#CBD5E1]">No tasks yet. Create your first task above.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -162,13 +162,13 @@ export function TaskList({ missionId }: TaskListProps) {
               key={task.id}
               open={expandedTasks[task.id]}
               onOpenChange={() => toggleTaskExpand(task.id)}
-              className="border border-gray-200 rounded-md overflow-hidden"
+              className="border border-[#3A4D62] rounded-md overflow-hidden"
             >
-              <div className="flex items-center p-3 bg-white">
+              <div className="flex items-center p-3 bg-[#1C2A3A]">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={`p-0 h-6 w-6 mr-2 ${task.status === 'completed' ? 'text-neon-green' : 'text-gray-400'}`}
+                  className={`p-0 h-6 w-6 mr-2 ${task.status === 'completed' ? 'text-neon-green' : 'text-[#64748B]'}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     handleToggleTaskStatus(task.id, task.status);
@@ -186,7 +186,7 @@ export function TaskList({ missionId }: TaskListProps) {
                     <Input
                       value={editingTaskTitle}
                       onChange={(e) => setEditingTaskTitle(e.target.value)}
-                      className="flex-1"
+                      className="flex-1 bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]"
                       autoFocus
                       onBlur={() => saveTaskTitle(task.id)}
                       onKeyDown={(e) => {
@@ -201,13 +201,13 @@ export function TaskList({ missionId }: TaskListProps) {
                   <div 
                     className={cn(
                       "flex-1 cursor-pointer",
-                      task.status === 'completed' && "line-through text-gray-500"
+                      task.status === 'completed' && "line-through text-[#64748B]"
                     )}
                     onClick={() => toggleTaskExpand(task.id)}
                   >
-                    <span className="font-medium">{task.title}</span>
+                    <span className="font-medium text-[#F1F5F9]">{task.title}</span>
                     {task.due_date && (
-                      <span className="ml-2 text-xs text-gray-500">
+                      <span className="ml-2 text-xs text-[#64748B]">
                         Due: {format(new Date(task.due_date), 'MMM d')}
                       </span>
                     )}
@@ -218,7 +218,7 @@ export function TaskList({ missionId }: TaskListProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 w-7 p-0"
+                    className="h-7 w-7 p-0 text-[#CBD5E1]"
                     onClick={(e) => {
                       e.stopPropagation();
                       startEditingTask(task);
@@ -230,7 +230,7 @@ export function TaskList({ missionId }: TaskListProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 w-7 p-0 text-red-500"
+                    className="h-7 w-7 p-0 text-neon-red"
                     onClick={(e) => {
                       e.stopPropagation();
                       if (window.confirm('Are you sure you want to delete this task?')) {
@@ -242,7 +242,7 @@ export function TaskList({ missionId }: TaskListProps) {
                   </Button>
 
                   <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-[#CBD5E1]">
                       {expandedTasks[task.id] ? (
                         <ChevronUp className="h-4 w-4" />
                       ) : (
@@ -254,7 +254,7 @@ export function TaskList({ missionId }: TaskListProps) {
               </div>
 
               <CollapsibleContent>
-                <div className="p-3 border-t bg-gray-50">
+                <div className="p-3 border-t border-[#3A4D62] bg-[#25384D]">
                   <div className="mb-4">
                     <RichTextEditor
                       content={task.description}
@@ -265,7 +265,7 @@ export function TaskList({ missionId }: TaskListProps) {
 
                   {/* Subtasks */}
                   <div className="mt-4">
-                    <h4 className="text-sm font-medium mb-2">Subtasks</h4>
+                    <h4 className="text-sm font-medium mb-2 text-[#F1F5F9]">Subtasks</h4>
                     
                     <TaskSubtaskList
                       parentTaskId={task.id}
@@ -336,13 +336,15 @@ function TaskSubtaskList({
             key={subtask.id}
             className={cn(
               "flex items-center p-2 rounded-md",
-              subtask.status === 'completed' ? 'bg-gray-100' : 'bg-white border border-gray-200'
+              subtask.status === 'completed' 
+                ? 'bg-[#1C2A3A]/70 border border-[#3A4D62]/50' 
+                : 'bg-[#1C2A3A] border border-[#3A4D62]'
             )}
           >
             <Button
               variant="ghost"
               size="sm"
-              className={`p-0 h-5 w-5 mr-2 ${subtask.status === 'completed' ? 'text-neon-green' : 'text-gray-400'}`}
+              className={`p-0 h-5 w-5 mr-2 ${subtask.status === 'completed' ? 'text-neon-green' : 'text-[#64748B]'}`}
               onClick={() => onToggleStatus(subtask.id, subtask.status)}
             >
               {subtask.status === 'completed' ? (
@@ -356,7 +358,7 @@ function TaskSubtaskList({
               <Input
                 value={editingTitle}
                 onChange={(e) => setEditingTitle(e.target.value)}
-                className="flex-1 h-7 text-sm py-1"
+                className="flex-1 h-7 text-sm py-1 bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]"
                 autoFocus
                 onBlur={() => saveSubtaskEdit(subtask.id)}
                 onKeyDown={(e) => {
@@ -370,7 +372,7 @@ function TaskSubtaskList({
               <div 
                 className={cn(
                   "flex-1 text-sm",
-                  subtask.status === 'completed' && "line-through text-gray-500"
+                  subtask.status === 'completed' ? "line-through text-[#64748B]" : "text-[#F1F5F9]"
                 )}
               >
                 {subtask.title}
@@ -381,7 +383,7 @@ function TaskSubtaskList({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 w-6 p-0"
+                className="h-6 w-6 p-0 text-[#CBD5E1]"
                 onClick={() => startEditingSubtask(subtask)}
               >
                 <Edit2 className="h-3 w-3" />
@@ -390,7 +392,7 @@ function TaskSubtaskList({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 w-6 p-0 text-red-500"
+                className="h-6 w-6 p-0 text-neon-red"
                 onClick={() => {
                   if (window.confirm('Are you sure you want to delete this subtask?')) {
                     onDelete(subtask.id);
@@ -403,7 +405,7 @@ function TaskSubtaskList({
           </div>
         ))
       ) : (
-        <div className="text-center p-2 text-sm text-gray-500 italic">
+        <div className="text-center p-2 text-sm text-[#64748B] italic">
           No subtasks yet
         </div>
       )}
@@ -413,13 +415,13 @@ function TaskSubtaskList({
           placeholder="Add subtask..."
           value={newSubtaskTitle}
           onChange={(e) => setNewSubtaskTitle(e.target.value)}
-          className="flex-1 h-8 text-sm"
+          className="flex-1 h-8 text-sm bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]"
         />
         <Button 
           type="submit" 
           size="sm"
           disabled={!newSubtaskTitle.trim()}
-          className="h-8"
+          className="h-8 bg-neon-aqua hover:bg-neon-aqua/90 text-black"
         >
           <Plus className="h-3 w-3" />
         </Button>
@@ -427,3 +429,4 @@ function TaskSubtaskList({
     </div>
   );
 }
+
