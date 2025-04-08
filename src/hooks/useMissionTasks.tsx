@@ -33,19 +33,36 @@ export function useMissionTasks(missionId: string | null) {
     queryFn: async () => {
       if (!missionId) return false;
       
-      // Check if the missionId exists in the tasks table
-      const { data, error } = await supabase
-        .from('tasks')
-        .select('id')
-        .eq('id', missionId)
-        .single();
+      try {
+        // Check if the missionId exists in the tasks table
+        const { data, error } = await supabase
+          .from('tasks')
+          .select('id')
+          .eq('id', missionId)
+          .single();
+          
+        if (error) {
+          console.error("Error checking mission existence:", error);
+          
+          // If not a direct mission ID, check if it's referenced in tags
+          const { data: relatedTasks, error: relatedError } = await supabase
+            .from('tasks')
+            .select('id')
+            .filter('tags', 'cs', `{"mission:${missionId}}`)
+            .limit(1);
+          
+          if (relatedError || !relatedTasks || relatedTasks.length === 0) {
+            return false;
+          }
+          
+          return true;
+        }
         
-      if (error) {
-        console.error("Error checking mission existence:", error);
+        return !!data;
+      } catch (err) {
+        console.error("Error in mission validation:", err);
         return false;
       }
-      
-      return !!data;
     },
     enabled: !!missionId
   });
@@ -60,19 +77,41 @@ export function useMissionTasks(missionId: string | null) {
     queryFn: async () => {
       if (!missionId) return [];
       
-      // Instead of using reporter_id as mission ID, we'll use parent_task_id
-      // to reference subtasks, and for top-level tasks, we'll store mission ID in a tag
-      const { data, error } = await supabase
-        .from('tasks')
-        .select('*')
-        .filter('tags', 'cs', `{"mission:${missionId}}`)
-        .order('created_at', { ascending: true });
+      try {
+        // Get tasks associated with this mission
+        const { data, error } = await supabase
+          .from('tasks')
+          .select('*')
+          .filter('tags', 'cs', `{"mission:${missionId}}`)
+          .order('created_at', { ascending: true });
+          
+        if (error) {
+          console.error("Error fetching tasks:", error);
+          throw error;
+        }
         
-      if (error) throw error;
-      return data as Task[];
+        return data as Task[];
+      } catch (err) {
+        console.error("Error in task retrieval:", err);
+        return [];
+      }
     },
-    enabled: !!missionId
+    enabled: !!missionId && missionExists !== false,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true
   });
+
+  // Initial load of subtasks for all top-level tasks
+  useEffect(() => {
+    if (tasks && tasks.length > 0) {
+      const topLevelTasks = tasks.filter(task => !task.parent_task_id);
+      
+      // Batch load subtasks for top-level tasks
+      topLevelTasks.forEach(task => {
+        getSubtasks.mutate(task.id);
+      });
+    }
+  }, [tasks]);
 
   const createTask = useMutation({
     mutationFn: async (params: { 
@@ -133,7 +172,7 @@ export function useMissionTasks(missionId: string | null) {
     onError: (error) => {
       toast({
         title: "Error",
-        description: `Failed to create task: ${error.message}`,
+        description: `Failed to create task: ${error instanceof Error ? error.message : "Unknown error"}`,
         variant: "destructive"
       });
     }
@@ -165,7 +204,7 @@ export function useMissionTasks(missionId: string | null) {
     onError: (error) => {
       toast({
         title: "Error",
-        description: `Failed to update task: ${error.message}`,
+        description: `Failed to update task: ${error instanceof Error ? error.message : "Unknown error"}`,
         variant: "destructive"
       });
     }
@@ -192,7 +231,7 @@ export function useMissionTasks(missionId: string | null) {
     onError: (error) => {
       toast({
         title: "Error",
-        description: `Failed to update task title: ${error.message}`,
+        description: `Failed to update task title: ${error instanceof Error ? error.message : "Unknown error"}`,
         variant: "destructive"
       });
     }
@@ -219,7 +258,7 @@ export function useMissionTasks(missionId: string | null) {
     onError: (error) => {
       toast({
         title: "Error",
-        description: `Failed to update task description: ${error.message}`,
+        description: `Failed to update task description: ${error instanceof Error ? error.message : "Unknown error"}`,
         variant: "destructive"
       });
     }
@@ -246,7 +285,7 @@ export function useMissionTasks(missionId: string | null) {
     onError: (error) => {
       toast({
         title: "Error",
-        description: `Failed to update due date: ${error.message}`,
+        description: `Failed to update due date: ${error instanceof Error ? error.message : "Unknown error"}`,
         variant: "destructive"
       });
     }
@@ -294,7 +333,7 @@ export function useMissionTasks(missionId: string | null) {
     onError: (error) => {
       toast({
         title: "Error",
-        description: `Failed to delete task: ${error.message}`,
+        description: `Failed to delete task: ${error instanceof Error ? error.message : "Unknown error"}`,
         variant: "destructive"
       });
     }
@@ -302,13 +341,19 @@ export function useMissionTasks(missionId: string | null) {
   
   const getSubtasks = useMutation({
     mutationFn: async (parentTaskId: string) => {
+      console.log(`Fetching subtasks for parent: ${parentTaskId}`);
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
         .eq('parent_task_id', parentTaskId)
         .order('created_at', { ascending: true });
         
-      if (error) throw error;
+      if (error) {
+        console.error(`Error fetching subtasks for ${parentTaskId}:`, error);
+        throw error;
+      }
+      
+      console.log(`Found ${data?.length || 0} subtasks for parent: ${parentTaskId}`);
       return { parentTaskId, subtasks: data as Task[] };
     },
     onSuccess: (result) => {
@@ -320,7 +365,7 @@ export function useMissionTasks(missionId: string | null) {
     onError: (error) => {
       toast({
         title: "Error",
-        description: `Failed to fetch subtasks: ${error.message}`,
+        description: `Failed to fetch subtasks: ${error instanceof Error ? error.message : "Unknown error"}`,
         variant: "destructive"
       });
     }

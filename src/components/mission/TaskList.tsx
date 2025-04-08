@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import ReactMarkdown from 'react-markdown';
 
 interface TaskListProps {
   missionId: string;
@@ -48,8 +49,16 @@ export function TaskList({ missionId }: TaskListProps) {
     deleteTask,
     isCreating,
     getSubtasks,
-    subtasks
+    subtasks,
+    refetch
   } = useMissionTasks(missionId);
+
+  // Ensure we load tasks when the mission ID changes
+  useEffect(() => {
+    if (missionId) {
+      refetch();
+    }
+  }, [missionId, refetch]);
 
   useEffect(() => {
     if (editingTaskId && titleInputRef.current) {
@@ -70,7 +79,7 @@ export function TaskList({ missionId }: TaskListProps) {
     }
     
     if (newTaskTitle.trim()) {
-      createTask(newTaskTitle.trim(), null, newTaskDescription); // null parent_task_id for top-level tasks
+      createTask(newTaskTitle.trim(), null, newTaskDescription);
       setNewTaskTitle('');
       setNewTaskDescription('');
       setDueDate('');
@@ -136,6 +145,49 @@ export function TaskList({ missionId }: TaskListProps) {
     } catch (e) {
       return null;
     }
+  };
+
+  const renderTaskEditor = (task: Task, isInlineEdit = true) => {
+    return (
+      <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+        <Input
+          ref={titleInputRef}
+          value={editingTaskTitle}
+          onChange={(e) => setEditingTaskTitle(e.target.value)}
+          className="mb-1 py-0 h-6 bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]"
+          placeholder="Task title"
+        />
+        <Textarea
+          ref={descriptionInputRef}
+          value={editingTaskDescription}
+          onChange={(e) => setEditingTaskDescription(e.target.value)}
+          placeholder="Add description or notes with Markdown support..."
+          className="min-h-[120px] resize-none bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9] text-sm"
+        />
+        <div className="flex justify-between text-xs text-[#64748B]">
+          <div>
+            <span>Supports Markdown: **bold**, *italic*, - lists, etc.</span>
+          </div>
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button 
+            size="sm" 
+            variant="outline"
+            onClick={() => setEditingTaskId(null)}
+            className="text-xs h-7 border-[#3A4D62] text-[#F1F5F9]"
+          >
+            Cancel
+          </Button>
+          <Button 
+            size="sm" 
+            onClick={() => handleTaskTitleChange(task)}
+            className="text-xs h-7"
+          >
+            Save
+          </Button>
+        </div>
+      </div>
+    );
   };
 
   const renderTask = (task: Task, isSubtask = false) => {
@@ -208,38 +260,7 @@ export function TaskList({ missionId }: TaskListProps) {
             onClick={() => handleTaskClick(task.id)}
           >
             {editingTaskId === task.id ? (
-              <div className="space-y-2">
-                <Input
-                  ref={titleInputRef}
-                  value={editingTaskTitle}
-                  onChange={(e) => setEditingTaskTitle(e.target.value)}
-                  className="mb-1 py-0 h-6 bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]"
-                />
-                <Textarea
-                  ref={descriptionInputRef}
-                  value={editingTaskDescription}
-                  onChange={(e) => setEditingTaskDescription(e.target.value)}
-                  placeholder="Add a description..."
-                  className="min-h-[60px] resize-none bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9] text-sm"
-                />
-                <div className="flex justify-end gap-2">
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => setEditingTaskId(null)}
-                    className="text-xs h-7 border-[#3A4D62] text-[#F1F5F9]"
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    onClick={() => handleTaskTitleChange(task)}
-                    className="text-xs h-7"
-                  >
-                    Save
-                  </Button>
-                </div>
-              </div>
+              renderTaskEditor(task)
             ) : (
               <div>
                 <div className="flex items-center gap-1 cursor-pointer">
@@ -277,12 +298,16 @@ export function TaskList({ missionId }: TaskListProps) {
                         size="sm"
                         className="mt-1 p-0 h-5 text-xs text-[#64748B] hover:text-neon-aqua transition-colors flex items-center gap-1"
                       >
-                        {isDescriptionExpanded ? "Hide" : "Show"} description
+                        {isDescriptionExpanded ? "Hide" : "Show"} notes
                         {isDescriptionExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
                       </Button>
                     </CollapsibleTrigger>
                     <CollapsibleContent className="mt-2 text-sm text-[#A3B8CC] bg-[#1A2433] p-2 rounded border border-[#3A4D62]/50">
-                      {task.description}
+                      <div className="prose prose-sm prose-invert max-w-none">
+                        <ReactMarkdown>
+                          {task.description}
+                        </ReactMarkdown>
+                      </div>
                     </CollapsibleContent>
                   </Collapsible>
                 )}
@@ -440,12 +465,12 @@ export function TaskList({ missionId }: TaskListProps) {
                 className="mb-2 bg-[#1C2A3A] border-[#3A4D62]"
               />
               <Textarea
-                placeholder="Description (optional)"
+                placeholder="Task notes and details with Markdown support"
                 value={newTaskDescription}
                 onChange={(e) => setNewTaskDescription(e.target.value)}
-                className="mb-2 bg-[#1C2A3A] border-[#3A4D62] min-h-[80px] resize-none text-sm"
+                className="mb-2 bg-[#1C2A3A] border-[#3A4D62] min-h-[120px] resize-none text-sm"
               />
-              <div className="flex items-center">
+              <div className="flex items-center mb-2">
                 <Calendar className="h-4 w-4 text-[#64748B] mr-1" />
                 <Input
                   type="date"
@@ -454,6 +479,9 @@ export function TaskList({ missionId }: TaskListProps) {
                   className="bg-[#1C2A3A] border-[#3A4D62] text-sm"
                   placeholder="Due date (optional)"
                 />
+              </div>
+              <div className="text-xs text-[#64748B]">
+                <span>Supports Markdown: **bold**, *italic*, - lists, etc.</span>
               </div>
             </div>
             <div className="flex justify-end gap-2">
@@ -573,7 +601,7 @@ function TaskDetailDialog({ taskId, missionId, onClose }: TaskDetailDialogProps)
 
   return (
     <Dialog open={!!taskId} onOpenChange={() => onClose()}>
-      <DialogContent className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9] max-w-lg">
+      <DialogContent className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9] max-w-3xl">
         <DialogHeader>
           <DialogTitle className="text-neon-aqua">Task Details</DialogTitle>
           <DialogDescription className="text-[#CBD5E1]">
@@ -592,14 +620,28 @@ function TaskDetailDialog({ taskId, missionId, onClose }: TaskDetailDialogProps)
           </div>
           
           <div className="space-y-2">
-            <label className="text-sm font-medium text-[#CBD5E1]">Description</label>
+            <label className="text-sm font-medium text-[#CBD5E1]">Notes</label>
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               onBlur={handleSaveDescription}
-              placeholder="Add a description..."
-              className="min-h-[100px] bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] hover:border-neon-aqua/30 focus:border-neon-aqua/50 transition-colors"
+              placeholder="Add notes with Markdown support..."
+              className="min-h-[200px] bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] hover:border-neon-aqua/30 focus:border-neon-aqua/50 transition-colors"
             />
+            <div className="text-xs text-[#64748B]">
+              <span>Supports Markdown: **bold**, *italic*, - lists, etc.</span>
+            </div>
+            
+            {description && (
+              <div className="mt-4 p-3 bg-[#25384D]/50 border border-[#3A4D62] rounded-md">
+                <h4 className="text-sm font-medium text-neon-aqua mb-2">Preview</h4>
+                <div className="prose prose-sm prose-invert max-w-none">
+                  <ReactMarkdown>
+                    {description}
+                  </ReactMarkdown>
+                </div>
+              </div>
+            )}
           </div>
           
           <div className="space-y-2">
@@ -635,36 +677,6 @@ function TaskDetailDialog({ taskId, missionId, onClose }: TaskDetailDialogProps)
               className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] hover:border-neon-aqua/30 focus:border-neon-aqua/50 transition-colors"
             />
           </div>
-          
-          {subtasks[taskId]?.length > 0 && (
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-[#CBD5E1]">Subtasks</label>
-              <div className="space-y-1 ml-4">
-                {subtasks[taskId].map((subtask) => (
-                  <div key={subtask.id} className="flex items-center gap-2 p-2 rounded-md border border-[#3A4D62]/50 bg-[#25384D]/50 hover:border-neon-aqua/30 transition-colors">
-                    <Checkbox
-                      checked={subtask.status === 'completed'}
-                      onCheckedChange={(checked) => {
-                        const newStatus = checked ? 'completed' : 'open';
-                        updateTaskStatus(subtask.id, newStatus);
-                      }}
-                    />
-                    <div className="flex-1">
-                      <span className={cn(
-                        "text-sm",
-                        subtask.status === 'completed' && "line-through text-[#64748B]"
-                      )}>
-                        {subtask.title}
-                      </span>
-                      {subtask.description && (
-                        <p className="text-xs text-[#64748B] mt-1 line-clamp-2">{subtask.description}</p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </DialogContent>
     </Dialog>

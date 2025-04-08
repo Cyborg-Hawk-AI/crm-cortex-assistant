@@ -1,0 +1,138 @@
+
+/* Markdown styling for task descriptions */
+
+.prose {
+  color: #F1F5F9;
+}
+
+.prose p {
+  margin-bottom: 0.75em;
+}
+
+.prose strong {
+  font-weight: bold;
+  color: #F1F5F9;
+}
+
+.prose em {
+  font-style: italic;
+  color: #F1F5F9;
+}
+
+.prose ul {
+  list-style-type: disc;
+  padding-left: 1.5em;
+  margin-bottom: 0.75em;
+}
+
+.prose ol {
+  list-style-type: decimal;
+  padding-left: 1.5em;
+  margin-bottom: 0.75em;
+}
+
+.prose li {
+  margin-bottom: 0.25em;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  font-weight: 600;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+}
+
+.prose h1 {
+  font-size: 1.5em;
+}
+
+.prose h2 {
+  font-size: 1.25em;
+}
+
+.prose h3 {
+  font-size: 1.125em;
+}
+
+.prose code {
+  background-color: rgba(71, 85, 105, 0.4);
+  padding: 0.125em 0.25em;
+  border-radius: 0.25em;
+  font-family: monospace;
+  font-size: 0.9em;
+}
+
+.prose pre {
+  background-color: rgba(15, 23, 42, 0.7);
+  padding: 0.75em;
+  border-radius: 0.375em;
+  overflow-x: auto;
+  margin-bottom: 0.75em;
+}
+
+.prose pre code {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
+.prose a {
+  color: #38BDF8;
+  text-decoration: underline;
+}
+
+.prose a:hover {
+  text-decoration: none;
+}
+
+.prose blockquote {
+  border-left: 3px solid #4B5563;
+  padding-left: 1em;
+  font-style: italic;
+  margin: 1em 0;
+}
+
+.prose-sm {
+  font-size: 0.875rem;
+}
+
+.prose-invert {
+  color: #CBD5E1;
+}
+
+.prose-invert a {
+  color: #5EEAD4;
+}
+
+.prose-invert code {
+  background-color: rgba(30, 41, 59, 0.7);
+}
+
+.prose-invert pre {
+  background-color: rgba(15, 23, 42, 0.7);
+}
+
+.prose-invert blockquote {
+  border-left-color: #64748B;
+}
+
+.prose .task-list {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.prose .task-list-item {
+  display: flex;
+  align-items: flex-start;
+}
+
+.prose .task-list-item-checkbox {
+  margin-right: 0.5em;
+  margin-top: 0.25em;
+}
+
+.max-w-none {
+  max-width: none;
+}
