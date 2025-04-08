@@ -456,13 +456,12 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
         console.log('[DEBUG] Updated HTML content:', updatedContent);
         
         // Explicitly update the block content with HTML
-        const block = blocks.find(b => b.id === block.id);
         if (block) {
           onUpdateBlock(block.id, { 
             ...block.content, 
             text: updatedContent 
           });
-          contentChangeRef.current.set(blockId, false);
+          contentChangeRef.current.set(block.id, false);
         }
       }
       return;
