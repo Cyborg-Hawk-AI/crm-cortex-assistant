@@ -51,8 +51,9 @@ const BLOCK_TYPES = [
   { type: 'columns', label: 'Columns', icon: <Columns className="h-4 w-4" />, shortcut: '/columns' },
 ] as const;
 
+const CONTENT_UPDATE_DEBOUNCE = 1000;
+
 export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onUpdateBlock, onDeleteBlock, onMoveBlock, onDuplicateBlock }: BlockEditorProps) {
-  // Sort blocks by position at the component level
   const blocks = [...unsortedBlocks].sort((a, b) => (a.position || 0) - (b.position || 0));
   
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
@@ -66,8 +67,8 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const blockRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const updateTimeoutRef = useRef<Record<string, NodeJS.Timeout>>({});
+  const contentChangeRef = useRef<Map<string, boolean>>(new Map());
 
-  // Debug logging for state changes
   useEffect(() => {
     console.log('🔍 BlockEditor State Update:', {
       selectedBlock,
@@ -79,21 +80,26 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     });
   }, [selectedBlock, draggedBlock, hoveredBlock, editingContent, blocks]);
 
-  // Add placeholder block when editor is empty
   useEffect(() => {
     if (blocks.length === 0) {
       handleCreateBlock('text', { text: '' }, 0);
     }
   }, [blocks.length]);
 
-  // Scroll to bottom when new blocks are added
   useEffect(() => {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
   }, [blocks.length]);
 
-  // Function to set cursor at the end of a contentEditable div
+  useEffect(() => {
+    return () => {
+      Object.values(updateTimeoutRef.current).forEach(timeout => {
+        clearTimeout(timeout);
+      });
+    };
+  }, []);
+
   const setCursorToEnd = (element: HTMLDivElement) => {
     const range = document.createRange();
     const selection = window.getSelection();
@@ -137,14 +143,11 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     });
 
     try {
-      // Calculate the new position by finding the maximum position and adding 1
       const maxPosition = Math.max(...blocks.map(b => b.position || 0), 0);
       const newPosition = position > maxPosition ? position : maxPosition + 1;
 
-      // Create the new block first
       const newBlockId = await onCreateBlock(type, content, newPosition, parentId);
       
-      // Then update positions of existing blocks
       const blocksToUpdate = blocks
         .filter(b => b.position >= position && b.id !== newBlockId)
         .map(b => ({
@@ -152,7 +155,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
           newPosition: (b.position || 0) + 1
         }));
 
-      // Update positions in sequence
       for (const block of blocksToUpdate) {
         await onUpdateBlock(block.id, { 
           ...blocks.find(b => b.id === block.id)?.content,
@@ -168,7 +170,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
 
       if (newBlockId) {
         setSelectedBlock(newBlockId);
-        // Focus the new block after a short delay to ensure it's rendered
         setTimeout(() => {
           const newBlockRef = blockRefs.current.get(newBlockId);
           if (newBlockRef) {
@@ -176,7 +177,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
             setCursorToEnd(newBlockRef);
             console.log('🎯 Focused new block:', newBlockId);
           }
-        }, 50); // Increased delay to ensure rendering
+        }, 50);
       }
     } catch (error) {
       console.error('❌ Error creating block:', error);
@@ -190,7 +191,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     const currentIndex = blocks.findIndex(b => b.id === currentBlock.id);
     const position = currentIndex + 1;
 
-    // Initialize content based on block type
     const content: MindBlock['content'] = { text: '' };
     switch (type) {
       case 'todo':
@@ -219,7 +219,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, block: MindBlock) => {
-    // Handle slash command for block selector
     if (e.key === '/' && !e.shiftKey) {
       e.preventDefault();
       const blockRef = blockRefs.current.get(block.id);
@@ -238,16 +237,13 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       return;
     }
 
-    // Handle Shift+Enter for todo blocks
     if (e.key === 'Enter' && e.shiftKey && block.content_type === 'todo') {
       e.preventDefault();
       const position = blocks.findIndex(b => b.id === block.id) + 1;
       
-      // Create a new todo block below the current one
       handleCreateBlock('todo', {
         text: '',
         checked: false,
-        // Inherit properties from the current block
         assignee: block.content.assignee,
         due_date: block.content.due_date,
         priority: block.content.priority,
@@ -256,16 +252,13 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       return;
     }
 
-    // Handle Enter for new blocks
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       const position = blocks.findIndex(b => b.id === block.id) + 1;
       
-      // Continue the same block type for lists and todos
       const continueTypes: MindBlock['content_type'][] = ['bullet', 'numbered', 'todo'];
       const newType = continueTypes.includes(block.content_type) ? block.content_type : 'text';
       
-      // If the current block is empty and is a continuing type, convert it to text
       if (continueTypes.includes(block.content_type) && !block.content.text?.trim()) {
         handleBlockTypeChange(block.id, 'text');
         return;
@@ -277,13 +270,11 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       }, position, block.parent_block_id);
     }
 
-    // Handle Backspace to remove empty blocks
     if (e.key === 'Backspace' && !e.shiftKey) {
       const text = (e.target as HTMLDivElement).textContent || '';
       if (!text.trim() && blocks.length > 1) {
         e.preventDefault();
         onDeleteBlock(block.id);
-        // Focus the previous block
         const prevBlock = blocks[blocks.findIndex(b => b.id === block.id) - 1];
         if (prevBlock) {
           setSelectedBlock(prevBlock.id);
@@ -291,7 +282,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       }
     }
 
-    // Handle arrow keys for navigation
     if (e.key === 'ArrowUp' && !e.shiftKey) {
       const currentIndex = blocks.findIndex(b => b.id === block.id);
       if (currentIndex > 0) {
@@ -307,7 +297,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       }
     }
 
-    // Handle markdown shortcuts
     if (e.key === ' ' && !e.shiftKey) {
       const text = (e.target as HTMLDivElement).textContent || '';
       const trimmedText = text.trim();
@@ -344,15 +333,12 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     const block = blocks.find(b => b.id === blockId);
     if (!block) return;
 
-    // Preserve the text content when converting between text-based blocks
     const textContent = block.content.text || '';
     
-    // Initialize new content based on the target block type
     const newContent: MindBlock['content'] = {
       text: textContent,
     };
 
-    // Add type-specific properties
     switch (newType) {
       case 'todo':
         newContent.checked = false;
@@ -372,7 +358,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       case 'columns':
         newContent.columns = 2;
         break;
-      // Add other type-specific initializations as needed
     }
 
     await onUpdateBlock(blockId, {
@@ -388,14 +373,19 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       currentContent: blocks.find(b => b.id === blockId)?.content.text
     });
 
-    // Clear any existing timeout for this block
     if (updateTimeoutRef.current[blockId]) {
-      console.log('⏱️ Clearing existing timeout for block:', blockId);
       clearTimeout(updateTimeoutRef.current[blockId]);
     }
 
-    // Only store the content in local state, don't update the server yet
     setEditingContent(prev => ({ ...prev, [blockId]: content }));
+    contentChangeRef.current.set(blockId, true);
+
+    updateTimeoutRef.current[blockId] = setTimeout(() => {
+      if (contentChangeRef.current.get(blockId)) {
+        handleContentSave(blockId, content);
+        contentChangeRef.current.set(blockId, false);
+      }
+    }, CONTENT_UPDATE_DEBOUNCE);
   };
 
   const handleContentSave = async (blockId: string, content: string) => {
@@ -409,14 +399,12 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     if (!block) return;
 
     try {
-      // Preserve the block's position and other properties when updating content
       await onUpdateBlock(blockId, { 
         ...block.content, 
         text: content,
-        position: block.position // Explicitly preserve position
+        position: block.position 
       });
 
-      // Clear the editing state after successful save
       setEditingContent(prev => {
         const next = { ...prev };
         delete next[blockId];
@@ -435,11 +423,15 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       });
       e.preventDefault();
       const content = (e.target as HTMLDivElement).textContent || '';
+      
+      if (updateTimeoutRef.current[blockId]) {
+        clearTimeout(updateTimeoutRef.current[blockId]);
+      }
+      
       handleContentSave(blockId, content);
     }
   };
 
-  // Filter block types based on search query
   const filteredBlockTypes = BLOCK_TYPES.filter(type => 
     type.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (type.shortcut && type.shortcut.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -460,7 +452,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       onInput: (e: React.FormEvent<HTMLDivElement>) => {
         const content = e.currentTarget.textContent || '';
         handleContentUpdate(block.id, content);
-        // Ensure cursor stays at the right position after input
         const selection = window.getSelection();
         const range = selection?.getRangeAt(0);
         if (range) {
@@ -488,10 +479,17 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
           content,
           currentPosition: blocks.findIndex(b => b.id === block.id)
         });
-        handleContentSave(block.id, content);
+        
+        if (updateTimeoutRef.current[block.id]) {
+          clearTimeout(updateTimeoutRef.current[block.id]);
+        }
+        
+        if (contentChangeRef.current.get(block.id)) {
+          handleContentSave(block.id, content);
+          contentChangeRef.current.set(block.id, false);
+        }
       },
       onFocus: (e: React.FocusEvent<HTMLDivElement>) => {
-        // Set cursor to end when focusing empty block
         if (!e.currentTarget.textContent) {
           setCursorToEnd(e.currentTarget);
         }
@@ -649,7 +647,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
 
       case 'image':
       case 'video':
-    return (
+        return (
           <div className="relative group">
             {block.content.url ? (
               block.content_type === 'image' ? (
@@ -672,7 +670,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
                 </Button>
               </div>
             )}
-        </div>
+          </div>
         );
 
       case 'file':
@@ -683,16 +681,16 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
             {!block.content.url && (
               <Button variant="ghost" size="sm">Upload file</Button>
             )}
-      </div>
-    );
-  
+          </div>
+        );
+
       case 'table':
-    return (
+        return (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               {/* Table implementation */}
             </table>
-        </div>
+          </div>
         );
 
       case 'columns':
@@ -701,14 +699,14 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
             gridTemplateColumns: `repeat(${block.content.columns || 2}, 1fr)` 
           }}>
             {/* Column content */}
-      </div>
-    );
+          </div>
+        );
 
       default:
         return null;
-  }
+    }
   };
-  
+
   return (
     <div 
       ref={editorRef}
@@ -750,7 +748,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
                   zIndex: selectedBlock === block.id ? 1 : 0
                 }}
               >
-                {/* Block Controls - Only show on hover */}
                 <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1">
                   <Button
                     variant="ghost"
@@ -763,21 +760,16 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
                   </Button>
                 </div>
 
-                {/* Block Content */}
-                <div 
-                  className="flex-1"
-                  ref={(el) => {
-                    if (el) {
-                      blockRefs.current.set(block.id, el);
-                    } else {
-                      blockRefs.current.delete(block.id);
-                    }
-                  }}
-                >
+                <div className="flex-1" ref={(el) => {
+                  if (el) {
+                    blockRefs.current.set(block.id, el);
+                  } else {
+                    blockRefs.current.delete(block.id);
+                  }
+                }}>
                   {renderBlockContent(block)}
                 </div>
 
-                {/* Block Actions */}
                 <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1">
                   <Button 
                     variant="ghost"
@@ -803,7 +795,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
                   </Button>
                 </div>
 
-                {/* Insert Block Button */}
                 {hoveredBlock === block.id && (
                   <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100">
                     <Button
@@ -823,7 +814,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
             );
           })}
 
-          {/* Phantom Block */}
           <div
             className="h-8 opacity-0 hover:opacity-100 transition-opacity cursor-text"
             onClick={() => handleCreateBlock('text', { text: '' }, blocks.length)}
@@ -833,7 +823,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
         </div>
       </ScrollArea>
 
-      {/* Block Selector Menu */}
       {showBlockSelector && (
         <DropdownMenu open={showBlockSelector} onOpenChange={setShowBlockSelector}>
           <DropdownMenuContent

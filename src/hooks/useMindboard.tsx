@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Mindboard, MindSection, MindPage, MindBlock } from '@/utils/types';
@@ -12,7 +11,30 @@ export function useMindboard() {
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
   const [activePageId, setActivePageId] = useState<string | null>(null);
   
-  // Fetch all mindboards
+  const [lastToastTime, setLastToastTime] = useState<Record<string, number>>({
+    block: 0,
+    page: 0,
+    section: 0,
+    mindboard: 0
+  });
+  
+  const TOAST_THROTTLE = 2000;
+  
+  const shouldShowToast = (type: 'block' | 'page' | 'section' | 'mindboard'): boolean => {
+    const now = Date.now();
+    const lastShown = lastToastTime[type] || 0;
+    const shouldShow = now - lastShown > TOAST_THROTTLE;
+    
+    if (shouldShow) {
+      setLastToastTime(prev => ({
+        ...prev,
+        [type]: now
+      }));
+    }
+    
+    return shouldShow;
+  };
+  
   const { 
     data: mindboards = [], 
     isLoading: isLoadingMindboards,
@@ -22,7 +44,6 @@ export function useMindboard() {
     queryFn: mindboardApi.getMindboards,
   });
   
-  // Fetch sections for active mindboard
   const {
     data: sections = [],
     isLoading: isLoadingSections,
@@ -35,7 +56,6 @@ export function useMindboard() {
     enabled: !!activeMindboardId,
   });
   
-  // Fetch pages for active section
   const {
     data: pages = [],
     isLoading: isLoadingPages,
@@ -48,7 +68,6 @@ export function useMindboard() {
     enabled: !!activeSectionId,
   });
   
-  // Fetch blocks for active page
   const {
     data: blocks = [],
     isLoading: isLoadingBlocks,
@@ -61,7 +80,6 @@ export function useMindboard() {
     enabled: !!activePageId,
   });
   
-  // Mindboard mutations
   const createMindboardMutation = useMutation({
     mutationFn: (params: { title: string, description?: string, color?: string, icon?: string }) => 
       mindboardApi.createMindboard(params.title, params),
@@ -86,10 +104,12 @@ export function useMindboard() {
     mutationFn: mindboardApi.updateMindboard,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mindboards'] });
-      toast({
-        title: 'Mindboard updated',
-        description: 'Mindboard has been updated successfully'
-      });
+      if (shouldShowToast('mindboard')) {
+        toast({
+          title: 'Mindboard updated',
+          description: 'Mindboard has been updated successfully'
+        });
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -121,7 +141,6 @@ export function useMindboard() {
     },
   });
   
-  // Section mutations
   const createSectionMutation = useMutation({
     mutationFn: (params: { 
       mindboardId: string, 
@@ -159,10 +178,12 @@ export function useMindboard() {
     mutationFn: mindboardApi.updateMindSection,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mind_sections', activeMindboardId] });
-      toast({
-        title: 'Section updated',
-        description: 'Section has been updated successfully'
-      });
+      if (shouldShowToast('section')) {
+        toast({
+          title: 'Section updated',
+          description: 'Section has been updated successfully'
+        });
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -194,7 +215,6 @@ export function useMindboard() {
     },
   });
   
-  // Page mutations
   const createPageMutation = useMutation({
     mutationFn: (params: { 
       sectionId: string, 
@@ -232,10 +252,12 @@ export function useMindboard() {
     mutationFn: mindboardApi.updateMindPage,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mind_pages', activeSectionId] });
-      toast({
-        title: 'Page updated',
-        description: 'Page has been updated successfully'
-      });
+      if (shouldShowToast('page')) {
+        toast({
+          title: 'Page updated',
+          description: 'Page has been updated successfully'
+        });
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -267,7 +289,6 @@ export function useMindboard() {
     },
   });
   
-  // Block mutations
   const createBlockMutation = useMutation({
     mutationFn: (params: { 
       pageId: string, 
@@ -286,10 +307,12 @@ export function useMindboard() {
     ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mind_blocks', activePageId] });
-      toast({
-        title: 'Block added',
-        description: 'New content block has been created'
-      });
+      if (shouldShowToast('block')) {
+        toast({
+          title: 'Block added',
+          description: 'New content block has been created'
+        });
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -304,10 +327,12 @@ export function useMindboard() {
     mutationFn: mindboardApi.updateMindBlock,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mind_blocks', activePageId] });
-      toast({
-        title: 'Block updated',
-        description: 'Content block has been updated successfully'
-      });
+      if (shouldShowToast('block')) {
+        toast({
+          title: 'Block updated',
+          description: 'Content block has been updated successfully'
+        });
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -336,23 +361,19 @@ export function useMindboard() {
     },
   });
   
-  // Effect to set first mindboard as active if none selected
   if (mindboards.length > 0 && !activeMindboardId) {
     setActiveMindboardId(mindboards[0].id);
   }
   
-  // Effect to set first section as active if none selected
   if (sections.length > 0 && !activeSectionId) {
     setActiveSectionId(sections[0].id);
   }
   
-  // Effect to set first page as active if none selected
   if (pages.length > 0 && !activePageId) {
     setActivePageId(pages[0].id);
   }
 
   return {
-    // State
     mindboards,
     sections,
     pages,
@@ -364,34 +385,28 @@ export function useMindboard() {
     setActiveSectionId,
     setActivePageId,
     
-    // Mindboard operations
     createMindboard: createMindboardMutation.mutateAsync,
     updateMindboard: updateMindboardMutation.mutateAsync,
     deleteMindboard: deleteMindboardMutation.mutateAsync,
     
-    // Section operations
     createSection: createSectionMutation.mutateAsync,
     updateSection: updateSectionMutation.mutateAsync,
     deleteSection: deleteSectionMutation.mutateAsync,
     
-    // Page operations
     createPage: createPageMutation.mutateAsync,
     updatePage: updatePageMutation.mutateAsync,
     deletePage: deletePageMutation.mutateAsync,
     
-    // Block operations
     createBlock: createBlockMutation.mutateAsync,
     updateBlock: updateBlockMutation.mutateAsync,
     deleteBlock: deleteBlockMutation.mutateAsync,
     
-    // Loading states
     isLoading: 
       isLoadingMindboards || 
       isLoadingSections || 
       isLoadingPages || 
       isLoadingBlocks,
       
-    // Mutation states
     isCreatingMindboard: createMindboardMutation.isPending,
     isUpdatingMindboard: updateMindboardMutation.isPending,
     isDeletingMindboard: deleteMindboardMutation.isPending,
@@ -405,7 +420,6 @@ export function useMindboard() {
     isUpdatingBlock: updateBlockMutation.isPending,
     isDeletingBlock: deleteBlockMutation.isPending,
     
-    // Errors
     error: mindboardsError || sectionsError || pagesError || blocksError
   };
 }
