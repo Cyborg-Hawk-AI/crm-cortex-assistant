@@ -177,14 +177,14 @@ export function NoteCanvas({ notebookId, sectionId, pageId }: NoteCanvasProps) {
         </div>
       )}
       
-      {/* Canvas Content Area */}
-      <ScrollArea className="flex-1">
-        <div className="p-6">
+      {/* Canvas Content Area with Enhanced Vertical Scrolling */}
+      <ScrollArea className="flex-1" orientation="vertical">
+        <div className="p-6 min-h-[800px]">
           {isEditing ? (
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="w-full h-[500px] p-3 rounded-md bg-[#25384D]/30 border border-[#3A4D62] text-[#F1F5F9] focus:outline-none focus:border-neon-aqua/50 resize-none"
+              className="w-full min-h-[500px] p-3 rounded-md bg-[#25384D]/30 border border-[#3A4D62] text-[#F1F5F9] focus:outline-none focus:border-neon-aqua/50 resize-vertical"
             />
           ) : (
             <div className="prose prose-invert max-w-none">
@@ -200,7 +200,7 @@ export function NoteCanvas({ notebookId, sectionId, pageId }: NoteCanvasProps) {
             </div>
           )}
           
-          {/* Notes attached to this page */}
+          {/* Notes attached to this page - maintain original ordering */}
           {notes.length > 0 && !isEditing && (
             <Collapsible className="mt-8 border-t border-[#3A4D62]/50 pt-4">
               <CollapsibleTrigger asChild>
