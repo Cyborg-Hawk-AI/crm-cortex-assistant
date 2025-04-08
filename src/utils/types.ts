@@ -1,3 +1,4 @@
+
 export interface Message {
   id: string;
   content: string;
@@ -276,6 +277,7 @@ export interface MindPage {
   title: string;
   description?: string;
   section_id: string;
+  user_id?: string;  // Added for API compatibility
   parent_page_id?: string;
   parent_id?: string;
   is_pinned?: boolean;
@@ -290,14 +292,20 @@ export interface MindBlock {
   user_id: string;
   content_type: 'text' | 'heading1' | 'heading2' | 'heading3' | 'todo' | 'bullet' | 'numbered' | 
     'toggle' | 'quote' | 'callout' | 'divider' | 'code' | 'image' | 'video' | 'file' | 'embed' | 
-    'table' | 'database' | 'columns' | 'ai';
+    'table' | 'database' | 'columns' | 'ai' | 'audio';  // Added 'audio' to the accepted types
   content: {
     text?: string;
     checked?: boolean;
+    completed?: boolean;  // Added for todo items
     level?: 1 | 2 | 3; // For headings
     language?: string; // For code blocks
     url?: string; // For images, videos, embeds
+    name?: string; // For file name display
     filename?: string; // For files
+    code?: string; // For code blocks
+    caption?: string; // For image/media captions
+    mimeType?: string; // For audio/video media types
+    title?: string; // For embed titles
     columns?: number; // For column layouts
     expanded?: boolean; // For toggles
     style?: string; // For callouts
@@ -324,3 +332,4 @@ export interface MindBlock {
     created_at: string;
   }>;
 }
+

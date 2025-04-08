@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { MindBlock } from '@/utils/types';
 import { Card } from '@/components/ui/card';
