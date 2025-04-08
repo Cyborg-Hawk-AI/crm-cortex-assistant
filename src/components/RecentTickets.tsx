@@ -4,19 +4,19 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getRecentTickets } from '@/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { TaskList } from '@/components/mission/TaskList';
 import type { Ticket } from '@/api/tickets';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { Input } from '@/components/ui/input';
-import { ChevronDown, ChevronRight, Edit2, Plus, GripVertical } from 'lucide-react';
+import { ChevronDown, ChevronRight, Edit2, GripVertical } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Textarea } from '@/components/ui/textarea';
 import { useMissionTasks } from '@/hooks/useMissionTasks';
+import { MissionCreateButton } from '@/components/mission/MissionCreateButton';
 
 interface RecentTicketsProps {
   compact?: boolean;
@@ -30,8 +30,8 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
   const [editingMissionId, setEditingMissionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
   const [editingDescription, setEditingDescription] = useState('');
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [expandedMissionTasks, setExpandedMissionTasks] = useState<Record<string, any>>({});
+  const { toast } = useToast();
   
   const titleInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
@@ -110,7 +110,7 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .filter('tags', 'cs', `{"mission:${missionId}}`)
+        .contains('tags', [`mission:${missionId}`]) // Fixed the array syntax
         .order('created_at', { ascending: true });
         
       if (error) {
@@ -166,11 +166,6 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
     setEditingMissionId(null);
   };
 
-  const handleCreateMission = () => {
-    // This would trigger the existing create mission modal
-    setShowCreateModal(true);
-  };
-
   if (isLoading) {
     return (
       <div className={compact ? "space-y-2" : "bg-[#25384D] rounded-lg p-4 border border-[#3A4D62] shadow-[0_0_15px_rgba(0,247,239,0.15)] hover:shadow-[0_0_20px_rgba(0,247,239,0.25)] transition-all duration-300 space-y-4"}>
@@ -211,15 +206,7 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
             <div className="w-2 h-2 rounded-full bg-neon-green mr-2"></div>
             Recent Missions
           </h3>
-          {fullView && (
-            <Button 
-              onClick={handleCreateMission} 
-              className="bg-neon-aqua/20 hover:bg-neon-aqua/30 text-neon-aqua hover:shadow-[0_0_8px_rgba(0,247,239,0.3)]"
-            >
-              <Plus className="mr-1 h-4 w-4" />
-              Create Mission
-            </Button>
-          )}
+          {fullView && <MissionCreateButton />}
         </div>
       )}
 

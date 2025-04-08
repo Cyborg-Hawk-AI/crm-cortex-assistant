@@ -27,27 +27,28 @@ export interface Assistant {
 export interface Task {
   id: string;
   title: string;
-  description?: string;
+  description: string | null;
   status: string;
   priority: string;
-  due_date?: string | Date;
-  assignee_id?: string;
-  reporter_id?: string;
-  parent_task_id?: string | null;  // Added for subtask support
-  created_by?: string;
-  created_at: Date | string;
-  updated_at: Date | string;
-  tags?: string[];
+  due_date: string | null;
+  assignee_id: string | null;
+  reporter_id: string;
+  user_id: string; // Required field for user ownership
+  parent_task_id: string | null;
+  created_at: string;
+  updated_at: string;
+  tags: string[];
 }
 
 export interface SubTask {
   id: string;
   title: string;
   parent_task_id: string;
+  user_id: string; // Required field for user ownership
   is_completed: boolean;
-  created_by?: string;
-  created_at: string;  // Changed to string only for form compatibility
-  updated_at: string;  // Changed to string only for form compatibility
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Note {

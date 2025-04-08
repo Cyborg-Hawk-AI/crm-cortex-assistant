@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -11,7 +12,7 @@ export function useMissionTasks(missionId: string | null) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Get current user ID for task creation
+  // Get current user ID for task creation and filtering
   const {
     data: currentUserId,
     isLoading: loadingUserId
@@ -23,21 +24,22 @@ export function useMissionTasks(missionId: string | null) {
     }
   });
 
-  // Validate the missionId exists in the database
+  // Validate the missionId exists and belongs to the current user
   const {
     data: missionExists,
     isLoading: checkingMission,
   } = useQuery({
     queryKey: ['mission-exists', missionId],
     queryFn: async () => {
-      if (!missionId) return false;
+      if (!missionId || !currentUserId) return false;
       
       try {
-        // Check if the missionId exists in the tasks table
+        // Check if the missionId exists in the tasks table and belongs to current user
         const { data, error } = await supabase
           .from('tasks')
           .select('id')
           .eq('id', missionId)
+          .eq('user_id', currentUserId)
           .single();
           
         if (error) {
@@ -47,8 +49,8 @@ export function useMissionTasks(missionId: string | null) {
           const { data: relatedTasks, error: relatedError } = await supabase
             .from('tasks')
             .select('id')
-            .filter('tags', 'cs', `{"mission:${missionId}}`)
-            .limit(1);
+            .eq('user_id', currentUserId)
+            .filter('tags', 'cs', `{"mission:${missionId}"}`);
           
           if (relatedError || !relatedTasks || relatedTasks.length === 0) {
             return false;
@@ -63,7 +65,7 @@ export function useMissionTasks(missionId: string | null) {
         return false;
       }
     },
-    enabled: !!missionId
+    enabled: !!missionId && !!currentUserId
   });
 
   const {
@@ -72,19 +74,20 @@ export function useMissionTasks(missionId: string | null) {
     error,
     refetch
   } = useQuery({
-    queryKey: ['mission-tasks', missionId],
+    queryKey: ['mission-tasks', missionId, currentUserId],
     queryFn: async () => {
-      if (!missionId) return [];
+      if (!missionId || !currentUserId) return [];
       
       try {
         // Format the tag properly for Postgres containment operator
         const missionTag = `mission:${missionId}`;
         
-        // Get tasks associated with this mission
+        // Get tasks associated with this mission AND user_id
         const { data, error } = await supabase
           .from('tasks')
           .select('*')
-          .contains('tags', [missionTag])  // Using contains instead of cs to match array values
+          .eq('user_id', currentUserId)
+          .contains('tags', [missionTag])
           .order('created_at', { ascending: true });
           
         if (error) {
@@ -99,14 +102,14 @@ export function useMissionTasks(missionId: string | null) {
         return [];
       }
     },
-    enabled: !!missionId && missionExists !== false,
+    enabled: !!missionId && !!currentUserId && missionExists !== false,
     refetchOnMount: true,
     refetchOnWindowFocus: true
   });
 
   // Initial load of subtasks for all top-level tasks
   useEffect(() => {
-    if (tasks && tasks.length > 0) {
+    if (tasks && tasks.length > 0 && currentUserId) {
       const topLevelTasks = tasks.filter(task => !task.parent_task_id);
       
       // Batch load subtasks for top-level tasks
@@ -114,7 +117,7 @@ export function useMissionTasks(missionId: string | null) {
         getSubtasks.mutate(task.id);
       });
     }
-  }, [tasks]);
+  }, [tasks, currentUserId]);
 
   const createTask = useMutation({
     mutationFn: async (params: { 
@@ -137,9 +140,11 @@ export function useMissionTasks(missionId: string | null) {
         description: params.description || null,
         status: 'open',
         priority: 'medium',
-        reporter_id: currentUserId, // Use current user ID as the reporter
+        reporter_id: currentUserId,
+        user_id: currentUserId, // Essential for ownership
         parent_task_id: params.parentTaskId,
         due_date: dueDate,
+        assignee_id: null,
         // Store mission ID in tags array to query related tasks
         tags: params.parentTaskId ? [] : [missionTag],
         created_at: new Date().toISOString(),
@@ -165,7 +170,7 @@ export function useMissionTasks(missionId: string | null) {
       setDueDate(null);
       
       // Invalidate and refetch the mission tasks query
-      queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId] });
+      queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId, currentUserId] });
       
       // Force an immediate refetch to update the UI
       setTimeout(() => {
@@ -192,6 +197,8 @@ export function useMissionTasks(missionId: string | null) {
 
   const updateTaskStatus = useMutation({
     mutationFn: async ({ taskId, status }: { taskId: string, status: string }) => {
+      if (!currentUserId) throw new Error('User not authenticated');
+      
       const { data, error } = await supabase
         .from('tasks')
         .update({ 
@@ -199,6 +206,7 @@ export function useMissionTasks(missionId: string | null) {
           updated_at: new Date().toISOString()
         })
         .eq('id', taskId)
+        .eq('user_id', currentUserId)
         .select()
         .single();
         
@@ -206,7 +214,7 @@ export function useMissionTasks(missionId: string | null) {
       return data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId] });
+      queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId, currentUserId] });
       refetch();
       
       // If this is a subtask, we need to invalidate the parent's subtasks
@@ -225,6 +233,8 @@ export function useMissionTasks(missionId: string | null) {
   
   const updateTaskTitle = useMutation({
     mutationFn: async ({ taskId, title }: { taskId: string, title: string }) => {
+      if (!currentUserId) throw new Error('User not authenticated');
+      
       const { data, error } = await supabase
         .from('tasks')
         .update({ 
@@ -232,6 +242,7 @@ export function useMissionTasks(missionId: string | null) {
           updated_at: new Date().toISOString()
         })
         .eq('id', taskId)
+        .eq('user_id', currentUserId)
         .select()
         .single();
         
@@ -239,7 +250,7 @@ export function useMissionTasks(missionId: string | null) {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId] });
+      queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId, currentUserId] });
       refetch();
     },
     onError: (error) => {
@@ -253,6 +264,8 @@ export function useMissionTasks(missionId: string | null) {
 
   const updateTaskDescription = useMutation({
     mutationFn: async ({ taskId, description }: { taskId: string, description: string | null }) => {
+      if (!currentUserId) throw new Error('User not authenticated');
+      
       const { data, error } = await supabase
         .from('tasks')
         .update({ 
@@ -260,6 +273,7 @@ export function useMissionTasks(missionId: string | null) {
           updated_at: new Date().toISOString()
         })
         .eq('id', taskId)
+        .eq('user_id', currentUserId)
         .select()
         .single();
         
@@ -267,7 +281,7 @@ export function useMissionTasks(missionId: string | null) {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId] });
+      queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId, currentUserId] });
       refetch();
     },
     onError: (error) => {
@@ -281,6 +295,8 @@ export function useMissionTasks(missionId: string | null) {
   
   const updateTaskDueDate = useMutation({
     mutationFn: async ({ taskId, dueDate }: { taskId: string, dueDate: string | null }) => {
+      if (!currentUserId) throw new Error('User not authenticated');
+      
       const { data, error } = await supabase
         .from('tasks')
         .update({ 
@@ -288,6 +304,7 @@ export function useMissionTasks(missionId: string | null) {
           updated_at: new Date().toISOString()
         })
         .eq('id', taskId)
+        .eq('user_id', currentUserId)
         .select()
         .single();
         
@@ -295,7 +312,7 @@ export function useMissionTasks(missionId: string | null) {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId] });
+      queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId, currentUserId] });
       refetch();
     },
     onError: (error) => {
@@ -309,30 +326,35 @@ export function useMissionTasks(missionId: string | null) {
 
   const deleteTask = useMutation({
     mutationFn: async (taskId: string) => {
-      // First, find and delete any subtasks
+      if (!currentUserId) throw new Error('User not authenticated');
+      
+      // First, find and delete any subtasks that belong to this user
       const { data: subtasksToDelete } = await supabase
         .from('tasks')
         .select('id')
-        .eq('parent_task_id', taskId);
+        .eq('parent_task_id', taskId)
+        .eq('user_id', currentUserId);
       
       if (subtasksToDelete && subtasksToDelete.length > 0) {
         const subtaskIds = subtasksToDelete.map(subtask => subtask.id);
         await supabase
           .from('tasks')
           .delete()
-          .in('id', subtaskIds);
+          .in('id', subtaskIds)
+          .eq('user_id', currentUserId);
       }
       
       // Then delete the task itself
       const { error } = await supabase
         .from('tasks')
         .delete()
-        .eq('id', taskId);
+        .eq('id', taskId)
+        .eq('user_id', currentUserId);
         
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId] });
+      queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId, currentUserId] });
       refetch();
       
       // Clear any cached subtasks for the deleted task
@@ -358,11 +380,14 @@ export function useMissionTasks(missionId: string | null) {
   
   const getSubtasks = useMutation({
     mutationFn: async (parentTaskId: string) => {
+      if (!currentUserId) throw new Error('User not authenticated');
+      
       console.log(`Fetching subtasks for parent: ${parentTaskId}`);
       const { data, error } = await supabase
-        .from('tasks')
+        .from('tasks') // Using tasks table for subtasks as per schema
         .select('*')
         .eq('parent_task_id', parentTaskId)
+        .eq('user_id', currentUserId)
         .order('created_at', { ascending: true });
         
       if (error) {
