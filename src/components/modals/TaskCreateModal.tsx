@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { CalendarIcon, X, Plus } from 'lucide-react';
@@ -135,10 +136,10 @@ export function TaskCreateModal({ open, onOpenChange, onTaskCreated }: TaskCreat
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] bg-[#25384D] border-[#3A4D62] text-[#F1F5F9]">
         <DialogHeader>
-          <DialogTitle>Create New Task</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-neon-aqua">Create New Task</DialogTitle>
+          <DialogDescription className="text-[#CBD5E1]">
             Add a new task to your workflow.
           </DialogDescription>
         </DialogHeader>
@@ -149,11 +150,11 @@ export function TaskCreateModal({ open, onOpenChange, onTaskCreated }: TaskCreat
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title</FormLabel>
+                  <FormLabel className="text-[#F1F5F9]">Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="Task title" {...field} />
+                    <Input placeholder="Task title" {...field} className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]" />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-neon-red" />
                 </FormItem>
               )}
             />
@@ -163,15 +164,15 @@ export function TaskCreateModal({ open, onOpenChange, onTaskCreated }: TaskCreat
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel className="text-[#F1F5F9]">Description</FormLabel>
                   <FormControl>
                     <Textarea 
                       placeholder="Task description" 
-                      className="resize-none"
+                      className="resize-none bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]"
                       {...field} 
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-neon-red" />
                 </FormItem>
               )}
             />
@@ -182,15 +183,15 @@ export function TaskCreateModal({ open, onOpenChange, onTaskCreated }: TaskCreat
                 name="dueDate"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Due Date</FormLabel>
+                    <FormLabel className="text-[#F1F5F9]">Due Date</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
                             variant={"outline"}
                             className={cn(
-                              "pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
+                              "pl-3 text-left font-normal bg-[#1C2A3A] border-[#3A4D62]",
+                              !field.value && "text-[#64748B]"
                             )}
                           >
                             {field.value ? (
@@ -202,16 +203,17 @@ export function TaskCreateModal({ open, onOpenChange, onTaskCreated }: TaskCreat
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
+                      <PopoverContent className="w-auto p-0 bg-[#25384D] border-[#3A4D62]" align="start">
                         <Calendar
                           mode="single"
                           selected={field.value}
                           onSelect={field.onChange}
                           initialFocus
+                          className="bg-[#25384D] text-[#F1F5F9]"
                         />
                       </PopoverContent>
                     </Popover>
-                    <FormMessage />
+                    <FormMessage className="text-neon-red" />
                   </FormItem>
                 )}
               />
@@ -221,10 +223,10 @@ export function TaskCreateModal({ open, onOpenChange, onTaskCreated }: TaskCreat
                 name="priority"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Priority</FormLabel>
+                    <FormLabel className="text-[#F1F5F9]">Priority</FormLabel>
                     <FormControl>
                       <select
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex h-10 w-full rounded-md border border-[#3A4D62] bg-[#1C2A3A] px-3 py-2 text-sm text-[#F1F5F9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         defaultValue="medium"
                         {...field}
                       >
@@ -234,7 +236,7 @@ export function TaskCreateModal({ open, onOpenChange, onTaskCreated }: TaskCreat
                         <option value="urgent">Urgent</option>
                       </select>
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-neon-red" />
                   </FormItem>
                 )}
               />
@@ -245,28 +247,28 @@ export function TaskCreateModal({ open, onOpenChange, onTaskCreated }: TaskCreat
               name="assignee_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Assignee</FormLabel>
+                  <FormLabel className="text-[#F1F5F9]">Assignee</FormLabel>
                   <FormControl>
-                    <Input placeholder="Assignee ID" {...field} />
+                    <Input placeholder="Assignee ID" {...field} className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]" />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-neon-red" />
                 </FormItem>
               )}
             />
             
             <div>
-              <FormLabel>Labels</FormLabel>
+              <FormLabel className="text-[#F1F5F9]">Labels</FormLabel>
               <div className="flex flex-wrap gap-2 mt-2">
                 {labels.map((label, index) => (
                   <div 
                     key={index} 
-                    className="bg-teal-green/10 text-forest-green px-2 py-1 rounded-md flex items-center gap-1"
+                    className="bg-neon-aqua/10 text-neon-aqua px-2 py-1 rounded-md flex items-center gap-1"
                   >
                     <span>{label}</span>
                     <button
                       type="button"
                       onClick={() => handleRemoveLabel(label)}
-                      className="text-forest-green hover:text-red-500"
+                      className="text-neon-aqua hover:text-neon-red"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -278,7 +280,7 @@ export function TaskCreateModal({ open, onOpenChange, onTaskCreated }: TaskCreat
                   value={newLabel}
                   onChange={(e) => setNewLabel(e.target.value)}
                   placeholder="Add label"
-                  className="flex-1"
+                  className="flex-1 bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
@@ -291,6 +293,7 @@ export function TaskCreateModal({ open, onOpenChange, onTaskCreated }: TaskCreat
                   variant="outline" 
                   size="sm" 
                   onClick={handleAddLabel}
+                  className="border-[#3A4D62] text-[#F1F5F9] hover:bg-[#3A4D62]/30"
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
@@ -299,9 +302,15 @@ export function TaskCreateModal({ open, onOpenChange, onTaskCreated }: TaskCreat
 
             <DialogFooter>
               <DialogClose asChild>
-                <Button type="button" variant="outline">Cancel</Button>
+                <Button type="button" variant="outline" className="border-[#3A4D62] text-[#F1F5F9] hover:bg-[#3A4D62]/30">
+                  Cancel
+                </Button>
               </DialogClose>
-              <Button type="submit" disabled={isPending}>
+              <Button 
+                type="submit" 
+                disabled={isPending} 
+                className="bg-neon-aqua text-black hover:bg-neon-aqua/90"
+              >
                 {isPending ? 'Creating...' : 'Create Task'}
               </Button>
             </DialogFooter>

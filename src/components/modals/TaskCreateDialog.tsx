@@ -108,9 +108,9 @@ export function TaskCreateDialog({
         priority: values.priority,
         tags: values.tags || [],
         reporter_id: userId,
-        user_id: userId, // Added user_id field
+        user_id: userId, // Include user_id field
         assignee_id: values.assignee_id || null,
-        parent_task_id: null, // Added required parent_task_id field
+        parent_task_id: null, 
         due_date: values.due_date ? values.due_date.toISOString() : null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -126,10 +126,10 @@ export function TaskCreateDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] bg-[#25384D] border-[#3A4D62] text-[#F1F5F9]">
         <DialogHeader>
-          <DialogTitle>Create New Task</DialogTitle>
-          <DialogDescription>Create a new task and assign it to a user</DialogDescription>
+          <DialogTitle className="text-neon-aqua">Create New Task</DialogTitle>
+          <DialogDescription className="text-[#CBD5E1]">Create a new task and assign it to a user</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
@@ -138,11 +138,11 @@ export function TaskCreateDialog({
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title</FormLabel>
+                  <FormLabel className="text-[#F1F5F9]">Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="Task title" {...field} />
+                    <Input placeholder="Task title" {...field} className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]" />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-neon-red" />
                 </FormItem>
               )}
             />
@@ -152,16 +152,17 @@ export function TaskCreateDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel className="text-[#F1F5F9]">Description</FormLabel>
                   <FormControl>
                     <Textarea 
                       placeholder="Task description (optional)" 
                       rows={3} 
                       {...field} 
                       value={field.value || ''}
+                      className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9] resize-none"
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-neon-red" />
                 </FormItem>
               )}
             />
@@ -172,24 +173,24 @@ export function TaskCreateDialog({
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Status</FormLabel>
+                    <FormLabel className="text-[#F1F5F9]">Status</FormLabel>
                     <Select 
                       onValueChange={field.onChange} 
                       defaultValue={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]">
                           <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9]">
                         <SelectItem value="open">Open</SelectItem>
                         <SelectItem value="in-progress">In Progress</SelectItem>
                         <SelectItem value="resolved">Resolved</SelectItem>
                         <SelectItem value="closed">Closed</SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormMessage />
+                    <FormMessage className="text-neon-red" />
                   </FormItem>
                 )}
               />
@@ -199,24 +200,24 @@ export function TaskCreateDialog({
                 name="priority"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Priority</FormLabel>
+                    <FormLabel className="text-[#F1F5F9]">Priority</FormLabel>
                     <Select 
                       onValueChange={field.onChange} 
                       defaultValue={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]">
                           <SelectValue placeholder="Select priority" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9]">
                         <SelectItem value="low">Low</SelectItem>
                         <SelectItem value="medium">Medium</SelectItem>
                         <SelectItem value="high">High</SelectItem>
                         <SelectItem value="urgent">Urgent</SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormMessage />
+                    <FormMessage className="text-neon-red" />
                   </FormItem>
                 )}
               />
@@ -227,18 +228,18 @@ export function TaskCreateDialog({
               name="assignee_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Assignee</FormLabel>
+                  <FormLabel className="text-[#F1F5F9]">Assignee</FormLabel>
                   <Select 
                     onValueChange={field.onChange} 
                     value={field.value || ''}
                     disabled={isLoadingUsers}
                   >
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]">
                         <SelectValue placeholder="Select assignee" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9]">
                       {users.map(user => (
                         <SelectItem key={user.id} value={user.id}>
                           {user.full_name || user.email}
@@ -246,7 +247,7 @@ export function TaskCreateDialog({
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormMessage />
+                  <FormMessage className="text-neon-red" />
                 </FormItem>
               )}
             />
@@ -256,15 +257,15 @@ export function TaskCreateDialog({
               name="due_date"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Due Date</FormLabel>
+                  <FormLabel className="text-[#F1F5F9]">Due Date</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
                           variant={"outline"}
                           className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
+                            "w-full pl-3 text-left font-normal bg-[#1C2A3A] border-[#3A4D62]",
+                            !field.value && "text-[#64748B]"
                           )}
                         >
                           {field.value ? (
@@ -276,27 +277,28 @@ export function TaskCreateDialog({
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent className="w-auto p-0 bg-[#25384D] border-[#3A4D62]" align="start">
                       <CalendarComponent
                         mode="single"
                         selected={field.value}
                         onSelect={field.onChange}
                         initialFocus
+                        className="bg-[#25384D] text-[#F1F5F9]"
                       />
                     </PopoverContent>
                   </Popover>
-                  <FormMessage />
+                  <FormMessage className="text-neon-red" />
                 </FormItem>
               )}
             />
             
             <DialogFooter className="gap-2 sm:gap-0">
               <DialogClose asChild>
-                <Button type="button" variant="outline">
+                <Button type="button" variant="outline" className="border-[#3A4D62] text-[#F1F5F9] hover:bg-[#3A4D62]/30">
                   Cancel
                 </Button>
               </DialogClose>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} className="bg-neon-aqua text-black hover:bg-neon-aqua/90">
                 {isSubmitting ? 'Creating...' : 'Create Task'}
               </Button>
             </DialogFooter>
