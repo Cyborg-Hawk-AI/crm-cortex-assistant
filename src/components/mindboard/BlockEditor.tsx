@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { 
   Plus, Trash2, Copy, MoreVertical, ChevronDown, GripVertical, 
@@ -55,7 +56,8 @@ const BLOCK_TYPES = [
   { type: 'columns', label: 'Columns', icon: <Columns className="h-4 w-4" />, shortcut: '/columns' },
 ] as const;
 
-const CONTENT_UPDATE_DEBOUNCE = 1000;
+// Significantly increase the debounce time to reduce update frequency
+const CONTENT_UPDATE_DEBOUNCE = 3000;
 
 export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onUpdateBlock, onDeleteBlock, onMoveBlock, onDuplicateBlock }: BlockEditorProps) {
   const blocks = [...unsortedBlocks].sort((a, b) => (a.position || 0) - (b.position || 0));
@@ -69,6 +71,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
   const [selectedBlocks, setSelectedBlocks] = useState<string[]>([]);
   
   const [isUpdating, setIsUpdating] = useState<Record<string, boolean>>({});
+  const [manualUpdateMode, setManualUpdateMode] = useState<Record<string, boolean>>({});
   
   const editorRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -76,10 +79,15 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
   const updateTimeoutRef = useRef<Record<string, NodeJS.Timeout>>({});
   const contentChangeRef = useRef<Map<string, boolean>>(new Map());
   const nestedLevels = useRef<Map<string, number>>(new Map());
-  const cursorPosition = useRef<Map<string, {node: Node | null, offset: number}>>(new Map());
-
+  const cursorPosition = useRef<Map<string, {
+    node: Node | null, 
+    offset: number,
+    nodeHTML?: string,
+    textContent?: string
+  }>>(new Map());
+  
   console.log('[DEBUG] Initial blocks:', blocks);
-  console.log('[DEBUG] Cursor tracking enabled with enhanced position management');
+  console.log('[DEBUG] Cursor tracking enabled with improved position management');
 
   useEffect(() => {
     if (blocks.length === 0) {
@@ -111,9 +119,17 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       const blockEl = blockRefs.current.get(blockId);
       
       if (blockEl && blockEl.contains(range.startContainer)) {
+        // Store more information about the node to help with restoration
+        const node = range.startContainer;
+        const nodeHTML = node.nodeType === Node.ELEMENT_NODE 
+          ? (node as Element).innerHTML 
+          : node.textContent || '';
+          
         cursorPosition.current.set(blockId, {
           node: range.startContainer,
-          offset: range.startOffset
+          offset: range.startOffset,
+          nodeHTML: nodeHTML,
+          textContent: node.textContent || ''
         });
         
         console.log('[DEBUG] Cursor position saved:', {
@@ -121,7 +137,8 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
           node: range.startContainer.nodeName,
           nodeType: range.startContainer.nodeType,
           text: range.startContainer.textContent?.substring(0, 20) + '...',
-          offset: range.startOffset
+          offset: range.startOffset,
+          nodeHTML: nodeHTML.substring(0, 20) + '...'
         });
       }
     }
@@ -141,66 +158,95 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       const selection = window.getSelection();
       if (!selection) return;
       
-      let targetNode = savedPosition.node;
-      let targetOffset = savedPosition.offset;
-      
-      if (!blockElement.contains(savedPosition.node)) {
-        console.log('[DEBUG] Saved node not found in DOM, finding alternative');
+      // First attempt: Try to find the exact same node
+      if (blockElement.contains(savedPosition.node)) {
+        console.log('[DEBUG] Original node found, restoring directly');
+        const range = document.createRange();
+        range.setStart(savedPosition.node, savedPosition.offset);
+        range.collapse(true);
         
-        const walkNodes = (node: Node, searchText: string): Node | null => {
-          if (node.nodeType === Node.TEXT_NODE && node.textContent && node.textContent.includes(searchText)) {
-            return node;
+        selection.removeAllRanges();
+        selection.addRange(range);
+        return;
+      }
+      
+      // Second attempt: Try to find a node with matching text content
+      if (savedPosition.textContent) {
+        console.log('[DEBUG] Searching for node with matching text:', savedPosition.textContent.substring(0, 15));
+        
+        // Helper function to find a node with similar text content
+        const findNodeWithText = (rootNode: Node, text: string): Node | null => {
+          if (rootNode.nodeType === Node.TEXT_NODE && rootNode.textContent?.includes(text)) {
+            return rootNode;
           }
           
-          let child = node.firstChild;
-          while (child) {
-            const result = walkNodes(child, searchText);
+          for (let i = 0; i < rootNode.childNodes.length; i++) {
+            const child = rootNode.childNodes[i];
+            const result = findNodeWithText(child, text);
             if (result) return result;
-            child = child.nextSibling;
           }
           
           return null;
         };
         
-        if (savedPosition.node.textContent) {
-          const searchText = savedPosition.node.textContent.substring(0, 10);
-          const similarNode = walkNodes(blockElement, searchText);
-          if (similarNode) {
-            targetNode = similarNode;
-            console.log('[DEBUG] Found similar text node');
-          } else {
-            if (blockElement.firstChild) {
-              if (blockElement.firstChild.nodeType === Node.TEXT_NODE) {
-                targetNode = blockElement.firstChild;
-              } else if (blockElement.firstChild.firstChild) {
-                targetNode = blockElement.firstChild.firstChild;
+        // Try to find a node with at least part of the text
+        const searchText = savedPosition.textContent.substring(0, Math.min(20, savedPosition.textContent.length));
+        if (searchText && searchText.trim().length > 0) {
+          const foundNode = findNodeWithText(blockElement, searchText);
+          
+          if (foundNode) {
+            console.log('[DEBUG] Found node with matching text');
+            const range = document.createRange();
+            
+            // Calculate an appropriate offset
+            let offsetInNode = 0;
+            if (foundNode.textContent) {
+              // Try to maintain the same relative position in the text
+              const originalLength = savedPosition.textContent.length;
+              const newLength = foundNode.textContent.length;
+              
+              if (originalLength > 0) {
+                const relativePosition = savedPosition.offset / originalLength;
+                offsetInNode = Math.min(Math.floor(relativePosition * newLength), newLength);
               } else {
-                targetNode = blockElement.firstChild;
+                offsetInNode = Math.min(savedPosition.offset, newLength);
               }
-            } else {
-              targetNode = blockElement;
-              targetOffset = 0;
             }
+            
+            range.setStart(foundNode, offsetInNode);
+            range.collapse(true);
+            
+            selection.removeAllRanges();
+            selection.addRange(range);
+            return;
           }
         }
-      
-        if (targetNode.nodeType === Node.TEXT_NODE) {
-          targetOffset = Math.min(targetOffset, targetNode.textContent?.length || 0);
-        }
-      
-        const range = document.createRange();
-        range.setStart(targetNode, targetOffset);
-        range.collapse(true);
-        
-        selection.removeAllRanges();
-        selection.addRange(range);
-        
-        console.log('[DEBUG] Cursor position restored:', {
-          blockId,
-          node: targetNode.nodeName,
-          offset: targetOffset
-        });
       }
+      
+      // Third attempt: Position at the first text node
+      console.log('[DEBUG] Fallback to positioning at the first text node');
+      
+      const findFirstTextNode = (node: Node): Node => {
+        if (node.nodeType === Node.TEXT_NODE) return node;
+        
+        for (let i = 0; i < node.childNodes.length; i++) {
+          const result = findFirstTextNode(node.childNodes[i]);
+          if (result.nodeType === Node.TEXT_NODE) return result;
+        }
+        
+        return node;
+      };
+      
+      const targetNode = findFirstTextNode(blockElement);
+      const offset = Math.min(savedPosition.offset, targetNode.textContent?.length || 0);
+      
+      const range = document.createRange();
+      range.setStart(targetNode, offset);
+      range.collapse(true);
+      
+      selection.removeAllRanges();
+      selection.addRange(range);
+      
     } catch (err) {
       console.error('[DEBUG] Error restoring cursor:', err);
     }
@@ -391,6 +437,13 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       handleOpenSlashCommand(blockId);
     }
     
+    // If manual update mode is on for this block, don't schedule automatic updates
+    if (manualUpdateMode[blockId]) {
+      console.log('[DEBUG] Manual update mode active, skipping auto update');
+      contentChangeRef.current.set(blockId, true);
+      return;
+    }
+    
     if (updateTimeoutRef.current[blockId]) {
       clearTimeout(updateTimeoutRef.current[blockId]);
     }
@@ -451,9 +504,33 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
         }).then(() => {
           contentChangeRef.current.set(blockId, false);
           setIsUpdating(prev => ({ ...prev, [blockId]: false }));
+          // Don't restore cursor position on blur - this avoids conflicts
         });
       }
     }
+  };
+
+  const handleManualUpdate = (blockId: string, content: string) => {
+    const block = blocks.find(b => b.id === blockId);
+    if (!block) return;
+    
+    saveCursorPosition(blockId);
+    
+    setIsUpdating(prev => ({ ...prev, [blockId]: true }));
+    
+    onUpdateBlock(blockId, { 
+      ...block.content, 
+      text: content 
+    }).then(() => {
+      contentChangeRef.current.set(blockId, false);
+      setIsUpdating(prev => ({ ...prev, [blockId]: false }));
+      
+      setTimeout(() => {
+        if (blockRefs.current.get(blockId)) {
+          restoreCursorPosition(blockId);
+        }
+      }, 10);
+    });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>, block: MindBlock) => {
@@ -485,8 +562,13 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       } : 'No selection'
     });
     
-    if (!(e.key === 'Enter' && e.shiftKey)) {
-      handleContentChange(block.id, e);
+    // Don't process content change for regular typing - only on Shift+Enter
+    if (e.key !== 'Enter') {
+      // Set manual update mode for this block
+      setManualUpdateMode(prev => ({
+        ...prev,
+        [block.id]: true
+      }));
     }
     
     if (cursorAtStart && isEmpty) {
@@ -517,100 +599,52 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       return;
     }
 
+    // Shift+Enter triggers an update with the current content
     if (e.key === 'Enter' && e.shiftKey) {
       e.preventDefault();
-      console.log('[DEBUG] Shift+Enter detected - inserting line break with preserved cursor');
+      console.log('[DEBUG] Shift+Enter detected - inserting line break and triggering update');
       
       const selection = window.getSelection();
       if (selection && selection.rangeCount > 0) {
         console.log('[DEBUG] Selection exists, creating line break');
+        
+        saveCursorPosition(block.id);
+        
         const range = selection.getRangeAt(0);
         
-        const originalStartContainer = range.startContainer;
-        const originalStartOffset = range.startOffset;
-        const originText = originalStartContainer.textContent || '';
-        console.log('[DEBUG] Original position:', { 
-          container: originalStartContainer.nodeName,
-          offset: originalStartOffset,
-          text: originText
-        });
-        
+        // Insert the line break
         const br = document.createElement('br');
         range.deleteContents();
         range.insertNode(br);
         
+        // Add a zero-width space to ensure cursor can be positioned after the BR
         const textNode = document.createTextNode('\u200B');
         range.setStartAfter(br);
         range.insertNode(textNode);
         
+        // Position cursor after the inserted text
         range.setStartAfter(textNode);
         range.collapse(true);
         selection.removeAllRanges();
         selection.addRange(range);
         
-        console.log('[DEBUG] Line break inserted, updating content with cursor management');
-        
+        // Get the updated content
         const updatedContent = e.currentTarget.innerHTML;
         console.log('[DEBUG] Updated HTML content after insertion:', updatedContent);
         
-        if (block) {
-          setIsUpdating(prev => ({ ...prev, [block.id]: true }));
-          
-          if (updateTimeoutRef.current[block.id]) {
-            clearTimeout(updateTimeoutRef.current[block.id]);
-          }
-          
-          onUpdateBlock(block.id, { 
-            ...block.content, 
-            text: updatedContent 
-          }).then(() => {
-            console.log('[DEBUG] Block updated after Shift+Enter');
-            contentChangeRef.current.set(block.id, false);
-            setIsUpdating(prev => ({ ...prev, [block.id]: false }));
-            
-            setTimeout(() => {
-              const blockEl = blockRefs.current.get(block.id);
-              if (blockEl) {
-                blockEl.focus();
-                
-                try {
-                  const allBrs = blockEl.querySelectorAll('br');
-                  if (allBrs.length > 0) {
-                    const lastBr = allBrs[allBrs.length - 1];
-                    
-                    let textNodeAfterBr = lastBr.nextSibling;
-                    while (textNodeAfterBr && textNodeAfterBr.nodeType !== Node.TEXT_NODE) {
-                      textNodeAfterBr = textNodeAfterBr.nextSibling;
-                    }
-                    
-                    const selection = window.getSelection();
-                    if (selection) {
-                      const range = document.createRange();
-                      
-                      if (textNodeAfterBr) {
-                        range.setStart(textNodeAfterBr, 0);
-                      } else {
-                        range.setStartAfter(lastBr);
-                      }
-                      
-                      range.collapse(true);
-                      selection.removeAllRanges();
-                      selection.addRange(range);
-                      
-                      console.log('[DEBUG] Cursor positioned after <br>');
-                    }
-                  }
-                } catch (err) {
-                  console.error('[DEBUG] Error positioning cursor after update:', err);
-                }
-              }
-            }, 20);
-          });
-        }
+        // Set flag to avoid auto-update
+        setManualUpdateMode(prev => ({
+          ...prev,
+          [block.id]: false
+        }));
+        
+        // Manually trigger an update
+        handleManualUpdate(block.id, updatedContent);
       }
       return;
     }
 
+    // Regular Enter now creates a new block
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       const blockIndex = blocks.findIndex(b => b.id === block.id);
@@ -626,6 +660,13 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
         return;
       }
       
+      // Trigger update of the current block before creating a new one
+      if (contentChangeRef.current.get(block.id)) {
+        const currentContent = e.currentTarget.innerHTML;
+        handleManualUpdate(block.id, currentContent);
+      }
+      
+      // Then create the new block
       handleCreateBlock(newType, {
         text: '',
         checked: newType === 'todo' ? false : undefined
@@ -1040,8 +1081,8 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
   const navigationModeClass = isNavigationMode ? "cursor-pointer !bg-transparent" : "";
 
   useEffect(() => {
-    toast.info("Block editor loaded with improved cursor management", {
-      description: "Shift+Enter creates a line break within blocks and cursor position is now properly maintained",
+    toast.info("Manual update mode enabled", {
+      description: "Press Shift+Enter to update content, Enter to create a new block",
       duration: 5000
     });
   }, []);
@@ -1056,7 +1097,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
         <h2 className="text-lg font-semibold">
           {isNavigationMode ? (
             <Badge variant="outline">Navigation Mode</Badge>
-          ) : "Blocks (Enhanced Cursor Management)"}
+          ) : "Blocks (Manual Update Mode)"}
         </h2>
         <div className="flex items-center gap-2">
           <Button 
@@ -1108,7 +1149,8 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
                             selectedBlocks.includes(block.id) && isNavigationMode && "bg-primary/10 ring-1 ring-primary/20",
                             snapshot.isDragging && "bg-accent/20 shadow-lg",
                             navigationModeClass,
-                            isUpdating[block.id] && "border-l-2 border-amber-400"
+                            isUpdating[block.id] && "border-l-2 border-amber-400",
+                            manualUpdateMode[block.id] && "border-l-2 border-blue-400"
                           )}
                           onClick={(e) => handleBlockClick(e, block.id)}
                           onMouseEnter={() => setHoveredBlock(block.id)}
@@ -1165,11 +1207,38 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
                             >
                               <Copy className="h-4 w-4" />
                             </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 hover:bg-accent/10"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                console.log('[DEBUG] Manual update button clicked for block:', block.id);
+                                if (contentChangeRef.current.get(block.id)) {
+                                  const blockEl = blockRefs.current.get(block.id);
+                                  if (blockEl) {
+                                    handleManualUpdate(block.id, blockEl.innerHTML);
+                                  }
+                                }
+                              }}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                                <polyline points="17 21 17 13 7 13 7 21"/>
+                                <polyline points="7 3 7 8 15 8"/>
+                              </svg>
+                            </Button>
                           </div>
 
                           {isUpdating[block.id] && (
                             <div className="absolute right-2 top-2">
                               <Badge variant="outline" className="bg-amber-100 text-amber-800 text-xs">Updating</Badge>
+                            </div>
+                          )}
+                          
+                          {manualUpdateMode[block.id] && contentChangeRef.current.get(block.id) && (
+                            <div className="absolute right-2 top-2">
+                              <Badge variant="outline" className="bg-blue-100 text-blue-800 text-xs">Unsaved</Badge>
                             </div>
                           )}
 
