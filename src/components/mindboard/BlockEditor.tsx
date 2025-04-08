@@ -53,39 +53,35 @@ const BLOCK_TYPES = [
 ] as const;
 
 // Increased debounce time to reduce update frequency
-const CONTENT_UPDATE_DEBOUNCE = 3000;
+const CONTENT_UPDATE_DEBOUNCE = 2000;
 
 export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onUpdateBlock, onDeleteBlock, onMoveBlock, onDuplicateBlock }: BlockEditorProps) {
-  // Always create a stable sorted copy of blocks to prevent random reordering
-  const blocks = React.useMemo(() => {
-    return [...unsortedBlocks].sort((a, b) => (a.position || 0) - (b.position || 0));
-  }, [unsortedBlocks]);
+  // Always sort blocks by position to ensure consistent rendering
+  const blocks = [...unsortedBlocks].sort((a, b) => (a.position || 0) - (b.position || 0));
   
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
   const [hoveredBlock, setHoveredBlock] = useState<string | null>(null);
   const [showBlockSelector, setShowBlockSelector] = useState(false);
   const [blockSelectorPosition, setBlockSelectorPosition] = useState({ x: 0, y: 0 });
   const [searchQuery, setSearchQuery] = useState('');
-  const [isDragging, setIsDragging] = useState(false);
   
   const editorRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const blockRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const updateTimeoutRef = useRef<Record<string, NodeJS.Timeout>>({});
   const contentChangeRef = useRef<Map<string, boolean>>(new Map());
-  const lastPositionsRef = useRef<Map<string, number>>(new Map());
-
-  // Store block positions for stability
-  useEffect(() => {
-    blocks.forEach(block => {
-      lastPositionsRef.current.set(block.id, block.position || 0);
-    });
-  }, [blocks]);
 
   // Create a default block if none exist
   useEffect(() => {
     if (blocks.length === 0) {
       handleCreateBlock('text', { text: '' }, 0);
+    }
+  }, [blocks.length]);
+
+  // Scroll to bottom when blocks change
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
   }, [blocks.length]);
 
@@ -328,7 +324,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     });
   };
 
-  // Debounced content change handler with higher debounce to prevent excessive saves
+  // Debounced content change handler to prevent excessive saves
   const handleContentChange = (blockId: string, event: React.FormEvent<HTMLDivElement>) => {
     const content = event.currentTarget.textContent || '';
     
@@ -373,13 +369,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     }
   };
 
-  const handleDragStart = () => {
-    setIsDragging(true);
-  };
-  
   const handleDragEnd = async (result: any) => {
-    setIsDragging(false);
-    
     // Dropped outside the list
     if (!result.destination) {
       return;
@@ -638,35 +628,27 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
   return (
     <div 
       ref={editorRef}
-      className="flex flex-col h-full w-full"
+      className="flex flex-col h-full"
       onClick={handleEditorClick}
     >
       <div className="flex items-center justify-between p-4 border-b">
         <h2 className="text-lg font-semibold">Blocks</h2>
       </div>
       
-      <DragDropContext 
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
+      <DragDropContext onDragEnd={handleDragEnd}>
         <Droppable droppableId="blocks-droppable">
           {(provided) => (
             <ScrollArea 
               ref={scrollAreaRef} 
-              className="flex-1 p-4 h-full w-full overflow-auto"
+              className="flex-1 p-4"
             >
               <div
-                className="space-y-2 min-h-full w-full"
+                className="space-y-2 min-h-full"
                 {...provided.droppableProps}
                 ref={provided.innerRef}
               >
                 {blocks.map((block, index) => (
-                  <Draggable 
-                    key={block.id} 
-                    draggableId={block.id} 
-                    index={index}
-                    isDragDisabled={isDragging && selectedBlock !== block.id}
-                  >
+                  <Draggable key={block.id} draggableId={block.id} index={index}>
                     {(provided, snapshot) => (
                       <div
                         ref={provided.innerRef}
