@@ -28,7 +28,6 @@ const subtaskSchema = z.object({
   id: z.string(),
   title: z.string().min(1, 'Title is required'),
   parent_task_id: z.string(),
-  user_id: z.string(), // Added user_id to the schema
   is_completed: z.boolean(),
   created_by: z.string().optional(),
   created_at: z.string(),
@@ -94,7 +93,6 @@ export function SubtaskEditDialog({
         id: values.id,
         title: values.title,
         parent_task_id: values.parent_task_id,
-        user_id: values.user_id, // Include the user_id in the submit
         is_completed: values.is_completed,
         created_by: values.created_by || null,
         created_at: values.created_at,
