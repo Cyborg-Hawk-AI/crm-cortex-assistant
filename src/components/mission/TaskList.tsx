@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Check, Circle, Clock, AlertCircle, Plus, Trash2, Calendar, ChevronRight, ChevronDown, Edit2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
@@ -10,6 +9,7 @@ import { useMissionTasks } from '@/hooks/useMissionTasks';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Task } from '@/utils/types';
+import { useToast } from '@/hooks/use-toast';
 
 interface TaskListProps {
   missionId: string;
@@ -23,12 +23,14 @@ export function TaskList({ missionId }: TaskListProps) {
   const [editingTaskTitle, setEditingTaskTitle] = useState('');
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const { toast } = useToast();
   
   const titleInputRef = useRef<HTMLInputElement>(null);
 
   const {
     tasks,
     isLoading,
+    missionExists,
     createTask,
     updateTaskStatus,
     updateTaskTitle,
@@ -46,6 +48,15 @@ export function TaskList({ missionId }: TaskListProps) {
 
   const handleCreateTask = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!missionExists) {
+      toast({
+        title: "Error",
+        description: "Cannot create tasks for this mission. The mission ID does not exist in the database.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     if (newTaskTitle.trim()) {
       createTask(newTaskTitle.trim(), null); // null parent_task_id for top-level tasks
       setNewTaskTitle('');
@@ -264,6 +275,15 @@ export function TaskList({ missionId }: TaskListProps) {
         <div className="h-6 bg-[#3A4D62]/30 rounded animate-pulse mb-3"></div>
         <div className="h-6 bg-[#3A4D62]/30 rounded animate-pulse mb-3"></div>
         <div className="h-6 bg-[#3A4D62]/30 rounded animate-pulse"></div>
+      </div>
+    );
+  }
+
+  if (!missionExists) {
+    return (
+      <div className="p-4 text-center">
+        <p className="text-[#64748B] mb-2">Cannot load tasks for this mission.</p>
+        <p className="text-[#64748B] text-sm">The mission ID does not exist in the database or cannot be referenced.</p>
       </div>
     );
   }

@@ -12,6 +12,8 @@ import { Bell, Filter, Plus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { TaskList } from '@/components/mission/TaskList';
 import type { Ticket } from '@/api/tickets';
+import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
 
 interface RecentTicketsProps {
   compact?: boolean;
@@ -26,6 +28,37 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
     queryKey: ['recentTickets'],
     queryFn: getRecentTickets,
   });
+
+  // Check if the mission exists before opening the dialog
+  const handleMissionClick = async (missionId: string) => {
+    try {
+      // Verify the mission ID exists in the database
+      const { data, error } = await supabase
+        .from('tickets')
+        .select('id')
+        .eq('id', missionId)
+        .single();
+      
+      if (error || !data) {
+        console.error("Error validating mission ID:", error);
+        toast({
+          title: "Error",
+          description: "The selected mission could not be found",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      setSelectedMissionId(missionId);
+    } catch (err) {
+      console.error("Error checking mission:", err);
+      toast({
+        title: "Error",
+        description: "Failed to load mission tasks",
+        variant: "destructive"
+      });
+    }
+  };
 
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
@@ -108,7 +141,7 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2 }}
-              onClick={() => setSelectedMissionId(ticket.id)}
+              onClick={() => handleMissionClick(ticket.id)}
             >
               <div className="flex justify-between items-start">
                 <div className="flex-1">

@@ -12,6 +12,33 @@ export function useMissionTasks(missionId: string | null) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Validate the missionId exists in the database
+  const {
+    data: missionExists,
+    isLoading: checkingMission,
+  } = useQuery({
+    queryKey: ['mission-exists', missionId],
+    queryFn: async () => {
+      if (!missionId) return false;
+      
+      // Check if the missionId exists in the missions table
+      // If not using missions table, adjust this to check the appropriate table
+      const { data, error } = await supabase
+        .from('tickets') // Assuming reporter_id references the tickets table
+        .select('id')
+        .eq('id', missionId)
+        .single();
+        
+      if (error) {
+        console.error("Error checking mission existence:", error);
+        return false;
+      }
+      
+      return !!data;
+    },
+    enabled: !!missionId
+  });
+
   const {
     data: tasks = [],
     isLoading,
@@ -38,6 +65,11 @@ export function useMissionTasks(missionId: string | null) {
     mutationFn: async (params: { title: string; parentTaskId: string | null }) => {
       if (!missionId) throw new Error('No mission ID provided');
       
+      // Verify the mission exists before attempting to create a task
+      if (!missionExists) {
+        throw new Error('The referenced mission does not exist');
+      }
+      
       const newTask = {
         title: params.title,
         status: 'open',
@@ -49,13 +81,18 @@ export function useMissionTasks(missionId: string | null) {
         updated_at: new Date().toISOString(),
       };
       
+      console.log("Creating task with data:", newTask);
+      
       const { data, error } = await supabase
         .from('tasks')
         .insert(newTask)
         .select()
         .single();
         
-      if (error) throw error;
+      if (error) {
+        console.error("Task creation error:", error);
+        throw error;
+      }
       return data;
     },
     onSuccess: (data, variables) => {
@@ -248,12 +285,13 @@ export function useMissionTasks(missionId: string | null) {
   return {
     tasks,
     subtasks,
-    isLoading,
+    isLoading: isLoading || checkingMission,
     error,
     newTaskTitle,
     setNewTaskTitle,
     dueDate,
     setDueDate,
+    missionExists,
     createTask: (title: string, parentTaskId: string | null) => 
       createTask.mutate({ title, parentTaskId }),
     updateTaskStatus: (taskId: string, status: string) => 
@@ -271,3 +309,4 @@ export function useMissionTasks(missionId: string | null) {
     refetch
   };
 }
+
