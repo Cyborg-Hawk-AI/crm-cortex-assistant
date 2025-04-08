@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTasks } from '@/hooks/useTasks';
@@ -15,6 +14,13 @@ import { TaskEditDialog } from './modals/TaskEditDialog';
 import { SubtaskCreateDialog } from './modals/SubtaskCreateDialog';
 import { SubtaskEditDialog } from './modals/SubtaskEditDialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { MissionTasksSection } from './mission/MissionTasksSection';
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 export function TasksPage() {
   const { 
@@ -40,8 +46,8 @@ export function TasksPage() {
   const [isCreateSubtaskOpen, setIsCreateSubtaskOpen] = useState(false);
   const [isEditSubtaskOpen, setIsEditSubtaskOpen] = useState(false);
   const [currentSubtask, setCurrentSubtask] = useState<SubTask | null>(null);
-  
-  // Calculate the completion percentage of subtasks for a task
+  const [showTasksDialog, setShowTasksDialog] = useState(false);
+
   const getCompletionPercentage = (taskId: string): number => {
     if (!subtasks || subtasks.length === 0) return 0;
     
@@ -51,7 +57,7 @@ export function TasksPage() {
     const completedCount = filteredSubtasks.filter(st => st.is_completed).length;
     return Math.round((completedCount / filteredSubtasks.length) * 100);
   };
-  
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'open':
@@ -122,6 +128,11 @@ export function TasksPage() {
       return;
     }
     setIsCreateSubtaskOpen(true);
+  };
+
+  const handleViewTasks = (taskId: string) => {
+    setActiveTaskId(taskId);
+    setShowTasksDialog(true);
   };
 
   if (error) {
@@ -199,7 +210,7 @@ export function TasksPage() {
             return (
               <Collapsible 
                 key={task.id} 
-                open={activeTaskId === task.id}
+                open={activeTaskId === task.id && !showTasksDialog}
                 onOpenChange={() => handleOpenTask(task.id)}
                 className="w-full"
               >
@@ -214,14 +225,19 @@ export function TasksPage() {
                               size="sm" 
                               className="p-0 mr-2 h-6 w-6 text-neon-green hover:text-neon-green/80"
                             >
-                              {activeTaskId === task.id ? (
+                              {activeTaskId === task.id && !showTasksDialog ? (
                                 <ChevronUp className="h-4 w-4" />
                               ) : (
                                 <ChevronDown className="h-4 w-4" />
                               )}
                             </Button>
                           </CollapsibleTrigger>
-                          <CardTitle className="text-lg text-foreground">{task.title}</CardTitle>
+                          <CardTitle 
+                            className="text-lg text-foreground cursor-pointer" 
+                            onClick={() => handleViewTasks(task.id)}
+                          >
+                            {task.title}
+                          </CardTitle>
                         </div>
                         <div className="flex items-center mt-2 space-x-2">
                           <Badge variant={getStatusColor(task.status)}>
@@ -371,6 +387,17 @@ export function TasksPage() {
           })}
         </div>
       )}
+
+      <Dialog open={showTasksDialog} onOpenChange={setShowTasksDialog}>
+        <DialogContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] max-w-4xl max-h-[80vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="text-neon-aqua">Mission Tasks</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 overflow-hidden">
+            {activeTaskId && <MissionTasksSection missionId={activeTaskId} showCreateButton={true} />}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <TaskCreateDialog 
         open={isCreateTaskOpen} 

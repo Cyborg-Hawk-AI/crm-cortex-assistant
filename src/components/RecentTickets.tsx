@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -50,7 +49,6 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
 
   const handleMissionClick = async (missionId: string) => {
     try {
-      // Verify the mission ID exists in the tasks table
       const { data, error } = await supabase
         .from('tasks')
         .select('id')
@@ -59,12 +57,10 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
       
       if (error || !data) {
         console.error("Error validating mission ID:", error);
-        // Check if we should allow mission ID without validation
-        // This lets us use the mission ID even if it's not a task itself
         const { data: tasksRelatedToMission } = await supabase
           .from('tasks')
           .select('id')
-          .filter('tags', 'cs', `{"mission:${missionId}}`) // Check if any task has this mission tag
+          .filter('tags', 'cs', `{"mission:${missionId}}`)
           .limit(1);
 
         if (!tasksRelatedToMission || tasksRelatedToMission.length === 0) {
@@ -89,14 +85,12 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
   };
 
   const toggleMissionExpand = (missionId: string) => {
-    // Toggle expanded state for this mission
     setExpandedMission(prev => {
       const newState = {
         ...prev,
         [missionId]: !prev[missionId]
       };
       
-      // When expanding, make sure we've loaded the tasks
       if (newState[missionId] && !expandedMissionTasks[missionId]) {
         loadMissionTasks(missionId);
       }
@@ -107,11 +101,10 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
   
   const loadMissionTasks = async (missionId: string) => {
     try {
-      // Fetch tasks with the mission tag
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .contains('tags', [`mission:${missionId}`]) // Fixed the array syntax
+        .contains('tags', [`mission:${missionId}`])
         .order('created_at', { ascending: true });
         
       if (error) {
@@ -153,7 +146,6 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
         description: "Mission updated successfully"
       });
       
-      // Refresh the mission list
       refetch();
     } catch (err) {
       console.error("Error updating mission:", err);
@@ -322,10 +314,9 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
         <p className="text-center py-4 text-sm text-[#CBD5E1]">No recent missions found</p>
       )}
 
-      {/* Mission Tasks Dialog */}
       {selectedMissionId && (
         <Dialog open={!!selectedMissionId} onOpenChange={() => setSelectedMissionId(null)}>
-          <DialogContent className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9] max-w-4xl max-h-[80vh] overflow-hidden">
+          <DialogContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] max-w-4xl max-h-[80vh] overflow-hidden">
             <DialogHeader>
               <DialogTitle className="text-neon-aqua">Mission Tasks</DialogTitle>
             </DialogHeader>
@@ -339,7 +330,6 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
   );
 }
 
-// Mini TaskList component specifically for the collapsible view in the mission list
 function MiniTaskList({ missionId }: { missionId: string }) {
   const {
     tasks,
