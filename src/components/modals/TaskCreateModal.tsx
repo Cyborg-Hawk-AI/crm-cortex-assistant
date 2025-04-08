@@ -1,18 +1,12 @@
-import { useState } from 'react';
-import { format } from 'date-fns';
-import { CalendarIcon, X, Plus } from 'lucide-react';
-import { cn } from '@/lib/utils';
+
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogClose
-} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Form,
   FormControl,
@@ -21,116 +15,120 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
-import { createTask } from '@/api/tasks';
-import { getCurrentUserId } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
+import { useQueryClient } from '@tanstack/react-query';
 
-const taskSchema = z.object({
-  title: z.string().min(3, 'Title must be at least 3 characters'),
+const formSchema = z.object({
+  title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
-  dueDate: z.date().optional(),
-  priority: z.string().optional(),
-  assignee_id: z.string().optional(),
-  labels: z.array(z.string()).optional()
+  priority: z.enum(["low", "medium", "high", "urgent"]),
+  status: z.enum(["open", "in-progress", "resolved", "closed"]),
 });
 
-type TaskFormValues = z.infer<typeof taskSchema>;
+// We'll use a singleton pattern to control the modal
+let modalOpenState = false;
+let setModalOpenState: React.Dispatch<React.SetStateAction<boolean>> | null = null;
 
-interface TaskCreateModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onTaskCreated?: () => void;
-}
+export const openTaskCreateModal = () => {
+  if (setModalOpenState) {
+    setModalOpenState(true);
+  } else {
+    modalOpenState = true;
+  }
+};
 
-export function TaskCreateModal({ open, onOpenChange, onTaskCreated }: TaskCreateModalProps) {
+export function TaskCreateModal() {
+  const [isOpen, setIsOpen] = useState(modalOpenState);
+  // Store the setter for external access
+  setModalOpenState = setIsOpen;
+
   const { toast } = useToast();
-  const [labels, setLabels] = useState<string[]>([]);
-  const [newLabel, setNewLabel] = useState('');
-  const [userId, setUserId] = useState<string | null>(null);
-
-  useState(() => {
-    const fetchUserId = async () => {
-      const id = await getCurrentUserId();
-      setUserId(id);
-    };
-    fetchUserId();
-  });
-
-  const form = useForm<TaskFormValues>({
-    resolver: zodResolver(taskSchema),
+  const queryClient = useQueryClient();
+  
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       title: '',
       description: '',
       priority: 'medium',
-      labels: []
-    }
-  });
-
-  const { mutate: createTaskMutation, isPending } = useMutation({
-    mutationFn: createTask,
-    onSuccess: () => {
-      toast({
-        title: 'Task created',
-        description: 'Your task has been created successfully'
-      });
-      form.reset();
-      setLabels([]);
-      if (onTaskCreated) onTaskCreated();
-      onOpenChange(false);
+      status: 'open',
     },
-    onError: (error) => {
-      toast({
-        title: 'Error',
-        description: `Failed to create task: ${error.message}`,
-        variant: 'destructive'
-      });
-    }
   });
 
-  const onSubmit = (data: TaskFormValues) => {
-    const taskData = {
-      title: data.title,
-      description: data.description || null,
-      status: data.priority === 'urgent' ? 'in-progress' as const : 'open' as const,
-      priority: data.priority as 'low' | 'medium' | 'high' | 'urgent' || 'medium',
-      reporter_id: userId || 'unknown',
-      assignee_id: data.assignee_id || null,
-      due_date: data.dueDate ? data.dueDate.toISOString() : null,
-      tags: labels,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    
-    createTaskMutation(taskData);
-  };
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    try {
+      // Get current user
+      const { data: session } = await supabase.auth.getSession();
+      const userId = session?.session?.user?.id;
 
-  const handleAddLabel = () => {
-    if (newLabel.trim() !== '' && !labels.includes(newLabel.trim())) {
-      setLabels([...labels, newLabel.trim()]);
-      setNewLabel('');
+      if (!userId) {
+        toast({
+          title: "Authentication Error",
+          description: "You need to be signed in to create tasks",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Create the task with the mission tag
+      const newTask = {
+        title: values.title,
+        description: values.description || null,
+        status: values.status,
+        priority: values.priority,
+        reporter_id: userId,
+        tags: ["mission:"+values.title.toLowerCase().replace(/\s+/g, '-')],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert(newTask)
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Mission Created",
+        description: "Your new mission has been created successfully."
+      });
+
+      // Reset form and close modal
+      form.reset();
+      setIsOpen(false);
+
+      // Invalidate queries to refresh lists
+      queryClient.invalidateQueries({ queryKey: ['recentTickets'] });
+      queryClient.invalidateQueries({ queryKey: ['mission-tasks'] });
+    } catch (error: any) {
+      console.error("Error creating task:", error);
+      toast({
+        title: "Error",
+        description: `Failed to create mission: ${error.message || "Unknown error"}`,
+        variant: "destructive"
+      });
     }
-  };
-
-  const handleRemoveLabel = (labelToRemove: string) => {
-    setLabels(labels.filter(label => label !== labelToRemove));
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogContent className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9] sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Create New Task</DialogTitle>
-          <DialogDescription>
-            Add a new task to your workflow.
-          </DialogDescription>
+          <DialogTitle className="text-neon-aqua">Create New Mission</DialogTitle>
         </DialogHeader>
+        
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -140,7 +138,11 @@ export function TaskCreateModal({ open, onOpenChange, onTaskCreated }: TaskCreat
                 <FormItem>
                   <FormLabel>Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="Task title" {...field} />
+                    <Input 
+                      placeholder="Enter mission title" 
+                      {...field} 
+                      className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9]"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -155,9 +157,9 @@ export function TaskCreateModal({ open, onOpenChange, onTaskCreated }: TaskCreat
                   <FormLabel>Description</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Task description" 
-                      className="resize-none"
+                      placeholder="Enter mission details" 
                       {...field} 
+                      className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] min-h-[100px]"
                     />
                   </FormControl>
                   <FormMessage />
@@ -168,38 +170,26 @@ export function TaskCreateModal({ open, onOpenChange, onTaskCreated }: TaskCreat
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="dueDate"
+                name="priority"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Due Date</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
+                  <FormItem>
+                    <FormLabel>Priority</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9]">
+                          <SelectValue placeholder="Select priority" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9]">
+                        <SelectItem value="low" className="text-neon-green">Low</SelectItem>
+                        <SelectItem value="medium" className="text-neon-blue">Medium</SelectItem>
+                        <SelectItem value="high" className="text-neon-yellow">High</SelectItem>
+                        <SelectItem value="urgent" className="text-neon-red">Urgent</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -207,91 +197,46 @@ export function TaskCreateModal({ open, onOpenChange, onTaskCreated }: TaskCreat
               
               <FormField
                 control={form.control}
-                name="priority"
+                name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Priority</FormLabel>
-                    <FormControl>
-                      <select
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        defaultValue="medium"
-                        {...field}
-                      >
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
-                        <option value="urgent">Urgent</option>
-                      </select>
-                    </FormControl>
+                    <FormLabel>Status</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9]">
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9]">
+                        <SelectItem value="open">Open</SelectItem>
+                        <SelectItem value="in-progress">In Progress</SelectItem>
+                        <SelectItem value="resolved">Resolved</SelectItem>
+                        <SelectItem value="closed">Closed</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
             
-            <FormField
-              control={form.control}
-              name="assignee_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Assignee</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Assignee ID" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div>
-              <FormLabel>Labels</FormLabel>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {labels.map((label, index) => (
-                  <div 
-                    key={index} 
-                    className="bg-teal-green/10 text-forest-green px-2 py-1 rounded-md flex items-center gap-1"
-                  >
-                    <span>{label}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveLabel(label)}
-                      className="text-forest-green hover:text-red-500"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <div className="flex mt-2 gap-2">
-                <Input
-                  value={newLabel}
-                  onChange={(e) => setNewLabel(e.target.value)}
-                  placeholder="Add label"
-                  className="flex-1"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddLabel();
-                    }
-                  }}
-                />
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleAddLabel}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
             <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="outline">Cancel</Button>
-              </DialogClose>
-              <Button type="submit" disabled={isPending}>
-                {isPending ? 'Creating...' : 'Create Task'}
+              <Button 
+                type="button" 
+                variant="outline"
+                onClick={() => setIsOpen(false)}
+                className="border-[#3A4D62] text-[#F1F5F9]"
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit"
+                className="bg-neon-aqua/20 hover:bg-neon-aqua/30 text-neon-aqua hover:shadow-[0_0_8px_rgba(0,247,239,0.3)]"
+              >
+                Create Mission
               </Button>
             </DialogFooter>
           </form>

@@ -10,7 +10,7 @@ import { getRecentTickets } from '@/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { TaskList } from '@/components/mission/TaskList';
 import type { Ticket } from '@/api/tickets';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { Input } from '@/components/ui/input';
 import { ChevronDown, ChevronRight, Edit2, Plus, GripVertical } from 'lucide-react';
@@ -169,6 +169,25 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
   const handleCreateMission = () => {
     // This would trigger the existing create mission modal
     setShowCreateModal(true);
+    console.log("Open create mission modal");
+    
+    // Integration with the task creation system
+    // This should be connected to the CreateTaskModal component
+    // We'll implement a temporary direct creation for testing
+    import('@/components/modals/TaskCreateModal').then(module => {
+      const { openTaskCreateModal } = module;
+      if (typeof openTaskCreateModal === 'function') {
+        openTaskCreateModal();
+      } else {
+        // Fallback if the modal function isn't available
+        toast({
+          title: "Create Mission",
+          description: "The mission creation modal is currently being updated. Please try again shortly."
+        });
+      }
+    }).catch(err => {
+      console.error("Error loading task create modal:", err);
+    });
   };
 
   if (isLoading) {
@@ -324,6 +343,7 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
                 </motion.div>
 
                 <CollapsibleContent className="pl-6 mt-2 space-y-2 overflow-hidden">
+                  {/* This is where we'll render the tasks in the expanded mission */}
                   <MiniTaskList missionId={ticket.id} />
                 </CollapsibleContent>
               </div>

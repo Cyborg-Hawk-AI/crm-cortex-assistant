@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Check, Circle, Clock, AlertCircle, Plus, Trash2, Calendar, ChevronRight, ChevronDown, Edit2, GripVertical } from 'lucide-react';
 import { cn } from "@/lib/utils";
@@ -7,7 +8,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
 import { useMissionTasks } from '@/hooks/useMissionTasks';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Task } from '@/utils/types';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
@@ -29,12 +29,12 @@ export function TaskList({ missionId }: TaskListProps) {
   const [editingTaskDescription, setEditingTaskDescription] = useState('');
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
   const [expandedDescriptions, setExpandedDescriptions] = useState<Record<string, boolean>>({});
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
   const { toast } = useToast();
   
   const titleInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
+  const addTaskInputRef = useRef<HTMLInputElement>(null);
 
   const {
     tasks,
@@ -59,11 +59,19 @@ export function TaskList({ missionId }: TaskListProps) {
     }
   }, [missionId, refetch]);
 
+  // Focus on input when edit mode is activated
   useEffect(() => {
     if (editingTaskId && titleInputRef.current) {
       titleInputRef.current.focus();
     }
   }, [editingTaskId]);
+
+  // Focus on add task input when shown
+  useEffect(() => {
+    if (showAddForm && addTaskInputRef.current) {
+      addTaskInputRef.current.focus();
+    }
+  }, [showAddForm]);
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,10 +110,6 @@ export function TaskList({ missionId }: TaskListProps) {
     }
     
     setEditingTaskId(null);
-  };
-
-  const handleTaskClick = (taskId: string) => {
-    setSelectedTaskId(taskId);
   };
 
   const toggleExpand = (taskId: string) => {
@@ -265,10 +269,7 @@ export function TaskList({ missionId }: TaskListProps) {
             )}
           </div>
           
-          <div 
-            className="flex-1 min-w-0"
-            onClick={() => handleTaskClick(task.id)}
-          >
+          <div className="flex-1 min-w-0">
             {editingTaskId === task.id ? (
               renderTaskEditor(task)
             ) : (
@@ -322,37 +323,33 @@ export function TaskList({ missionId }: TaskListProps) {
                   </Collapsible>
                 )}
                 
-                <div className="flex items-center flex-wrap gap-2 mt-1">
-                  {task.due_date && (
-                    <span className="text-xs text-[#64748B] flex items-center">
-                      <Calendar className="h-3 w-3 mr-1" />
-                      {formatDueDate(task.due_date)}
-                    </span>
-                  )}
-                  
-                  {subtasks[task.id]?.length > 0 && (
-                    <span className="text-xs text-[#64748B]">
-                      {subtasks[task.id].length} subtask{subtasks[task.id].length !== 1 ? 's' : ''}
-                    </span>
-                  )}
-                </div>
-                
-                {!hasSubtasks && !isSubtask && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setNewTaskTitle('');
-                      setNewTaskDescription('');
-                      toggleExpand(task.id);
-                    }}
-                    className="opacity-0 group-hover:opacity-100 mt-1 h-5 text-xs text-[#64748B] hover:text-neon-aqua p-0 transition-opacity"
-                  >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Add subtask
-                  </Button>
+                {task.due_date && (
+                  <div className="mt-1 flex items-center text-xs text-[#64748B]">
+                    <Clock className="h-3 w-3 mr-1" />
+                    <span>{formatDueDate(task.due_date)}</span>
+                  </div>
                 )}
+              </div>
+            )}
+
+            {/* Subtasks */}
+            {isExpanded && subtasks[task.id] && (
+              <div className="mt-3 space-y-2">
+                {subtasks[task.id].map(subtask => renderTask(subtask, true))}
+                
+                {/* Add subtask button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setNewTaskTitle('');
+                    setShowAddForm(true);
+                  }}
+                  className="ml-6 h-7 text-xs text-[#64748B] hover:text-neon-aqua"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Add subtask
+                </Button>
               </div>
             )}
           </div>
@@ -362,340 +359,164 @@ export function TaskList({ missionId }: TaskListProps) {
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              deleteTask(task.id);
+              if (confirm('Are you sure you want to delete this task?')) {
+                deleteTask(task.id);
+              }
             }}
-            className="opacity-0 group-hover:opacity-100 h-8 w-8 p-0 text-[#64748B] hover:text-red-400 hover:bg-red-400/10 transition-all"
+            className="opacity-0 group-hover:opacity-100 h-8 w-8 p-0 text-[#64748B] hover:text-neon-red hover:bg-neon-red/10"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
         
-        {/* Subtasks section */}
-        <AnimatePresence>
-          {isExpanded && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              {subtasks[task.id]?.map((subtask) => renderTask(subtask, true))}
+        {isExpanded && showAddForm && (
+          <div className="ml-6 mt-2 p-3 bg-[#1C2A3A]/70 rounded-md border border-[#3A4D62]">
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              handleCreateSubtask(task.id);
+            }}>
+              <Input
+                ref={addTaskInputRef}
+                value={newTaskTitle}
+                onChange={(e) => setNewTaskTitle(e.target.value)}
+                placeholder="New subtask title"
+                className="mb-2 bg-[#25384D] border-[#3A4D62] text-[#F1F5F9]"
+              />
               
-              {/* Add subtask form */}
-              <div className="ml-6 mt-2 mb-3 bg-[#1C2A3A]/30 p-3 rounded-md border border-[#3A4D62]/50 hover:border-neon-aqua/30 transition-colors">
-                <Input
-                  placeholder="Add subtask..."
-                  value={newTaskTitle}
-                  onChange={(e) => setNewTaskTitle(e.target.value)}
-                  className="mb-2 bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]"
-                />
-                <Textarea
-                  placeholder="Description (optional)"
-                  value={newTaskDescription}
-                  onChange={(e) => setNewTaskDescription(e.target.value)}
-                  className="mb-2 bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9] min-h-[60px] resize-none text-sm"
-                />
-                <div className="flex justify-end gap-2">
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => {
-                      setNewTaskTitle('');
-                      setNewTaskDescription('');
-                    }}
-                    className="text-xs h-7 border-[#3A4D62] text-[#F1F5F9]"
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    onClick={() => handleCreateSubtask(task.id)}
-                    disabled={!newTaskTitle.trim()}
-                    className="text-xs h-7"
-                  >
-                    Add
-                  </Button>
-                </div>
+              <Textarea
+                value={newTaskDescription}
+                onChange={(e) => setNewTaskDescription(e.target.value)}
+                placeholder="Add description (optional)"
+                className="mb-2 min-h-[60px] bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] text-sm"
+              />
+              
+              <div className="flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm" 
+                  onClick={() => setShowAddForm(false)}
+                  className="h-7 text-xs border-[#3A4D62] text-[#F1F5F9]"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="h-7 text-xs"
+                  disabled={isCreating}
+                >
+                  {isCreating ? (
+                    <>
+                      <div className="h-3 w-3 rounded-full border-2 border-t-transparent border-neon-aqua animate-spin mr-1"></div>
+                      Adding...
+                    </>
+                  ) : (
+                    'Add Subtask'
+                  )}
+                </Button>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </form>
+          </div>
+        )}
       </motion.div>
     );
   };
 
   if (isLoading) {
     return (
-      <div className="p-4">
-        <div className="h-6 bg-[#3A4D62]/30 rounded animate-pulse mb-3"></div>
-        <div className="h-6 bg-[#3A4D62]/30 rounded animate-pulse mb-3"></div>
-        <div className="h-6 bg-[#3A4D62]/30 rounded animate-pulse"></div>
+      <div className="flex justify-center items-center min-h-[200px]">
+        <div className="h-6 w-6 rounded-full border-2 border-t-transparent border-neon-aqua animate-spin"></div>
       </div>
     );
   }
 
-  if (!currentUserId) {
+  if (!missionExists) {
     return (
-      <div className="p-4 text-center">
-        <p className="text-[#64748B] mb-2">You need to be signed in to view and manage tasks.</p>
-        <p className="text-[#64748B] text-sm">Please sign in to continue.</p>
+      <div className="text-center py-6">
+        <p className="text-sm text-[#CBD5E1]">The mission could not be found.</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-[#25384D]/30 rounded-md border border-[#3A4D62] p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-sm font-medium text-[#F1F5F9]">Mission Tasks</h3>
-        <Button 
-          onClick={() => setShowAddForm(!showAddForm)} 
-          size="sm" 
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-medium text-[#F1F5F9]">Tasks</h3>
+        <Button
+          onClick={() => {
+            setNewTaskTitle('');
+            setNewTaskDescription('');
+            setShowAddForm(true);
+          }}
           className="bg-neon-aqua/20 hover:bg-neon-aqua/30 text-neon-aqua hover:shadow-[0_0_8px_rgba(0,247,239,0.3)]"
+          size="sm"
         >
-          <Plus className="h-4 w-4 mr-1" />
+          <Plus className="mr-1 h-4 w-4" />
           Add Task
         </Button>
       </div>
-      
-      <AnimatePresence>
-        {showAddForm && (
-          <motion.form 
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-            onSubmit={handleCreateTask} 
-            className="mb-4 bg-[#1C2A3A]/50 p-3 rounded-md border border-[#3A4D62] hover:border-neon-aqua/30 transition-colors"
-          >
-            <div className="mb-2">
-              <Input
-                placeholder="Task title..."
-                value={newTaskTitle}
-                onChange={(e) => setNewTaskTitle(e.target.value)}
-                className="mb-2 bg-[#1C2A3A] border-[#3A4D62]"
-              />
-              <Textarea
-                placeholder="Task notes and details with Markdown support"
-                value={newTaskDescription}
-                onChange={(e) => setNewTaskDescription(e.target.value)}
-                className="mb-2 bg-[#1C2A3A] border-[#3A4D62] min-h-[120px] resize-none text-sm"
-              />
-              <div className="flex items-center mb-2">
-                <Calendar className="h-4 w-4 text-[#64748B] mr-1" />
+
+      <ScrollArea className="pr-4 max-h-[calc(80vh-140px)]">
+        <div className="space-y-2">
+          {tasks.length === 0 && !showAddForm ? (
+            <p className="text-center py-4 text-sm text-[#64748B]">
+              No tasks yet. Add tasks to get started.
+            </p>
+          ) : (
+            tasks.filter(task => !task.parent_task_id).map(task => renderTask(task))
+          )}
+          
+          {/* Add Task Form */}
+          {showAddForm && !editingTaskId && (
+            <div className="p-3 bg-[#1C2A3A]/70 rounded-md border border-[#3A4D62]">
+              <form onSubmit={handleCreateTask}>
                 <Input
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  className="bg-[#1C2A3A] border-[#3A4D62] text-sm"
-                  placeholder="Due date (optional)"
+                  ref={addTaskInputRef}
+                  value={newTaskTitle}
+                  onChange={(e) => setNewTaskTitle(e.target.value)}
+                  placeholder="New task title"
+                  className="mb-2 bg-[#25384D] border-[#3A4D62] text-[#F1F5F9]"
                 />
-              </div>
-              <div className="text-xs text-[#64748B]">
-                <span>Supports Markdown: **bold**, *italic*, - lists, etc.</span>
-              </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button 
-                type="button" 
-                size="sm" 
-                variant="outline"
-                onClick={() => setShowAddForm(false)}
-                className="border-[#3A4D62] text-[#F1F5F9]"
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                size="sm" 
-                disabled={isCreating || !newTaskTitle.trim()}
-                className="hover:shadow-[0_0_8px_rgba(0,247,239,0.3)]"
-              >
-                Add Task
-              </Button>
-            </div>
-          </motion.form>
-        )}
-      </AnimatePresence>
-
-      <ScrollArea className="max-h-[350px] pr-4" hideScrollbar={false}>
-        {tasks.filter(task => !task.parent_task_id).length > 0 ? (
-          <div className="space-y-2">
-            {tasks
-              .filter(task => !task.parent_task_id) // Only show top-level tasks in the main list
-              .map(task => renderTask(task))}
-          </div>
-        ) : (
-          <div className="text-center py-8 text-[#64748B] text-sm">
-            <div className="mx-auto mb-2 p-2 rounded-full bg-[#1C2A3A] w-10 h-10 flex items-center justify-center">
-              <Plus className="h-5 w-5 text-neon-aqua" />
-            </div>
-            <p>No tasks yet</p>
-            <p className="text-xs mt-1 max-w-[200px] mx-auto">Click "Add Task" to create your first task for this mission</p>
-          </div>
-        )}
-      </ScrollArea>
-
-      {/* Task Detail Dialog */}
-      {selectedTaskId && (
-        <TaskDetailDialog 
-          taskId={selectedTaskId} 
-          missionId={missionId}
-          onClose={() => setSelectedTaskId(null)}
-          onTaskUpdate={() => refetch()}
-        />
-      )}
-    </div>
-  );
-}
-
-interface TaskDetailDialogProps {
-  taskId: string;
-  missionId: string;
-  onClose: () => void;
-  onTaskUpdate?: () => void;
-}
-
-function TaskDetailDialog({ taskId, missionId, onClose, onTaskUpdate }: TaskDetailDialogProps) {
-  const { 
-    getTaskById, 
-    updateTaskTitle, 
-    updateTaskDescription,
-    updateTaskStatus, 
-    updateTaskDueDate,
-    getSubtasks,
-    subtasks,
-    refetch
-  } = useMissionTasks(missionId);
-  
-  const task = getTaskById(taskId);
-  
-  const [title, setTitle] = useState(task?.title || '');
-  const [description, setDescription] = useState(task?.description || '');
-  const [status, setStatus] = useState(task?.status || 'open');
-  const [dueDate, setDueDate] = useState(task?.due_date ? new Date(task.due_date).toISOString().split('T')[0] : '');
-  
-  useEffect(() => {
-    if (task) {
-      setTitle(task.title);
-      setDescription(task.description || '');
-      setStatus(task.status);
-      setDueDate(task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : '');
-      getSubtasks(taskId);
-    }
-  }, [task, taskId, getSubtasks]);
-
-  if (!task) {
-    return null;
-  }
-
-  const handleSaveTitle = async () => {
-    if (title.trim() && title !== task.title) {
-      await updateTaskTitle(taskId, title);
-      if (onTaskUpdate) onTaskUpdate();
-    }
-  };
-  
-  const handleSaveDescription = async () => {
-    if (description !== task.description) {
-      await updateTaskDescription(taskId, description);
-      if (onTaskUpdate) onTaskUpdate();
-    }
-  };
-
-  const handleStatusChange = async (newStatus: string) => {
-    if (newStatus !== task.status) {
-      await updateTaskStatus(taskId, newStatus);
-      setStatus(newStatus);
-      if (onTaskUpdate) onTaskUpdate();
-    }
-  };
-
-  const handleDueDateChange = async (newDate: string) => {
-    await updateTaskDueDate(taskId, newDate);
-    setDueDate(newDate);
-    if (onTaskUpdate) onTaskUpdate();
-  };
-
-  return (
-    <Dialog open={!!taskId} onOpenChange={() => onClose()}>
-      <DialogContent className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9] max-w-3xl">
-        <DialogHeader>
-          <DialogTitle className="text-neon-aqua">Task Details</DialogTitle>
-          <DialogDescription className="text-[#CBD5E1]">
-            Edit task information and view subtasks
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-[#CBD5E1]">Title</label>
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onBlur={handleSaveTitle}
-              className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] hover:border-neon-aqua/30 focus:border-neon-aqua/50 transition-colors"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-[#CBD5E1]">Notes</label>
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              onBlur={handleSaveDescription}
-              placeholder="Add notes with Markdown support..."
-              className="min-h-[200px] bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] hover:border-neon-aqua/30 focus:border-neon-aqua/50 transition-colors"
-            />
-            <div className="text-xs text-[#64748B]">
-              <span>Supports Markdown: **bold**, *italic*, - lists, etc.</span>
-            </div>
-            
-            {description && (
-              <div className="mt-4 p-3 bg-[#25384D]/50 border border-[#3A4D62] rounded-md">
-                <h4 className="text-sm font-medium text-neon-aqua mb-2">Preview</h4>
-                <div className="prose prose-sm prose-invert max-w-none">
-                  <ReactMarkdown>
-                    {description}
-                  </ReactMarkdown>
+                
+                <Textarea
+                  value={newTaskDescription}
+                  onChange={(e) => setNewTaskDescription(e.target.value)}
+                  placeholder="Add description (optional)"
+                  className="mb-2 min-h-[80px] bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] text-sm"
+                />
+                
+                <div className="flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm" 
+                    onClick={() => setShowAddForm(false)}
+                    className="h-8 text-xs border-[#3A4D62] text-[#F1F5F9]"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    size="sm"
+                    className="h-8 text-xs"
+                    disabled={isCreating}
+                  >
+                    {isCreating ? (
+                      <>
+                        <div className="h-3 w-3 rounded-full border-2 border-t-transparent border-neon-aqua animate-spin mr-1"></div>
+                        Adding...
+                      </>
+                    ) : (
+                      'Add Task'
+                    )}
+                  </Button>
                 </div>
-              </div>
-            )}
-          </div>
-          
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-[#CBD5E1]">Status</label>
-            <div className="flex space-x-2">
-              {['open', 'in-progress', 'completed'].map((statusOption) => (
-                <Button
-                  key={statusOption}
-                  variant={status === statusOption ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleStatusChange(statusOption)}
-                  className={cn(
-                    status === statusOption 
-                      ? "hover:shadow-[0_0_8px_rgba(0,247,239,0.3)]" 
-                      : "border-[#3A4D62] text-[#CBD5E1]"
-                  )}
-                >
-                  {statusOption === 'open' && <Circle className="h-3 w-3 mr-1" />}
-                  {statusOption === 'in-progress' && <Clock className="h-3 w-3 mr-1" />}
-                  {statusOption === 'completed' && <Check className="h-3 w-3 mr-1" />}
-                  {statusOption.charAt(0).toUpperCase() + statusOption.slice(1).replace('-', ' ')}
-                </Button>
-              ))}
+              </form>
             </div>
-          </div>
-          
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-[#CBD5E1]">Due Date</label>
-            <Input
-              type="date"
-              value={dueDate}
-              onChange={(e) => handleDueDateChange(e.target.value)}
-              className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] hover:border-neon-aqua/30 focus:border-neon-aqua/50 transition-colors"
-            />
-          </div>
+          )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </ScrollArea>
+    </div>
   );
 }
