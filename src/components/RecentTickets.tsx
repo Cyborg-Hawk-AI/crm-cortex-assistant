@@ -32,9 +32,9 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
   // Check if the mission exists before opening the dialog
   const handleMissionClick = async (missionId: string) => {
     try {
-      // Verify the mission ID exists in the database
+      // Verify the mission ID exists in the tasks table
       const { data, error } = await supabase
-        .from('tickets')
+        .from('tasks')
         .select('id')
         .eq('id', missionId)
         .single();

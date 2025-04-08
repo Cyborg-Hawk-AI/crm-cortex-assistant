@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -21,10 +20,9 @@ export function useMissionTasks(missionId: string | null) {
     queryFn: async () => {
       if (!missionId) return false;
       
-      // Check if the missionId exists in the missions table
-      // If not using missions table, adjust this to check the appropriate table
+      // Check if the missionId exists in the tasks table
       const { data, error } = await supabase
-        .from('tickets') // Assuming reporter_id references the tickets table
+        .from('tasks')
         .select('id')
         .eq('id', missionId)
         .single();
@@ -309,4 +307,3 @@ export function useMissionTasks(missionId: string | null) {
     refetch
   };
 }
-
