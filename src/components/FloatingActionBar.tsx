@@ -11,7 +11,7 @@ import {
   BookOpen
 } from 'lucide-react';
 import { Button } from './ui/button';
-import { TaskCreateModal } from './modals/TaskCreateModal';
+import { TaskCreateModal, openTaskCreateModal } from './modals/TaskCreateModal';
 import { MeetingCreateModal } from './modals/MeetingCreateModal';
 import { ContactCreateModal } from './modals/ContactCreateModal';
 import { NotebookCreateModal } from './modals/NotebookCreateModal';

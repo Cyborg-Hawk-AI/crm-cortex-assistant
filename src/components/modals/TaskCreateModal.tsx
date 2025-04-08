@@ -45,10 +45,31 @@ export const openTaskCreateModal = () => {
   }
 };
 
-export function TaskCreateModal() {
-  const [isOpen, setIsOpen] = useState(modalOpenState);
+interface TaskCreateModalProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onTaskCreated?: () => void;
+}
+
+export function TaskCreateModal({ 
+  open: externalOpen, 
+  onOpenChange: externalOnOpenChange,
+  onTaskCreated 
+}: TaskCreateModalProps = {}) {
+  // Use external control if provided, otherwise use internal state
+  const [internalOpen, setInternalOpen] = useState(modalOpenState);
+  
+  const isOpen = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setIsOpen = (value: boolean) => {
+    if (externalOnOpenChange) {
+      externalOnOpenChange(value);
+    } else {
+      setInternalOpen(value);
+    }
+  };
+  
   // Store the setter for external access
-  setModalOpenState = setIsOpen;
+  setModalOpenState = setInternalOpen;
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -112,6 +133,11 @@ export function TaskCreateModal() {
       // Invalidate queries to refresh lists
       queryClient.invalidateQueries({ queryKey: ['recentTickets'] });
       queryClient.invalidateQueries({ queryKey: ['mission-tasks'] });
+      
+      // Call the onTaskCreated callback if provided
+      if (onTaskCreated) {
+        onTaskCreated();
+      }
     } catch (error: any) {
       console.error("Error creating task:", error);
       toast({

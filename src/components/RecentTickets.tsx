@@ -35,6 +35,7 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
   
   const titleInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
+  const { toast } = useToast();
   
   const { data: tickets = [], isLoading, error, refetch } = useQuery({
     queryKey: ['recentTickets'],
