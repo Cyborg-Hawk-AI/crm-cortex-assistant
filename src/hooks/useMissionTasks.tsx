@@ -89,7 +89,8 @@ export function useMissionTasks(missionId: string | null) {
           .from('tasks')
           .select('*')
           .or(`reporter_id.eq.${currentUserId},user_id.eq.${currentUserId}`)
-          .or(`tags.cs.{"${missionTag}"},id.eq.${missionId},parent_task_id.eq.${missionId}`);
+          .or(`tags.cs.{"${missionTag}"},id.eq.${missionId},parent_task_id.eq.${missionId}`)
+          .order('created_at', { ascending: true });
           
         if (error) {
           console.error("Error fetching tasks:", error);
@@ -162,7 +163,6 @@ export function useMissionTasks(missionId: string | null) {
       parentTaskId: string | null; 
       description?: string | null;
     }) => {
-      if (!missionId) throw new Error('No mission ID provided');
       if (!currentUserId) throw new Error('User not authenticated');
       
       // Verify the mission exists before attempting to create a task
@@ -173,7 +173,7 @@ export function useMissionTasks(missionId: string | null) {
         }
       }
       
-      const missionTag = `mission:${missionId}`;
+      const missionTag = missionId ? `mission:${missionId}` : null;
       
       const newTask = {
         title: params.title,
@@ -186,7 +186,7 @@ export function useMissionTasks(missionId: string | null) {
         due_date: dueDate,
         assignee_id: null,
         // Store mission ID in tags array to query related tasks
-        tags: params.parentTaskId ? [] : [missionTag],
+        tags: params.parentTaskId ? [] : missionTag ? [missionTag] : [],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -371,11 +371,52 @@ export function useMissionTasks(missionId: string | null) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId, currentUserId] });
       refetch();
+      
+      toast({
+        title: "Date updated",
+        description: "Task due date has been updated"
+      });
     },
     onError: (error) => {
       toast({
         title: "Error",
         description: `Failed to update due date: ${error instanceof Error ? error.message : "Unknown error"}`,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const updateTaskPriority = useMutation({
+    mutationFn: async ({ taskId, priority }: { taskId: string, priority: string }) => {
+      if (!currentUserId) throw new Error('User not authenticated');
+      
+      const { data, error } = await supabase
+        .from('tasks')
+        .update({ 
+          priority,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', taskId)
+        .or(`reporter_id.eq.${currentUserId},user_id.eq.${currentUserId}`)
+        .select()
+        .single();
+        
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId, currentUserId] });
+      refetch();
+      
+      toast({
+        title: "Priority updated",
+        description: "Task priority has been updated"
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to update priority: ${error instanceof Error ? error.message : "Unknown error"}`,
         variant: "destructive"
       });
     }
@@ -482,11 +523,15 @@ export function useMissionTasks(missionId: string | null) {
       updateTaskDescription.mutate({ taskId, description }),
     updateTaskDueDate: (taskId: string, dueDate: string | null) => 
       updateTaskDueDate.mutate({ taskId, dueDate }),
+    updateTaskPriority: (taskId: string, priority: string) => 
+      updateTaskPriority.mutate({ taskId, priority }),
     deleteTask: (taskId: string) => deleteTask.mutate(taskId),
     getSubtasks: (parentTaskId: string) => getSubtasks.mutate(parentTaskId),
     getTaskById,
     isCreating: createTask.isPending,
-    isUpdating: updateTaskStatus.isPending || updateTaskTitle.isPending || updateTaskDueDate.isPending || updateTaskDescription.isPending,
+    isUpdating: updateTaskStatus.isPending || updateTaskTitle.isPending || 
+                updateTaskDueDate.isPending || updateTaskDescription.isPending || 
+                updateTaskPriority.isPending,
     isDeleting: deleteTask.isPending,
     refetch
   };

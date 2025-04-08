@@ -7,8 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { getRecentTickets } from '@/api';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { TaskList } from '@/components/mission/TaskList';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import type { Ticket } from '@/api/tickets';
 import { useToast } from '@/hooks/use-toast';
 import { supabase, getCurrentUserId } from '@/lib/supabase';
@@ -18,7 +17,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Textarea } from '@/components/ui/textarea';
 import { useMissionTasks } from '@/hooks/useMissionTasks';
 import { MissionCreateButton } from '@/components/mission/MissionCreateButton';
-import { RichTextEditor } from './mission/RichTextEditor';
+import { MissionTableView } from '@/components/mission/MissionTableView';
+import { MissionTaskEditor } from '@/components/mission/MissionTaskEditor';
 
 interface RecentTicketsProps {
   compact?: boolean;
@@ -32,14 +32,11 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
   const [editingMissionId, setEditingMissionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
   const [editingDescription, setEditingDescription] = useState('');
-  const [expandedMissionTasks, setExpandedMissionTasks] = useState<Record<string, any>>({});
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [selectedTask, setSelectedTask] = useState<any | null>(null);
   
   const { toast } = useToast();
   
   const titleInputRef = useRef<HTMLInputElement>(null);
-  const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
   
   const { data: tickets = [], isLoading, error, refetch } = useQuery({
     queryKey: ['recentTickets'],
@@ -78,7 +75,13 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
         }
       }
       
-      setSelectedMissionId(missionId);
+      if (fullView) {
+        // In fullView, open the task editor dialog 
+        setSelectedMissionId(missionId);
+      } else {
+        // In compact view, navigate to Tasks page
+        navigate('/tasks');
+      }
     } catch (err) {
       console.error("Error checking mission:", err);
       toast({
@@ -95,43 +98,8 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
         ...prev,
         [missionId]: !prev[missionId]
       };
-      
-      if (newState[missionId] && !expandedMissionTasks[missionId]) {
-        loadMissionTasks(missionId);
-      }
-      
       return newState;
     });
-  };
-  
-  const loadMissionTasks = async (missionId: string) => {
-    try {
-      const userId = await getCurrentUserId();
-      
-      if (!userId) {
-        console.error("No user ID available");
-        return;
-      }
-      
-      const { data, error } = await supabase
-        .from('tasks')
-        .select('*')
-        .or(`tags.cs.{"mission:${missionId}"},id.eq.${missionId},parent_task_id.eq.${missionId}`)
-        .or(`reporter_id.eq.${userId},user_id.eq.${userId}`)
-        .order('created_at', { ascending: true });
-        
-      if (error) {
-        console.error("Error fetching mission tasks:", error);
-        return;
-      }
-      
-      setExpandedMissionTasks(prev => ({
-        ...prev,
-        [missionId]: data || []
-      }));
-    } catch (err) {
-      console.error("Error loading mission tasks:", err);
-    }
   };
 
   const handleEditMission = (mission: Ticket) => {
@@ -170,69 +138,6 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
     }
     
     setEditingMissionId(null);
-  };
-
-  const handleTaskClick = async (taskId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('id', taskId)
-        .single();
-        
-      if (error || !data) {
-        console.error("Error fetching task details:", error);
-        return;
-      }
-      
-      setSelectedTask(data);
-      setSelectedTaskId(taskId);
-    } catch (err) {
-      console.error("Error retrieving task details:", err);
-    }
-  };
-
-  const handleUpdateTaskDescription = async (description: string) => {
-    if (!selectedTaskId) return;
-    
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ 
-          description,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', selectedTaskId);
-        
-      if (error) throw error;
-      
-      toast({
-        title: "Success",
-        description: "Task updated successfully"
-      });
-      
-      if (selectedTask) {
-        setSelectedTask({
-          ...selectedTask,
-          description
-        });
-      }
-      
-      if (selectedTask && selectedTask.parent_task_id) {
-        loadMissionTasks(selectedTask.parent_task_id);
-      } else if (expandedMissionTasks[selectedTaskId]) {
-        loadMissionTasks(selectedTaskId);
-      }
-      
-      refetch();
-    } catch (err) {
-      console.error("Error updating task:", err);
-      toast({
-        title: "Error",
-        description: "Failed to update task",
-        variant: "destructive"
-      });
-    }
   };
 
   if (isLoading) {
@@ -289,7 +194,7 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
             >
               <div className="relative">
                 <motion.div
-                  className={`p-3 border border-[#3A4D62] rounded-md transition-all cursor-pointer ${
+                  className={`p-3 border border-[#3A4D62] rounded-md transition-all ${
                     compact ? 'bg-[#1C2A3A]/60 hover:bg-[#25384D]' : 'bg-[#1C2A3A] hover:shadow-[0_0_10px_rgba(0,247,239,0.2)]'
                   }`}
                   whileHover={{ scale: 1.01 }}
@@ -316,7 +221,7 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
                       </Button>
                     </CollapsibleTrigger>
                     
-                    <div className="flex-1" onClick={() => !editingMissionId && handleMissionClick(ticket.id)}>
+                    <div className="flex-1 cursor-pointer" onClick={() => !editingMissionId && handleMissionClick(ticket.id)}>
                       {editingMissionId === ticket.id ? (
                         <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
                           <Input
@@ -326,7 +231,6 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
                             className="mb-1 py-1 h-7 bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]"
                           />
                           <Textarea
-                            ref={descriptionInputRef}
                             value={editingDescription}
                             onChange={(e) => setEditingDescription(e.target.value)}
                             placeholder="Add a description..."
@@ -379,11 +283,12 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
                   </div>
                 </motion.div>
 
-                <CollapsibleContent className="pl-6 mt-2 space-y-2 overflow-hidden">
-                  <MiniTaskList 
-                    missionId={ticket.id}
-                    onTaskClick={handleTaskClick}
-                  />
+                <CollapsibleContent className="mt-2">
+                  {expandedMission[ticket.id] && (
+                    <div className="pl-6 pr-2 py-2 rounded-md bg-[#1C2A3A]/30 border border-[#3A4D62]/30 overflow-hidden">
+                      <MissionTableView missionId={ticket.id} />
+                    </div>
+                  )}
                 </CollapsibleContent>
               </div>
             </Collapsible>
@@ -396,113 +301,25 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
       {selectedMissionId && (
         <Dialog open={!!selectedMissionId} onOpenChange={() => setSelectedMissionId(null)}>
           <DialogContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] max-w-4xl max-h-[80vh] overflow-hidden">
-            <DialogHeader>
-              <DialogTitle className="text-neon-aqua">Mission Tasks</DialogTitle>
-            </DialogHeader>
-            <div className="py-4 overflow-hidden">
-              <TaskList missionId={selectedMissionId} />
-            </div>
+            <MissionTaskEditor 
+              taskId={selectedMissionId} 
+              onClose={() => setSelectedMissionId(null)}
+              onRefresh={refetch}
+            />
           </DialogContent>
         </Dialog>
       )}
 
-      {selectedTask && (
+      {selectedTaskId && (
         <Dialog open={!!selectedTaskId} onOpenChange={() => setSelectedTaskId(null)}>
-          <DialogContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] max-w-2xl max-h-[80vh] overflow-hidden">
-            <DialogHeader>
-              <DialogTitle className="text-neon-aqua">{selectedTask.title}</DialogTitle>
-            </DialogHeader>
-            <div className="py-4 space-y-4">
-              <div className="flex items-center space-x-2 text-sm">
-                <span className="text-[#CBD5E1]">Status:</span>
-                <span className={`px-2 py-0.5 rounded-full text-xs ${
-                  selectedTask.status === 'completed' 
-                    ? 'bg-neon-green/20 text-neon-green' 
-                    : 'bg-[#3A4D62] text-[#F1F5F9]'
-                }`}>
-                  {selectedTask.status || 'Open'}
-                </span>
-                
-                {selectedTask.due_date && (
-                  <>
-                    <span className="text-[#CBD5E1] ml-2">Due:</span>
-                    <span className="text-[#F1F5F9]">
-                      {new Date(selectedTask.due_date).toLocaleDateString()}
-                    </span>
-                  </>
-                )}
-              </div>
-              
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium text-[#F1F5F9]">Description</h4>
-                <RichTextEditor
-                  content={selectedTask.description || ''}
-                  onSave={handleUpdateTaskDescription}
-                  placeholder="Add a description for this task..."
-                />
-              </div>
-            </div>
+          <DialogContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] max-w-4xl max-h-[80vh] overflow-hidden">
+            <MissionTaskEditor 
+              taskId={selectedTaskId} 
+              onClose={() => setSelectedTaskId(null)}
+              onRefresh={refetch}
+            />
           </DialogContent>
         </Dialog>
-      )}
-    </div>
-  );
-}
-
-function MiniTaskList({ missionId, onTaskClick }: { missionId: string, onTaskClick: (taskId: string) => void }) {
-  const {
-    tasks,
-    isLoading,
-    error,
-    refetch
-  } = useMissionTasks(missionId);
-  
-  useEffect(() => {
-    refetch();
-  }, [missionId, refetch]);
-  
-  if (isLoading) {
-    return (
-      <div className="py-2 flex justify-center">
-        <div className="h-4 w-4 rounded-full border-2 border-t-transparent border-neon-aqua animate-spin"></div>
-      </div>
-    );
-  }
-  
-  if (error || !tasks) {
-    return (
-      <div className="py-2 text-center">
-        <p className="text-xs text-[#64748B]">Could not load tasks</p>
-      </div>
-    );
-  }
-  
-  if (tasks.length === 0) {
-    return (
-      <div className="py-2 text-center">
-        <p className="text-xs text-[#64748B] italic">No tasks found for this mission</p>
-      </div>
-    );
-  }
-  
-  return (
-    <div className="space-y-1">
-      {tasks.slice(0, 3).map(task => (
-        <div 
-          key={task.id} 
-          className="p-2 bg-[#25384D]/60 rounded border border-[#3A4D62]/40 flex items-center gap-2 cursor-pointer hover:bg-[#3A4D62]/30"
-          onClick={() => onTaskClick(task.id)}
-        >
-          <div className={`w-2 h-2 rounded-full ${task.status === 'completed' ? 'bg-neon-green' : 'bg-[#64748B]'}`}></div>
-          <span className={`text-xs ${task.status === 'completed' ? 'text-[#A3B8CC] line-through' : 'text-[#F1F5F9]'}`}>
-            {task.title}
-          </span>
-        </div>
-      ))}
-      {tasks.length > 3 && (
-        <p className="text-xs text-neon-aqua py-1">
-          +{tasks.length - 3} more tasks
-        </p>
       )}
     </div>
   );
