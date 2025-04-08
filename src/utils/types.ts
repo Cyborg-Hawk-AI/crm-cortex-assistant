@@ -1,4 +1,3 @@
-
 export interface Message {
   id: string;
   content: string;
@@ -314,6 +313,8 @@ export interface MindBlock {
     due_date?: string;
     priority?: 'low' | 'medium' | 'high';
     status?: string;
+    indent?: number; // Added for indentation
+    number?: number; // Added for numbered lists
   };
   position?: number;
   parent_block_id?: string; // For nesting blocks
@@ -332,4 +333,3 @@ export interface MindBlock {
     created_at: string;
   }>;
 }
-

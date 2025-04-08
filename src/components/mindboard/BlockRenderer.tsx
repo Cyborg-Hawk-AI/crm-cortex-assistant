@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { MindBlock } from '@/utils/types';
 import { Card } from '@/components/ui/card';
@@ -180,4 +179,4 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({ block, onUpdate })
   );
 };
 
-export default BlockRenderer; 
+export default BlockRenderer;

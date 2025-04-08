@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { 
   Plus, Trash2, Copy, MoreVertical, ChevronDown, GripVertical, 
@@ -55,11 +54,9 @@ const BLOCK_TYPES = [
   { type: 'columns', label: 'Columns', icon: <Columns className="h-4 w-4" />, shortcut: '/columns' },
 ] as const;
 
-// Increased debounce time to reduce update frequency
 const CONTENT_UPDATE_DEBOUNCE = 500;
 
 export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onUpdateBlock, onDeleteBlock, onMoveBlock, onDuplicateBlock }: BlockEditorProps) {
-  // Always sort blocks by position to ensure consistent rendering
   const blocks = [...unsortedBlocks].sort((a, b) => (a.position || 0) - (b.position || 0));
   
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
@@ -78,14 +75,12 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
   const nestedLevels = useRef<Map<string, number>>(new Map());
   const cursorPosition = useRef<Map<string, number>>(new Map());
 
-  // Create a default block if none exist
   useEffect(() => {
     if (blocks.length === 0) {
       handleCreateBlock('text', { text: '' }, 0);
     }
   }, [blocks.length]);
 
-  // Scroll to selected block when blocks change
   useEffect(() => {
     if (selectedBlock && blockRefs.current.get(selectedBlock)) {
       const blockEl = blockRefs.current.get(selectedBlock);
@@ -101,7 +96,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     }
   }, [selectedBlock, blocks.length]);
 
-  // Clean up timeouts on unmount
   useEffect(() => {
     return () => {
       Object.values(updateTimeoutRef.current).forEach(timeout => {
@@ -110,7 +104,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     };
   }, []);
 
-  // Handle Escape key for navigation mode
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -143,7 +136,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     
     if (isNavigationMode) {
       if (e.shiftKey) {
-        // Multi-select with shift
         setSelectedBlocks(prev => {
           if (prev.includes(blockId)) {
             return prev.filter(id => id !== blockId);
@@ -152,7 +144,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
           }
         });
       } else {
-        // Single select
         setSelectedBlocks([blockId]);
       }
     } else {
@@ -169,11 +160,9 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     indent?: number
   ) => {
     try {
-      // Use the provided position or add at the end
       const maxPosition = blocks.length > 0 ? Math.max(...blocks.map(b => b.position || 0)) : -1;
       const newPosition = position !== undefined ? position : maxPosition + 1;
 
-      // Initialize the content based on block type
       const finalContent = { ...content };
       if (type === 'todo' && finalContent.checked === undefined) {
         finalContent.checked = false;
@@ -181,20 +170,17 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
 
       const newBlockId = await onCreateBlock(type, finalContent, newPosition, parentId);
       
-      // Set indentation if specified
       if (indent !== undefined && indent > 0) {
         nestedLevels.current.set(newBlockId, indent);
       }
       
       setSelectedBlock(newBlockId);
       
-      // Focus the new block after a short delay to ensure the DOM has updated
       setTimeout(() => {
         const newBlockRef = blockRefs.current.get(newBlockId);
         if (newBlockRef) {
           newBlockRef.focus();
           
-          // Move cursor to the end of the content
           const range = document.createRange();
           const selection = window.getSelection();
           if (selection && newBlockRef.firstChild) {
@@ -269,7 +255,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       setTimeout(() => {
         blockElement.focus();
         
-        // Move cursor to end
         const selection = window.getSelection();
         const range = document.createRange();
         
@@ -311,19 +296,15 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     }
   };
 
-  // Debounced content change handler to prevent excessive saves
-  const handleContentChange = (blockId: string, event: React.FormEvent<HTMLDivElement>) => {
+  const handleContentChange = (blockId: string, event: React.FormEvent<HTMLDivElement> | React.KeyboardEvent<HTMLDivElement>) => {
     const content = event.currentTarget.textContent || '';
     
-    // Save cursor position
     saveCursorPosition(blockId);
     
-    // Check for slash command
     if (content === '/') {
       handleOpenSlashCommand(blockId);
     }
     
-    // Update with debounce to prevent excessive saves
     if (updateTimeoutRef.current[blockId]) {
       clearTimeout(updateTimeoutRef.current[blockId]);
     }
@@ -344,7 +325,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     }, CONTENT_UPDATE_DEBOUNCE);
   };
 
-  // Handle block content blur for saving changes immediately
   const handleContentBlur = (blockId: string, event: React.FocusEvent<HTMLDivElement>) => {
     const content = event.currentTarget.textContent || '';
     
@@ -371,7 +351,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     const cursorAtEnd = selection?.anchorOffset === textContent.length;
     const isEmpty = !textContent.trim();
     
-    // Handle markdown shortcuts at start of empty blocks
     if (cursorAtStart && isEmpty) {
       switch (e.key) {
         case '#':
@@ -394,18 +373,15 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       }
     }
     
-    // Handle slash to show block selector
     if (e.key === '/' && !e.shiftKey && isEmpty) {
       e.preventDefault();
       handleOpenSlashCommand(block.id);
       return;
     }
 
-    // Handle Shift+Enter for new line in same block
     if (e.key === 'Enter' && e.shiftKey) {
       e.preventDefault();
       
-      // Insert a line break where the cursor is
       const selection = window.getSelection();
       if (selection && selection.rangeCount > 0) {
         const range = selection.getRangeAt(0);
@@ -413,19 +389,16 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
         range.deleteContents();
         range.insertNode(br);
         
-        // Move the cursor after the break
         range.setStartAfter(br);
         range.collapse(true);
         selection.removeAllRanges();
         selection.addRange(range);
         
-        // Update the content with the new line
         handleContentChange(block.id, e);
       }
       return;
     }
 
-    // Handle Enter to create a new block
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       const blockIndex = blocks.findIndex(b => b.id === block.id);
@@ -436,7 +409,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       const continueTypes: MindBlock['content_type'][] = ['bullet', 'numbered', 'todo'];
       const newType = continueTypes.includes(block.content_type) ? block.content_type : 'text';
       
-      // If empty list item, convert it to text
       if (continueTypes.includes(block.content_type) && !block.content.text?.trim()) {
         handleBlockTypeChange(block.id, 'text');
         return;
@@ -449,12 +421,10 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       return;
     }
 
-    // Handle Tab for indentation
     if (e.key === 'Tab') {
       e.preventDefault();
       
       if (e.shiftKey) {
-        // Decrease indentation (un-indent)
         const currentLevel = nestedLevels.current.get(block.id) || 0;
         if (currentLevel > 0) {
           nestedLevels.current.set(block.id, currentLevel - 1);
@@ -464,7 +434,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
           });
         }
       } else {
-        // Increase indentation
         const currentLevel = nestedLevels.current.get(block.id) || 0;
         nestedLevels.current.set(block.id, currentLevel + 1);
         onUpdateBlock(block.id, {
@@ -475,7 +444,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       return;
     }
 
-    // Handle Backspace to delete empty block
     if (e.key === 'Backspace' && !e.shiftKey) {
       const text = (e.target as HTMLDivElement).textContent || '';
       if (!text.trim() && blocks.length > 1) {
@@ -485,7 +453,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
         if (prevBlock) {
           setSelectedBlock(prevBlock.id);
           
-          // Focus previous block and move cursor to end
           setTimeout(() => {
             const prevBlockEl = blockRefs.current.get(prevBlock.id);
             if (prevBlockEl) {
@@ -506,7 +473,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       return;
     }
 
-    // Handle up/down arrows for block navigation
     if (e.key === 'ArrowUp' && !e.shiftKey && cursorAtStart) {
       const currentIndex = blocks.findIndex(b => b.id === block.id);
       if (currentIndex > 0) {
@@ -522,7 +488,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
             const range = document.createRange();
             
             if (selection && prevBlockEl.firstChild) {
-              // Move cursor to end of previous block
               range.setStart(prevBlockEl.firstChild, prevBlockEl.textContent?.length || 0);
               range.collapse(true);
               selection.removeAllRanges();
@@ -549,7 +514,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
             const range = document.createRange();
             
             if (selection && nextBlockEl.firstChild) {
-              // Move cursor to beginning of next block
               range.setStart(nextBlockEl.firstChild, 0);
               range.collapse(true);
               selection.removeAllRanges();
@@ -561,7 +525,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       return;
     }
 
-    // Markdown-style shortcuts at beginning of blocks
     if (e.key === ' ' && !e.shiftKey && cursorAtStart) {
       const text = (e.target as HTMLDivElement).textContent || '';
       const trimmedText = text.trim();
@@ -595,14 +558,12 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
   };
 
   const handleDragEnd = async (result: any) => {
-    // Dropped outside the list
     if (!result.destination) {
       return;
     }
 
     const { source, destination } = result;
     
-    // If the item didn't move positions
     if (source.index === destination.index) {
       return;
     }
@@ -615,19 +576,15 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     }
   };
 
-  // Helper to calculate position value when moving blocks
   const calculatePosition = (newIndex: number): number => {
-    // If moving to the start
     if (newIndex === 0) {
       return blocks.length > 0 ? (blocks[0].position || 0) - 1 : 0;
     }
     
-    // If moving to the end
     if (newIndex >= blocks.length) {
       return blocks.length > 0 ? (blocks[blocks.length - 1].position || 0) + 1 : 0;
     }
     
-    // Moving between two blocks - calculate the midpoint position
     const prevPos = blocks[newIndex - 1].position || 0;
     const nextPos = blocks[newIndex].position || 0;
     return prevPos + (nextPos - prevPos) / 2;
@@ -639,7 +596,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     const currentBlock = blocks.find(b => b.id === selectedBlock);
     if (!currentBlock) return;
 
-    // Replace the current block's content with the new type
     const content: Record<string, any> = { text: '' };
     
     switch (type) {
@@ -674,7 +630,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
 
   const renderBlockContent = (block: MindBlock) => {
     const indentLevel = nestedLevels.current.get(block.id) || 0;
-    const indentPadding = indentLevel * 24; // 24px per indent level
+    const indentPadding = indentLevel * 24;
 
     const commonProps = {
       contentEditable: true,
@@ -726,7 +682,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
             />
             <div
               {...commonProps}
-              style={{ marginLeft: 0 }} // Remove margin since parent has indent
+              style={{ marginLeft: 0 }}
               dangerouslySetInnerHTML={{ __html: block.content.text || '' }}
               className={cn(
                 "min-h-[24px] focus:outline-none text-left flex-1",
@@ -754,7 +710,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
             <span className="mt-1.5 text-lg">•</span>
             <div
               {...commonProps}
-              style={{ marginLeft: 0 }} // Remove margin since parent has indent
+              style={{ marginLeft: 0 }}
               dangerouslySetInnerHTML={{ __html: block.content.text || '' }}
               className="min-h-[24px] focus:outline-none text-left flex-1"
             />
@@ -770,7 +726,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
             <span className="mt-1.5 min-w-[1.5em] text-right">{index}.</span>
             <div
               {...commonProps}
-              style={{ marginLeft: 0 }} // Remove margin since parent has indent
+              style={{ marginLeft: 0 }}
               dangerouslySetInnerHTML={{ __html: block.content.text || '' }}
               className="min-h-[24px] focus:outline-none text-left flex-1"
             />
@@ -796,7 +752,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
             </Button>
             <div
               {...commonProps}
-              style={{ marginLeft: 0 }} // Remove margin since parent has indent
+              style={{ marginLeft: 0 }}
               dangerouslySetInnerHTML={{ __html: block.content.text || '' }}
               className="min-h-[24px] focus:outline-none text-left flex-1"
             />
@@ -808,7 +764,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
           <div className="border-l-4 border-accent pl-4" style={{ marginLeft: `${indentPadding}px` }}>
             <div
               {...commonProps}
-              style={{ marginLeft: 0 }} // Remove margin since parent has indent
+              style={{ marginLeft: 0 }}
               className="min-h-[24px] focus:outline-none italic text-left"
               dangerouslySetInnerHTML={{ __html: block.content.text || '' }}
             />
@@ -820,7 +776,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
           <div className="bg-accent/10 p-4 rounded-lg" style={{ marginLeft: `${indentPadding}px` }}>
             <div
               {...commonProps}
-              style={{ marginLeft: 0 }} // Remove margin since parent has indent
+              style={{ marginLeft: 0 }}
               dangerouslySetInnerHTML={{ __html: block.content.text || '' }}
             />
           </div>
@@ -834,7 +790,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
           <div className="bg-accent/10 p-4 rounded-lg font-mono" style={{ marginLeft: `${indentPadding}px` }}>
             <div
               {...commonProps}
-              style={{ marginLeft: 0 }} // Remove margin since parent has indent
+              style={{ marginLeft: 0 }}
               dangerouslySetInnerHTML={{ __html: block.content.text || '' }}
             />
           </div>
@@ -884,7 +840,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     }
   };
 
-  // Navigation mode styles
   const navigationModeClass = isNavigationMode ? "cursor-pointer !bg-transparent" : "";
 
   return (
