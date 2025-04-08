@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -13,7 +12,7 @@ import type { Ticket } from '@/api/tickets';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { Input } from '@/components/ui/input';
-import { ChevronDown, ChevronRight, Edit2, Plus } from 'lucide-react';
+import { ChevronDown, ChevronRight, Edit2, Plus, GripVertical } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -45,10 +44,8 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
     }
   }, [editingMissionId]);
 
-  // Check if the mission exists before opening the dialog
   const handleMissionClick = async (missionId: string) => {
     try {
-      // Verify the mission ID exists in the tasks table
       const { data, error } = await supabase
         .from('tasks')
         .select('id')
@@ -57,12 +54,10 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
       
       if (error || !data) {
         console.error("Error validating mission ID:", error);
-        // Check if we should allow mission ID without validation
-        // This lets us use the mission ID even if it's not a task itself
         const { data: tasksRelatedToMission } = await supabase
           .from('tasks')
           .select('id')
-          .filter('tags', 'cs', `{"mission:${missionId}}`) // Check if any task has this mission tag
+          .filter('tags', 'cs', `{"mission:${missionId}}`)
           .limit(1);
 
         if (!tasksRelatedToMission || tasksRelatedToMission.length === 0) {
@@ -118,7 +113,6 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
         description: "Mission updated successfully"
       });
       
-      // Refresh the mission list
       refetch();
     } catch (err) {
       console.error("Error updating mission:", err);
@@ -133,7 +127,6 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
   };
 
   const handleCreateMission = () => {
-    // This would trigger the existing create mission modal
     setShowCreateModal(true);
   };
 
@@ -307,7 +300,6 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
         <p className="text-center py-4 text-sm text-[#CBD5E1]">No recent missions found</p>
       )}
 
-      {/* Mission Tasks Dialog */}
       {selectedMissionId && (
         <Dialog open={!!selectedMissionId} onOpenChange={() => setSelectedMissionId(null)}>
           <DialogContent className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9] max-w-4xl max-h-[80vh] overflow-hidden">
@@ -320,12 +312,6 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
           </DialogContent>
         </Dialog>
       )}
-      
-      {/* Mission Create Modal would go here - we're not implementing the full modal since we'd use existing ones */}
     </div>
   );
 }
-
-// Import the GripVertical icon component since it's not in the imports but used in the code
-import { GripVertical } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
