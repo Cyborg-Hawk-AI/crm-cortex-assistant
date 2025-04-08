@@ -218,11 +218,33 @@ box-shadow: 0 0 15px rgba(0, 247, 239, 0.3);
 - **Warning**: Cautionary actions with yellow gradient
 - **Gradient**: Special emphasis with multi-color gradient
 
+Example implementation:
+```jsx
+<Button variant="default">Default Button</Button>
+<Button variant="secondary">Secondary Button</Button>
+<Button variant="outline">Outline Button</Button>
+<Button variant="ghost">Ghost Button</Button>
+<Button variant="link">Link Button</Button>
+<Button variant="destructive">Destructive Button</Button>
+<Button variant="success">Success Button</Button>
+<Button variant="info">Info Button</Button>
+<Button variant="warning">Warning Button</Button>
+<Button variant="gradient">Gradient Button</Button>
+```
+
 #### Button Sizes
 - **Small**: Compact UI areas, secondary actions
 - **Default**: Standard size for most UI areas
 - **Large**: Primary CTAs, prominent actions
 - **Icon**: Icon-only buttons
+
+Example implementation:
+```jsx
+<Button size="sm">Small Button</Button>
+<Button size="default">Default Button</Button>
+<Button size="lg">Large Button</Button>
+<Button size="icon"><PlusIcon /></Button>
+```
 
 #### Button States
 - Default
@@ -247,6 +269,22 @@ box-shadow: 0 0 15px rgba(0, 247, 239, 0.3);
 - CardContent: Main content area
 - CardFooter: Actions or secondary information with top border
 
+Example implementation:
+```jsx
+<Card>
+  <CardHeader>
+    <CardTitle>Card Title</CardTitle>
+    <CardDescription>Card description goes here</CardDescription>
+  </CardHeader>
+  <CardContent>
+    <p>Main content of the card</p>
+  </CardContent>
+  <CardFooter>
+    <Button>Action Button</Button>
+  </CardFooter>
+</Card>
+```
+
 ### Form Controls
 
 #### Text Inputs
@@ -256,6 +294,15 @@ box-shadow: 0 0 15px rgba(0, 247, 239, 0.3);
 - Disabled state with reduced opacity
 - Label positioning above inputs
 - Helper text and error message placement below inputs
+
+Example implementation:
+```jsx
+<div className="space-y-2">
+  <Label htmlFor="email">Email</Label>
+  <Input id="email" type="email" placeholder="Enter your email" />
+  <p className="text-sm text-muted-foreground">We'll never share your email.</p>
+</div>
+```
 
 #### Selects & Dropdowns
 - Custom styling to match text inputs
@@ -305,6 +352,19 @@ box-shadow: 0 0 15px rgba(0, 247, 239, 0.3);
 - Dismissable option
 - Timeout for automatic dismissal
 - Dark themed with neon accents
+
+Example implementation:
+```jsx
+<Alert variant="info">
+  <AlertTitle>Information</AlertTitle>
+  <AlertDescription>This is an informational message.</AlertDescription>
+</Alert>
+
+<Alert variant="warning">
+  <AlertTitle>Warning</AlertTitle>
+  <AlertDescription>This is a warning message.</AlertDescription>
+</Alert>
+```
 
 #### Modal Dialogs
 - Backdrop overlay with blur effect
@@ -461,7 +521,42 @@ box-shadow: 0 0 15px rgba(0, 247, 239, 0.3);
 - **Mindboards**: Collection of related mind sections and pages
 - **MindSections**: Logical groupings within a mindboard
 - **MindPages**: Individual documents within sections
-- **MindBlocks**: Content blocks within pages (text, code, images)
+- **MindBlocks**: Content blocks within pages (text, code, images, audio, video, etc.)
+
+The MindBlock system supports various content types:
+- Text blocks
+- Todo items with completion tracking
+- Headings (levels 1-3)
+- File attachments
+- Code blocks with syntax highlighting
+- Images with captions
+- Audio playback
+- Video playback
+- Embedded content
+- And more specialized blocks
+
+Example MindBlock renderer:
+```jsx
+<Card className="w-full mb-4 overflow-hidden">
+  {block.content_type === 'text' && (
+    <div className="p-4">
+      <p>{block.content.text}</p>
+    </div>
+  )}
+  {block.content_type === 'todo' && (
+    <div className="p-4 flex items-center gap-2">
+      <Checkbox
+        checked={block.content.completed}
+        onCheckedChange={handleTodoToggle}
+      />
+      <span className={block.content.completed ? 'line-through text-muted-foreground' : ''}>
+        {block.content.text}
+      </span>
+    </div>
+  )}
+  {/* Additional block types... */}
+</Card>
+```
 
 ### Command Cards
 ```jsx
