@@ -53,8 +53,34 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        iconLeft: () => <ChevronLeft className="h-4 w-4 text-[#CBD5E1]" />,
-        iconRight: () => <ChevronRight className="h-4 w-4 text-[#CBD5E1]" />
+        Nav: ({ 
+          onPrevious, 
+          onNext, 
+          ...navProps 
+        }) => (
+          <div className="flex justify-between items-center">
+            <button
+              onClick={onPrevious}
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                "h-7 w-7 bg-transparent border border-[#3A4D62] p-0 opacity-50 hover:opacity-100 absolute left-1"
+              )}
+              aria-label="Go to previous month"
+            >
+              <ChevronLeft className="h-4 w-4 text-[#CBD5E1]" />
+            </button>
+            <button
+              onClick={onNext}
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                "h-7 w-7 bg-transparent border border-[#3A4D62] p-0 opacity-50 hover:opacity-100 absolute right-1"
+              )}
+              aria-label="Go to next month"
+            >
+              <ChevronRight className="h-4 w-4 text-[#CBD5E1]" />
+            </button>
+          </div>
+        )
       }}
       {...props}
     />
