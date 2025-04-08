@@ -119,9 +119,10 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
+      // Fix: Use currentTarget.blur() instead of target.blur()
       e.currentTarget.blur();
     }
   };

@@ -28,13 +28,20 @@ export function MissionCreateButton() {
     setIsLoading(true);
     
     try {
-      // Create a new top-level task as a mission
+      // Create a new top-level task as a mission with all required fields
       const newTask = await createTask({
         title: title.trim(),
         description: '',
         status: 'open',
         priority: 'medium',
         tags: ['mission'],
+        parent_task_id: null,
+        reporter_id: '', // This will be filled by the API with current user ID
+        user_id: '', // This will be filled by the API with current user ID
+        due_date: null,
+        assignee_id: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       });
       
       // Invalidate relevant queries

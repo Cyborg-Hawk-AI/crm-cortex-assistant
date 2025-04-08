@@ -4,22 +4,30 @@ import { supabase, getCurrentUserId } from '@/lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
 
 // Create a new task in Supabase
-export const createTask = async (task: Omit<Task, 'id'>): Promise<Task> => {
+export const createTask = async (taskData: Partial<Omit<Task, 'id'>>): Promise<Task> => {
   // Get current user ID for ownership
   const userId = await getCurrentUserId();
   if (!userId) throw new Error('User must be authenticated to create tasks');
   
   // Generate a task with default values
-  const taskWithDefaults = {
-    ...task,
-    id: uuidv4(),
-    reporter_id: task.reporter_id || userId,
-    user_id: task.user_id || userId, // Use provided user_id or default to current user
+  const taskWithDefaults: Omit<Task, 'id'> = {
+    title: taskData.title || '',
+    description: taskData.description || null,
+    status: taskData.status || 'open',
+    priority: taskData.priority || 'medium',
+    due_date: taskData.due_date || null,
+    assignee_id: taskData.assignee_id || null,
+    reporter_id: userId, // Always use current user as reporter
+    user_id: userId, // Always use current user as owner
+    parent_task_id: taskData.parent_task_id || null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    tags: taskData.tags || [],
   };
   
   const { data, error } = await supabase
     .from('tasks')
-    .insert(taskWithDefaults)
+    .insert({ ...taskWithDefaults, id: uuidv4() })
     .select()
     .single();
   
