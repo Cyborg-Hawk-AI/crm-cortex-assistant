@@ -1,0 +1,165 @@
+
+/* Editor animations and styles */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Block appearance transitions */
+[contenteditable] {
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+[contenteditable]:focus {
+  outline: none;
+  background-color: rgba(0, 0, 0, 0.03);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Block type transformations */
+.block-transform-enter {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Navigation mode styling */
+.navigation-mode [contenteditable] {
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Slash command menu */
+.slash-command-menu {
+  animation: fadeIn 0.15s ease-out;
+}
+
+/* Block hover state */
+.block-hover {
+  position: relative;
+}
+
+.block-hover::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  bottom: -1px;
+  background-color: transparent;
+  transition: background-color 0.2s;
+}
+
+.block-hover:hover::after {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Block insertion animation */
+.block-insert {
+  animation: slideIn 0.2s ease-out;
+}
+
+/* Todo checkbox animation */
+.todo-checkbox {
+  transition: background-color 0.2s, border-color 0.2s, transform 0.1s;
+}
+
+.todo-checkbox:checked {
+  transform: scale(1.1);
+}
+
+/* Block drag animations */
+.dragging {
+  opacity: 0.8;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.drag-over {
+  position: relative;
+}
+
+.drag-over::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #3c9aff;
+  z-index: 10;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Plus button animation */
+.plus-button {
+  transition: transform 0.15s, background-color 0.15s;
+}
+
+.plus-button:hover {
+  transform: scale(1.1);
+}
+
+/* Indentation guide lines */
+.indent-guide {
+  position: relative;
+}
+
+.indent-guide::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: rgba(0, 0, 0, 0.1);
+  left: 12px;
+}
+
+/* Command palette */
+.command-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.command-item {
+  transition: background-color 0.15s;
+}
+
+.command-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Textarea replacement styles for contenteditable */
+[contenteditable] {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
