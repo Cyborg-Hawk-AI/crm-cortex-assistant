@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Check, Circle, Clock, AlertCircle, Plus, Trash2, Calendar, ChevronRight, ChevronDown, Edit2 } from 'lucide-react';
+import { Check, Circle, Clock, AlertCircle, Plus, Trash2, Calendar, ChevronRight, ChevronDown, Edit2, GripVertical } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Task } from '@/utils/types';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
+import { motion } from 'framer-motion';
 
 interface TaskListProps {
   missionId: string;
@@ -24,6 +26,7 @@ export function TaskList({ missionId }: TaskListProps) {
   const [editingTaskTitle, setEditingTaskTitle] = useState('');
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
   const { toast } = useToast();
   
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -114,21 +117,48 @@ export function TaskList({ missionId }: TaskListProps) {
     }
   };
 
+  const getPriorityColor = (priority?: string) => {
+    switch (priority?.toLowerCase()) {
+      case 'high':
+        return 'destructive';
+      case 'medium':
+        return 'warning';
+      case 'low':
+        return 'success';
+      default:
+        return 'secondary';
+    }
+  };
+
   const renderTask = (task: Task, isSubtask = false) => {
     const hasSubtasks = subtasks[task.id]?.length > 0;
     const isExpanded = expandedTasks[task.id] || false;
+    const isHovered = hoveredTaskId === task.id;
     
     return (
-      <div key={task.id} className="mb-2">
+      <motion.div
+        key={task.id}
+        className="mb-2"
+        initial={{ opacity: 0, y: 5 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+      >
         <div 
           className={cn(
-            "p-3 rounded flex items-start gap-3 group border",
+            "p-3 rounded-md flex items-start gap-3 group border transition-all duration-200",
             task.status === 'completed' 
-              ? "bg-[#1C2A3A]/30 border-[#3A4D62]/30" 
-              : "bg-[#1C2A3A]/50 border-[#3A4D62]",
-            isSubtask && "ml-6"
+              ? "bg-[#1C2A3A]/30 border-[#3A4D62]/30 text-[#64748B]" 
+              : "bg-[#1C2A3A]/50 border-[#3A4D62] text-[#F1F5F9]",
+            isSubtask && "ml-6",
+            isHovered && "shadow-[0_0_8px_rgba(0,247,239,0.15)] border-neon-aqua/40"
           )}
+          onMouseEnter={() => setHoveredTaskId(task.id)}
+          onMouseLeave={() => setHoveredTaskId(null)}
         >
+          <div className="flex items-center h-full mr-1 cursor-move text-[#64748B] opacity-0 group-hover:opacity-70 hover:opacity-100 transition-opacity">
+            <GripVertical className="h-4 w-4" />
+          </div>
+
           <div className="flex flex-col items-center gap-1">
             <Checkbox
               checked={task.status === 'completed'}
@@ -136,7 +166,10 @@ export function TaskList({ missionId }: TaskListProps) {
                 const newStatus = checked ? 'completed' : 'open';
                 updateTaskStatus(task.id, newStatus);
               }}
-              className="mt-1"
+              className={cn(
+                "mt-1 transition-all",
+                task.status === 'completed' ? "text-neon-green" : ""
+              )}
             />
             
             {hasSubtasks && (
@@ -144,7 +177,10 @@ export function TaskList({ missionId }: TaskListProps) {
                 variant="ghost"
                 size="sm"
                 onClick={() => toggleExpand(task.id)}
-                className="h-5 w-5 p-0 text-[#64748B]"
+                className={cn(
+                  "h-5 w-5 p-0 text-[#64748B] hover:text-neon-aqua transition-colors",
+                  isExpanded && "text-neon-aqua"
+                )}
               >
                 {isExpanded ? (
                   <ChevronDown className="h-3 w-3" />
@@ -170,14 +206,14 @@ export function TaskList({ missionId }: TaskListProps) {
                     handleTaskTitleChange(task);
                   }
                 }}
-                className="mb-1 py-0 h-6 bg-[#1C2A3A] border-[#3A4D62]"
+                className="mb-1 py-0 h-6 bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]"
               />
             ) : (
               <div className="flex items-center gap-1">
                 <span 
                   className={cn(
-                    "block text-sm cursor-pointer",
-                    task.status === 'completed' && "line-through text-[#64748B]"
+                    "block text-sm cursor-pointer transition-all",
+                    task.status === 'completed' && "line-through"
                   )}
                 >
                   {task.title}
@@ -190,21 +226,35 @@ export function TaskList({ missionId }: TaskListProps) {
                     setEditingTaskId(task.id);
                     setEditingTaskTitle(task.title);
                   }}
-                  className="opacity-0 group-hover:opacity-100 h-5 w-5 p-0 text-[#64748B] hover:text-[#F1F5F9]"
+                  className="opacity-0 group-hover:opacity-100 h-5 w-5 p-0 text-[#64748B] hover:text-[#F1F5F9] transition-opacity"
                 >
                   <Edit2 className="h-3 w-3" />
                 </Button>
               </div>
             )}
             
-            {task.due_date && (
-              <span className="text-xs text-[#64748B] flex items-center mt-1">
-                <Calendar className="h-3 w-3 mr-1" />
-                {formatDueDate(task.due_date)}
-              </span>
-            )}
+            <div className="flex items-center flex-wrap gap-2 mt-1">
+              {task.due_date && (
+                <span className="text-xs text-[#64748B] flex items-center">
+                  <Calendar className="h-3 w-3 mr-1" />
+                  {formatDueDate(task.due_date)}
+                </span>
+              )}
+              
+              {task.priority && (
+                <Badge variant={getPriorityColor(task.priority)} className="text-xs h-5 py-0 px-1.5">
+                  {task.priority}
+                </Badge>
+              )}
+
+              {subtasks[task.id]?.length > 0 && (
+                <Badge variant="secondary" className="text-xs h-5 py-0 px-1.5">
+                  {subtasks[task.id].length} subtask{subtasks[task.id].length !== 1 ? 's' : ''}
+                </Badge>
+              )}
+            </div>
             
-            {!isSubtask && !hasSubtasks && (
+            {!hasSubtasks && !isSubtask && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -213,7 +263,7 @@ export function TaskList({ missionId }: TaskListProps) {
                   setNewTaskTitle('');
                   toggleExpand(task.id);
                 }}
-                className="opacity-0 group-hover:opacity-100 mt-1 h-5 text-xs text-[#64748B] hover:text-neon-aqua p-0"
+                className="opacity-0 group-hover:opacity-100 mt-1 h-5 text-xs text-[#64748B] hover:text-neon-aqua p-0 transition-opacity"
               >
                 <Plus className="h-3 w-3 mr-1" />
                 Add subtask
@@ -228,7 +278,7 @@ export function TaskList({ missionId }: TaskListProps) {
               e.stopPropagation();
               deleteTask(task.id);
             }}
-            className="opacity-0 group-hover:opacity-100 h-8 w-8 p-0 text-[#64748B] hover:text-red-400 hover:bg-red-400/10"
+            className="opacity-0 group-hover:opacity-100 h-8 w-8 p-0 text-[#64748B] hover:text-red-400 hover:bg-red-400/10 transition-all"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -240,12 +290,12 @@ export function TaskList({ missionId }: TaskListProps) {
             {subtasks[task.id]?.map((subtask) => renderTask(subtask, true))}
             
             {/* Add subtask form */}
-            <div className="ml-6 mt-2 mb-3 bg-[#1C2A3A]/30 p-2 rounded-md border border-[#3A4D62]/50">
+            <div className="ml-6 mt-2 mb-3 bg-[#1C2A3A]/30 p-3 rounded-md border border-[#3A4D62]/50 hover:border-neon-aqua/30 transition-colors">
               <Input
                 placeholder="Add subtask..."
                 value={newTaskTitle}
                 onChange={(e) => setNewTaskTitle(e.target.value)}
-                className="mb-2 bg-[#1C2A3A] border-[#3A4D62]"
+                className="mb-2 bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]"
               />
               <div className="flex justify-end gap-2">
                 <Button 
@@ -268,7 +318,7 @@ export function TaskList({ missionId }: TaskListProps) {
             </div>
           </>
         )}
-      </div>
+      </motion.div>
     );
   };
 
@@ -298,7 +348,7 @@ export function TaskList({ missionId }: TaskListProps) {
         <Button 
           onClick={() => setShowAddForm(!showAddForm)} 
           size="sm" 
-          className="bg-neon-aqua/20 hover:bg-neon-aqua/30 text-neon-aqua"
+          className="bg-neon-aqua/20 hover:bg-neon-aqua/30 text-neon-aqua hover:shadow-[0_0_8px_rgba(0,247,239,0.3)]"
         >
           <Plus className="h-4 w-4 mr-1" />
           Add Task
@@ -306,7 +356,13 @@ export function TaskList({ missionId }: TaskListProps) {
       </div>
       
       {showAddForm && (
-        <form onSubmit={handleCreateTask} className="mb-4 bg-[#1C2A3A]/50 p-3 rounded-md border border-[#3A4D62]">
+        <motion.form 
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          transition={{ duration: 0.2 }}
+          onSubmit={handleCreateTask} 
+          className="mb-4 bg-[#1C2A3A]/50 p-3 rounded-md border border-[#3A4D62] hover:border-neon-aqua/30 transition-colors"
+        >
           <div className="mb-2">
             <Input
               placeholder="Task title..."
@@ -339,11 +395,12 @@ export function TaskList({ missionId }: TaskListProps) {
               type="submit" 
               size="sm" 
               disabled={isCreating || !newTaskTitle.trim()}
+              className="hover:shadow-[0_0_8px_rgba(0,247,239,0.3)]"
             >
               Add Task
             </Button>
           </div>
-        </form>
+        </motion.form>
       )}
 
       <ScrollArea className="max-h-[350px] pr-4" hideScrollbar={false}>
@@ -354,8 +411,12 @@ export function TaskList({ missionId }: TaskListProps) {
               .map(task => renderTask(task))}
           </div>
         ) : (
-          <div className="text-center py-4 text-[#64748B] text-sm">
-            No tasks yet. Click "Add Task" to create your first task.
+          <div className="text-center py-8 text-[#64748B] text-sm">
+            <div className="mx-auto mb-2 p-2 rounded-full bg-[#1C2A3A] w-10 h-10 flex items-center justify-center">
+              <Plus className="h-5 w-5 text-neon-aqua" />
+            </div>
+            <p>No tasks yet</p>
+            <p className="text-xs mt-1 max-w-[200px] mx-auto">Click "Add Task" to create your first task for this mission</p>
           </div>
         )}
       </ScrollArea>
@@ -438,7 +499,7 @@ function TaskDetailDialog({ taskId, missionId, onClose }: TaskDetailDialogProps)
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               onBlur={handleSaveTitle}
-              className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9]"
+              className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] hover:border-neon-aqua/30 focus:border-neon-aqua/50 transition-colors"
             />
           </div>
           
@@ -451,7 +512,11 @@ function TaskDetailDialog({ taskId, missionId, onClose }: TaskDetailDialogProps)
                   variant={status === statusOption ? "default" : "outline"}
                   size="sm"
                   onClick={() => handleStatusChange(statusOption)}
-                  className={status === statusOption ? "" : "border-[#3A4D62] text-[#CBD5E1]"}
+                  className={cn(
+                    status === statusOption 
+                      ? "hover:shadow-[0_0_8px_rgba(0,247,239,0.3)]" 
+                      : "border-[#3A4D62] text-[#CBD5E1]"
+                  )}
                 >
                   {statusOption === 'open' && <Circle className="h-3 w-3 mr-1" />}
                   {statusOption === 'in-progress' && <Clock className="h-3 w-3 mr-1" />}
@@ -468,7 +533,7 @@ function TaskDetailDialog({ taskId, missionId, onClose }: TaskDetailDialogProps)
               type="date"
               value={dueDate}
               onChange={(e) => handleDueDateChange(e.target.value)}
-              className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9]"
+              className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] hover:border-neon-aqua/30 focus:border-neon-aqua/50 transition-colors"
             />
           </div>
           
@@ -477,7 +542,7 @@ function TaskDetailDialog({ taskId, missionId, onClose }: TaskDetailDialogProps)
               <label className="text-sm font-medium text-[#CBD5E1]">Subtasks</label>
               <div className="space-y-1 ml-4">
                 {subtasks[taskId].map((subtask) => (
-                  <div key={subtask.id} className="flex items-center gap-2 p-2 rounded-md border border-[#3A4D62]/50 bg-[#25384D]/50">
+                  <div key={subtask.id} className="flex items-center gap-2 p-2 rounded-md border border-[#3A4D62]/50 bg-[#25384D]/50 hover:border-neon-aqua/30 transition-colors">
                     <Checkbox
                       checked={subtask.status === 'completed'}
                       onCheckedChange={(checked) => {
