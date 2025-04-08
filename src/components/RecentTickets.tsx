@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { MotionCardHeader as CardHeader, Card, CardContent, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardTitle, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { TicketInfo } from '@/components/TicketInfo';
@@ -25,7 +25,8 @@ const tickets: Ticket[] = [
       'Create bar chart component',
       'Implement data filtering',
       'Add export functionality'
-    ]
+    ],
+    related: ['e14e7cae-cc7a-4cfb-b0ad-c2202805c786'] // Added related property to link to child task
   },
   {
     id: 'e14e7cae-cc7a-4cfb-b0ad-c2202805c786',
@@ -43,8 +44,7 @@ const tickets: Ticket[] = [
       'Check rate limiting settings',
       'Update documentation'
     ],
-    // Example of a subtask with parent task reference
-    parent_task_id: '24b9da97-07c2-41e5-bb4a-254595162af6'
+    related: ['24b9da97-07c2-41e5-bb4a-254595162af6'] // We'll use this to indicate the parent task
   },
 ];
 

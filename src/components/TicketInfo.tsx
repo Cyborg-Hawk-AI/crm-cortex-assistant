@@ -42,7 +42,7 @@ export function TicketInfo({
   const handleTaskClick = () => {
     // Navigate to the task directly with the task ID as state instead of a URL parameter
     // This avoids 404 errors when clicking on tasks
-    navigate('/tasks', { state: { openTaskId: ticket.id } });
+    navigate('/', { state: { openTaskId: ticket.id } });
   };
 
   return (

@@ -1,3 +1,4 @@
+
 export interface Message {
   id: string;
   content: string;
@@ -169,6 +170,7 @@ export interface Ticket {
   created_at: Date;
   updated_at: Date;
   updatedAt?: Date; // Added for compatibility
+  parent_task_id?: string; // Added parent_task_id for ticket relationships
   customer?: { // Added for compatibility
     name: string;
     company?: string;

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -44,9 +43,10 @@ import { cn } from '@/lib/utils';
 
 interface MissionTableViewProps {
   missionId: string;
+  onTaskClick?: (taskId: string) => void;
 }
 
-export const MissionTableView = ({ missionId }: MissionTableViewProps) => {
+export const MissionTableView = ({ missionId, onTaskClick }: MissionTableViewProps) => {
   const navigate = useNavigate();
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -101,7 +101,11 @@ export const MissionTableView = ({ missionId }: MissionTableViewProps) => {
   };
 
   const handleTaskClick = (taskId: string) => {
-    setSelectedTaskId(taskId);
+    if (onTaskClick) {
+      onTaskClick(taskId);
+    } else {
+      setSelectedTaskId(taskId);
+    }
   };
 
   const startEditingTitle = (taskId: string, currentTitle: string, e: React.MouseEvent) => {
@@ -344,7 +348,7 @@ export const MissionTableView = ({ missionId }: MissionTableViewProps) => {
         </Table>
       </div>
       
-      {selectedTaskId && (
+      {!onTaskClick && selectedTaskId && (
         <Dialog open={!!selectedTaskId} onOpenChange={() => setSelectedTaskId(null)}>
           <DialogContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] max-w-4xl max-h-[90vh] overflow-hidden">
             <MissionTaskEditor 
