@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -64,7 +65,7 @@ export function useMissionTasks(missionId: string | null) {
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .filter('tags', 'cs', `{"mission:${missionId}"}`)
+        .filter('tags', 'cs', `{"mission:${missionId}}`)
         .order('created_at', { ascending: true });
         
       if (error) throw error;
@@ -74,7 +75,11 @@ export function useMissionTasks(missionId: string | null) {
   });
 
   const createTask = useMutation({
-    mutationFn: async (params: { title: string; parentTaskId: string | null }) => {
+    mutationFn: async (params: { 
+      title: string; 
+      parentTaskId: string | null; 
+      description?: string | null;
+    }) => {
       if (!missionId) throw new Error('No mission ID provided');
       if (!currentUserId) throw new Error('User not authenticated');
       
@@ -85,6 +90,7 @@ export function useMissionTasks(missionId: string | null) {
       
       const newTask = {
         title: params.title,
+        description: params.description || null,
         status: 'open',
         priority: 'medium',
         reporter_id: currentUserId, // Use current user ID as the reporter
@@ -187,6 +193,33 @@ export function useMissionTasks(missionId: string | null) {
       toast({
         title: "Error",
         description: `Failed to update task title: ${error.message}`,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const updateTaskDescription = useMutation({
+    mutationFn: async ({ taskId, description }: { taskId: string, description: string | null }) => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .update({ 
+          description,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', taskId)
+        .select()
+        .single();
+        
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to update task description: ${error.message}`,
         variant: "destructive"
       });
     }
@@ -308,12 +341,14 @@ export function useMissionTasks(missionId: string | null) {
     setDueDate,
     missionExists,
     currentUserId,
-    createTask: (title: string, parentTaskId: string | null) => 
-      createTask.mutate({ title, parentTaskId }),
+    createTask: (title: string, parentTaskId: string | null, description?: string) => 
+      createTask.mutate({ title, parentTaskId, description }),
     updateTaskStatus: (taskId: string, status: string) => 
       updateTaskStatus.mutate({ taskId, status }),
     updateTaskTitle: (taskId: string, title: string) => 
       updateTaskTitle.mutate({ taskId, title }),
+    updateTaskDescription: (taskId: string, description: string | null) => 
+      updateTaskDescription.mutate({ taskId, description }),
     updateTaskDueDate: (taskId: string, dueDate: string | null) => 
       updateTaskDueDate.mutate({ taskId, dueDate }),
     deleteTask: (taskId: string) => deleteTask.mutate(taskId),
