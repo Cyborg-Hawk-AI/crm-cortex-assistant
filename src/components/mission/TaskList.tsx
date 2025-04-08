@@ -52,7 +52,6 @@ export function TaskList({ missionId }: TaskListProps) {
     refetch
   } = useMissionTasks(missionId);
 
-  // Ensure we load tasks when the mission ID changes
   useEffect(() => {
     if (missionId) {
       refetch();
@@ -84,7 +83,6 @@ export function TaskList({ missionId }: TaskListProps) {
       setDueDate('');
       setShowAddForm(false);
       
-      // Force a refetch to ensure tasks are up to date
       setTimeout(() => {
         refetch();
       }, 100);
@@ -96,7 +94,6 @@ export function TaskList({ missionId }: TaskListProps) {
       updateTaskTitle(task.id, editingTaskTitle);
     }
     
-    // Update description if it has changed
     if (editingTaskDescription !== task.description) {
       updateTaskDescription(task.id, editingTaskDescription);
     }
@@ -113,7 +110,6 @@ export function TaskList({ missionId }: TaskListProps) {
       const isCurrentlyExpanded = prev[taskId];
       
       if (!isCurrentlyExpanded) {
-        // Only fetch subtasks when expanding
         getSubtasks(taskId);
       }
       
@@ -138,7 +134,6 @@ export function TaskList({ missionId }: TaskListProps) {
       setNewTaskDescription('');
       setDueDate('');
       
-      // Force a refetch and update the subtasks
       setTimeout(() => {
         refetch();
         getSubtasks(parentTaskId);
@@ -370,7 +365,6 @@ export function TaskList({ missionId }: TaskListProps) {
           </Button>
         </div>
         
-        {/* Subtasks section */}
         <AnimatePresence>
           {isExpanded && (
             <motion.div
@@ -381,7 +375,6 @@ export function TaskList({ missionId }: TaskListProps) {
             >
               {subtasks[task.id]?.map((subtask) => renderTask(subtask, true))}
               
-              {/* Add subtask form */}
               <div className="ml-6 mt-2 mb-3 bg-[#1C2A3A]/30 p-3 rounded-md border border-[#3A4D62]/50 hover:border-neon-aqua/30 transition-colors">
                 <Input
                   placeholder="Add subtask..."
@@ -535,7 +528,6 @@ export function TaskList({ missionId }: TaskListProps) {
         )}
       </ScrollArea>
 
-      {/* Task Detail Dialog */}
       {selectedTaskId && (
         <TaskDetailDialog 
           taskId={selectedTaskId} 
@@ -569,18 +561,23 @@ function TaskDetailDialog({ taskId, missionId, onClose, onTaskUpdate }: TaskDeta
   
   const task = getTaskById(taskId);
   
-  const [title, setTitle] = useState(task?.title || '');
-  const [description, setDescription] = useState(task?.description || '');
-  const [status, setStatus] = useState(task?.status || 'open');
-  const [dueDate, setDueDate] = useState(task?.due_date ? new Date(task.due_date).toISOString().split('T')[0] : '');
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [status, setStatus] = useState('open');
+  const [dueDate, setDueDate] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
   
   useEffect(() => {
     if (task) {
-      setTitle(task.title);
+      setTitle(task.title || '');
       setDescription(task.description || '');
-      setStatus(task.status);
+      setStatus(task.status || 'open');
       setDueDate(task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : '');
-      getSubtasks(taskId);
+      
+      if (taskId) {
+        getSubtasks(taskId);
+      }
     }
   }, [task, taskId, getSubtasks]);
 
@@ -590,30 +587,94 @@ function TaskDetailDialog({ taskId, missionId, onClose, onTaskUpdate }: TaskDeta
 
   const handleSaveTitle = async () => {
     if (title.trim() && title !== task.title) {
-      await updateTaskTitle(taskId, title);
-      if (onTaskUpdate) onTaskUpdate();
+      setIsSubmitting(true);
+      try {
+        await updateTaskTitle(taskId, title);
+        if (onTaskUpdate) onTaskUpdate();
+        toast({
+          title: "Title updated",
+          description: "Task title has been saved"
+        });
+      } catch (err) {
+        console.error("Error saving task title:", err);
+        toast({
+          title: "Error",
+          description: "Could not update task title",
+          variant: "destructive"
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
   
   const handleSaveDescription = async () => {
     if (description !== task.description) {
-      await updateTaskDescription(taskId, description);
-      if (onTaskUpdate) onTaskUpdate();
+      setIsSubmitting(true);
+      try {
+        await updateTaskDescription(taskId, description);
+        if (onTaskUpdate) onTaskUpdate();
+        toast({
+          title: "Notes updated",
+          description: "Task notes have been saved"
+        });
+      } catch (err) {
+        console.error("Error saving task description:", err);
+        toast({
+          title: "Error",
+          description: "Could not update task notes",
+          variant: "destructive"
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
   const handleStatusChange = async (newStatus: string) => {
     if (newStatus !== task.status) {
-      await updateTaskStatus(taskId, newStatus);
-      setStatus(newStatus);
-      if (onTaskUpdate) onTaskUpdate();
+      setIsSubmitting(true);
+      try {
+        await updateTaskStatus(taskId, newStatus);
+        setStatus(newStatus);
+        if (onTaskUpdate) onTaskUpdate();
+        toast({
+          title: "Status updated",
+          description: `Task marked as ${newStatus}`
+        });
+      } catch (err) {
+        console.error("Error updating task status:", err);
+        toast({
+          title: "Error",
+          description: "Could not update task status",
+          variant: "destructive"
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
   const handleDueDateChange = async (newDate: string) => {
-    await updateTaskDueDate(taskId, newDate);
-    setDueDate(newDate);
-    if (onTaskUpdate) onTaskUpdate();
+    setIsSubmitting(true);
+    try {
+      await updateTaskDueDate(taskId, newDate);
+      setDueDate(newDate);
+      if (onTaskUpdate) onTaskUpdate();
+      toast({
+        title: "Due date updated",
+        description: newDate ? `Due date set to ${format(new Date(newDate), 'MMM d, yyyy')}` : "Due date removed"
+      });
+    } catch (err) {
+      console.error("Error updating due date:", err);
+      toast({
+        title: "Error",
+        description: "Could not update due date",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -632,6 +693,7 @@ function TaskDetailDialog({ taskId, missionId, onClose, onTaskUpdate }: TaskDeta
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               onBlur={handleSaveTitle}
+              disabled={isSubmitting}
               className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] hover:border-neon-aqua/30 focus:border-neon-aqua/50 transition-colors"
             />
           </div>
@@ -643,7 +705,8 @@ function TaskDetailDialog({ taskId, missionId, onClose, onTaskUpdate }: TaskDeta
               onChange={(e) => setDescription(e.target.value)}
               onBlur={handleSaveDescription}
               placeholder="Add notes with Markdown support..."
-              className="min-h-[200px] bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] hover:border-neon-aqua/30 focus:border-neon-aqua/50 transition-colors"
+              disabled={isSubmitting}
+              className="min-h-[200px] bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] hover:border-neon-aqua/30 focus:border-neon-aqua/50 transition-colors resize-y"
             />
             <div className="text-xs text-[#64748B]">
               <span>Supports Markdown: **bold**, *italic*, - lists, etc.</span>
@@ -652,7 +715,7 @@ function TaskDetailDialog({ taskId, missionId, onClose, onTaskUpdate }: TaskDeta
             {description && (
               <div className="mt-4 p-3 bg-[#25384D]/50 border border-[#3A4D62] rounded-md">
                 <h4 className="text-sm font-medium text-neon-aqua mb-2">Preview</h4>
-                <div className="prose prose-sm prose-invert max-w-none">
+                <div className="prose prose-sm prose-invert max-w-none overflow-auto">
                   <ReactMarkdown>
                     {description}
                   </ReactMarkdown>
@@ -670,6 +733,7 @@ function TaskDetailDialog({ taskId, missionId, onClose, onTaskUpdate }: TaskDeta
                   variant={status === statusOption ? "default" : "outline"}
                   size="sm"
                   onClick={() => handleStatusChange(statusOption)}
+                  disabled={isSubmitting}
                   className={cn(
                     status === statusOption 
                       ? "hover:shadow-[0_0_8px_rgba(0,247,239,0.3)]" 
@@ -691,6 +755,7 @@ function TaskDetailDialog({ taskId, missionId, onClose, onTaskUpdate }: TaskDeta
               type="date"
               value={dueDate}
               onChange={(e) => handleDueDateChange(e.target.value)}
+              disabled={isSubmitting}
               className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] hover:border-neon-aqua/30 focus:border-neon-aqua/50 transition-colors"
             />
           </div>
