@@ -40,7 +40,7 @@ export function useMissionTasks(missionId: string | null) {
           .from('tasks')
           .select('id')
           .eq('id', missionId)
-          .eq('reporter_id', currentUserId) 
+          .or(`reporter_id.eq.${currentUserId},user_id.eq.${currentUserId}`)
           .single();
           
         if (error) {
@@ -50,7 +50,7 @@ export function useMissionTasks(missionId: string | null) {
           const { data: relatedTasks, error: relatedError } = await supabase
             .from('tasks')
             .select('id')
-            .eq('reporter_id', currentUserId)
+            .or(`reporter_id.eq.${currentUserId},user_id.eq.${currentUserId}`)
             .or(`tags.cs.{"mission:${missionId}"},id.eq.${missionId}`);
           
           if (relatedError || !relatedTasks || relatedTasks.length === 0) {
@@ -84,11 +84,11 @@ export function useMissionTasks(missionId: string | null) {
         const missionTag = `mission:${missionId}`;
         
         // Get tasks associated with this mission - using OR condition to check both tag and direct ID match
-        // This query has been improved to catch all related tasks
+        // This query has been improved to catch all related tasks and check both reporter_id and user_id
         const { data, error } = await supabase
           .from('tasks')
           .select('*')
-          .eq('reporter_id', currentUserId)
+          .or(`reporter_id.eq.${currentUserId},user_id.eq.${currentUserId}`)
           .or(`tags.cs.{"${missionTag}"},id.eq.${missionId},parent_task_id.eq.${missionId}`);
           
         if (error) {
@@ -113,12 +113,12 @@ export function useMissionTasks(missionId: string | null) {
     if (!currentUserId) return [];
     
     try {
-      // Use reporter_id instead of user_id for filtering
+      // Check both reporter_id and user_id for filtering
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
         .eq('parent_task_id', parentTaskId)
-        .eq('reporter_id', currentUserId)
+        .or(`reporter_id.eq.${currentUserId},user_id.eq.${currentUserId}`)
         .order('created_at', { ascending: true });
         
       if (error) {
@@ -181,6 +181,7 @@ export function useMissionTasks(missionId: string | null) {
         status: 'open',
         priority: 'medium',
         reporter_id: currentUserId,
+        user_id: currentUserId, // Also set user_id to currentUserId
         parent_task_id: params.parentTaskId,
         due_date: dueDate,
         assignee_id: null,
@@ -245,7 +246,7 @@ export function useMissionTasks(missionId: string | null) {
           updated_at: new Date().toISOString()
         })
         .eq('id', taskId)
-        .eq('reporter_id', currentUserId)
+        .or(`reporter_id.eq.${currentUserId},user_id.eq.${currentUserId}`)
         .select()
         .single();
         
@@ -281,7 +282,7 @@ export function useMissionTasks(missionId: string | null) {
           updated_at: new Date().toISOString()
         })
         .eq('id', taskId)
-        .eq('reporter_id', currentUserId)
+        .or(`reporter_id.eq.${currentUserId},user_id.eq.${currentUserId}`)
         .select()
         .single();
         
@@ -314,7 +315,7 @@ export function useMissionTasks(missionId: string | null) {
           updated_at: new Date().toISOString()
         })
         .eq('id', taskId)
-        .eq('reporter_id', currentUserId)
+        .or(`reporter_id.eq.${currentUserId},user_id.eq.${currentUserId}`)
         .select()
         .single();
         
@@ -360,7 +361,7 @@ export function useMissionTasks(missionId: string | null) {
           updated_at: new Date().toISOString()
         })
         .eq('id', taskId)
-        .eq('reporter_id', currentUserId)
+        .or(`reporter_id.eq.${currentUserId},user_id.eq.${currentUserId}`)
         .select()
         .single();
         
@@ -389,7 +390,7 @@ export function useMissionTasks(missionId: string | null) {
         .from('tasks')
         .select('id')
         .eq('parent_task_id', taskId)
-        .eq('reporter_id', currentUserId);
+        .or(`reporter_id.eq.${currentUserId},user_id.eq.${currentUserId}`);
       
       if (subtasksToDelete && subtasksToDelete.length > 0) {
         const subtaskIds = subtasksToDelete.map(subtask => subtask.id);
@@ -397,7 +398,7 @@ export function useMissionTasks(missionId: string | null) {
           .from('tasks')
           .delete()
           .in('id', subtaskIds)
-          .eq('reporter_id', currentUserId);
+          .or(`reporter_id.eq.${currentUserId},user_id.eq.${currentUserId}`);
       }
       
       // Then delete the task itself
@@ -405,7 +406,7 @@ export function useMissionTasks(missionId: string | null) {
         .from('tasks')
         .delete()
         .eq('id', taskId)
-        .eq('reporter_id', currentUserId);
+        .or(`reporter_id.eq.${currentUserId},user_id.eq.${currentUserId}`);
         
       if (error) throw error;
     },

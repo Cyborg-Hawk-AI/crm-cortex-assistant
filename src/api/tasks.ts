@@ -37,11 +37,11 @@ export const getTasks = async (): Promise<Task[]> => {
   const userId = await getCurrentUserId();
   if (!userId) throw new Error('User must be authenticated to fetch tasks');
   
-  // Filter by user_id and only get top-level tasks (where parent_task_id is null)
+  // Filter by reporter_id or user_id and only get top-level tasks (where parent_task_id is null)
   const { data, error } = await supabase
     .from('tasks')
     .select('*')
-    .eq('user_id', userId) // Use user_id for filtering
+    .or(`reporter_id.eq.${userId},user_id.eq.${userId}`)
     .is('parent_task_id', null)
     .order('created_at', { ascending: false });
   
@@ -53,7 +53,7 @@ export const getTasks = async (): Promise<Task[]> => {
   return data as Task[];
 };
 
-// Update an existing task - verify ownership via user_id
+// Update an existing task - verify ownership via reporter_id or user_id
 export const updateTask = async (task: Task): Promise<Task> => {
   const userId = await getCurrentUserId();
   if (!userId) throw new Error('User must be authenticated to update tasks');
@@ -61,7 +61,7 @@ export const updateTask = async (task: Task): Promise<Task> => {
   // Verify task belongs to current user
   const { data: existingTask, error: checkError } = await supabase
     .from('tasks')
-    .select('user_id')
+    .select('reporter_id, user_id')
     .eq('id', task.id)
     .single();
   
@@ -69,7 +69,7 @@ export const updateTask = async (task: Task): Promise<Task> => {
     throw new Error('Task not found or access denied');
   }
   
-  if (existingTask.user_id !== userId) {
+  if (existingTask.reporter_id !== userId && existingTask.user_id !== userId) {
     throw new Error('You do not have permission to update this task');
   }
   
@@ -91,7 +91,7 @@ export const updateTask = async (task: Task): Promise<Task> => {
   return data as Task;
 };
 
-// Delete a task - verify ownership via user_id
+// Delete a task - verify ownership via reporter_id or user_id
 export const deleteTask = async (taskId: string): Promise<void> => {
   const userId = await getCurrentUserId();
   if (!userId) throw new Error('User must be authenticated to delete tasks');
@@ -99,7 +99,7 @@ export const deleteTask = async (taskId: string): Promise<void> => {
   // Verify task belongs to current user
   const { data: existingTask, error: checkError } = await supabase
     .from('tasks')
-    .select('user_id')
+    .select('reporter_id, user_id')
     .eq('id', taskId)
     .single();
   
@@ -107,7 +107,7 @@ export const deleteTask = async (taskId: string): Promise<void> => {
     throw new Error('Task not found or access denied');
   }
   
-  if (existingTask.user_id !== userId) {
+  if (existingTask.reporter_id !== userId && existingTask.user_id !== userId) {
     throw new Error('You do not have permission to delete this task');
   }
   
@@ -122,7 +122,7 @@ export const deleteTask = async (taskId: string): Promise<void> => {
   }
 };
 
-// Create subtask with parent_task_id and user_id
+// Create subtask with parent_task_id, reporter_id and user_id
 export const createSubtask = async (subtask: Omit<SubTask, 'id'>): Promise<SubTask> => {
   const userId = await getCurrentUserId();
   if (!userId) throw new Error('User must be authenticated to create subtasks');
@@ -150,7 +150,7 @@ export const createSubtask = async (subtask: Omit<SubTask, 'id'>): Promise<SubTa
   return data as SubTask;
 };
 
-// Get subtasks for a task - filter by parent_task_id and user_id
+// Get subtasks for a task - filter by parent_task_id and user_id/created_by
 export const getSubtasks = async (taskId: string): Promise<SubTask[]> => {
   const userId = await getCurrentUserId();
   if (!userId) throw new Error('User must be authenticated to fetch subtasks');
@@ -159,7 +159,7 @@ export const getSubtasks = async (taskId: string): Promise<SubTask[]> => {
     .from('subtasks')
     .select('*')
     .eq('parent_task_id', taskId)
-    .eq('user_id', userId) // Filter by user_id as well
+    .or(`user_id.eq.${userId},created_by.eq.${userId}`)
     .order('created_at', { ascending: true });
   
   if (error) {
@@ -170,7 +170,7 @@ export const getSubtasks = async (taskId: string): Promise<SubTask[]> => {
   return data as SubTask[];
 };
 
-// Update subtask - verify user_id ownership
+// Update subtask - verify user_id/created_by ownership
 export const updateSubtask = async (subtask: SubTask): Promise<SubTask> => {
   const userId = await getCurrentUserId();
   if (!userId) throw new Error('User must be authenticated to update subtasks');
@@ -178,7 +178,7 @@ export const updateSubtask = async (subtask: SubTask): Promise<SubTask> => {
   // Verify subtask belongs to current user
   const { data: existingSubtask, error: checkError } = await supabase
     .from('subtasks')
-    .select('user_id')
+    .select('user_id, created_by')
     .eq('id', subtask.id)
     .single();
   
@@ -186,7 +186,7 @@ export const updateSubtask = async (subtask: SubTask): Promise<SubTask> => {
     throw new Error('Subtask not found');
   }
   
-  if (existingSubtask.user_id !== userId) {
+  if (existingSubtask.user_id !== userId && existingSubtask.created_by !== userId) {
     throw new Error('You do not have permission to update this subtask');
   }
   
@@ -208,7 +208,7 @@ export const updateSubtask = async (subtask: SubTask): Promise<SubTask> => {
   return data as SubTask;
 };
 
-// Delete subtask - verify user_id ownership
+// Delete subtask - verify user_id/created_by ownership
 export const deleteSubtask = async (subtaskId: string): Promise<void> => {
   const userId = await getCurrentUserId();
   if (!userId) throw new Error('User must be authenticated to delete subtasks');
@@ -216,7 +216,7 @@ export const deleteSubtask = async (subtaskId: string): Promise<void> => {
   // Verify subtask belongs to current user
   const { data: subtask, error: getSubtaskError } = await supabase
     .from('subtasks')
-    .select('user_id')
+    .select('user_id, created_by')
     .eq('id', subtaskId)
     .single();
   
@@ -224,7 +224,7 @@ export const deleteSubtask = async (subtaskId: string): Promise<void> => {
     throw new Error('Subtask not found');
   }
   
-  if (subtask.user_id !== userId) {
+  if (subtask.user_id !== userId && subtask.created_by !== userId) {
     throw new Error('You do not have permission to delete this subtask');
   }
   

@@ -105,10 +105,18 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
   
   const loadMissionTasks = async (missionId: string) => {
     try {
+      const userId = await getCurrentUserId();
+      
+      if (!userId) {
+        console.error("No user ID available");
+        return;
+      }
+      
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
         .or(`tags.cs.{"mission:${missionId}"},id.eq.${missionId},parent_task_id.eq.${missionId}`)
+        .or(`reporter_id.eq.${userId},user_id.eq.${userId}`)
         .order('created_at', { ascending: true });
         
       if (error) {
