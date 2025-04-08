@@ -56,11 +56,17 @@ const BLOCK_TYPES = [
   { type: 'columns', label: 'Columns', icon: <Columns className="h-4 w-4" />, shortcut: '/columns' },
 ] as const;
 
-// Significantly increase the debounce time to reduce update frequency
-const CONTENT_UPDATE_DEBOUNCE = 3000;
+// Increase the debounce time even further to reduce update frequency
+const CONTENT_UPDATE_DEBOUNCE = 5000; // 5 seconds
 
 export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onUpdateBlock, onDeleteBlock, onMoveBlock, onDuplicateBlock }: BlockEditorProps) {
-  const blocks = [...unsortedBlocks].sort((a, b) => (a.position || 0) - (b.position || 0));
+  // Sort blocks by position to fix ordering issues
+  const blocks = [...unsortedBlocks].sort((a, b) => {
+    // Ensure we have valid numbers for comparison
+    const posA = typeof a.position === 'number' ? a.position : 0;
+    const posB = typeof b.position === 'number' ? b.position : 0;
+    return posA - posB;
+  });
   
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
   const [hoveredBlock, setHoveredBlock] = useState<string | null>(null);
@@ -79,15 +85,23 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
   const updateTimeoutRef = useRef<Record<string, NodeJS.Timeout>>({});
   const contentChangeRef = useRef<Map<string, boolean>>(new Map());
   const nestedLevels = useRef<Map<string, number>>(new Map());
+  
+  // Enhanced cursor position tracking
   const cursorPosition = useRef<Map<string, {
     node: Node | null, 
     offset: number,
     nodeHTML?: string,
-    textContent?: string
+    textContent?: string,
+    startContainer?: Node | null,
+    endContainer?: Node | null,
+    startOffset?: number,
+    endOffset?: number,
+    range?: Range,
+    rangeText?: string,
   }>>(new Map());
   
   console.log('[DEBUG] Initial blocks:', blocks);
-  console.log('[DEBUG] Cursor tracking enabled with improved position management');
+  console.log('[DEBUG] Enhanced cursor tracking with improved position management');
 
   useEffect(() => {
     if (blocks.length === 0) {
@@ -110,40 +124,59 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     }
   }, [selectedBlock, blocks.length]);
 
+  // Enhanced cursor position saving with selection range support
   const saveCursorPosition = (blockId: string) => {
     console.log('[DEBUG] Saving cursor position for block:', blockId);
     const selection = window.getSelection();
     
-    if (selection && selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0);
-      const blockEl = blockRefs.current.get(blockId);
-      
-      if (blockEl && blockEl.contains(range.startContainer)) {
-        // Store more information about the node to help with restoration
-        const node = range.startContainer;
-        const nodeHTML = node.nodeType === Node.ELEMENT_NODE 
-          ? (node as Element).innerHTML 
-          : node.textContent || '';
-          
-        cursorPosition.current.set(blockId, {
-          node: range.startContainer,
-          offset: range.startOffset,
-          nodeHTML: nodeHTML,
-          textContent: node.textContent || ''
-        });
-        
-        console.log('[DEBUG] Cursor position saved:', {
-          blockId,
-          node: range.startContainer.nodeName,
-          nodeType: range.startContainer.nodeType,
-          text: range.startContainer.textContent?.substring(0, 20) + '...',
-          offset: range.startOffset,
-          nodeHTML: nodeHTML.substring(0, 20) + '...'
-        });
-      }
+    if (!selection || selection.rangeCount === 0) {
+      console.log('[DEBUG] No valid selection found to save');
+      return;
     }
+    
+    const range = selection.getRangeAt(0);
+    const blockEl = blockRefs.current.get(blockId);
+    
+    if (!blockEl || !blockEl.contains(range.startContainer)) {
+      console.log('[DEBUG] Block element not found or selection outside block');
+      return;
+    }
+    
+    // Store complete range information
+    const node = range.startContainer;
+    const nodeHTML = node.nodeType === Node.ELEMENT_NODE 
+      ? (node as Element).innerHTML 
+      : node.textContent || '';
+    
+    const clonedRange = range.cloneRange();
+    const rangeText = clonedRange.toString();
+    
+    cursorPosition.current.set(blockId, {
+      node: range.startContainer,
+      offset: range.startOffset,
+      nodeHTML: nodeHTML,
+      textContent: node.textContent || '',
+      startContainer: range.startContainer,
+      endContainer: range.endContainer,
+      startOffset: range.startOffset,
+      endOffset: range.endOffset,
+      range: clonedRange,
+      rangeText: rangeText
+    });
+    
+    console.log('[DEBUG] Cursor position saved:', {
+      blockId,
+      node: range.startContainer.nodeName,
+      nodeType: range.startContainer.nodeType,
+      text: range.startContainer.textContent?.substring(0, 20) + '...',
+      offset: range.startOffset,
+      nodeHTML: nodeHTML.substring(0, 20) + '...',
+      isCollapsed: range.collapsed,
+      rangeText: rangeText.substring(0, 20) + (rangeText.length > 20 ? '...' : ''),
+    });
   };
 
+  // Enhanced cursor restoration with multiple fallback strategies
   const restoreCursorPosition = (blockId: string) => {
     console.log('[DEBUG] Restoring cursor position for block:', blockId);
     const savedPosition = cursorPosition.current.get(blockId);
@@ -158,25 +191,58 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       const selection = window.getSelection();
       if (!selection) return;
       
-      // First attempt: Try to find the exact same node
-      if (blockElement.contains(savedPosition.node)) {
-        console.log('[DEBUG] Original node found, restoring directly');
-        const range = document.createRange();
-        range.setStart(savedPosition.node, savedPosition.offset);
-        range.collapse(true);
-        
+      // Strategy 1: Try using the saved range directly if available
+      if (savedPosition.range && blockElement.contains(savedPosition.startContainer)) {
+        console.log('[DEBUG] Using saved range for restoration');
         selection.removeAllRanges();
-        selection.addRange(range);
-        return;
+        
+        try {
+          // Create a new range based on saved positions
+          const newRange = document.createRange();
+          newRange.setStart(savedPosition.startContainer!, savedPosition.startOffset!);
+          
+          if (savedPosition.endContainer && !savedPosition.range.collapsed) {
+            newRange.setEnd(savedPosition.endContainer, savedPosition.endOffset!);
+          } else {
+            newRange.collapse(true);
+          }
+          
+          selection.addRange(newRange);
+          console.log('[DEBUG] Cursor restored using saved range');
+          return;
+        } catch (err) {
+          console.log('[DEBUG] Error restoring from saved range:', err);
+        }
       }
       
-      // Second attempt: Try to find a node with matching text content
-      if (savedPosition.textContent) {
-        console.log('[DEBUG] Searching for node with matching text:', savedPosition.textContent.substring(0, 15));
+      // Strategy 2: Try to find the exact same node
+      if (blockElement.contains(savedPosition.node)) {
+        console.log('[DEBUG] Original node found, restoring directly');
+        
+        try {
+          const range = document.createRange();
+          range.setStart(savedPosition.node, savedPosition.offset);
+          range.collapse(true);
+          
+          selection.removeAllRanges();
+          selection.addRange(range);
+          console.log('[DEBUG] Cursor restored using original node');
+          return;
+        } catch (err) {
+          console.log('[DEBUG] Error restoring using original node:', err);
+        }
+      }
+      
+      // Strategy 3: Try to find node with specific text content
+      if (savedPosition.textContent && savedPosition.textContent.trim() !== '') {
+        console.log('[DEBUG] Searching for node with matching text:', 
+          savedPosition.textContent.substring(0, 15));
         
         // Helper function to find a node with similar text content
         const findNodeWithText = (rootNode: Node, text: string): Node | null => {
-          if (rootNode.nodeType === Node.TEXT_NODE && rootNode.textContent?.includes(text)) {
+          if (rootNode.nodeType === Node.TEXT_NODE && 
+              rootNode.textContent && 
+              rootNode.textContent.includes(text)) {
             return rootNode;
           }
           
@@ -190,41 +256,131 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
         };
         
         // Try to find a node with at least part of the text
-        const searchText = savedPosition.textContent.substring(0, Math.min(20, savedPosition.textContent.length));
+        const searchText = savedPosition.textContent.substring(0, 
+          Math.min(20, savedPosition.textContent.length));
+          
         if (searchText && searchText.trim().length > 0) {
           const foundNode = findNodeWithText(blockElement, searchText);
           
           if (foundNode) {
             console.log('[DEBUG] Found node with matching text');
-            const range = document.createRange();
             
-            // Calculate an appropriate offset
-            let offsetInNode = 0;
-            if (foundNode.textContent) {
-              // Try to maintain the same relative position in the text
-              const originalLength = savedPosition.textContent.length;
-              const newLength = foundNode.textContent.length;
+            try {
+              const range = document.createRange();
               
-              if (originalLength > 0) {
-                const relativePosition = savedPosition.offset / originalLength;
-                offsetInNode = Math.min(Math.floor(relativePosition * newLength), newLength);
-              } else {
-                offsetInNode = Math.min(savedPosition.offset, newLength);
+              // Calculate appropriate offset
+              let offsetInNode = 0;
+              if (foundNode.textContent) {
+                // Try to maintain same relative position in text
+                const originalLength = savedPosition.textContent.length;
+                const newLength = foundNode.textContent.length;
+                
+                if (originalLength > 0) {
+                  const relativePosition = savedPosition.offset / originalLength;
+                  offsetInNode = Math.min(Math.floor(relativePosition * newLength), newLength);
+                } else {
+                  offsetInNode = Math.min(savedPosition.offset, newLength);
+                }
               }
+              
+              range.setStart(foundNode, offsetInNode);
+              range.collapse(true);
+              
+              selection.removeAllRanges();
+              selection.addRange(range);
+              console.log('[DEBUG] Cursor restored using text-matching node');
+              return;
+            } catch (err) {
+              console.log('[DEBUG] Error restoring using text-matching node:', err);
             }
-            
-            range.setStart(foundNode, offsetInNode);
-            range.collapse(true);
-            
-            selection.removeAllRanges();
-            selection.addRange(range);
-            return;
           }
         }
       }
       
-      // Third attempt: Position at the first text node
-      console.log('[DEBUG] Fallback to positioning at the first text node');
+      // Strategy 4: Analyze all text nodes in the block and place cursor at a similar position
+      console.log('[DEBUG] Using text node traversal strategy');
+      
+      const textNodes: Node[] = [];
+      const traverseForText = (node: Node) => {
+        if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim()) {
+          textNodes.push(node);
+        } else {
+          for (let i = 0; i < node.childNodes.length; i++) {
+            traverseForText(node.childNodes[i]);
+          }
+        }
+      };
+      
+      traverseForText(blockElement);
+      
+      if (textNodes.length > 0) {
+        // If we have saved rangeText, try to find it
+        if (savedPosition.rangeText && savedPosition.rangeText.trim()) {
+          let bestNode = textNodes[0];
+          let bestPosition = 0;
+          
+          for (const node of textNodes) {
+            if (!node.textContent) continue;
+            
+            const index = node.textContent.indexOf(savedPosition.rangeText);
+            if (index >= 0) {
+              bestNode = node;
+              bestPosition = index;
+              break;
+            }
+          }
+          
+          try {
+            const range = document.createRange();
+            range.setStart(bestNode, bestPosition);
+            range.collapse(true);
+            
+            selection.removeAllRanges();
+            selection.addRange(range);
+            console.log('[DEBUG] Cursor restored using text content search');
+            return;
+          } catch (err) {
+            console.log('[DEBUG] Error during text content search restoration:', err);
+          }
+        }
+        
+        // Fallback: Place at similar relative position
+        try {
+          const totalLength = textNodes.reduce((sum, node) => 
+            sum + (node.textContent?.length || 0), 0);
+          const targetOffset = Math.floor(savedPosition.offset / 100 * totalLength);
+          
+          let currentLength = 0;
+          let targetNode = textNodes[0];
+          let nodeOffset = 0;
+          
+          for (const node of textNodes) {
+            const nodeLength = node.textContent?.length || 0;
+            
+            if (currentLength + nodeLength > targetOffset) {
+              targetNode = node;
+              nodeOffset = targetOffset - currentLength;
+              break;
+            }
+            
+            currentLength += nodeLength;
+          }
+          
+          const range = document.createRange();
+          range.setStart(targetNode, Math.min(nodeOffset, targetNode.textContent?.length || 0));
+          range.collapse(true);
+          
+          selection.removeAllRanges();
+          selection.addRange(range);
+          console.log('[DEBUG] Cursor restored using positional estimation');
+          return;
+        } catch (err) {
+          console.log('[DEBUG] Error in positional estimation:', err);
+        }
+      }
+      
+      // Final fallback: Position at the beginning of the first text node
+      console.log('[DEBUG] Fallback to positioning at first text node');
       
       const findFirstTextNode = (node: Node): Node => {
         if (node.nodeType === Node.TEXT_NODE) return node;
@@ -237,15 +393,22 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
         return node;
       };
       
-      const targetNode = findFirstTextNode(blockElement);
-      const offset = Math.min(savedPosition.offset, targetNode.textContent?.length || 0);
-      
-      const range = document.createRange();
-      range.setStart(targetNode, offset);
-      range.collapse(true);
-      
-      selection.removeAllRanges();
-      selection.addRange(range);
+      try {
+        const targetNode = findFirstTextNode(blockElement);
+        
+        // Use the original offset if possible
+        const offset = Math.min(savedPosition.offset, targetNode.textContent?.length || 0);
+        
+        const range = document.createRange();
+        range.setStart(targetNode, offset);
+        range.collapse(true);
+        
+        selection.removeAllRanges();
+        selection.addRange(range);
+        console.log('[DEBUG] Cursor positioned at first text node');
+      } catch (err) {
+        console.error('[DEBUG] Final fallback positioning failed:', err);
+      }
       
     } catch (err) {
       console.error('[DEBUG] Error restoring cursor:', err);
@@ -316,8 +479,27 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     indent?: number
   ) => {
     try {
-      const maxPosition = blocks.length > 0 ? Math.max(...blocks.map(b => b.position || 0)) : -1;
-      const newPosition = position !== undefined ? position : maxPosition + 1;
+      // Calculate position to ensure correct ordering
+      let newPosition = position;
+      
+      if (position === undefined || position === null) {
+        const maxPosition = blocks.length > 0 
+          ? Math.max(...blocks.map(b => typeof b.position === 'number' ? b.position : 0)) 
+          : -1;
+        newPosition = maxPosition + 1;
+      }
+      
+      // When creating a new block between existing blocks, calculate intermediate position
+      if (blocks.length > 0 && position < blocks.length) {
+        const prevBlock = blocks[Math.max(0, position - 1)];
+        const nextBlock = blocks[Math.min(position, blocks.length - 1)];
+        
+        const prevPos = typeof prevBlock.position === 'number' ? prevBlock.position : 0;
+        const nextPos = typeof nextBlock.position === 'number' ? nextBlock.position : prevPos + 1;
+        
+        // Create a position between the two blocks
+        newPosition = prevPos + (nextPos - prevPos) / 2;
+      }
 
       const finalContent = { ...content };
       if (type === 'todo' && finalContent.checked === undefined) {
@@ -431,6 +613,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       eventType: event.type
     });
     
+    // Always save cursor position on content change
     saveCursorPosition(blockId);
     
     if (content === '/') {
@@ -504,16 +687,17 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
         }).then(() => {
           contentChangeRef.current.set(blockId, false);
           setIsUpdating(prev => ({ ...prev, [blockId]: false }));
-          // Don't restore cursor position on blur - this avoids conflicts
         });
       }
     }
   };
 
+  // Improved manual update function that preserves cursor position
   const handleManualUpdate = (blockId: string, content: string) => {
     const block = blocks.find(b => b.id === blockId);
     if (!block) return;
     
+    // Always save cursor position before update
     saveCursorPosition(blockId);
     
     setIsUpdating(prev => ({ ...prev, [blockId]: true }));
@@ -525,11 +709,15 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       contentChangeRef.current.set(blockId, false);
       setIsUpdating(prev => ({ ...prev, [blockId]: false }));
       
+      // Restore cursor position after update using enhanced restoration
       setTimeout(() => {
         if (blockRefs.current.get(blockId)) {
           restoreCursorPosition(blockId);
         }
       }, 10);
+    }).catch(error => {
+      console.error('[DEBUG] Error updating block:', error);
+      setIsUpdating(prev => ({ ...prev, [blockId]: false }));
     });
   };
 
@@ -599,7 +787,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       return;
     }
 
-    // Shift+Enter triggers an update with the current content
+    // Shift+Enter triggers an update with the current content and inserts a line break
     if (e.key === 'Enter' && e.shiftKey) {
       e.preventDefault();
       console.log('[DEBUG] Shift+Enter detected - inserting line break and triggering update');
@@ -608,6 +796,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       if (selection && selection.rangeCount > 0) {
         console.log('[DEBUG] Selection exists, creating line break');
         
+        // Save complete cursor position with enhanced data
         saveCursorPosition(block.id);
         
         const range = selection.getRangeAt(0);
@@ -628,6 +817,17 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
         selection.removeAllRanges();
         selection.addRange(range);
         
+        // Save the current range again after modification
+        const updatedRange = selection.getRangeAt(0);
+        cursorPosition.current.set(block.id, {
+          ...cursorPosition.current.get(block.id)!,
+          range: updatedRange.cloneRange(),
+          startContainer: updatedRange.startContainer,
+          endContainer: updatedRange.endContainer,
+          startOffset: updatedRange.startOffset,
+          endOffset: updatedRange.endOffset
+        });
+        
         // Get the updated content
         const updatedContent = e.currentTarget.innerHTML;
         console.log('[DEBUG] Updated HTML content after insertion:', updatedContent);
@@ -638,7 +838,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
           [block.id]: false
         }));
         
-        // Manually trigger an update
+        // Manually trigger an update with the updated cursor position
         handleManualUpdate(block.id, updatedContent);
       }
       return;
@@ -647,6 +847,8 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     // Regular Enter now creates a new block
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      
+      // Find the actual index of this block based on position order
       const blockIndex = blocks.findIndex(b => b.id === block.id);
       const position = blockIndex + 1;
       
@@ -666,7 +868,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
         handleManualUpdate(block.id, currentContent);
       }
       
-      // Then create the new block
+      // Then create the new block with proper position
       handleCreateBlock(newType, {
         text: '',
         checked: newType === 'todo' ? false : undefined
@@ -809,18 +1011,44 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     }
   };
 
+  // Improved position calculation to prevent blocks with same position
   const calculatePosition = (newIndex: number): number => {
-    if (newIndex === 0) {
-      return blocks.length > 0 ? (blocks[0].position || 0) - 1 : 0;
+    // Ensure blocks are ordered by position value
+    const sortedBlocks = [...blocks].sort((a, b) => {
+      const posA = typeof a.position === 'number' ? a.position : 0;
+      const posB = typeof b.position === 'number' ? b.position : 0;
+      return posA - posB;
+    });
+    
+    if (newIndex <= 0) {
+      // Place at the beginning
+      const firstPosition = sortedBlocks.length > 0 ? 
+        (typeof sortedBlocks[0].position === 'number' ? sortedBlocks[0].position : 0) : 0;
+      return firstPosition - 1;
     }
     
-    if (newIndex >= blocks.length) {
-      return blocks.length > 0 ? (blocks[blocks.length - 1].position || 0) + 1 : 0;
+    if (newIndex >= sortedBlocks.length) {
+      // Place at the end
+      const lastPosition = sortedBlocks.length > 0 ? 
+        (typeof sortedBlocks[sortedBlocks.length - 1].position === 'number' ? 
+          sortedBlocks[sortedBlocks.length - 1].position : 0) : 0;
+      return lastPosition + 1;
     }
     
-    const prevPos = blocks[newIndex - 1].position || 0;
-    const nextPos = blocks[newIndex].position || 0;
-    return prevPos + (nextPos - prevPos) / 2;
+    // Place between two blocks
+    const beforeBlock = sortedBlocks[newIndex - 1];
+    const afterBlock = sortedBlocks[newIndex];
+    
+    const beforePos = typeof beforeBlock.position === 'number' ? beforeBlock.position : 0;
+    const afterPos = typeof afterBlock.position === 'number' ? afterBlock.position : beforePos + 1;
+    
+    // Make sure we don't create identical positions
+    if (beforePos === afterPos) {
+      // Reorder all block positions to create space
+      return beforePos + 0.5;
+    }
+    
+    return beforePos + (afterPos - beforePos) / 2;
   };
 
   const handleInsertBlockFromSlash = async (type: MindBlock['content_type']) => {
@@ -1315,3 +1543,4 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     </div>
   );
 }
+
