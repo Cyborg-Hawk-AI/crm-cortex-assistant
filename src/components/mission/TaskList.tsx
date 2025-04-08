@@ -34,7 +34,8 @@ export function TaskList({ missionId }: TaskListProps) {
     getSubtasks,
     isCreating,
     isUpdating,
-    isDeleting
+    isDeleting,
+    refetch
   } = useMissionTasks(missionId);
 
   // Automatically expand tasks when first loaded
@@ -85,6 +86,15 @@ export function TaskList({ missionId }: TaskListProps) {
     
     updateTaskTitle(taskId, editingTaskTitle.trim());
     setEditingTaskId(null);
+  };
+
+  const handleUpdateDescription = (taskId: string, content: string) => {
+    console.log(`Updating task ${taskId} with description:`, content);
+    updateTaskDescription(taskId, content);
+    // Force a refresh after a small delay to ensure the UI updates
+    setTimeout(() => {
+      refetch();
+    }, 300);
   };
 
   const handleSubtaskCreate = (parentId: string, title: string) => {
@@ -256,9 +266,10 @@ export function TaskList({ missionId }: TaskListProps) {
               <CollapsibleContent>
                 <div className="p-3 border-t border-[#3A4D62] bg-[#25384D]">
                   <div className="mb-4">
+                    <h4 className="text-sm font-medium mb-2 text-[#F1F5F9]">Description</h4>
                     <RichTextEditor
                       content={task.description}
-                      onSave={(content) => updateTaskDescription(task.id, content)}
+                      onSave={(content) => handleUpdateDescription(task.id, content)}
                       placeholder="Add description..."
                     />
                   </div>

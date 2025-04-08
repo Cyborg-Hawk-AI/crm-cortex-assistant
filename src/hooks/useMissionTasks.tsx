@@ -302,6 +302,8 @@ export function useMissionTasks(missionId: string | null) {
     mutationFn: async ({ taskId, description }: { taskId: string, description: string | null }) => {
       if (!currentUserId) throw new Error('User not authenticated');
       
+      console.log(`Updating task ${taskId} with description:`, description);
+      
       const { data, error } = await supabase
         .from('tasks')
         .update({ 
@@ -313,12 +315,27 @@ export function useMissionTasks(missionId: string | null) {
         .select()
         .single();
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating description:", error);
+        throw error;
+      }
+      
+      console.log("Description updated successfully:", data);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Invalidate the appropriate cache entries to ensure UI updates
       queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId, currentUserId] });
-      refetch();
+      
+      // Force an immediate refetch
+      setTimeout(() => {
+        refetch();
+      }, 150);
+      
+      toast({
+        title: "Description updated",
+        description: "Task description has been saved"
+      });
     },
     onError: (error) => {
       toast({
@@ -465,7 +482,7 @@ export function useMissionTasks(missionId: string | null) {
     getSubtasks: (parentTaskId: string) => getSubtasks.mutate(parentTaskId),
     getTaskById,
     isCreating: createTask.isPending,
-    isUpdating: updateTaskStatus.isPending || updateTaskTitle.isPending || updateTaskDueDate.isPending,
+    isUpdating: updateTaskStatus.isPending || updateTaskTitle.isPending || updateTaskDueDate.isPending || updateTaskDescription.isPending,
     isDeleting: deleteTask.isPending,
     refetch
   };
