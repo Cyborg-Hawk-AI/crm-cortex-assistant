@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -34,12 +33,12 @@ export function useMissionTasks(missionId: string | null) {
       if (!missionId || !currentUserId) return false;
       
       try {
-        // Check if the missionId exists in the tasks table and belongs to current user
+        // Check if the missionId exists in the tasks table
         const { data, error } = await supabase
           .from('tasks')
           .select('id')
           .eq('id', missionId)
-          .eq('user_id', currentUserId)
+          .eq('reporter_id', currentUserId) // Use reporter_id instead of user_id
           .single();
           
         if (error) {
@@ -49,7 +48,7 @@ export function useMissionTasks(missionId: string | null) {
           const { data: relatedTasks, error: relatedError } = await supabase
             .from('tasks')
             .select('id')
-            .eq('user_id', currentUserId)
+            .eq('reporter_id', currentUserId) // Use reporter_id instead of user_id
             .filter('tags', 'cs', `{"mission:${missionId}"}`);
           
           if (relatedError || !relatedTasks || relatedTasks.length === 0) {
@@ -82,11 +81,11 @@ export function useMissionTasks(missionId: string | null) {
         // Format the tag properly for Postgres containment operator
         const missionTag = `mission:${missionId}`;
         
-        // Get tasks associated with this mission AND user_id
+        // Get tasks associated with this mission
         const { data, error } = await supabase
           .from('tasks')
           .select('*')
-          .eq('user_id', currentUserId)
+          .eq('reporter_id', currentUserId) // Use reporter_id instead of user_id
           .contains('tags', [missionTag])
           .order('created_at', { ascending: true });
           
@@ -141,7 +140,6 @@ export function useMissionTasks(missionId: string | null) {
         status: 'open',
         priority: 'medium',
         reporter_id: currentUserId,
-        user_id: currentUserId, // Essential for ownership
         parent_task_id: params.parentTaskId,
         due_date: dueDate,
         assignee_id: null,
@@ -206,7 +204,7 @@ export function useMissionTasks(missionId: string | null) {
           updated_at: new Date().toISOString()
         })
         .eq('id', taskId)
-        .eq('user_id', currentUserId)
+        .eq('reporter_id', currentUserId) // Using reporter_id instead of user_id
         .select()
         .single();
         
@@ -230,7 +228,7 @@ export function useMissionTasks(missionId: string | null) {
       });
     }
   });
-  
+
   const updateTaskTitle = useMutation({
     mutationFn: async ({ taskId, title }: { taskId: string, title: string }) => {
       if (!currentUserId) throw new Error('User not authenticated');
@@ -242,7 +240,7 @@ export function useMissionTasks(missionId: string | null) {
           updated_at: new Date().toISOString()
         })
         .eq('id', taskId)
-        .eq('user_id', currentUserId)
+        .eq('reporter_id', currentUserId) // Using reporter_id instead of user_id
         .select()
         .single();
         
@@ -273,7 +271,7 @@ export function useMissionTasks(missionId: string | null) {
           updated_at: new Date().toISOString()
         })
         .eq('id', taskId)
-        .eq('user_id', currentUserId)
+        .eq('reporter_id', currentUserId) // Using reporter_id instead of user_id
         .select()
         .single();
         
@@ -292,7 +290,7 @@ export function useMissionTasks(missionId: string | null) {
       });
     }
   });
-  
+
   const updateTaskDueDate = useMutation({
     mutationFn: async ({ taskId, dueDate }: { taskId: string, dueDate: string | null }) => {
       if (!currentUserId) throw new Error('User not authenticated');
@@ -304,7 +302,7 @@ export function useMissionTasks(missionId: string | null) {
           updated_at: new Date().toISOString()
         })
         .eq('id', taskId)
-        .eq('user_id', currentUserId)
+        .eq('reporter_id', currentUserId) // Using reporter_id instead of user_id
         .select()
         .single();
         
@@ -328,12 +326,12 @@ export function useMissionTasks(missionId: string | null) {
     mutationFn: async (taskId: string) => {
       if (!currentUserId) throw new Error('User not authenticated');
       
-      // First, find and delete any subtasks that belong to this user
+      // First, find and delete any subtasks that belong to this task
       const { data: subtasksToDelete } = await supabase
         .from('tasks')
         .select('id')
         .eq('parent_task_id', taskId)
-        .eq('user_id', currentUserId);
+        .eq('reporter_id', currentUserId); // Using reporter_id instead of user_id
       
       if (subtasksToDelete && subtasksToDelete.length > 0) {
         const subtaskIds = subtasksToDelete.map(subtask => subtask.id);
@@ -341,7 +339,7 @@ export function useMissionTasks(missionId: string | null) {
           .from('tasks')
           .delete()
           .in('id', subtaskIds)
-          .eq('user_id', currentUserId);
+          .eq('reporter_id', currentUserId); // Using reporter_id instead of user_id
       }
       
       // Then delete the task itself
@@ -349,7 +347,7 @@ export function useMissionTasks(missionId: string | null) {
         .from('tasks')
         .delete()
         .eq('id', taskId)
-        .eq('user_id', currentUserId);
+        .eq('reporter_id', currentUserId); // Using reporter_id instead of user_id
         
       if (error) throw error;
     },
@@ -377,7 +375,7 @@ export function useMissionTasks(missionId: string | null) {
       });
     }
   });
-  
+
   const getSubtasks = useMutation({
     mutationFn: async (parentTaskId: string) => {
       if (!currentUserId) throw new Error('User not authenticated');
@@ -387,7 +385,7 @@ export function useMissionTasks(missionId: string | null) {
         .from('tasks') // Using tasks table for subtasks as per schema
         .select('*')
         .eq('parent_task_id', parentTaskId)
-        .eq('user_id', currentUserId)
+        .eq('reporter_id', currentUserId) // Using reporter_id instead of user_id
         .order('created_at', { ascending: true });
         
       if (error) {
@@ -412,7 +410,7 @@ export function useMissionTasks(missionId: string | null) {
       });
     }
   });
-  
+
   const getTaskById = (taskId: string) => {
     return tasks.find(task => task.id === taskId);
   };

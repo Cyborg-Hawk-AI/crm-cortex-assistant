@@ -33,7 +33,6 @@ export interface Task {
   due_date: string | null;
   assignee_id: string | null;
   reporter_id: string;
-  user_id: string; // Required field for user ownership
   parent_task_id: string | null;
   created_at: string;
   updated_at: string;
@@ -44,7 +43,6 @@ export interface SubTask {
   id: string;
   title: string;
   parent_task_id: string;
-  user_id: string; // Required field for user ownership
   is_completed: boolean;
   created_by: string | null;
   created_at: string;

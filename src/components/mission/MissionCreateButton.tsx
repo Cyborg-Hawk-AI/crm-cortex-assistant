@@ -31,7 +31,7 @@ export function MissionCreateButton() {
       const missionId = uuidv4();
       const missionTag = `mission:${missionId}`;
       
-      // Create a new task as the mission
+      // Create a new task as the mission - removing user_id field which doesn't exist in schema
       const { data, error } = await supabase
         .from('tasks')
         .insert({
@@ -41,7 +41,6 @@ export function MissionCreateButton() {
           status: 'open',
           priority: 'medium',
           reporter_id: userId,
-          user_id: userId,
           parent_task_id: null,
           assignee_id: null,
           tags: [missionTag], // Tag with self-reference for easy querying
