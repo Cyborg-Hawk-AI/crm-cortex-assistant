@@ -7,13 +7,11 @@ import {
   Plus, 
   CalendarPlus, 
   ListTodo, 
-  UserPlus,
   BookOpen
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { TaskCreateModal } from './modals/TaskCreateModal';
 import { MeetingCreateModal } from './modals/MeetingCreateModal';
-import { ContactCreateModal } from './modals/ContactCreateModal';
 import { NotebookCreateModal } from './modals/NotebookCreateModal';
 import { useMeetings } from '@/hooks/useMeetings';
 
@@ -87,15 +85,6 @@ export function FloatingActionBar() {
                       <BookOpen className="h-4 w-4 mr-1 text-neon-purple" /> New Note
                     </Button>
                     <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setActiveModal('contact')}
-                      className="h-8 bg-gradient-to-r from-neon-yellow/20 to-neon-yellow/10 text-[#F1F5F9] border-neon-yellow/30
-                                hover:bg-gradient-to-r hover:from-neon-yellow/30 hover:to-neon-yellow/20 hover:shadow-[0_0_8px_rgba(251,191,36,0.4)]"
-                    >
-                      <UserPlus className="h-4 w-4 mr-1 text-neon-yellow" /> Add to Orbit
-                    </Button>
-                    <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setIsCollapsed(!isCollapsed)}
@@ -120,8 +109,10 @@ export function FloatingActionBar() {
                       transition={{ duration: 0.2 }}
                       className="overflow-hidden"
                     >
-                      <div className="p-4 text-center text-[#CBD5E1] text-sm">
-                        Select an action from above to get started
+                      <div className="p-4 text-center">
+                        <h3 className="text-xl font-bold text-[#F1F5F9] bg-clip-text text-transparent bg-gradient-to-r from-neon-aqua to-neon-purple cursor-pointer">
+                          Invite the team!
+                        </h3>
                       </div>
                     </motion.div>
                   )}
@@ -148,16 +139,6 @@ export function FloatingActionBar() {
           if (!open) setActiveModal(null);
         }}
         onSubmit={(meetingData) => createMeeting(meetingData)}
-      />
-
-      <ContactCreateModal 
-        open={activeModal === 'contact'} 
-        onOpenChange={(open) => {
-          if (!open) setActiveModal(null);
-        }}
-        onContactCreated={() => {
-          // You would typically refresh contact data here
-        }}
       />
       
       <NotebookCreateModal 

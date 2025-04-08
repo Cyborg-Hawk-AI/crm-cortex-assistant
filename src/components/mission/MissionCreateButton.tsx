@@ -126,7 +126,6 @@ export function MissionCreateButton() {
                 content={description} 
                 onSave={setDescription} 
                 placeholder="Add mission details..."
-                autoFocus={false}
               />
             </div>
           </div>
