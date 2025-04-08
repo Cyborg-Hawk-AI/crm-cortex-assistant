@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { 
   Plus, Trash2, Copy, MoreVertical, ChevronDown, GripVertical, 
@@ -55,9 +56,11 @@ const BLOCK_TYPES = [
   { type: 'columns', label: 'Columns', icon: <Columns className="h-4 w-4" />, shortcut: '/columns' },
 ] as const;
 
-const CONTENT_UPDATE_DEBOUNCE = 500;
+// Increase the debounce time to reduce update frequency
+const CONTENT_UPDATE_DEBOUNCE = 800;
 
 export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onUpdateBlock, onDeleteBlock, onMoveBlock, onDuplicateBlock }: BlockEditorProps) {
+  // Sort blocks to maintain stable ordering
   const blocks = [...unsortedBlocks].sort((a, b) => (a.position || 0) - (b.position || 0));
   
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
@@ -68,15 +71,19 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
   const [isNavigationMode, setIsNavigationMode] = useState(false);
   const [selectedBlocks, setSelectedBlocks] = useState<string[]>([]);
   
+  // New state to track if an update is in progress to prevent multiple updates
+  const [isUpdating, setIsUpdating] = useState<Record<string, boolean>>({});
+  
   const editorRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const blockRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const updateTimeoutRef = useRef<Record<string, NodeJS.Timeout>>({});
   const contentChangeRef = useRef<Map<string, boolean>>(new Map());
   const nestedLevels = useRef<Map<string, number>>(new Map());
-  const cursorPosition = useRef<Map<string, number>>(new Map());
+  const cursorPosition = useRef<Map<string, {node: Node | null, offset: number}>>(new Map());
 
   console.log('[DEBUG] Initial blocks:', blocks);
+  console.log('[DEBUG] Cursor tracking enabled with enhanced position management');
 
   useEffect(() => {
     if (blocks.length === 0) {
@@ -99,6 +106,86 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     }
   }, [selectedBlock, blocks.length]);
 
+  // Enhanced cursor position saving
+  const saveCursorPosition = (blockId: string) => {
+    console.log('[DEBUG] Saving cursor position for block:', blockId);
+    const selection = window.getSelection();
+    
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      const blockEl = blockRefs.current.get(blockId);
+      
+      if (blockEl && blockEl.contains(range.startContainer)) {
+        cursorPosition.current.set(blockId, {
+          node: range.startContainer,
+          offset: range.startOffset
+        });
+        
+        console.log('[DEBUG] Cursor position saved:', {
+          blockId,
+          node: range.startContainer.nodeName,
+          nodeType: range.startContainer.nodeType,
+          text: range.startContainer.textContent?.substring(0, 20) + '...',
+          offset: range.startOffset
+        });
+      }
+    }
+  };
+
+  // Enhanced cursor position restoration
+  const restoreCursorPosition = (blockId: string) => {
+    console.log('[DEBUG] Restoring cursor position for block:', blockId);
+    const savedPosition = cursorPosition.current.get(blockId);
+    const blockElement = blockRefs.current.get(blockId);
+    
+    if (!savedPosition || !blockElement) {
+      console.log('[DEBUG] No saved position or block element found');
+      return;
+    }
+    
+    try {
+      const selection = window.getSelection();
+      if (!selection) return;
+      
+      // If the node is no longer in the DOM, find the best approximation
+      let targetNode = savedPosition.node;
+      let targetOffset = savedPosition.offset;
+      
+      if (!blockElement.contains(savedPosition.node)) {
+        console.log('[DEBUG] Saved node not found in DOM, finding alternative');
+        // Default to the first text node or the element itself
+        if (blockElement.firstChild) {
+          if (blockElement.firstChild.nodeType === Node.TEXT_NODE) {
+            targetNode = blockElement.firstChild;
+          } else if (blockElement.firstChild.firstChild) {
+            targetNode = blockElement.firstChild.firstChild;
+          } else {
+            targetNode = blockElement.firstChild;
+          }
+          targetOffset = Math.min(targetOffset, targetNode.textContent?.length || 0);
+        } else {
+          targetNode = blockElement;
+          targetOffset = 0;
+        }
+      }
+      
+      const range = document.createRange();
+      range.setStart(targetNode || blockElement, targetOffset);
+      range.collapse(true);
+      
+      selection.removeAllRanges();
+      selection.addRange(range);
+      
+      console.log('[DEBUG] Cursor position restored:', {
+        blockId,
+        node: targetNode?.nodeName,
+        offset: targetOffset
+      });
+    } catch (err) {
+      console.error('[DEBUG] Error restoring cursor:', err);
+    }
+  };
+
   useEffect(() => {
     return () => {
       Object.values(updateTimeoutRef.current).forEach(timeout => {
@@ -107,6 +194,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     };
   }, []);
 
+  // Key navigation handlers
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -222,6 +310,8 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     const block = blocks.find(b => b.id === blockId);
     if (!block) return;
 
+    saveCursorPosition(blockId);
+    
     const textContent = block.content.text || '';
     
     const newContent: Record<string, any> = {
@@ -257,45 +347,8 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     if (blockElement) {
       setTimeout(() => {
         blockElement.focus();
-        
-        const selection = window.getSelection();
-        const range = document.createRange();
-        
-        if (selection && blockElement.firstChild) {
-          range.setStart(blockElement.firstChild, blockElement.textContent?.length || 0);
-          range.collapse(true);
-          selection.removeAllRanges();
-          selection.addRange(range);
-        }
+        restoreCursorPosition(blockId);
       }, 10);
-    }
-  };
-
-  const saveCursorPosition = (blockId: string) => {
-    const selection = window.getSelection();
-    if (selection && selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0);
-      if (range.startContainer.parentElement && blockRefs.current.get(blockId)?.contains(range.startContainer)) {
-        cursorPosition.current.set(blockId, range.startOffset);
-      }
-    }
-  };
-
-  const restoreCursorPosition = (blockId: string) => {
-    const position = cursorPosition.current.get(blockId);
-    const blockElement = blockRefs.current.get(blockId);
-    
-    if (position !== undefined && blockElement) {
-      const selection = window.getSelection();
-      const range = document.createRange();
-      
-      if (selection && blockElement.firstChild) {
-        const offset = Math.min(position, blockElement.textContent?.length || 0);
-        range.setStart(blockElement.firstChild, offset);
-        range.collapse(true);
-        selection.removeAllRanges();
-        selection.addRange(range);
-      }
     }
   };
 
@@ -313,35 +366,52 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       eventType: event.type
     });
     
+    // Save cursor position BEFORE any updates
     saveCursorPosition(blockId);
     
     if (content === '/') {
       handleOpenSlashCommand(blockId);
     }
     
+    // Cancel existing update timeout if there is one
     if (updateTimeoutRef.current[blockId]) {
       clearTimeout(updateTimeoutRef.current[blockId]);
     }
     
+    // Mark content as changed
     contentChangeRef.current.set(blockId, true);
     
-    updateTimeoutRef.current[blockId] = setTimeout(() => {
-      if (contentChangeRef.current.get(blockId)) {
-        const block = blocks.find(b => b.id === blockId);
-        if (block) {
-          console.log('[DEBUG] Updating block content after timeout:', {
-            blockId,
-            htmlContent: htmlContent
-          });
-          
-          onUpdateBlock(blockId, { 
-            ...block.content, 
-            text: htmlContent 
-          });
-          contentChangeRef.current.set(blockId, false);
+    // Only schedule an update if one isn't already in progress
+    if (!isUpdating[blockId]) {
+      updateTimeoutRef.current[blockId] = setTimeout(() => {
+        if (contentChangeRef.current.get(blockId)) {
+          const block = blocks.find(b => b.id === blockId);
+          if (block) {
+            console.log('[DEBUG] Updating block content after timeout:', {
+              blockId,
+              htmlContent: htmlContent
+            });
+            
+            setIsUpdating(prev => ({ ...prev, [blockId]: true }));
+            
+            onUpdateBlock(blockId, { 
+              ...block.content, 
+              text: htmlContent 
+            }).then(() => {
+              contentChangeRef.current.set(blockId, false);
+              setIsUpdating(prev => ({ ...prev, [blockId]: false }));
+              
+              // Restore cursor position AFTER the update completes
+              setTimeout(() => {
+                if (blockRefs.current.get(blockId)) {
+                  restoreCursorPosition(blockId);
+                }
+              }, 10);
+            });
+          }
         }
-      }
-    }, CONTENT_UPDATE_DEBOUNCE);
+      }, CONTENT_UPDATE_DEBOUNCE);
+    }
   };
 
   const handleContentBlur = (blockId: string, event: React.FocusEvent<HTMLDivElement>) => {
@@ -359,11 +429,15 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     if (contentChangeRef.current.get(blockId)) {
       const block = blocks.find(b => b.id === blockId);
       if (block) {
+        setIsUpdating(prev => ({ ...prev, [blockId]: true }));
+        
         onUpdateBlock(blockId, { 
           ...block.content, 
           text: htmlContent 
+        }).then(() => {
+          contentChangeRef.current.set(blockId, false);
+          setIsUpdating(prev => ({ ...prev, [blockId]: false }));
         });
-        contentChangeRef.current.set(blockId, false);
       }
     }
   };
@@ -431,6 +505,9 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       e.preventDefault();
       console.log('[DEBUG] Shift+Enter detected - inserting line break');
       
+      // Save cursor position before the change
+      saveCursorPosition(block.id);
+      
       const selection = window.getSelection();
       if (selection && selection.rangeCount > 0) {
         console.log('[DEBUG] Selection exists, creating line break');
@@ -457,11 +534,39 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
         
         // Explicitly update the block content with HTML
         if (block) {
+          setIsUpdating(prev => ({ ...prev, [block.id]: true }));
+          
           onUpdateBlock(block.id, { 
             ...block.content, 
             text: updatedContent 
+          }).then(() => {
+            console.log('[DEBUG] Block updated after Shift+Enter, cursor should be after break');
+            contentChangeRef.current.set(block.id, false);
+            setIsUpdating(prev => ({ ...prev, [block.id]: false }));
+            
+            // Make sure the cursor stays after the <br>
+            setTimeout(() => {
+              const blockEl = blockRefs.current.get(block.id);
+              if (blockEl) {
+                blockEl.focus();
+                
+                // Find the last <br> element
+                const allBrs = blockEl.querySelectorAll('br');
+                if (allBrs.length > 0) {
+                  const lastBr = allBrs[allBrs.length - 1];
+                  const range = document.createRange();
+                  const selection = window.getSelection();
+                  
+                  if (selection) {
+                    range.setStartAfter(lastBr);
+                    range.collapse(true);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                  }
+                }
+              }
+            }, 10);
           });
-          contentChangeRef.current.set(block.id, false);
         }
       }
       return;
@@ -541,6 +646,49 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       return;
     }
 
+    // Arrow key navigation
+    handleArrowNavigation(e, block);
+
+    if (e.key === ' ' && !e.shiftKey && cursorAtStart) {
+      const text = (e.target as HTMLDivElement).textContent || '';
+      const trimmedText = text.trim();
+      
+      if (trimmedText === '#') {
+        e.preventDefault();
+        handleBlockTypeChange(block.id, 'heading1');
+        (e.target as HTMLDivElement).textContent = '';
+      } else if (trimmedText === '##') {
+        e.preventDefault();
+        handleBlockTypeChange(block.id, 'heading2');
+        (e.target as HTMLDivElement).textContent = '';
+      } else if (trimmedText === '###') {
+        e.preventDefault();
+        handleBlockTypeChange(block.id, 'heading3');
+        (e.target as HTMLDivElement).textContent = '';
+      } else if (trimmedText === '-') {
+        e.preventDefault();
+        handleBlockTypeChange(block.id, 'bullet');
+        (e.target as HTMLDivElement).textContent = '';
+      } else if (trimmedText === '1.') {
+        e.preventDefault();
+        handleBlockTypeChange(block.id, 'numbered');
+        (e.target as HTMLDivElement).textContent = '';
+      } else if (trimmedText === '[]') {
+        e.preventDefault();
+        handleBlockTypeChange(block.id, 'todo');
+        (e.target as HTMLDivElement).textContent = '';
+      }
+    }
+  };
+
+  const handleArrowNavigation = (e: React.KeyboardEvent<HTMLDivElement>, block: MindBlock) => {
+    const selection = window.getSelection();
+    if (!selection) return;
+    
+    const textContent = e.currentTarget.textContent || '';
+    const cursorAtStart = selection.anchorOffset === 0;
+    const cursorAtEnd = selection.anchorOffset === textContent.length;
+    
     if (e.key === 'ArrowUp' && !e.shiftKey && cursorAtStart) {
       const currentIndex = blocks.findIndex(b => b.id === block.id);
       if (currentIndex > 0) {
@@ -592,38 +740,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       }
       return;
     }
-
-    if (e.key === ' ' && !e.shiftKey && cursorAtStart) {
-      const text = (e.target as HTMLDivElement).textContent || '';
-      const trimmedText = text.trim();
-      
-      if (trimmedText === '#') {
-        e.preventDefault();
-        handleBlockTypeChange(block.id, 'heading1');
-        (e.target as HTMLDivElement).textContent = '';
-      } else if (trimmedText === '##') {
-        e.preventDefault();
-        handleBlockTypeChange(block.id, 'heading2');
-        (e.target as HTMLDivElement).textContent = '';
-      } else if (trimmedText === '###') {
-        e.preventDefault();
-        handleBlockTypeChange(block.id, 'heading3');
-        (e.target as HTMLDivElement).textContent = '';
-      } else if (trimmedText === '-') {
-        e.preventDefault();
-        handleBlockTypeChange(block.id, 'bullet');
-        (e.target as HTMLDivElement).textContent = '';
-      } else if (trimmedText === '1.') {
-        e.preventDefault();
-        handleBlockTypeChange(block.id, 'numbered');
-        (e.target as HTMLDivElement).textContent = '';
-      } else if (trimmedText === '[]') {
-        e.preventDefault();
-        handleBlockTypeChange(block.id, 'todo');
-        (e.target as HTMLDivElement).textContent = '';
-      }
-    }
-  };
+  }
 
   const handleDragEnd = async (result: any) => {
     if (!result.destination) {
@@ -719,7 +836,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
             className="min-h-[24px] focus:outline-none text-left whitespace-pre-wrap break-words"
             style={{ 
               marginLeft: `${indentPadding}px`, 
-              minHeight: '100px' 
+              minHeight: '200px' 
             }}
           />
         );
@@ -916,8 +1033,8 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
   const navigationModeClass = isNavigationMode ? "cursor-pointer !bg-transparent" : "";
 
   useEffect(() => {
-    toast.info("Block editor loaded with debug mode", {
-      description: "Shift+Enter should create a line break within blocks",
+    toast.info("Block editor loaded with enhanced cursor management", {
+      description: "Shift+Enter creates a line break within blocks and cursor position is maintained during edits",
       duration: 5000
     });
   }, []);
@@ -932,7 +1049,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
         <h2 className="text-lg font-semibold">
           {isNavigationMode ? (
             <Badge variant="outline">Navigation Mode</Badge>
-          ) : "Blocks (Debug Mode)"}
+          ) : "Blocks (Enhanced Cursor Management)"}
         </h2>
         <div className="flex items-center gap-2">
           <Button 
@@ -940,6 +1057,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
             size="sm"
             onClick={() => {
               console.log('[DEBUG] Current blocks:', blocks);
+              console.log('[DEBUG] Cursor positions:', Array.from(cursorPosition.current.entries()));
               toast.info("Block state logged to console", { duration: 2000 });
             }}
           >
@@ -970,7 +1088,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
                       key={block.id} 
                       draggableId={block.id} 
                       index={index}
-                      isDragDisabled={isNavigationMode}
+                      isDragDisabled={isNavigationMode || isUpdating[block.id]}
                     >
                       {(provided, snapshot) => (
                         <div
@@ -982,7 +1100,8 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
                             selectedBlock === block.id && !isNavigationMode && "bg-accent/10",
                             selectedBlocks.includes(block.id) && isNavigationMode && "bg-primary/10 ring-1 ring-primary/20",
                             snapshot.isDragging && "bg-accent/20 shadow-lg",
-                            navigationModeClass
+                            navigationModeClass,
+                            isUpdating[block.id] && "border-l-2 border-amber-400" // Visual indicator for updating
                           )}
                           onClick={(e) => handleBlockClick(e, block.id)}
                           onMouseEnter={() => setHoveredBlock(block.id)}
@@ -1040,6 +1159,13 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
                               <Copy className="h-4 w-4" />
                             </Button>
                           </div>
+
+                          {/* Visual indicator for updating status */}
+                          {isUpdating[block.id] && (
+                            <div className="absolute right-2 top-2">
+                              <Badge variant="outline" className="bg-amber-100 text-amber-800 text-xs">Updating</Badge>
+                            </div>
+                          )}
 
                           {(hoveredBlock === block.id || index === blocks.length - 1) && !isNavigationMode && (
                             <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 z-10">
