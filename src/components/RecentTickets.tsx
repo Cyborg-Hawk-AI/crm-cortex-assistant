@@ -17,6 +17,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Textarea } from '@/components/ui/textarea';
 import { useMissionTasks } from '@/hooks/useMissionTasks';
 import { MissionCreateButton } from '@/components/mission/MissionCreateButton';
+import { RichTextEditor } from './mission/RichTextEditor';
 
 interface RecentTicketsProps {
   compact?: boolean;
@@ -31,6 +32,9 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
   const [editingTitle, setEditingTitle] = useState('');
   const [editingDescription, setEditingDescription] = useState('');
   const [expandedMissionTasks, setExpandedMissionTasks] = useState<Record<string, any>>({});
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<any | null>(null);
+  
   const { toast } = useToast();
   
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -157,6 +161,66 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
     }
     
     setEditingMissionId(null);
+  };
+
+  const handleTaskClick = async (taskId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('id', taskId)
+        .single();
+        
+      if (error || !data) {
+        console.error("Error fetching task details:", error);
+        return;
+      }
+      
+      setSelectedTask(data);
+      setSelectedTaskId(taskId);
+    } catch (err) {
+      console.error("Error retrieving task details:", err);
+    }
+  };
+
+  const handleUpdateTaskDescription = async (description: string) => {
+    if (!selectedTaskId) return;
+    
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ 
+          description,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', selectedTaskId);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Task updated successfully"
+      });
+      
+      if (selectedTask) {
+        setSelectedTask({
+          ...selectedTask,
+          description
+        });
+      }
+      
+      // Refresh task lists
+      if (expandedMissionTasks[selectedTask.parent_task_id || '']) {
+        loadMissionTasks(selectedTask.parent_task_id);
+      }
+    } catch (err) {
+      console.error("Error updating task:", err);
+      toast({
+        title: "Error",
+        description: "Failed to update task",
+        variant: "destructive"
+      });
+    }
   };
 
   if (isLoading) {
@@ -304,7 +368,10 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
                 </motion.div>
 
                 <CollapsibleContent className="pl-6 mt-2 space-y-2 overflow-hidden">
-                  <MiniTaskList missionId={ticket.id} />
+                  <MiniTaskList 
+                    missionId={ticket.id}
+                    onTaskClick={handleTaskClick}
+                  />
                 </CollapsibleContent>
               </div>
             </Collapsible>
@@ -326,11 +393,51 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
           </DialogContent>
         </Dialog>
       )}
+
+      {selectedTask && (
+        <Dialog open={!!selectedTaskId} onOpenChange={() => setSelectedTaskId(null)}>
+          <DialogContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] max-w-2xl max-h-[80vh] overflow-hidden">
+            <DialogHeader>
+              <DialogTitle className="text-neon-aqua">{selectedTask.title}</DialogTitle>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+              <div className="flex items-center space-x-2 text-sm">
+                <span className="text-[#CBD5E1]">Status:</span>
+                <span className={`px-2 py-0.5 rounded-full text-xs ${
+                  selectedTask.status === 'completed' 
+                    ? 'bg-neon-green/20 text-neon-green' 
+                    : 'bg-[#3A4D62] text-[#F1F5F9]'
+                }`}>
+                  {selectedTask.status || 'Open'}
+                </span>
+                
+                {selectedTask.due_date && (
+                  <>
+                    <span className="text-[#CBD5E1] ml-2">Due:</span>
+                    <span className="text-[#F1F5F9]">
+                      {new Date(selectedTask.due_date).toLocaleDateString()}
+                    </span>
+                  </>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-[#F1F5F9]">Description</h4>
+                <RichTextEditor
+                  content={selectedTask.description || ''}
+                  onSave={handleUpdateTaskDescription}
+                  placeholder="Add a description for this task..."
+                />
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
 
-function MiniTaskList({ missionId }: { missionId: string }) {
+function MiniTaskList({ missionId, onTaskClick }: { missionId: string, onTaskClick: (taskId: string) => void }) {
   const {
     tasks,
     isLoading,
@@ -369,7 +476,11 @@ function MiniTaskList({ missionId }: { missionId: string }) {
   return (
     <div className="space-y-1">
       {tasks.slice(0, 3).map(task => (
-        <div key={task.id} className="p-2 bg-[#25384D]/60 rounded border border-[#3A4D62]/40 flex items-center gap-2">
+        <div 
+          key={task.id} 
+          className="p-2 bg-[#25384D]/60 rounded border border-[#3A4D62]/40 flex items-center gap-2 cursor-pointer hover:bg-[#3A4D62]/30"
+          onClick={() => onTaskClick(task.id)}
+        >
           <div className={`w-2 h-2 rounded-full ${task.status === 'completed' ? 'bg-neon-green' : 'bg-[#64748B]'}`}></div>
           <span className={`text-xs ${task.status === 'completed' ? 'text-[#A3B8CC] line-through' : 'text-[#F1F5F9]'}`}>
             {task.title}
