@@ -21,6 +21,7 @@ import { MindBlock } from '@/utils/types';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
 interface BlockEditorProps {
   pageId: string;
@@ -55,7 +56,7 @@ const BLOCK_TYPES = [
 const CONTENT_UPDATE_DEBOUNCE = 2000;
 
 export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onUpdateBlock, onDeleteBlock, onMoveBlock, onDuplicateBlock }: BlockEditorProps) {
-  // Sort blocks by position to ensure consistent rendering
+  // Always sort blocks by position to ensure consistent rendering
   const blocks = [...unsortedBlocks].sort((a, b) => (a.position || 0) - (b.position || 0));
   
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
@@ -115,8 +116,8 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
   ) => {
     try {
       // Use the provided position or add at the end
-      const maxPosition = Math.max(...blocks.map(b => b.position || 0), 0);
-      const newPosition = position > maxPosition ? position : maxPosition + 1;
+      const maxPosition = blocks.length > 0 ? Math.max(...blocks.map(b => b.position || 0)) : -1;
+      const newPosition = position !== undefined ? position : maxPosition + 1;
 
       const newBlockId = await onCreateBlock(type, content, newPosition, parentId);
       
@@ -164,7 +165,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
         break;
     }
 
-    await onCreateBlock(type, content, position);
+    await handleCreateBlock(type, content, position);
     setShowBlockSelector(false);
     setSearchQuery('');
   };
@@ -323,7 +324,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     });
   };
 
-  // Simplified content update function to prevent cursor movement issues
+  // Debounced content change handler to prevent excessive saves
   const handleContentChange = (blockId: string, event: React.FormEvent<HTMLDivElement>) => {
     const content = event.currentTarget.textContent || '';
     
@@ -348,7 +349,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     }, CONTENT_UPDATE_DEBOUNCE);
   };
 
-  // Handle block content blur for saving changes
+  // Handle block content blur for saving changes immediately
   const handleContentBlur = (blockId: string, event: React.FocusEvent<HTMLDivElement>) => {
     const content = event.currentTarget.textContent || '';
     
@@ -366,6 +367,45 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
         contentChangeRef.current.set(blockId, false);
       }
     }
+  };
+
+  const handleDragEnd = async (result: any) => {
+    // Dropped outside the list
+    if (!result.destination) {
+      return;
+    }
+
+    const { source, destination } = result;
+    
+    // If the item didn't move positions
+    if (source.index === destination.index) {
+      return;
+    }
+
+    const blockId = blocks[source.index].id;
+    const newPosition = calculatePosition(destination.index);
+    
+    if (onMoveBlock) {
+      await onMoveBlock(blockId, newPosition);
+    }
+  };
+
+  // Helper to calculate position value when moving blocks
+  const calculatePosition = (newIndex: number): number => {
+    // If moving to the start
+    if (newIndex === 0) {
+      return blocks.length > 0 ? (blocks[0].position || 0) - 1 : 0;
+    }
+    
+    // If moving to the end
+    if (newIndex >= blocks.length) {
+      return blocks.length > 0 ? (blocks[blocks.length - 1].position || 0) + 1 : 0;
+    }
+    
+    // Moving between two blocks - calculate the midpoint position
+    const prevPos = blocks[newIndex - 1].position || 0;
+    const nextPos = blocks[newIndex].position || 0;
+    return prevPos + (nextPos - prevPos) / 2;
   };
 
   const filteredBlockTypes = BLOCK_TYPES.filter(type => 
@@ -595,90 +635,107 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
         <h2 className="text-lg font-semibold">Blocks</h2>
       </div>
       
-      <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
-        <div className="space-y-2 min-h-full">
-          {blocks.map((block, index) => (
-            <div
-              key={block.id}
-              className={cn(
-                "group relative flex items-start gap-2 p-2 rounded-lg hover:bg-accent/5",
-                selectedBlock === block.id && "bg-accent/10"
-              )}
-              onClick={(e) => handleBlockClick(e, block.id)}
-              onMouseEnter={() => setHoveredBlock(block.id)}
-              onMouseLeave={() => setHoveredBlock(null)}
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <Droppable droppableId="blocks-droppable">
+          {(provided) => (
+            <ScrollArea 
+              ref={scrollAreaRef} 
+              className="flex-1 p-4"
             >
-              <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                >
-                  <GripVertical className="h-4 w-4" />
-                </Button>
-              </div>
-
-              <div 
-                className="flex-1" 
-                ref={(el) => {
-                  if (el) blockRefs.current.set(block.id, el);
-                  else blockRefs.current.delete(block.id);
-                }}
+              <div
+                className="space-y-2 min-h-full"
+                {...provided.droppableProps}
+                ref={provided.innerRef}
               >
-                {renderBlockContent(block)}
+                {blocks.map((block, index) => (
+                  <Draggable key={block.id} draggableId={block.id} index={index}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        className={cn(
+                          "group relative flex items-start gap-2 p-2 rounded-lg hover:bg-accent/5",
+                          selectedBlock === block.id && "bg-accent/10",
+                          snapshot.isDragging && "bg-accent/20 shadow-lg"
+                        )}
+                        onClick={(e) => handleBlockClick(e, block.id)}
+                        onMouseEnter={() => setHoveredBlock(block.id)}
+                        onMouseLeave={() => setHoveredBlock(null)}
+                      >
+                        <div 
+                          className="opacity-30 hover:opacity-100 flex items-center gap-1 cursor-grab"
+                          {...provided.dragHandleProps}
+                        >
+                          <GripVertical className="h-4 w-4" />
+                        </div>
+
+                        <div 
+                          className="flex-1" 
+                          ref={(el) => {
+                            if (el) blockRefs.current.set(block.id, el);
+                            else blockRefs.current.delete(block.id);
+                          }}
+                        >
+                          {renderBlockContent(block)}
+                        </div>
+
+                        <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1">
+                          <Button 
+                            variant="ghost"
+                            size="sm" 
+                            className="h-8 w-8 p-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDeleteBlock(block.id);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost"
+                            size="sm" 
+                            className="h-8 w-8 p-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDuplicateBlock?.(block.id);
+                            }}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+
+                        {hoveredBlock === block.id && (
+                          <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 rounded-full bg-background border"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCreateBlock('text', { text: '' }, index + 1);
+                              }}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+
+                <div
+                  className="h-8 opacity-0 hover:opacity-100 transition-opacity cursor-text"
+                  onClick={() => handleCreateBlock('text', { text: '' }, blocks.length)}
+                  onFocus={() => handleCreateBlock('text', { text: '' }, blocks.length)}
+                  tabIndex={0}
+                />
               </div>
-
-              <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1">
-                <Button 
-                  variant="ghost"
-                  size="sm" 
-                  className="h-8 w-8 p-0"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteBlock(block.id);
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant="ghost"
-                  size="sm" 
-                  className="h-8 w-8 p-0"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDuplicateBlock?.(block.id);
-                  }}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </div>
-
-              {hoveredBlock === block.id && (
-                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0 rounded-full bg-background border"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleCreateBlock('text', { text: '' }, index + 1);
-                    }}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-            </div>
-          ))}
-
-          <div
-            className="h-8 opacity-0 hover:opacity-100 transition-opacity cursor-text"
-            onClick={() => handleCreateBlock('text', { text: '' }, blocks.length)}
-            onFocus={() => handleCreateBlock('text', { text: '' }, blocks.length)}
-            tabIndex={0}
-          />
-        </div>
-      </ScrollArea>
+            </ScrollArea>
+          )}
+        </Droppable>
+      </DragDropContext>
 
       {showBlockSelector && (
         <DropdownMenu open={showBlockSelector} onOpenChange={setShowBlockSelector}>
@@ -720,4 +777,3 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     </div>
   );
 }
-

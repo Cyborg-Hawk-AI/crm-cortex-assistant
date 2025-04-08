@@ -361,6 +361,59 @@ export function useMindboard() {
     },
   });
   
+  const moveBlockMutation = useMutation({
+    mutationFn: (params: { id: string, newPosition: number, newParentId?: string }) => {
+      return mindboardApi.updateMindBlock({
+        id: params.id,
+        position: params.newPosition,
+        parent_block_id: params.newParentId
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mind_blocks', activePageId] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: `Failed to move block: ${error.message}`,
+        variant: 'destructive'
+      });
+    },
+  });
+  
+  const duplicateBlockMutation = useMutation({
+    mutationFn: async (blockId: string) => {
+      const blockToClone = blocks.find(b => b.id === blockId);
+      if (!blockToClone || !activePageId) throw new Error("Block not found");
+      
+      const position = (blockToClone.position || 0) + 0.1;
+      
+      return mindboardApi.createMindBlock(
+        activePageId,
+        blockToClone.content_type,
+        { ...blockToClone.content },
+        {
+          position,
+          properties: blockToClone.properties
+        }
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mind_blocks', activePageId] });
+      toast({
+        title: 'Block duplicated',
+        description: 'Content block has been duplicated successfully'
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: `Failed to duplicate block: ${error.message}`,
+        variant: 'destructive'
+      });
+    },
+  });
+  
   if (mindboards.length > 0 && !activeMindboardId) {
     setActiveMindboardId(mindboards[0].id);
   }
@@ -400,6 +453,8 @@ export function useMindboard() {
     createBlock: createBlockMutation.mutateAsync,
     updateBlock: updateBlockMutation.mutateAsync,
     deleteBlock: deleteBlockMutation.mutateAsync,
+    moveBlock: moveBlockMutation.mutateAsync,
+    duplicateBlock: duplicateBlockMutation.mutateAsync,
     
     isLoading: 
       isLoadingMindboards || 
@@ -419,6 +474,8 @@ export function useMindboard() {
     isCreatingBlock: createBlockMutation.isPending,
     isUpdatingBlock: updateBlockMutation.isPending,
     isDeletingBlock: deleteBlockMutation.isPending,
+    isMovingBlock: moveBlockMutation.isPending,
+    isDuplicatingBlock: duplicateBlockMutation.isPending,
     
     error: mindboardsError || sectionsError || pagesError || blocksError
   };
