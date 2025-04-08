@@ -18,7 +18,7 @@ export function useMindboard() {
     mindboard: 0
   });
   
-  const TOAST_THROTTLE = 5000;
+  const TOAST_THROTTLE = 10000;
   
   const shouldShowToast = (type: 'block' | 'page' | 'section' | 'mindboard'): boolean => {
     const now = Date.now();

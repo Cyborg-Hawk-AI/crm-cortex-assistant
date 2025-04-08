@@ -3,157 +3,107 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    /* Steel Blue Futurism Theme */
-    --background: 212 35% 15%; /* #1C2A3A - Steel Blue */
-    --foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+:root {
+  --neon-aqua: #00F7EF;
+  --neon-purple: #AD00FF;
+  --neon-green: #00FF41;
+  --neon-blue: #4FD1FF;
+  --neon-red: #FF3B3B;
+}
 
-    --card: 213 33% 18%; /* #25384D - Slightly lighter steel */
-    --card-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
 
-    --popover: 213 33% 18%; /* #25384D - Lighter steel */
-    --popover-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+}
 
-    --primary: 181 100% 50%; /* #00F7EF - Neon Aqua */
-    --primary-foreground: 222 47% 11%; /* #111827 - Deep Navy */
+/* Add responsive styling */
+.responsive-container {
+  width: 100%;
+  max-width: 100%;
+  padding: 0 1rem;
+  margin: 0 auto;
+  overflow-x: hidden;
+}
 
-    --secondary: 265 90% 65%; /* #A855F7 - Electric Purple */
-    --secondary-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
-
-    --muted: 215 25% 40%; /* #557092 - Muted Blue Steel */
-    --muted-foreground: 214 32% 91%; /* #CBD5E1 - Cool Gray */
-
-    --accent: 142 100% 68%; /* #B6FF5D - Lime Green */
-    --accent-foreground: 222 47% 11%; /* #111827 - Deep Navy */
-
-    --destructive: 346 84% 61%; /* #F43F5E - Rose Red */
-    --destructive-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
-
-    --border: 213 28% 29%; /* #3A4D62 - Border color with better definition */
-    --input: 213 28% 29%; /* #3A4D62 - Input borders with better definition */
-    --ring: 181 100% 50%; /* #00F7EF - Neon Aqua ring */
-
-    --radius: 0.75rem;
-
-    /* Neon Colors */
-    --neon-red: 346 84% 61%; /* #F43F5E - Rose Red */
-    --neon-purple: 265 90% 65%; /* #A855F7 - Electric Purple */
-    --neon-blue: 199 98% 48%; /* #38BDF8 - Bright Blue */
-    --neon-aqua: 181 100% 50%; /* #00F7EF - Neon Aqua */
-    --neon-green: 142 100% 68%; /* #B6FF5D - Lime Green */
-    --neon-yellow: 41 100% 70%; /* #FBBF24 - Amber Yellow */
-  }
-
-  * {
-    @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground font-sans antialiased;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    @apply text-foreground font-bold;
-  }
-
-  p, span, div {
-    @apply text-foreground;
-  }
-
-  a {
-    @apply text-primary hover:text-primary/90 transition-colors font-medium;
-  }
-
-  button {
-    @apply transition-all;
-  }
-
-  /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  ::-webkit-scrollbar-track {
-    @apply bg-transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    @apply bg-[#3A4D62] rounded-full;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-[#4A5D72];
+@media (min-width: 640px) {
+  .responsive-container {
+    max-width: 640px;
   }
 }
 
-@layer components {
-  .glass-panel {
-    @apply bg-[#25384D]/90 backdrop-blur-md border-2 border-[#3A4D62] shadow-lg;
+@media (min-width: 768px) {
+  .responsive-container {
+    max-width: 768px;
   }
-  
-  .section-transition {
-    @apply transition-all duration-300 ease-in-out;
-  }
-  
-  .input-focus-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
-  }
-  
-  .hover-card-effect {
-    @apply transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl;
-  }
+}
 
-  .app-button {
-    @apply bg-gradient-to-r from-neon-aqua to-neon-aqua/80 text-[#111827] hover:brightness-110 transition-all shadow-md hover:shadow-[0_0_15px_rgba(0,247,239,0.5)];
+@media (min-width: 1024px) {
+  .responsive-container {
+    max-width: 1024px;
   }
+}
 
-  .card-container {
-    @apply bg-[#25384D] border border-[#3A4D62] rounded-lg shadow-md hover:shadow-[0_0_15px_rgba(0,247,239,0.25)] transition-all;
+@media (min-width: 1280px) {
+  .responsive-container {
+    max-width: 1280px;
   }
+}
 
-  .section-header {
-    @apply text-[#F1F5F9] font-bold;
-  }
-  
-  /* Alert styling */
-  .alert-box {
-    @apply border-l-4 shadow-lg;
-  }
-  
-  .alert-critical {
-    @apply bg-red-900/30 border-neon-red text-white;
-  }
-  
-  .alert-high {
-    @apply bg-orange-900/30 border-neon-yellow text-white;
-  }
-  
-  .alert-medium {
-    @apply bg-amber-900/30 border-amber-400 text-white;
-  }
-  
-  .alert-low {
-    @apply bg-blue-900/30 border-neon-blue text-white;
-  }
-  
-  .task-card {
-    @apply bg-[#1C2A3A] border border-[#3A4D62] shadow-md hover:shadow-[0_0_15px_rgba(0,247,239,0.2)] transition-all;
-  }
-  
-  .status-badge {
-    @apply text-white font-bold shadow-sm;
-  }
-  
-  .action-button {
-    @apply bg-gradient-to-r from-neon-aqua to-neon-aqua/80 text-[#111827] shadow-md hover:brightness-110 hover:shadow-[0_0_15px_rgba(0,247,239,0.5)];
-  }
+/* Add styles to ensure proper scrolling */
+.scroll-container {
+  max-height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
 
-  /* Glow text effect */
-  .glow-text {
-    text-shadow: 0 0 10px currentColor;
+/* Update ScrollArea styles */
+.scrollarea-viewport {
+  height: 100% !important;
+  width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+/* Add NebulaGrid theme styles */
+@layer base {
+  :root {
+    --background: 210 30% 8%;
+    --foreground: 120 100% 85%;
+    
+    --card: 210 20% 12%;
+    --card-foreground: 120 100% 85%;
+    
+    --popover: 210 20% 12%;
+    --popover-foreground: 120 100% 85%;
+    
+    --primary: 123 80% 50%;
+    --primary-foreground: 210 30% 8%;
+    
+    --secondary: 180 90% 55%;
+    --secondary-foreground: 210 30% 8%;
+    
+    --muted: 210 15% 15%;
+    --muted-foreground: 120 30% 60%;
+    
+    --accent: 200 80% 60%;
+    --accent-foreground: 210 30% 8%;
+    
+    --destructive: 0 100% 65%;
+    --destructive-foreground: 120 100% 85%;
+    
+    --border: 210 15% 20%;
+    --input: 210 15% 20%;
+    --ring: 123 80% 50%;
+    
+    --radius: 0.5rem;
   }
 }
