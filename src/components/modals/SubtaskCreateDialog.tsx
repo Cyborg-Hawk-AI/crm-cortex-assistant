@@ -65,11 +65,16 @@ export function SubtaskCreateDialog({
   const handleSubmit = async (values: SubtaskFormValues) => {
     setIsSubmitting(true);
     try {
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+      
       await onSubmit({
         title: values.title,
         parent_task_id: taskId,
         is_completed: false,
         created_by: userId || null,
+        user_id: userId, // Added the required user_id field
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });

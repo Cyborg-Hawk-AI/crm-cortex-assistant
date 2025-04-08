@@ -37,6 +37,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useUsers } from '@/hooks/useUsers';
+import { getCurrentUserId } from '@/lib/supabase';
 
 const taskSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -62,7 +63,17 @@ export function TaskCreateDialog({
   onSubmit 
 }: TaskCreateDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const { users, currentUser, isLoading: isLoadingUsers } = useUsers();
+
+  // Get the current user ID when component mounts
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const id = await getCurrentUserId();
+      setUserId(id);
+    };
+    fetchUserId();
+  }, []);
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
@@ -86,14 +97,20 @@ export function TaskCreateDialog({
   const handleSubmit = async (values: TaskFormValues) => {
     setIsSubmitting(true);
     try {
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+
       await onSubmit({
         title: values.title || '', 
         description: values.description || null,
         status: values.status,
         priority: values.priority,
         tags: values.tags || [],
-        reporter_id: currentUser?.id || '',
+        reporter_id: userId,
+        user_id: userId, // Added required user_id field
         assignee_id: values.assignee_id || null,
+        parent_task_id: null, // Added required parent_task_id field
         due_date: values.due_date ? values.due_date.toISOString() : null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { CalendarIcon, X, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -55,13 +55,13 @@ export function TaskCreateModal({ open, onOpenChange, onTaskCreated }: TaskCreat
   const [newLabel, setNewLabel] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     const fetchUserId = async () => {
       const id = await getCurrentUserId();
       setUserId(id);
     };
     fetchUserId();
-  });
+  }, []);
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
@@ -95,13 +95,24 @@ export function TaskCreateModal({ open, onOpenChange, onTaskCreated }: TaskCreat
   });
 
   const onSubmit = (data: TaskFormValues) => {
+    if (!userId) {
+      toast({
+        title: 'Error',
+        description: 'User ID is not available. Please try again.',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
     const taskData = {
       title: data.title,
       description: data.description || null,
       status: data.priority === 'urgent' ? 'in-progress' as const : 'open' as const,
       priority: data.priority as 'low' | 'medium' | 'high' | 'urgent' || 'medium',
-      reporter_id: userId || 'unknown',
+      reporter_id: userId,
+      user_id: userId,
       assignee_id: data.assignee_id || null,
+      parent_task_id: null,
       due_date: data.dueDate ? data.dueDate.toISOString() : null,
       tags: labels,
       created_at: new Date().toISOString(),

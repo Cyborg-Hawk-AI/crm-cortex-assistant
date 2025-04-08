@@ -37,16 +37,19 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useUsers } from '@/hooks/useUsers';
+import { getCurrentUserId } from '@/lib/supabase';
 
 const taskSchema = z.object({
   id: z.string(),
   title: z.string().min(1, 'Title is required'),
-  description: z.string().optional(),
+  description: z.string().nullable().optional(),
   status: z.string(),
   priority: z.string(),
   due_date: z.date().optional(),
-  assignee_id: z.string().optional(),
+  assignee_id: z.string().optional().nullable(),
   reporter_id: z.string(),
+  user_id: z.string(),
+  parent_task_id: z.string().nullable().optional(),
   tags: z.array(z.string()).optional(),
   created_at: z.string(),
   updated_at: z.string(),
@@ -69,17 +72,26 @@ export function TaskEditDialog({
 }: TaskEditDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { users, isLoading: isLoadingUsers } = useUsers();
+  const [userId, setUserId] = useState<string | null>(null);
 
-  // Convert dates to strings for form compatibility
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const id = await getCurrentUserId();
+      setUserId(id);
+    };
+    fetchUserId();
+  }, []);
+
+  // Convert dates to strings and handle null values for form compatibility
   const normalizedTask = {
     ...task,
     due_date: task.due_date ? new Date(task.due_date) : undefined,
-    created_at: typeof task.created_at === 'object' 
-      ? task.created_at.toISOString() 
-      : task.created_at,
-    updated_at: typeof task.updated_at === 'object' 
-      ? task.updated_at.toISOString() 
-      : task.updated_at,
+    created_at: task.created_at ? (typeof task.created_at === 'object' 
+      ? (task.created_at as Date).toISOString() 
+      : task.created_at) : new Date().toISOString(),
+    updated_at: task.updated_at ? (typeof task.updated_at === 'object' 
+      ? (task.updated_at as Date).toISOString() 
+      : task.updated_at) : new Date().toISOString(),
   };
 
   const form = useForm<TaskFormValues>({
@@ -92,12 +104,12 @@ export function TaskEditDialog({
       const formattedTask = {
         ...task,
         due_date: task.due_date ? new Date(task.due_date) : undefined,
-        created_at: typeof task.created_at === 'object' 
-          ? task.created_at.toISOString() 
-          : task.created_at,
-        updated_at: typeof task.updated_at === 'object' 
-          ? task.updated_at.toISOString() 
-          : task.updated_at,
+        created_at: task.created_at ? (typeof task.created_at === 'object' 
+          ? (task.created_at as Date).toISOString() 
+          : task.created_at) : new Date().toISOString(),
+        updated_at: task.updated_at ? (typeof task.updated_at === 'object' 
+          ? (task.updated_at as Date).toISOString() 
+          : task.updated_at) : new Date().toISOString(),
       };
       form.reset(formattedTask);
     }
@@ -115,6 +127,8 @@ export function TaskEditDialog({
         due_date: values.due_date ? values.due_date.toISOString() : null,
         assignee_id: values.assignee_id || null,
         reporter_id: values.reporter_id,
+        user_id: values.user_id, // Ensure user_id is preserved
+        parent_task_id: values.parent_task_id || null, // Include parent_task_id
         tags: values.tags || [],
         created_at: values.created_at,
         updated_at: new Date().toISOString(),
