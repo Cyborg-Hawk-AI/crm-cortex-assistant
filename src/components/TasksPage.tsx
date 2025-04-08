@@ -5,14 +5,17 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle, BookOpen, Table, List, Zap } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { MissionTableView } from '@/components/mission/MissionTableView';
 import { MissionCreateButton } from '@/components/mission/MissionCreateButton';
+import { MissionTaskEditor } from '@/components/mission/MissionTaskEditor';
 
 export function TasksPage() {
   const { toast } = useToast();
   const [viewMode, setViewMode] = useState<'table' | 'list'>('table');
   const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [isTaskEditorOpen, setIsTaskEditorOpen] = useState(false);
   
   // Mock mission for demonstration - In a real implementation, fetch from Supabase
   const missions = [{
@@ -26,6 +29,15 @@ export function TasksPage() {
       setSelectedMissionId(missions[0].id);
     }
   }, [missions, selectedMissionId]);
+
+  const handleTaskClick = (taskId: string) => {
+    setSelectedTaskId(taskId);
+    setIsTaskEditorOpen(true);
+  };
+  
+  const handleCloseTaskEditor = () => {
+    setIsTaskEditorOpen(false);
+  };
   
   if (!missions.length) {
     return (
@@ -88,7 +100,10 @@ export function TasksPage() {
               transition={{ duration: 0.3 }}
             >
               {viewMode === 'table' ? (
-                <MissionTableView missionId={selectedMissionId} />
+                <MissionTableView 
+                  missionId={selectedMissionId} 
+                  onTaskClick={handleTaskClick}
+                />
               ) : (
                 <div className="p-4 text-center text-[#CBD5E1]">
                   <p>List view coming soon</p>
@@ -98,6 +113,19 @@ export function TasksPage() {
           )}
         </CardContent>
       </Card>
+      
+      {/* Task Editor Dialog */}
+      {selectedTaskId && (
+        <Dialog open={isTaskEditorOpen} onOpenChange={setIsTaskEditorOpen}>
+          <DialogContent className="sm:max-w-[700px] p-0 bg-[#25384D] border-[#3A4D62]">
+            <MissionTaskEditor 
+              taskId={selectedTaskId}
+              onClose={handleCloseTaskEditor}
+              onRefresh={() => {}}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

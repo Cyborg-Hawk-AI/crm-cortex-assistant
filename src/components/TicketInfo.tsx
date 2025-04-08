@@ -1,12 +1,13 @@
 
 import { motion } from 'framer-motion';
-import { AlertCircle, Clock, MessageCircle, NotebookPen, User, Building, Calendar, Users } from 'lucide-react';
+import { AlertCircle, Clock, MessageCircle, NotebookPen, User, Building, Calendar, Users, Zap } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Ticket } from '@/utils/types';
 import { formatDistanceToNow } from 'date-fns';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 interface TicketInfoProps {
   ticket: Ticket;
@@ -22,6 +23,7 @@ export function TicketInfo({
   onOpenScratchpad 
 }: TicketInfoProps) {
   const [showDetails, setShowDetails] = useState(true);
+  const navigate = useNavigate();
 
   const priorityColors = {
     low: 'bg-gradient-to-r from-blue-600/40 to-sky-600/40 text-white border-blue-400/50',
@@ -37,12 +39,19 @@ export function TicketInfo({
     closed: 'bg-gradient-to-r from-gray-600/40 to-slate-600/40 text-white border-gray-400/50'
   };
 
+  const handleTaskClick = () => {
+    // Navigate to the task directly with the task ID as state instead of a URL parameter
+    // This avoids 404 errors when clicking on tasks
+    navigate('/tasks', { state: { openTaskId: ticket.id } });
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="rounded-lg border border-border/50 bg-gradient-to-br from-gray-700/70 to-gray-600/50 backdrop-blur-sm shadow-md overflow-hidden mb-4"
+      className="rounded-lg border border-border/50 bg-gradient-to-br from-gray-700/70 to-gray-600/50 backdrop-blur-sm shadow-md overflow-hidden mb-4 cursor-pointer"
+      onClick={handleTaskClick}
     >
       <div className="flex flex-col">
         <div className="p-4">
@@ -54,6 +63,14 @@ export function TicketInfo({
               <Badge variant="outline" className={priorityColors[ticket.priority]}>
                 {ticket.priority}
               </Badge>
+              
+              {/* Display Mission association if this is a subtask */}
+              {ticket.parent_task_id && (
+                <Badge variant="outline" className="bg-gradient-to-r from-neon-aqua/40 to-neon-purple/40 text-white border-neon-aqua/50">
+                  <Zap className="h-3 w-3 mr-1 text-neon-aqua" />
+                  Mission Task
+                </Badge>
+              )}
             </div>
           </div>
           
@@ -64,9 +81,9 @@ export function TicketInfo({
           <div className="flex flex-wrap items-center text-xs text-white/80 space-x-4 mt-3">
             <div className="flex items-center">
               <User className="h-3 w-3 mr-1" />
-              <span>{ticket.customer.name}</span>
+              <span>{ticket.customer?.name || 'Unassigned'}</span>
             </div>
-            {ticket.customer.company && (
+            {ticket.customer?.company && (
               <div className="flex items-center">
                 <Building className="h-3 w-3 mr-1" />
                 <span>{ticket.customer.company}</span>
@@ -74,11 +91,11 @@ export function TicketInfo({
             )}
             <div className="flex items-center">
               <Clock className="h-3 w-3 mr-1" />
-              <span>Updated {formatDistanceToNow(ticket.updatedAt, { addSuffix: true })}</span>
+              <span>Updated {formatDistanceToNow(new Date(ticket.updated_at || ticket.updatedAt), { addSuffix: true })}</span>
             </div>
             <div className="flex items-center">
               <AlertCircle className="h-3 w-3 mr-1" />
-              <span>#{ticket.id}</span>
+              <span>#{ticket.id.split('-')[0]}</span>
             </div>
             {ticket.meetingDate && (
               <div className="flex items-center">
@@ -121,6 +138,17 @@ export function TicketInfo({
                 </div>
               )}
 
+              {/* Display parent mission info if this is a subtask */}
+              {ticket.parent_task_id && (
+                <div>
+                  <h4 className="text-xs font-medium mb-1 text-neon-aqua">Parent Mission</h4>
+                  <p className="text-xs flex items-center text-white/80">
+                    <Zap className="h-3 w-3 mr-1 text-neon-aqua" />
+                    <span>Connected to mission #{ticket.parent_task_id.split('-')[0]}</span>
+                  </p>
+                </div>
+              )}
+
               {ticket.actionItems && ticket.actionItems.length > 0 && (
                 <div>
                   <h4 className="text-xs font-medium mb-1 text-primary">Action Items</h4>
@@ -144,7 +172,10 @@ export function TicketInfo({
                       className="rounded-full h-10 w-10 p-0 flex items-center justify-center 
                                 bg-gradient-to-br from-primary to-primary/70 text-black border-0
                                 hover:from-primary/90 hover:to-primary/60 shadow-md hover:shadow-lg"
-                      onClick={onOpenChat}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenChat();
+                      }}
                     >
                       <MessageCircle className="h-5 w-5" />
                       <span className="sr-only">Open Chat</span>
@@ -158,7 +189,10 @@ export function TicketInfo({
                       className="rounded-full h-10 w-10 p-0 flex items-center justify-center 
                                 bg-gradient-to-br from-accent to-accent/70 text-black border-0
                                 hover:from-accent/90 hover:to-accent/60 shadow-md hover:shadow-lg"
-                      onClick={onOpenScratchpad}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenScratchpad();
+                      }}
                     >
                       <NotebookPen className="h-5 w-5" />
                       <span className="sr-only">Open Scratchpad</span>

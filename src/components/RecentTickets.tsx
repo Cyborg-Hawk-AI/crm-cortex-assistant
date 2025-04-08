@@ -1,326 +1,157 @@
 
-import React, { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Card } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import React from 'react';
+import { MotionCardHeader as CardHeader, Card, CardContent, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { getRecentTickets } from '@/api';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import type { Ticket } from '@/api/tickets';
-import { useToast } from '@/hooks/use-toast';
-import { supabase, getCurrentUserId } from '@/lib/supabase';
-import { Input } from '@/components/ui/input';
-import { ChevronDown, ChevronRight, Edit2, GripVertical } from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Textarea } from '@/components/ui/textarea';
-import { useMissionTasks } from '@/hooks/useMissionTasks';
-import { MissionCreateButton } from '@/components/mission/MissionCreateButton';
-import { MissionTableView } from '@/components/mission/MissionTableView';
-import { MissionTaskEditor } from '@/components/mission/MissionTaskEditor';
+import { TicketInfo } from '@/components/TicketInfo';
+import { TicketQuickActions } from '@/components/TicketQuickActions';
+import { PlusCircle, BarChart2, Layers } from 'lucide-react';
+import { Ticket } from '@/utils/types';
+
+// This is a mock implementation that simulates data
+const tickets: Ticket[] = [
+  {
+    id: '24b9da97-07c2-41e5-bb4a-254595162af6',
+    title: 'Implement dashboard analytics',
+    description: 'Create analytics dashboard with key performance metrics',
+    status: 'in-progress',
+    priority: 'high',
+    created_at: new Date('2025-03-29T08:00:00'),
+    updated_at: new Date('2025-04-07T11:30:00'),
+    customer: { name: 'Alex Chen', company: 'TechCorp Inc.' },
+    tags: ['design', 'frontend'],
+    summary: 'Working on implementing analytics dashboard with multiple visualization types.',
+    actionItems: [
+      'Create bar chart component',
+      'Implement data filtering',
+      'Add export functionality'
+    ]
+  },
+  {
+    id: 'e14e7cae-cc7a-4cfb-b0ad-c2202805c786',
+    title: 'API integration issues',
+    description: 'Fix authentication problems with external API',
+    status: 'open',
+    priority: 'urgent',
+    created_at: new Date('2025-04-03T15:20:00'),
+    updated_at: new Date('2025-04-08T09:45:00'),
+    customer: { name: 'Jamie Rivera' },
+    tags: ['backend', 'API'],
+    summary: 'Users experiencing intermittent connection failures to the main API.',
+    actionItems: [
+      'Debug authentication flow',
+      'Check rate limiting settings',
+      'Update documentation'
+    ],
+    // Example of a subtask with parent task reference
+    parent_task_id: '24b9da97-07c2-41e5-bb4a-254595162af6'
+  },
+];
 
 interface RecentTicketsProps {
-  compact?: boolean;
-  fullView?: boolean;
+  fullView?: boolean; 
+  onTaskClick?: (taskId: string) => void;
 }
 
-export function RecentTickets({ compact = false, fullView = false }: RecentTicketsProps) {
-  const navigate = useNavigate();
-  const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null);
-  const [expandedMission, setExpandedMission] = useState<Record<string, boolean>>({});
-  const [editingMissionId, setEditingMissionId] = useState<string | null>(null);
-  const [editingTitle, setEditingTitle] = useState('');
-  const [editingDescription, setEditingDescription] = useState('');
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsProps) {
+  const handleOpenChat = () => {
+    console.log("Open chat");
+    // Implementation would go here
+  };
   
-  const { toast } = useToast();
+  const handleOpenScratchpad = () => {
+    console.log("Open scratchpad");
+    // Implementation would go here
+  };
   
-  const titleInputRef = useRef<HTMLInputElement>(null);
-  
-  const { data: tickets = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['recentTickets'],
-    queryFn: getRecentTickets,
-  });
-
-  useEffect(() => {
-    if (editingMissionId && titleInputRef.current) {
-      titleInputRef.current.focus();
-    }
-  }, [editingMissionId]);
-
-  const handleMissionClick = async (missionId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('tasks')
-        .select('id')
-        .eq('id', missionId)
-        .single();
-      
-      if (error || !data) {
-        console.error("Error validating mission ID:", error);
-        const { data: tasksRelatedToMission } = await supabase
-          .from('tasks')
-          .select('id')
-          .filter('tags', 'cs', `{"mission:${missionId}}`)
-          .limit(1);
-
-        if (!tasksRelatedToMission || tasksRelatedToMission.length === 0) {
-          toast({
-            title: "Error",
-            description: "The selected mission could not be found",
-            variant: "destructive"
-          });
-          return;
-        }
-      }
-      
-      if (fullView) {
-        // In fullView, open the task editor dialog 
-        setSelectedMissionId(missionId);
-      } else {
-        // In compact view, navigate to Tasks page
-        navigate('/tasks');
-      }
-    } catch (err) {
-      console.error("Error checking mission:", err);
-      toast({
-        title: "Error",
-        description: "Failed to load mission tasks",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const toggleMissionExpand = (missionId: string) => {
-    setExpandedMission(prev => {
-      const newState = {
-        ...prev,
-        [missionId]: !prev[missionId]
-      };
-      return newState;
-    });
-  };
-
-  const handleEditMission = (mission: Ticket) => {
-    setEditingMissionId(mission.id);
-    setEditingTitle(mission.title);
-    setEditingDescription(mission.description || '');
-  };
-
-  const saveMissionChanges = async () => {
-    if (!editingMissionId) return;
-    
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({
-          title: editingTitle,
-          description: editingDescription
-        })
-        .eq('id', editingMissionId);
-        
-      if (error) throw error;
-      
-      toast({
-        title: "Success",
-        description: "Mission updated successfully"
-      });
-      
-      refetch();
-    } catch (err) {
-      console.error("Error updating mission:", err);
-      toast({
-        title: "Error",
-        description: "Failed to update mission",
-        variant: "destructive"
-      });
-    }
-    
-    setEditingMissionId(null);
-  };
-
-  if (isLoading) {
-    return (
-      <div className={compact ? "space-y-2" : "bg-[#25384D] rounded-lg p-4 border border-[#3A4D62] shadow-[0_0_15px_rgba(0,247,239,0.15)] hover:shadow-[0_0_20px_rgba(0,247,239,0.25)] transition-all duration-300 space-y-4"}>
-        {!compact && (
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="text-lg font-bold text-[#F1F5F9] flex items-center">
-              <div className="w-2 h-2 rounded-full bg-neon-green mr-2"></div>
-              Recent Missions
-            </h3>
-          </div>
-        )}
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="flex items-center space-x-4">
-            <Skeleton className="h-12 w-12 rounded-full bg-[#3A4D62]" />
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-[200px] bg-[#3A4D62]" />
-              <Skeleton className="h-4 w-[150px] bg-[#3A4D62]" />
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className={compact ? "text-center py-2" : "bg-[#25384D] rounded-lg p-4 border border-[#3A4D62] shadow-md text-center py-8"}>
-        <p className="text-sm text-[#CBD5E1]">Failed to load recent missions</p>
-      </div>
-    );
-  }
-
   return (
-    <div className={compact ? "" : "bg-[#25384D] rounded-lg p-4 border border-[#3A4D62] shadow-[0_0_15px_rgba(0,247,239,0.15)] hover:shadow-[0_0_20px_rgba(0,247,239,0.25)] transition-all duration-300"}>
-      {!compact && (
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold text-[#F1F5F9] flex items-center">
-            <div className="w-2 h-2 rounded-full bg-neon-green mr-2"></div>
-            Recent Missions
-          </h3>
-          {fullView && <MissionCreateButton />}
+    <Card>
+      <CardHeader className="pb-2 flex flex-row justify-between items-center">
+        <div className="flex items-center">
+          <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-neon-red to-neon-purple mr-2"></div>
+          <CardTitle className="text-lg font-bold">Recent Missions</CardTitle>
         </div>
-      )}
-
-      {tickets && tickets.length > 0 ? (
-        <div className="space-y-2">
-          {tickets.slice(0, compact && !fullView ? 3 : undefined).map((ticket: Ticket) => (
-            <Collapsible
-              key={ticket.id}
-              open={expandedMission[ticket.id]}
-              onOpenChange={() => toggleMissionExpand(ticket.id)}
+        <div className="flex items-center space-x-2">
+          {!fullView && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-sm px-2 text-[#CBD5E1] hover:text-[#F1F5F9]"
+              onClick={() => window.location.href = '/missions'}
             >
-              <div className="relative">
-                <motion.div
-                  className={`p-3 border border-[#3A4D62] rounded-md transition-all ${
-                    compact ? 'bg-[#1C2A3A]/60 hover:bg-[#25384D]' : 'bg-[#1C2A3A] hover:shadow-[0_0_10px_rgba(0,247,239,0.2)]'
-                  }`}
-                  whileHover={{ scale: 1.01 }}
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <div className="flex items-start">
-                    <div className="flex items-center mr-2 cursor-move text-[#64748B] hover:text-[#CBD5E1]">
-                      <GripVertical size={16} className="opacity-60" />
-                    </div>
-                    
-                    <CollapsibleTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="p-0 h-6 w-6 mr-2 text-[#64748B] hover:text-[#F1F5F9] hover:bg-transparent"
-                      >
-                        {expandedMission[ticket.id] ? (
-                          <ChevronDown className="h-4 w-4" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </CollapsibleTrigger>
-                    
-                    <div className="flex-1 cursor-pointer" onClick={() => !editingMissionId && handleMissionClick(ticket.id)}>
-                      {editingMissionId === ticket.id ? (
-                        <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
-                          <Input
-                            ref={titleInputRef}
-                            value={editingTitle}
-                            onChange={(e) => setEditingTitle(e.target.value)}
-                            className="mb-1 py-1 h-7 bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]"
-                          />
-                          <Textarea
-                            value={editingDescription}
-                            onChange={(e) => setEditingDescription(e.target.value)}
-                            placeholder="Add a description..."
-                            className="min-h-[60px] resize-none bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9] text-sm"
-                          />
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-7 text-xs border-[#3A4D62] text-[#F1F5F9]"
-                              onClick={() => setEditingMissionId(null)}
-                            >
-                              Cancel
-                            </Button>
-                            <Button
-                              size="sm"
-                              className="h-7 text-xs"
-                              onClick={saveMissionChanges}
-                            >
-                              Save
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <h4 className="text-sm font-medium text-[#F1F5F9]">{ticket.title}</h4>
-                          {ticket.description && (
-                            <p className="text-xs text-[#CBD5E1] mt-1 line-clamp-2">{ticket.description}</p>
-                          )}
-                          <div className="flex items-center mt-1">
-                            <span className="text-xs text-[#CBD5E1]">{ticket.date}</span>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                    
-                    {editingMissionId !== ticket.id && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditMission(ticket);
-                        }}
-                        className="opacity-0 group-hover:opacity-100 h-8 w-8 p-0 text-[#64748B] hover:text-[#F1F5F9] hover:bg-[#3A4D62]/30"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </motion.div>
-
-                <CollapsibleContent className="mt-2">
-                  {expandedMission[ticket.id] && (
-                    <div className="pl-6 pr-2 py-2 rounded-md bg-[#1C2A3A]/30 border border-[#3A4D62]/30 overflow-hidden">
-                      <MissionTableView missionId={ticket.id} />
-                    </div>
-                  )}
-                </CollapsibleContent>
-              </div>
-            </Collapsible>
-          ))}
+              View all
+            </Button>
+          )}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="border-neon-purple/40 hover:border-neon-purple/70 hover:bg-neon-purple/10 text-sm"
+          >
+            <PlusCircle className="h-3.5 w-3.5 mr-1" />
+            New
+          </Button>
         </div>
-      ) : (
-        <p className="text-center py-4 text-sm text-[#CBD5E1]">No recent missions found</p>
-      )}
-
-      {selectedMissionId && (
-        <Dialog open={!!selectedMissionId} onOpenChange={() => setSelectedMissionId(null)}>
-          <DialogContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] max-w-4xl max-h-[80vh] overflow-hidden">
-            <MissionTaskEditor 
-              taskId={selectedMissionId} 
-              onClose={() => setSelectedMissionId(null)}
-              onRefresh={refetch}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {selectedTaskId && (
-        <Dialog open={!!selectedTaskId} onOpenChange={() => setSelectedTaskId(null)}>
-          <DialogContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] max-w-4xl max-h-[80vh] overflow-hidden">
-            <MissionTaskEditor 
-              taskId={selectedTaskId} 
-              onClose={() => setSelectedTaskId(null)}
-              onRefresh={refetch}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
-    </div>
+      </CardHeader>
+      <CardContent className="pt-4">
+        {fullView ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {tickets.map((ticket) => (
+              <div key={ticket.id} className="flex flex-col" onClick={() => onTaskClick && onTaskClick(ticket.id)}>
+                <TicketInfo 
+                  ticket={ticket} 
+                  onOpenChat={handleOpenChat}
+                  onOpenScratchpad={handleOpenScratchpad}
+                />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <>
+            <div className="space-y-3">
+              {tickets.slice(0, 3).map((ticket) => (
+                <div key={ticket.id} onClick={() => onTaskClick && onTaskClick(ticket.id)}>
+                  <TicketInfo 
+                    ticket={ticket}
+                    onOpenChat={handleOpenChat}
+                    onOpenScratchpad={handleOpenScratchpad}
+                  />
+                </div>
+              ))}
+            </div>
+            
+            {/* Summary Statistics */}
+            <div className="mt-6 grid grid-cols-3 gap-2">
+              <div className="bg-gradient-to-br from-gray-800/50 to-gray-700/30 rounded-md p-3 flex items-center">
+                <div className="rounded-full bg-neon-purple/20 w-8 h-8 flex items-center justify-center mr-3">
+                  <Layers className="h-4 w-4 text-neon-purple" />
+                </div>
+                <div>
+                  <div className="text-xs text-[#CBD5E1]">Open</div>
+                  <div className="text-lg font-bold">4</div>
+                </div>
+              </div>
+              <div className="bg-gradient-to-br from-gray-800/50 to-gray-700/30 rounded-md p-3 flex items-center">
+                <div className="rounded-full bg-neon-blue/20 w-8 h-8 flex items-center justify-center mr-3">
+                  <BarChart2 className="h-4 w-4 text-neon-blue" />
+                </div>
+                <div>
+                  <div className="text-xs text-[#CBD5E1]">In Progress</div>
+                  <div className="text-lg font-bold">2</div>
+                </div>
+              </div>
+              <div className="bg-gradient-to-br from-gray-800/50 to-gray-700/30 rounded-md p-3 flex items-center">
+                <div className="rounded-full bg-neon-green/20 w-8 h-8 flex items-center justify-center mr-3">
+                  <BarChart2 className="h-4 w-4 text-neon-green" />
+                </div>
+                <div>
+                  <div className="text-xs text-[#CBD5E1]">Completed</div>
+                  <div className="text-lg font-bold">7</div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }

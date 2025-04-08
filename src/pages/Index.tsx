@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, LogOut } from 'lucide-react';
 import { Header } from '@/components/Header';
@@ -16,13 +16,29 @@ import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { Mindboard } from '@/components/mindboard/Mindboard';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { MissionTaskEditor } from '@/components/mission/MissionTaskEditor';
+import { TasksPage } from '@/components/TasksPage';
 
 export default function Index() {
   const [activeTab, setActiveTab] = useState<string>('main');
   const { signOut } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [isTaskEditorOpen, setIsTaskEditorOpen] = useState(false);
+
+  useEffect(() => {
+    const state = location.state as { openTaskId?: string } | null;
+    if (state?.openTaskId) {
+      setSelectedTaskId(state.openTaskId);
+      setIsTaskEditorOpen(true);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
 
   const handleOpenChat = () => {
     setActiveTab('chat');
@@ -34,6 +50,10 @@ export default function Index() {
 
   const handleSetActiveTab = (tab: string) => {
     setActiveTab(tab);
+  };
+  
+  const handleCloseTaskEditor = () => {
+    setIsTaskEditorOpen(false);
   };
 
   const handleSignOut = async () => {
@@ -52,6 +72,11 @@ export default function Index() {
         variant: "destructive",
       });
     }
+  };
+
+  const handleTaskClick = (taskId: string) => {
+    setSelectedTaskId(taskId);
+    setIsTaskEditorOpen(true);
   };
 
   return (
@@ -89,7 +114,7 @@ export default function Index() {
                 <TodaySyncUps />
                 
                 {/* Recent Missions */}
-                <RecentTickets />
+                <RecentTickets onTaskClick={handleTaskClick} />
                 
                 {/* Recent Mindboard Notes (was Activity Feed) */}
                 <RecentMindboardNotes />
@@ -135,10 +160,7 @@ export default function Index() {
               className="h-[calc(100vh-120px)] flex flex-col bg-[#25384D]/90 backdrop-blur-sm border border-[#3A4D62] rounded-lg shadow-md overflow-hidden"
             >
               <HomeButton />
-              <div className="flex-1 p-4 overflow-auto">
-                <h2 className="text-2xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-neon-green to-neon-blue">Missions</h2>
-                <RecentTickets fullView={true} />
-              </div>
+              <TasksPage />
             </motion.div>
           )}
 
@@ -192,7 +214,6 @@ export default function Index() {
                   Version 1.0.0 • action.it • Notion Assistant
                 </div>
                 
-                {/* Sign Out Button */}
                 <Button 
                   variant="destructive" 
                   className="w-full mt-4"
@@ -207,7 +228,18 @@ export default function Index() {
         </AnimatePresence>
       </main>
 
-      {/* Floating Action Bar */}
+      {selectedTaskId && (
+        <Dialog open={isTaskEditorOpen} onOpenChange={setIsTaskEditorOpen}>
+          <DialogContent className="sm:max-w-[700px] p-0 bg-[#25384D] border-[#3A4D62]">
+            <MissionTaskEditor 
+              taskId={selectedTaskId}
+              onClose={handleCloseTaskEditor}
+              onRefresh={() => {}}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
+
       {activeTab === 'main' && <FloatingActionBar />}
     </div>
   );
