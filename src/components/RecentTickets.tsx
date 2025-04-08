@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -10,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { TaskList } from '@/components/mission/TaskList';
 import type { Ticket } from '@/api/tickets';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase';
+import { supabase, getCurrentUserId } from '@/lib/supabase';
 import { Input } from '@/components/ui/input';
 import { ChevronDown, ChevronRight, Edit2, GripVertical } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
