@@ -74,7 +74,7 @@ export function SubtaskCreateDialog({
         parent_task_id: taskId,
         is_completed: false,
         created_by: userId || null,
-        user_id: userId, // Added the required user_id field
+        user_id: userId, // Include the user_id field
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });
