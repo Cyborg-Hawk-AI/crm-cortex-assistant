@@ -1,4 +1,3 @@
-
 import { motion } from 'framer-motion';
 import { AlertCircle, Clock, MessageCircle, NotebookPen, User, Building, Calendar, Users, Zap } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -40,9 +39,16 @@ export function TicketInfo({
   };
 
   const handleTaskClick = () => {
-    // Navigate to the task directly with the task ID as state instead of a URL parameter
-    // This avoids 404 errors when clicking on tasks
-    navigate('/', { state: { openTaskId: ticket.id } });
+    const taskTab = document.querySelector('[data-tab="tasks"]');
+    if (taskTab) {
+      (taskTab as HTMLElement).click();
+      
+      setTimeout(() => {
+        navigate('/', { state: { openTaskId: ticket.id } });
+      }, 100);
+    } else {
+      navigate('/', { state: { openTaskId: ticket.id } });
+    }
   };
 
   return (
@@ -64,7 +70,6 @@ export function TicketInfo({
                 {ticket.priority}
               </Badge>
               
-              {/* Display Mission association if this is a subtask */}
               {ticket.parent_task_id && (
                 <Badge variant="outline" className="bg-gradient-to-r from-neon-aqua/40 to-neon-purple/40 text-white border-neon-aqua/50">
                   <Zap className="h-3 w-3 mr-1 text-neon-aqua" />
@@ -138,7 +143,6 @@ export function TicketInfo({
                 </div>
               )}
 
-              {/* Display parent mission info if this is a subtask */}
               {ticket.parent_task_id && (
                 <div>
                   <h4 className="text-xs font-medium mb-1 text-neon-aqua">Parent Mission</h4>

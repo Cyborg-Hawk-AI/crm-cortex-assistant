@@ -77,7 +77,15 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
               variant="ghost" 
               size="sm" 
               className="text-sm px-2 text-[#CBD5E1] hover:text-[#F1F5F9]"
-              onClick={() => window.location.href = '/missions'}
+              onClick={() => {
+                // Navigate directly to the tasks tab instead of using a URL
+                const taskTab = document.querySelector('[data-tab="tasks"]');
+                if (taskTab) {
+                  (taskTab as HTMLElement).click();
+                } else {
+                  console.error("Tasks tab not found");
+                }
+              }}
             >
               View all
             </Button>

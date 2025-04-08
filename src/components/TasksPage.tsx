@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, BookOpen, Table, List, Zap } from 'lucide-react';
@@ -10,12 +10,25 @@ import { MissionTableView } from '@/components/mission/MissionTableView';
 import { MissionCreateButton } from '@/components/mission/MissionCreateButton';
 import { MissionTaskEditor } from '@/components/mission/MissionTaskEditor';
 
-export function TasksPage() {
+interface TasksPageProps {
+  selectedTaskId?: string | null;
+  onTaskClick?: (taskId: string) => void;
+}
+
+export function TasksPage({ selectedTaskId: externalSelectedTaskId = null, onTaskClick }: TasksPageProps) {
   const { toast } = useToast();
   const [viewMode, setViewMode] = useState<'table' | 'list'>('table');
   const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null);
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [isTaskEditorOpen, setIsTaskEditorOpen] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(externalSelectedTaskId);
+  const [isTaskEditorOpen, setIsTaskEditorOpen] = useState(!!externalSelectedTaskId);
+  
+  // Update state when external selectedTaskId changes
+  useEffect(() => {
+    if (externalSelectedTaskId) {
+      setSelectedTaskId(externalSelectedTaskId);
+      setIsTaskEditorOpen(true);
+    }
+  }, [externalSelectedTaskId]);
   
   // Mock mission for demonstration - In a real implementation, fetch from Supabase
   const missions = [{
@@ -31,12 +44,17 @@ export function TasksPage() {
   }, [missions, selectedMissionId]);
 
   const handleTaskClick = (taskId: string) => {
-    setSelectedTaskId(taskId);
-    setIsTaskEditorOpen(true);
+    if (onTaskClick) {
+      onTaskClick(taskId);
+    } else {
+      setSelectedTaskId(taskId);
+      setIsTaskEditorOpen(true);
+    }
   };
   
   const handleCloseTaskEditor = () => {
     setIsTaskEditorOpen(false);
+    setSelectedTaskId(null);
   };
   
   if (!missions.length) {
