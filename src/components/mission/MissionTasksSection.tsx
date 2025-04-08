@@ -2,6 +2,7 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TaskList } from '@/components/mission/TaskList';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface MissionTasksSectionProps {
   missionId: string;
@@ -14,7 +15,11 @@ export function MissionTasksSection({ missionId, compact = false }: MissionTasks
   }
   
   if (compact) {
-    return <TaskList missionId={missionId} />;
+    return (
+      <ScrollArea className="max-h-[400px]" hideScrollbar={true}>
+        <TaskList missionId={missionId} />
+      </ScrollArea>
+    );
   }
   
   return (
@@ -26,7 +31,9 @@ export function MissionTasksSection({ missionId, compact = false }: MissionTasks
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <TaskList missionId={missionId} />
+        <ScrollArea className="max-h-[400px]" hideScrollbar={true}>
+          <TaskList missionId={missionId} />
+        </ScrollArea>
       </CardContent>
     </Card>
   );

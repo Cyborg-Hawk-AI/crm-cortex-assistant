@@ -7,6 +7,7 @@ import { Task } from '@/utils/types';
 
 export function useMissionTasks(missionId: string | null) {
   const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [dueDate, setDueDate] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -41,6 +42,7 @@ export function useMissionTasks(missionId: string | null) {
         status: 'open',
         priority: 'medium',
         reporter_id: missionId,
+        due_date: dueDate,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -56,6 +58,7 @@ export function useMissionTasks(missionId: string | null) {
     },
     onSuccess: () => {
       setNewTaskTitle('');
+      setDueDate(null);
       queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId] });
       toast({
         title: "Task created",
@@ -129,6 +132,8 @@ export function useMissionTasks(missionId: string | null) {
     error,
     newTaskTitle,
     setNewTaskTitle,
+    dueDate,
+    setDueDate,
     createTask: (title: string) => createTask.mutate(title),
     updateTaskStatus: (taskId: string, status: string) => updateTaskStatus.mutate({ taskId, status }),
     deleteTask: (taskId: string) => deleteTask.mutate(taskId),
