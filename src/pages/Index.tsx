@@ -17,7 +17,6 @@ import { Mindboard } from '@/components/mindboard/Mindboard';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { TaskCreateModal } from '@/components/modals/TaskCreateModal';
 
 export default function Index() {
   const [activeTab, setActiveTab] = useState<string>('main');
@@ -210,9 +209,6 @@ export default function Index() {
 
       {/* Floating Action Bar */}
       {activeTab === 'main' && <FloatingActionBar />}
-      
-      {/* Add the TaskCreateModal to the app */}
-      <TaskCreateModal />
     </div>
   );
 }

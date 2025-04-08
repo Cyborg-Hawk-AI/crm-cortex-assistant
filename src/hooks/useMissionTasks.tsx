@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -85,7 +84,7 @@ export function useMissionTasks(missionId: string | null) {
         const { data, error } = await supabase
           .from('tasks')
           .select('*')
-          .filter('tags', 'cs', `{${missionTag}}`)  // Fix the filter syntax
+          .contains('tags', [missionTag])  // Using contains instead of cs to match array values
           .order('created_at', { ascending: true });
           
         if (error) {
@@ -138,7 +137,7 @@ export function useMissionTasks(missionId: string | null) {
         description: params.description || null,
         status: 'open',
         priority: 'medium',
-        reporter_id: currentUserId,
+        reporter_id: currentUserId, // Use current user ID as the reporter
         parent_task_id: params.parentTaskId,
         due_date: dueDate,
         // Store mission ID in tags array to query related tasks
@@ -334,7 +333,6 @@ export function useMissionTasks(missionId: string | null) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId] });
-      queryClient.invalidateQueries({ queryKey: ['recentTickets'] }); // Also update recent tickets
       refetch();
       
       // Clear any cached subtasks for the deleted task
