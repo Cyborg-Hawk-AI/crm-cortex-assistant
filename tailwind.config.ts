@@ -87,12 +87,12 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
                 // Neon colors
-                'neon-red': 'hsl(var(--neon-red))',
-                'neon-purple': 'hsl(var(--neon-purple))',
-                'neon-blue': 'hsl(var(--neon-blue))',
-                'neon-aqua': 'hsl(var(--neon-aqua))',
-                'neon-green': 'hsl(var(--neon-green))',
-                'neon-yellow': 'hsl(var(--neon-yellow))',
+                'neon-red': 'var(--neon-red)',
+                'neon-purple': 'var(--neon-purple)',
+                'neon-blue': 'var(--neon-blue)',
+                'neon-aqua': 'var(--neon-aqua)',
+                'neon-green': 'var(--neon-green)',
+                'neon-yellow': '#FBBF24',
 			},
 			fontFamily: {
 				sans: ['SF Pro Display', 'system-ui', 'sans-serif'],
