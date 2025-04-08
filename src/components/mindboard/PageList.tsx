@@ -8,6 +8,7 @@ import { getMindPages, getMindBlocks, updateMindPage } from '@/api/mindboard';
 import { MindPage, MindBlock } from '@/utils/types';
 import { cn } from '@/lib/utils';
 import { v4 as uuidv4 } from 'uuid';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface PageListProps {
   sectionId: string;
@@ -71,7 +72,6 @@ export const PageList: React.FC<PageListProps> = ({
 
   const handleCreatePage = () => {
     if (newPageTitle.trim()) {
-      // Create a new page with the title
       const newPage: Partial<MindPage> = {
         id: uuidv4(),
         section_id: sectionId,
@@ -81,7 +81,6 @@ export const PageList: React.FC<PageListProps> = ({
         updated_at: new Date().toISOString()
       };
 
-      // Call the onCreatePage callback with the new page
       onCreatePage(newPage);
       setNewPageTitle('');
       setShowNewPageInput(false);
@@ -169,21 +168,18 @@ export const PageList: React.FC<PageListProps> = ({
             )}
           </div>
 
-          {/* Mission Link Button */}
           <Button
             variant="ghost"
             size="sm"
             className="h-8 w-8 p-0 hover:bg-purple-500/10 text-purple-500 hover:text-purple-600"
             onClick={(e) => {
               e.stopPropagation();
-              // TODO: Implement mission linking
               console.log('Link mission to page:', page.id);
             }}
           >
             <LinkIcon className="h-4 w-4" />
           </Button>
 
-          {/* Page Actions */}
           <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1">
             <Button
               variant="ghost"
@@ -230,7 +226,7 @@ export const PageList: React.FC<PageListProps> = ({
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 h-full flex flex-col">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium">Mind Pages</h3>
         <Button
@@ -272,11 +268,13 @@ export const PageList: React.FC<PageListProps> = ({
         </div>
       )}
 
-      <div className="space-y-1">
-        {pages
-          ?.filter(page => !page.parent_page_id)
-          .map(page => renderPage(page))}
-      </div>
+      <ScrollArea className="flex-1 pr-2" orientation="vertical">
+        <div className="space-y-1 min-h-[200px]">
+          {pages
+            ?.filter(page => !page.parent_page_id)
+            .map(page => renderPage(page))}
+        </div>
+      </ScrollArea>
 
       {activePage && (
         <div className="flex-1 overflow-auto p-4 border-l">
@@ -284,14 +282,16 @@ export const PageList: React.FC<PageListProps> = ({
           {blocksLoading ? (
             <div>Loading blocks...</div>
           ) : (
-            <div>
-              {blocks?.map((block) => (
-                <BlockRenderer
-                  key={block.id}
-                  block={block}
-                />
-              ))}
-            </div>
+            <ScrollArea className="h-full" orientation="vertical">
+              <div className="min-h-[300px]">
+                {blocks?.map((block) => (
+                  <BlockRenderer
+                    key={block.id}
+                    block={block}
+                  />
+                ))}
+              </div>
+            </ScrollArea>
           )}
         </div>
       )}
