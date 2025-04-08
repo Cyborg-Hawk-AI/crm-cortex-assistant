@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, LogOut } from 'lucide-react';
@@ -76,14 +75,8 @@ export default function Index() {
   };
 
   const handleTaskClick = (taskId: string) => {
-    // When clicking a task in the dashboard, switch to tasks tab and open the dialog
-    setActiveTab('tasks');
-    
-    // Use a small delay to ensure the tab has changed before opening the dialog
-    setTimeout(() => {
-      setSelectedTaskId(taskId);
-      setIsTaskEditorOpen(true);
-    }, 100);
+    setSelectedTaskId(taskId);
+    setIsTaskEditorOpen(true);
   };
 
   return (
@@ -167,7 +160,7 @@ export default function Index() {
               className="h-[calc(100vh-120px)] flex flex-col bg-[#25384D]/90 backdrop-blur-sm border border-[#3A4D62] rounded-lg shadow-md overflow-hidden"
             >
               <HomeButton />
-              <TasksPage selectedTaskId={selectedTaskId} onTaskClick={setSelectedTaskId} />
+              <TasksPage />
             </motion.div>
           )}
 
@@ -235,8 +228,7 @@ export default function Index() {
         </AnimatePresence>
       </main>
 
-      {/* We don't need this dialog anymore since we'll show tasks within the tasks tab */}
-      {selectedTaskId && activeTab !== 'tasks' && (
+      {selectedTaskId && (
         <Dialog open={isTaskEditorOpen} onOpenChange={setIsTaskEditorOpen}>
           <DialogContent className="sm:max-w-[700px] p-0 bg-[#25384D] border-[#3A4D62]">
             <MissionTaskEditor 
