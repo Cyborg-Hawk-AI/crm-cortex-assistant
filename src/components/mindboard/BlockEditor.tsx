@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { 
   Plus, Trash2, Copy, MoreVertical, ChevronDown, GripVertical, 
@@ -56,13 +55,10 @@ const BLOCK_TYPES = [
   { type: 'columns', label: 'Columns', icon: <Columns className="h-4 w-4" />, shortcut: '/columns' },
 ] as const;
 
-// Increase the debounce time even further to reduce update frequency
 const CONTENT_UPDATE_DEBOUNCE = 5000; // 5 seconds
 
 export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onUpdateBlock, onDeleteBlock, onMoveBlock, onDuplicateBlock }: BlockEditorProps) {
-  // Sort blocks by position to fix ordering issues
   const blocks = [...unsortedBlocks].sort((a, b) => {
-    // Ensure we have valid numbers for comparison
     const posA = typeof a.position === 'number' ? a.position : 0;
     const posB = typeof b.position === 'number' ? b.position : 0;
     return posA - posB;
@@ -86,7 +82,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
   const contentChangeRef = useRef<Map<string, boolean>>(new Map());
   const nestedLevels = useRef<Map<string, number>>(new Map());
   
-  // Enhanced cursor position tracking
   const cursorPosition = useRef<Map<string, {
     node: Node | null, 
     offset: number,
@@ -124,7 +119,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     }
   }, [selectedBlock, blocks.length]);
 
-  // Enhanced cursor position saving with selection range support
   const saveCursorPosition = (blockId: string) => {
     console.log('[DEBUG] Saving cursor position for block:', blockId);
     const selection = window.getSelection();
@@ -142,7 +136,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       return;
     }
     
-    // Store complete range information
     const node = range.startContainer;
     const nodeHTML = node.nodeType === Node.ELEMENT_NODE 
       ? (node as Element).innerHTML 
@@ -176,7 +169,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     });
   };
 
-  // Enhanced cursor restoration with multiple fallback strategies
   const restoreCursorPosition = (blockId: string) => {
     console.log('[DEBUG] Restoring cursor position for block:', blockId);
     const savedPosition = cursorPosition.current.get(blockId);
@@ -191,13 +183,11 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       const selection = window.getSelection();
       if (!selection) return;
       
-      // Strategy 1: Try using the saved range directly if available
       if (savedPosition.range && blockElement.contains(savedPosition.startContainer)) {
         console.log('[DEBUG] Using saved range for restoration');
         selection.removeAllRanges();
         
         try {
-          // Create a new range based on saved positions
           const newRange = document.createRange();
           newRange.setStart(savedPosition.startContainer!, savedPosition.startOffset!);
           
@@ -215,7 +205,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
         }
       }
       
-      // Strategy 2: Try to find the exact same node
       if (blockElement.contains(savedPosition.node)) {
         console.log('[DEBUG] Original node found, restoring directly');
         
@@ -233,12 +222,10 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
         }
       }
       
-      // Strategy 3: Try to find node with specific text content
       if (savedPosition.textContent && savedPosition.textContent.trim() !== '') {
         console.log('[DEBUG] Searching for node with matching text:', 
           savedPosition.textContent.substring(0, 15));
         
-        // Helper function to find a node with similar text content
         const findNodeWithText = (rootNode: Node, text: string): Node | null => {
           if (rootNode.nodeType === Node.TEXT_NODE && 
               rootNode.textContent && 
@@ -255,7 +242,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
           return null;
         };
         
-        // Try to find a node with at least part of the text
         const searchText = savedPosition.textContent.substring(0, 
           Math.min(20, savedPosition.textContent.length));
           
@@ -268,10 +254,8 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
             try {
               const range = document.createRange();
               
-              // Calculate appropriate offset
               let offsetInNode = 0;
               if (foundNode.textContent) {
-                // Try to maintain same relative position in text
                 const originalLength = savedPosition.textContent.length;
                 const newLength = foundNode.textContent.length;
                 
@@ -297,7 +281,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
         }
       }
       
-      // Strategy 4: Analyze all text nodes in the block and place cursor at a similar position
       console.log('[DEBUG] Using text node traversal strategy');
       
       const textNodes: Node[] = [];
@@ -314,7 +297,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       traverseForText(blockElement);
       
       if (textNodes.length > 0) {
-        // If we have saved rangeText, try to find it
         if (savedPosition.rangeText && savedPosition.rangeText.trim()) {
           let bestNode = textNodes[0];
           let bestPosition = 0;
@@ -344,7 +326,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
           }
         }
         
-        // Fallback: Place at similar relative position
         try {
           const totalLength = textNodes.reduce((sum, node) => 
             sum + (node.textContent?.length || 0), 0);
@@ -379,7 +360,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
         }
       }
       
-      // Final fallback: Position at the beginning of the first text node
       console.log('[DEBUG] Fallback to positioning at first text node');
       
       const findFirstTextNode = (node: Node): Node => {
@@ -396,7 +376,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       try {
         const targetNode = findFirstTextNode(blockElement);
         
-        // Use the original offset if possible
         const offset = Math.min(savedPosition.offset, targetNode.textContent?.length || 0);
         
         const range = document.createRange();
@@ -479,7 +458,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     indent?: number
   ) => {
     try {
-      // Calculate position to ensure correct ordering
       let newPosition = position;
       
       if (position === undefined || position === null) {
@@ -489,7 +467,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
         newPosition = maxPosition + 1;
       }
       
-      // When creating a new block between existing blocks, calculate intermediate position
       if (blocks.length > 0 && position < blocks.length) {
         const prevBlock = blocks[Math.max(0, position - 1)];
         const nextBlock = blocks[Math.min(position, blocks.length - 1)];
@@ -497,7 +474,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
         const prevPos = typeof prevBlock.position === 'number' ? prevBlock.position : 0;
         const nextPos = typeof nextBlock.position === 'number' ? nextBlock.position : prevPos + 1;
         
-        // Create a position between the two blocks
         newPosition = prevPos + (nextPos - prevPos) / 2;
       }
 
@@ -613,14 +589,12 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       eventType: event.type
     });
     
-    // Always save cursor position on content change
     saveCursorPosition(blockId);
     
     if (content === '/') {
       handleOpenSlashCommand(blockId);
     }
     
-    // If manual update mode is on for this block, don't schedule automatic updates
     if (manualUpdateMode[blockId]) {
       console.log('[DEBUG] Manual update mode active, skipping auto update');
       contentChangeRef.current.set(blockId, true);
@@ -692,12 +666,10 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     }
   };
 
-  // Improved manual update function that preserves cursor position
   const handleManualUpdate = (blockId: string, content: string) => {
     const block = blocks.find(b => b.id === blockId);
     if (!block) return;
     
-    // Always save cursor position before update
     saveCursorPosition(blockId);
     
     setIsUpdating(prev => ({ ...prev, [blockId]: true }));
@@ -709,7 +681,6 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       contentChangeRef.current.set(blockId, false);
       setIsUpdating(prev => ({ ...prev, [blockId]: false }));
       
-      // Restore cursor position after update using enhanced restoration
       setTimeout(() => {
         if (blockRefs.current.get(blockId)) {
           restoreCursorPosition(blockId);
@@ -750,9 +721,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       } : 'No selection'
     });
     
-    // Don't process content change for regular typing - only on Shift+Enter
     if (e.key !== 'Enter') {
-      // Set manual update mode for this block
       setManualUpdateMode(prev => ({
         ...prev,
         [block.id]: true
@@ -787,37 +756,29 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
       return;
     }
 
-    // Shift+Enter triggers an update with the current content and inserts a line break
     if (e.key === 'Enter' && e.shiftKey) {
       e.preventDefault();
       console.log('[DEBUG] Shift+Enter detected - inserting line break and triggering update');
       
       const selection = window.getSelection();
       if (selection && selection.rangeCount > 0) {
-        console.log('[DEBUG] Selection exists, creating line break');
-        
-        // Save complete cursor position with enhanced data
         saveCursorPosition(block.id);
         
         const range = selection.getRangeAt(0);
         
-        // Insert the line break
         const br = document.createElement('br');
         range.deleteContents();
         range.insertNode(br);
         
-        // Add a zero-width space to ensure cursor can be positioned after the BR
         const textNode = document.createTextNode('\u200B');
         range.setStartAfter(br);
         range.insertNode(textNode);
         
-        // Position cursor after the inserted text
         range.setStartAfter(textNode);
         range.collapse(true);
         selection.removeAllRanges();
         selection.addRange(range);
         
-        // Save the current range again after modification
         const updatedRange = selection.getRangeAt(0);
         cursorPosition.current.set(block.id, {
           ...cursorPosition.current.get(block.id)!,
@@ -828,27 +789,22 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
           endOffset: updatedRange.endOffset
         });
         
-        // Get the updated content
         const updatedContent = e.currentTarget.innerHTML;
         console.log('[DEBUG] Updated HTML content after insertion:', updatedContent);
         
-        // Set flag to avoid auto-update
         setManualUpdateMode(prev => ({
           ...prev,
           [block.id]: false
         }));
         
-        // Manually trigger an update with the updated cursor position
         handleManualUpdate(block.id, updatedContent);
       }
       return;
     }
 
-    // Regular Enter now creates a new block
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       
-      // Find the actual index of this block based on position order
       const blockIndex = blocks.findIndex(b => b.id === block.id);
       const position = blockIndex + 1;
       
@@ -862,13 +818,11 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
         return;
       }
       
-      // Trigger update of the current block before creating a new one
       if (contentChangeRef.current.get(block.id)) {
         const currentContent = e.currentTarget.innerHTML;
         handleManualUpdate(block.id, currentContent);
       }
       
-      // Then create the new block with proper position
       handleCreateBlock(newType, {
         text: '',
         checked: newType === 'todo' ? false : undefined
@@ -1011,9 +965,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     }
   };
 
-  // Improved position calculation to prevent blocks with same position
   const calculatePosition = (newIndex: number): number => {
-    // Ensure blocks are ordered by position value
     const sortedBlocks = [...blocks].sort((a, b) => {
       const posA = typeof a.position === 'number' ? a.position : 0;
       const posB = typeof b.position === 'number' ? b.position : 0;
@@ -1021,30 +973,25 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     });
     
     if (newIndex <= 0) {
-      // Place at the beginning
       const firstPosition = sortedBlocks.length > 0 ? 
         (typeof sortedBlocks[0].position === 'number' ? sortedBlocks[0].position : 0) : 0;
       return firstPosition - 1;
     }
     
     if (newIndex >= sortedBlocks.length) {
-      // Place at the end
       const lastPosition = sortedBlocks.length > 0 ? 
         (typeof sortedBlocks[sortedBlocks.length - 1].position === 'number' ? 
           sortedBlocks[sortedBlocks.length - 1].position : 0) : 0;
       return lastPosition + 1;
     }
     
-    // Place between two blocks
     const beforeBlock = sortedBlocks[newIndex - 1];
     const afterBlock = sortedBlocks[newIndex];
     
     const beforePos = typeof beforeBlock.position === 'number' ? beforeBlock.position : 0;
     const afterPos = typeof afterBlock.position === 'number' ? afterBlock.position : beforePos + 1;
     
-    // Make sure we don't create identical positions
     if (beforePos === afterPos) {
-      // Reorder all block positions to create space
       return beforePos + 0.5;
     }
     
@@ -1348,6 +1295,7 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
             <ScrollArea 
               ref={scrollAreaRef} 
               className="flex-1 p-4"
+              hideScrollbar={true}
             >
               <div
                 className="space-y-1 min-h-full"
@@ -1543,4 +1491,3 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     </div>
   );
 }
-

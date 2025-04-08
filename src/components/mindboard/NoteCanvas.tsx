@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -13,7 +12,6 @@ import {
 import { NotePage, Note } from '@/utils/types';
 import { useToast } from '@/hooks/use-toast';
 
-// Mock API functions - replace with actual API calls
 const getPage = async (id: string | null): Promise<NotePage | null> => {
   if (!id) return null;
   return {
@@ -64,7 +62,6 @@ export function NoteCanvas({ notebookId, sectionId, pageId }: NoteCanvasProps) {
     enabled: !!pageId
   });
   
-  // Update local content when page changes
   useEffect(() => {
     if (page?.content) {
       setContent(page.content);
@@ -80,7 +77,6 @@ export function NoteCanvas({ notebookId, sectionId, pageId }: NoteCanvasProps) {
   const handleSave = () => {
     setIsEditing(false);
     
-    // In a real implementation, this would save to the API
     toast({
       title: "Page content saved",
       description: "Your changes have been saved"
@@ -88,8 +84,6 @@ export function NoteCanvas({ notebookId, sectionId, pageId }: NoteCanvasProps) {
   };
   
   const insertFormatting = (format: string) => {
-    // Implementation would depend on the editor being used
-    // This is just a placeholder function
     toast({
       title: `Format: ${format}`,
       description: `Applied ${format} formatting`
@@ -119,7 +113,6 @@ export function NoteCanvas({ notebookId, sectionId, pageId }: NoteCanvasProps) {
   
   return (
     <div className="flex flex-col h-full">
-      {/* Canvas Header */}
       <div className="flex items-center justify-between p-3 border-b border-[#3A4D62] bg-[#1C2A3A]/50">
         <h3 className="text-base font-medium text-[#F1F5F9]">
           {page?.title || 'Untitled'}
@@ -150,7 +143,6 @@ export function NoteCanvas({ notebookId, sectionId, pageId }: NoteCanvasProps) {
         </div>
       </div>
       
-      {/* Formatting Toolbar - Only show when editing */}
       {isEditing && (
         <div className="flex items-center p-2 border-b border-[#3A4D62] bg-[#25384D]/30">
           <div className="flex flex-wrap gap-1">
@@ -177,8 +169,7 @@ export function NoteCanvas({ notebookId, sectionId, pageId }: NoteCanvasProps) {
         </div>
       )}
       
-      {/* Canvas Content Area with Enhanced Vertical Scrolling */}
-      <ScrollArea className="flex-1" orientation="vertical">
+      <ScrollArea className="flex-1" orientation="vertical" hideScrollbar={true}>
         <div className="p-6 min-h-[800px]">
           {isEditing ? (
             <textarea
@@ -200,7 +191,6 @@ export function NoteCanvas({ notebookId, sectionId, pageId }: NoteCanvasProps) {
             </div>
           )}
           
-          {/* Notes attached to this page - maintain original ordering */}
           {notes.length > 0 && !isEditing && (
             <Collapsible className="mt-8 border-t border-[#3A4D62]/50 pt-4">
               <CollapsibleTrigger asChild>

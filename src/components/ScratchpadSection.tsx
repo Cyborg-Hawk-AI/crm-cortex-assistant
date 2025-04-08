@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Trash2, PlusCircle, ChevronRight, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -73,7 +74,7 @@ export const ScratchpadSection: React.FC<ScratchpadSectionProps> = ({
         </div>
         
         {isActive && sections && sections.length > 0 && (
-          <ScrollArea className="ml-2 mt-1 flex-1" orientation="vertical">
+          <ScrollArea className="ml-2 mt-1 flex-1" orientation="vertical" hideScrollbar={true}>
             <div className="space-y-0.5 min-h-[100px]">
               {sections.map(section => {
                 const isSectionActive = section.id === activeSectionId;
@@ -171,7 +172,7 @@ export const ScratchpadSection: React.FC<ScratchpadSectionProps> = ({
           </div>
         </div>
 
-        <ScrollArea className="flex-1" orientation="vertical">
+        <ScrollArea className="flex-1" orientation="vertical" hideScrollbar={true}>
           <div className="space-y-2 min-h-[200px]">
             {notes.length === 0 ? (
               <div className="text-center p-4 text-black">
