@@ -296,7 +296,10 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     }
   };
 
-  const handleContentChange = (blockId: string, event: React.FormEvent<HTMLDivElement> | React.KeyboardEvent<HTMLDivElement>) => {
+  const handleContentChange = (
+    blockId: string, 
+    event: React.FormEvent<HTMLDivElement> | React.KeyboardEvent<HTMLDivElement>
+  ) => {
     const content = event.currentTarget.textContent || '';
     
     saveCursorPosition(blockId);
@@ -344,12 +347,14 @@ export function BlockEditor({ pageId, blocks: unsortedBlocks, onCreateBlock, onU
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent, block: MindBlock) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>, block: MindBlock) => {
     const selection = window.getSelection();
     const textContent = e.currentTarget.textContent || '';
     const cursorAtStart = selection?.anchorOffset === 0;
     const cursorAtEnd = selection?.anchorOffset === textContent.length;
     const isEmpty = !textContent.trim();
+    
+    handleContentChange(block.id, e);
     
     if (cursorAtStart && isEmpty) {
       switch (e.key) {
