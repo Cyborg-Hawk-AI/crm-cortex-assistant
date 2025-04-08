@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Check, Circle, Clock, AlertCircle, Plus, Trash2, Calendar, ChevronRight, ChevronDown, Edit2, GripVertical } from 'lucide-react';
 import { cn } from "@/lib/utils";
@@ -66,7 +65,7 @@ export function TaskList({ missionId }: TaskListProps) {
     }
   }, [editingTaskId]);
 
-  const handleCreateTask = (e: React.FormEvent) => {
+  const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!currentUserId) {
@@ -79,11 +78,16 @@ export function TaskList({ missionId }: TaskListProps) {
     }
     
     if (newTaskTitle.trim()) {
-      createTask(newTaskTitle.trim(), null, newTaskDescription);
+      await createTask(newTaskTitle.trim(), null, newTaskDescription);
       setNewTaskTitle('');
       setNewTaskDescription('');
       setDueDate('');
       setShowAddForm(false);
+      
+      // Force a refetch to ensure tasks are up to date
+      setTimeout(() => {
+        refetch();
+      }, 100);
     }
   };
 
@@ -127,12 +131,18 @@ export function TaskList({ missionId }: TaskListProps) {
     }));
   };
 
-  const handleCreateSubtask = (parentTaskId: string) => {
+  const handleCreateSubtask = async (parentTaskId: string) => {
     if (newTaskTitle.trim()) {
-      createTask(newTaskTitle.trim(), parentTaskId, newTaskDescription);
+      await createTask(newTaskTitle.trim(), parentTaskId, newTaskDescription);
       setNewTaskTitle('');
       setNewTaskDescription('');
       setDueDate('');
+      
+      // Force a refetch and update the subtasks
+      setTimeout(() => {
+        refetch();
+        getSubtasks(parentTaskId);
+      }, 100);
     }
   };
   
@@ -531,6 +541,7 @@ export function TaskList({ missionId }: TaskListProps) {
           taskId={selectedTaskId} 
           missionId={missionId}
           onClose={() => setSelectedTaskId(null)}
+          onTaskUpdate={() => refetch()}
         />
       )}
     </div>
@@ -541,9 +552,10 @@ interface TaskDetailDialogProps {
   taskId: string;
   missionId: string;
   onClose: () => void;
+  onTaskUpdate?: () => void;
 }
 
-function TaskDetailDialog({ taskId, missionId, onClose }: TaskDetailDialogProps) {
+function TaskDetailDialog({ taskId, missionId, onClose, onTaskUpdate }: TaskDetailDialogProps) {
   const { 
     getTaskById, 
     updateTaskTitle, 
@@ -551,7 +563,8 @@ function TaskDetailDialog({ taskId, missionId, onClose }: TaskDetailDialogProps)
     updateTaskStatus, 
     updateTaskDueDate,
     getSubtasks,
-    subtasks
+    subtasks,
+    refetch
   } = useMissionTasks(missionId);
   
   const task = getTaskById(taskId);
@@ -575,28 +588,32 @@ function TaskDetailDialog({ taskId, missionId, onClose }: TaskDetailDialogProps)
     return null;
   }
 
-  const handleSaveTitle = () => {
+  const handleSaveTitle = async () => {
     if (title.trim() && title !== task.title) {
-      updateTaskTitle(taskId, title);
+      await updateTaskTitle(taskId, title);
+      if (onTaskUpdate) onTaskUpdate();
     }
   };
   
-  const handleSaveDescription = () => {
+  const handleSaveDescription = async () => {
     if (description !== task.description) {
-      updateTaskDescription(taskId, description);
+      await updateTaskDescription(taskId, description);
+      if (onTaskUpdate) onTaskUpdate();
     }
   };
 
-  const handleStatusChange = (newStatus: string) => {
+  const handleStatusChange = async (newStatus: string) => {
     if (newStatus !== task.status) {
-      updateTaskStatus(taskId, newStatus);
+      await updateTaskStatus(taskId, newStatus);
       setStatus(newStatus);
+      if (onTaskUpdate) onTaskUpdate();
     }
   };
 
-  const handleDueDateChange = (newDate: string) => {
-    updateTaskDueDate(taskId, newDate);
+  const handleDueDateChange = async (newDate: string) => {
+    await updateTaskDueDate(taskId, newDate);
     setDueDate(newDate);
+    if (onTaskUpdate) onTaskUpdate();
   };
 
   return (
@@ -662,7 +679,7 @@ function TaskDetailDialog({ taskId, missionId, onClose }: TaskDetailDialogProps)
                   {statusOption === 'open' && <Circle className="h-3 w-3 mr-1" />}
                   {statusOption === 'in-progress' && <Clock className="h-3 w-3 mr-1" />}
                   {statusOption === 'completed' && <Check className="h-3 w-3 mr-1" />}
-                  {statusOption.charAt(0).toUpperCase() + statusOption.slice(1)}
+                  {statusOption.charAt(0).toUpperCase() + statusOption.slice(1).replace('-', ' ')}
                 </Button>
               ))}
             </div>

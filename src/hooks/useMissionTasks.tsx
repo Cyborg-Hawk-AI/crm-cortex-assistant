@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -78,11 +77,14 @@ export function useMissionTasks(missionId: string | null) {
       if (!missionId) return [];
       
       try {
+        // Format the tag properly for Postgres containment operator
+        const missionTag = `mission:${missionId}`;
+        
         // Get tasks associated with this mission
         const { data, error } = await supabase
           .from('tasks')
           .select('*')
-          .filter('tags', 'cs', `{"mission:${missionId}}`)
+          .contains('tags', [missionTag])  // Using contains instead of cs to match array values
           .order('created_at', { ascending: true });
           
         if (error) {
@@ -90,6 +92,7 @@ export function useMissionTasks(missionId: string | null) {
           throw error;
         }
         
+        console.log("Fetched tasks for mission", missionId, ":", data);
         return data as Task[];
       } catch (err) {
         console.error("Error in task retrieval:", err);
@@ -127,6 +130,8 @@ export function useMissionTasks(missionId: string | null) {
         throw new Error('The referenced mission does not exist');
       }
       
+      const missionTag = `mission:${missionId}`;
+      
       const newTask = {
         title: params.title,
         description: params.description || null,
@@ -136,7 +141,7 @@ export function useMissionTasks(missionId: string | null) {
         parent_task_id: params.parentTaskId,
         due_date: dueDate,
         // Store mission ID in tags array to query related tasks
-        tags: params.parentTaskId ? [] : [`mission:${missionId}`],
+        tags: params.parentTaskId ? [] : [missionTag],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -158,7 +163,14 @@ export function useMissionTasks(missionId: string | null) {
     onSuccess: (data, variables) => {
       setNewTaskTitle('');
       setDueDate(null);
+      
+      // Invalidate and refetch the mission tasks query
       queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId] });
+      
+      // Force an immediate refetch to update the UI
+      setTimeout(() => {
+        refetch();
+      }, 100);
       
       if (variables.parentTaskId) {
         getSubtasks.mutate(variables.parentTaskId);
@@ -195,6 +207,7 @@ export function useMissionTasks(missionId: string | null) {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId] });
+      refetch();
       
       // If this is a subtask, we need to invalidate the parent's subtasks
       if (data.parent_task_id) {
@@ -227,6 +240,7 @@ export function useMissionTasks(missionId: string | null) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId] });
+      refetch();
     },
     onError: (error) => {
       toast({
@@ -254,6 +268,7 @@ export function useMissionTasks(missionId: string | null) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId] });
+      refetch();
     },
     onError: (error) => {
       toast({
@@ -281,6 +296,7 @@ export function useMissionTasks(missionId: string | null) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId] });
+      refetch();
     },
     onError: (error) => {
       toast({
@@ -317,6 +333,7 @@ export function useMissionTasks(missionId: string | null) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId] });
+      refetch();
       
       // Clear any cached subtasks for the deleted task
       setSubtasks(prev => {

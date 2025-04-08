@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -15,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { ChevronDown, ChevronRight, Edit2, Plus, GripVertical } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Textarea } from '@/components/ui/textarea';
+import { useMissionTasks } from '@/hooks/useMissionTasks';
 
 interface RecentTicketsProps {
   compact?: boolean;
@@ -29,6 +31,7 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
   const [editingTitle, setEditingTitle] = useState('');
   const [editingDescription, setEditingDescription] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [expandedMissionTasks, setExpandedMissionTasks] = useState<Record<string, any>>({});
   
   const titleInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
@@ -46,6 +49,7 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
 
   const handleMissionClick = async (missionId: string) => {
     try {
+      // Verify the mission ID exists in the tasks table
       const { data, error } = await supabase
         .from('tasks')
         .select('id')
@@ -54,10 +58,12 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
       
       if (error || !data) {
         console.error("Error validating mission ID:", error);
+        // Check if we should allow mission ID without validation
+        // This lets us use the mission ID even if it's not a task itself
         const { data: tasksRelatedToMission } = await supabase
           .from('tasks')
           .select('id')
-          .filter('tags', 'cs', `{"mission:${missionId}}`)
+          .filter('tags', 'cs', `{"mission:${missionId}}`) // Check if any task has this mission tag
           .limit(1);
 
         if (!tasksRelatedToMission || tasksRelatedToMission.length === 0) {
@@ -82,10 +88,43 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
   };
 
   const toggleMissionExpand = (missionId: string) => {
-    setExpandedMission(prev => ({
-      ...prev,
-      [missionId]: !prev[missionId]
-    }));
+    // Toggle expanded state for this mission
+    setExpandedMission(prev => {
+      const newState = {
+        ...prev,
+        [missionId]: !prev[missionId]
+      };
+      
+      // When expanding, make sure we've loaded the tasks
+      if (newState[missionId] && !expandedMissionTasks[missionId]) {
+        loadMissionTasks(missionId);
+      }
+      
+      return newState;
+    });
+  };
+  
+  const loadMissionTasks = async (missionId: string) => {
+    try {
+      // Fetch tasks with the mission tag
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .filter('tags', 'cs', `{"mission:${missionId}}`)
+        .order('created_at', { ascending: true });
+        
+      if (error) {
+        console.error("Error fetching mission tasks:", error);
+        return;
+      }
+      
+      setExpandedMissionTasks(prev => ({
+        ...prev,
+        [missionId]: data || []
+      }));
+    } catch (err) {
+      console.error("Error loading mission tasks:", err);
+    }
   };
 
   const handleEditMission = (mission: Ticket) => {
@@ -113,6 +152,7 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
         description: "Mission updated successfully"
       });
       
+      // Refresh the mission list
       refetch();
     } catch (err) {
       console.error("Error updating mission:", err);
@@ -127,6 +167,7 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
   };
 
   const handleCreateMission = () => {
+    // This would trigger the existing create mission modal
     setShowCreateModal(true);
   };
 
@@ -283,14 +324,7 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
                 </motion.div>
 
                 <CollapsibleContent className="pl-6 mt-2 space-y-2 overflow-hidden">
-                  <div 
-                    className="border-l-2 border-[#3A4D62] pl-3 rounded-l-sm cursor-pointer"
-                    onClick={() => handleMissionClick(ticket.id)}
-                  >
-                    <p className="text-xs text-[#CBD5E1] hover:text-neon-aqua transition-colors">
-                      View and manage tasks for this mission
-                    </p>
-                  </div>
+                  <MiniTaskList missionId={ticket.id} />
                 </CollapsibleContent>
               </div>
             </Collapsible>
@@ -300,6 +334,7 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
         <p className="text-center py-4 text-sm text-[#CBD5E1]">No recent missions found</p>
       )}
 
+      {/* Mission Tasks Dialog */}
       {selectedMissionId && (
         <Dialog open={!!selectedMissionId} onOpenChange={() => setSelectedMissionId(null)}>
           <DialogContent className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9] max-w-4xl max-h-[80vh] overflow-hidden">
@@ -311,6 +346,62 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
             </div>
           </DialogContent>
         </Dialog>
+      )}
+    </div>
+  );
+}
+
+// Mini TaskList component specifically for the collapsible view in the mission list
+function MiniTaskList({ missionId }: { missionId: string }) {
+  const {
+    tasks,
+    isLoading,
+    error,
+    refetch
+  } = useMissionTasks(missionId);
+  
+  useEffect(() => {
+    refetch();
+  }, [missionId, refetch]);
+  
+  if (isLoading) {
+    return (
+      <div className="py-2 flex justify-center">
+        <div className="h-4 w-4 rounded-full border-2 border-t-transparent border-neon-aqua animate-spin"></div>
+      </div>
+    );
+  }
+  
+  if (error || !tasks) {
+    return (
+      <div className="py-2 text-center">
+        <p className="text-xs text-[#64748B]">Could not load tasks</p>
+      </div>
+    );
+  }
+  
+  if (tasks.length === 0) {
+    return (
+      <div className="py-2 text-center">
+        <p className="text-xs text-[#64748B] italic">No tasks found for this mission</p>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="space-y-1">
+      {tasks.slice(0, 3).map(task => (
+        <div key={task.id} className="p-2 bg-[#25384D]/60 rounded border border-[#3A4D62]/40 flex items-center gap-2">
+          <div className={`w-2 h-2 rounded-full ${task.status === 'completed' ? 'bg-neon-green' : 'bg-[#64748B]'}`}></div>
+          <span className={`text-xs ${task.status === 'completed' ? 'text-[#A3B8CC] line-through' : 'text-[#F1F5F9]'}`}>
+            {task.title}
+          </span>
+        </div>
+      ))}
+      {tasks.length > 3 && (
+        <p className="text-xs text-neon-aqua py-1">
+          +{tasks.length - 3} more tasks
+        </p>
       )}
     </div>
   );
