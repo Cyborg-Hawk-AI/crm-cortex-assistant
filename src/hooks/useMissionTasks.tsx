@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -27,8 +27,9 @@ export function useMissionTasks(missionId: string | null) {
   const {
     data: missionExists,
     isLoading: checkingMission,
+    refetch: recheckMission
   } = useQuery({
-    queryKey: ['mission-exists', missionId],
+    queryKey: ['mission-exists', missionId, currentUserId],
     queryFn: async () => {
       if (!missionId || !currentUserId) return false;
       
@@ -38,7 +39,7 @@ export function useMissionTasks(missionId: string | null) {
           .from('tasks')
           .select('id')
           .eq('id', missionId)
-          .eq('reporter_id', currentUserId) // Use reporter_id instead of user_id
+          .eq('reporter_id', currentUserId) 
           .single();
           
         if (error) {
@@ -48,8 +49,8 @@ export function useMissionTasks(missionId: string | null) {
           const { data: relatedTasks, error: relatedError } = await supabase
             .from('tasks')
             .select('id')
-            .eq('reporter_id', currentUserId) // Use reporter_id instead of user_id
-            .filter('tags', 'cs', `{"mission:${missionId}"}`);
+            .eq('reporter_id', currentUserId)
+            .or(`tags.cs.{"mission:${missionId}"},id.eq.${missionId}`);
           
           if (relatedError || !relatedTasks || relatedTasks.length === 0) {
             return false;
@@ -81,13 +82,12 @@ export function useMissionTasks(missionId: string | null) {
         // Format the tag properly for Postgres containment operator
         const missionTag = `mission:${missionId}`;
         
-        // Get tasks associated with this mission
+        // Get tasks associated with this mission - using OR condition to check both tag and direct ID match
         const { data, error } = await supabase
           .from('tasks')
           .select('*')
-          .eq('reporter_id', currentUserId) // Use reporter_id instead of user_id
-          .contains('tags', [missionTag])
-          .order('created_at', { ascending: true });
+          .eq('reporter_id', currentUserId)
+          .or(`tags.cs.{"${missionTag}"},id.eq.${missionId},parent_task_id.eq.${missionId}`);
           
         if (error) {
           console.error("Error fetching tasks:", error);
@@ -106,17 +106,52 @@ export function useMissionTasks(missionId: string | null) {
     refetchOnWindowFocus: true
   });
 
+  // Function to fetch all subtasks for a given parent task
+  const fetchSubtasksForParent = useCallback(async (parentTaskId: string) => {
+    if (!currentUserId) return [];
+    
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('parent_task_id', parentTaskId)
+        .eq('reporter_id', currentUserId)
+        .order('created_at', { ascending: true });
+        
+      if (error) {
+        console.error(`Error fetching subtasks for ${parentTaskId}:`, error);
+        return [];
+      }
+      
+      console.log(`Found ${data?.length || 0} subtasks for parent: ${parentTaskId}`);
+      return data as Task[];
+    } catch (err) {
+      console.error("Error fetching subtasks:", err);
+      return [];
+    }
+  }, [currentUserId]);
+
   // Initial load of subtasks for all top-level tasks
   useEffect(() => {
-    if (tasks && tasks.length > 0 && currentUserId) {
-      const topLevelTasks = tasks.filter(task => !task.parent_task_id);
-      
-      // Batch load subtasks for top-level tasks
-      topLevelTasks.forEach(task => {
-        getSubtasks.mutate(task.id);
-      });
-    }
-  }, [tasks, currentUserId]);
+    const loadAllSubtasks = async () => {
+      if (tasks && tasks.length > 0 && currentUserId) {
+        const topLevelTasks = tasks.filter(task => !task.parent_task_id || task.parent_task_id === null);
+        
+        // Create a new subtasks object
+        const newSubtasks: Record<string, Task[]> = {};
+        
+        // Fetch subtasks for each top-level task
+        for (const task of topLevelTasks) {
+          const subtasksForTask = await fetchSubtasksForParent(task.id);
+          newSubtasks[task.id] = subtasksForTask;
+        }
+        
+        setSubtasks(newSubtasks);
+      }
+    };
+    
+    loadAllSubtasks();
+  }, [tasks, currentUserId, fetchSubtasksForParent]);
 
   const createTask = useMutation({
     mutationFn: async (params: { 
@@ -129,7 +164,10 @@ export function useMissionTasks(missionId: string | null) {
       
       // Verify the mission exists before attempting to create a task
       if (!missionExists && !params.parentTaskId) {
-        throw new Error('The referenced mission does not exist');
+        await recheckMission();
+        if (!missionExists) {
+          throw new Error('The referenced mission does not exist');
+        }
       }
       
       const missionTag = `mission:${missionId}`;
@@ -204,7 +242,7 @@ export function useMissionTasks(missionId: string | null) {
           updated_at: new Date().toISOString()
         })
         .eq('id', taskId)
-        .eq('reporter_id', currentUserId) // Using reporter_id instead of user_id
+        .eq('reporter_id', currentUserId)
         .select()
         .single();
         
@@ -240,7 +278,7 @@ export function useMissionTasks(missionId: string | null) {
           updated_at: new Date().toISOString()
         })
         .eq('id', taskId)
-        .eq('reporter_id', currentUserId) // Using reporter_id instead of user_id
+        .eq('reporter_id', currentUserId)
         .select()
         .single();
         
@@ -271,7 +309,7 @@ export function useMissionTasks(missionId: string | null) {
           updated_at: new Date().toISOString()
         })
         .eq('id', taskId)
-        .eq('reporter_id', currentUserId) // Using reporter_id instead of user_id
+        .eq('reporter_id', currentUserId)
         .select()
         .single();
         
@@ -302,7 +340,7 @@ export function useMissionTasks(missionId: string | null) {
           updated_at: new Date().toISOString()
         })
         .eq('id', taskId)
-        .eq('reporter_id', currentUserId) // Using reporter_id instead of user_id
+        .eq('reporter_id', currentUserId)
         .select()
         .single();
         
@@ -331,7 +369,7 @@ export function useMissionTasks(missionId: string | null) {
         .from('tasks')
         .select('id')
         .eq('parent_task_id', taskId)
-        .eq('reporter_id', currentUserId); // Using reporter_id instead of user_id
+        .eq('reporter_id', currentUserId);
       
       if (subtasksToDelete && subtasksToDelete.length > 0) {
         const subtaskIds = subtasksToDelete.map(subtask => subtask.id);
@@ -339,7 +377,7 @@ export function useMissionTasks(missionId: string | null) {
           .from('tasks')
           .delete()
           .in('id', subtaskIds)
-          .eq('reporter_id', currentUserId); // Using reporter_id instead of user_id
+          .eq('reporter_id', currentUserId);
       }
       
       // Then delete the task itself
@@ -347,18 +385,18 @@ export function useMissionTasks(missionId: string | null) {
         .from('tasks')
         .delete()
         .eq('id', taskId)
-        .eq('reporter_id', currentUserId); // Using reporter_id instead of user_id
+        .eq('reporter_id', currentUserId);
         
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, deletedTaskId) => {
       queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId, currentUserId] });
       refetch();
       
       // Clear any cached subtasks for the deleted task
       setSubtasks(prev => {
         const newSubtasks = { ...prev };
-        delete newSubtasks[missionId as string];
+        delete newSubtasks[deletedTaskId];
         return newSubtasks;
       });
       
@@ -380,21 +418,8 @@ export function useMissionTasks(missionId: string | null) {
     mutationFn: async (parentTaskId: string) => {
       if (!currentUserId) throw new Error('User not authenticated');
       
-      console.log(`Fetching subtasks for parent: ${parentTaskId}`);
-      const { data, error } = await supabase
-        .from('tasks') // Using tasks table for subtasks as per schema
-        .select('*')
-        .eq('parent_task_id', parentTaskId)
-        .eq('reporter_id', currentUserId) // Using reporter_id instead of user_id
-        .order('created_at', { ascending: true });
-        
-      if (error) {
-        console.error(`Error fetching subtasks for ${parentTaskId}:`, error);
-        throw error;
-      }
-      
-      console.log(`Found ${data?.length || 0} subtasks for parent: ${parentTaskId}`);
-      return { parentTaskId, subtasks: data as Task[] };
+      const subtasksForParent = await fetchSubtasksForParent(parentTaskId);
+      return { parentTaskId, subtasks: subtasksForParent };
     },
     onSuccess: (result) => {
       setSubtasks(prev => ({

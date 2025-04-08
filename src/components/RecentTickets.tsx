@@ -108,7 +108,7 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .contains('tags', [`mission:${missionId}`])
+        .or(`tags.cs.{"mission:${missionId}"},id.eq.${missionId},parent_task_id.eq.${missionId}`)
         .order('created_at', { ascending: true });
         
       if (error) {
@@ -209,10 +209,13 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
         });
       }
       
-      // Refresh task lists
-      if (expandedMissionTasks[selectedTask.parent_task_id || '']) {
+      if (selectedTask && selectedTask.parent_task_id) {
         loadMissionTasks(selectedTask.parent_task_id);
+      } else if (expandedMissionTasks[selectedTaskId]) {
+        loadMissionTasks(selectedTaskId);
       }
+      
+      refetch();
     } catch (err) {
       console.error("Error updating task:", err);
       toast({
