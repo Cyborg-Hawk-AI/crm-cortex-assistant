@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -83,6 +84,7 @@ export function useMissionTasks(missionId: string | null) {
         const missionTag = `mission:${missionId}`;
         
         // Get tasks associated with this mission - using OR condition to check both tag and direct ID match
+        // This query has been improved to catch all related tasks
         const { data, error } = await supabase
           .from('tasks')
           .select('*')
@@ -111,6 +113,7 @@ export function useMissionTasks(missionId: string | null) {
     if (!currentUserId) return [];
     
     try {
+      // Use reporter_id instead of user_id for filtering
       const { data, error } = await supabase
         .from('tasks')
         .select('*')

@@ -119,7 +119,9 @@ export function RichTextEditor({ content, onSave, placeholder = 'Enter text here
   };
 
   // Determine whether to show content or editor
-  const showEditor = isEditing || !content || content === '<p></p>' || content.trim() === '';
+  // This now checks if content exists and isn't just an empty paragraph
+  const isEmpty = !content || content === '<p></p>' || content.trim() === '';
+  const showEditor = isEditing || isEmpty;
   
   return (
     <div className="border border-[#3A4D62] rounded-md bg-[#1C2A3A]">
@@ -208,7 +210,7 @@ export function RichTextEditor({ content, onSave, placeholder = 'Enter text here
         <div 
           className="p-4 prose prose-invert max-w-none"
           onClick={() => setIsEditing(true)}
-          dangerouslySetInnerHTML={{ __html: content }}
+          dangerouslySetInnerHTML={{ __html: content || '' }}
         />
       )}
     </div>

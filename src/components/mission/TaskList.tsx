@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useMissionTasks } from '@/hooks/useMissionTasks';
 import { Plus, ChevronDown, ChevronUp, CheckCircle, Circle, Edit2, Trash2 } from 'lucide-react';
@@ -51,6 +50,13 @@ export function TaskList({ missionId }: TaskListProps) {
     }
   }, [tasks]);
 
+  // Force a refresh when mounted to ensure we have the latest tasks
+  useEffect(() => {
+    if (missionId) {
+      refetch();
+    }
+  }, [missionId, refetch]);
+
   const toggleTaskExpand = (taskId: string) => {
     setExpandedTasks(prev => ({
       ...prev,
@@ -91,6 +97,7 @@ export function TaskList({ missionId }: TaskListProps) {
   const handleUpdateDescription = (taskId: string, content: string) => {
     console.log(`Updating task ${taskId} with description:`, content);
     updateTaskDescription(taskId, content);
+    
     // Force a refresh after a small delay to ensure the UI updates
     setTimeout(() => {
       refetch();
