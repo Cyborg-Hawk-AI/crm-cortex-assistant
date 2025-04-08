@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -48,10 +47,12 @@ export type Database = {
           priority: 'low' | 'medium' | 'high' | 'urgent'
           assignee_id: string | null
           reporter_id: string
+          user_id: string
           due_date: string | null
           tags: string[]
           created_at: string
           updated_at: string
+          parent_task_id: string | null
         }
         Insert: {
           id?: string
@@ -61,10 +62,12 @@ export type Database = {
           priority?: 'low' | 'medium' | 'high' | 'urgent'
           assignee_id?: string | null
           reporter_id: string
+          user_id: string
           due_date?: string | null
           tags?: string[]
           created_at?: string
           updated_at?: string
+          parent_task_id?: string | null
         }
         Update: {
           id?: string
@@ -74,10 +77,12 @@ export type Database = {
           priority?: 'low' | 'medium' | 'high' | 'urgent'
           assignee_id?: string | null
           reporter_id?: string
+          user_id?: string
           due_date?: string | null
           tags?: string[]
           created_at?: string
           updated_at?: string
+          parent_task_id?: string | null
         }
       }
       subtasks: {
@@ -85,6 +90,7 @@ export type Database = {
           id: string
           title: string
           parent_task_id: string
+          user_id: string
           is_completed: boolean
           created_by: string | null
           created_at: string
@@ -94,6 +100,7 @@ export type Database = {
           id?: string
           title: string
           parent_task_id: string
+          user_id: string
           is_completed?: boolean
           created_by?: string | null
           created_at?: string
@@ -103,6 +110,7 @@ export type Database = {
           id?: string
           title?: string
           parent_task_id?: string
+          user_id?: string
           is_completed?: boolean
           created_by?: string | null
           created_at?: string

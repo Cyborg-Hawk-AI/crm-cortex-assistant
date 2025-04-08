@@ -48,6 +48,7 @@ const taskSchema = z.object({
   due_date: z.date().optional(),
   assignee_id: z.string().optional().nullable(),
   reporter_id: z.string(),
+  user_id: z.string(), // Added user_id field
   parent_task_id: z.string().nullable().optional(),
   tags: z.array(z.string()).optional(),
   created_at: z.string(),
@@ -126,6 +127,7 @@ export function TaskEditDialog({
         due_date: values.due_date ? values.due_date.toISOString() : null,
         assignee_id: values.assignee_id || null,
         reporter_id: values.reporter_id,
+        user_id: values.user_id, // Include user_id in the submit
         parent_task_id: values.parent_task_id || null,
         tags: values.tags || [],
         created_at: values.created_at,

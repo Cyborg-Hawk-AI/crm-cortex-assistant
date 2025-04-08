@@ -72,6 +72,7 @@ export function SubtaskCreateDialog({
       await onSubmit({
         title: values.title,
         parent_task_id: taskId,
+        user_id: userId, // Add user_id to the new subtask
         is_completed: false,
         created_by: userId || null,
         created_at: new Date().toISOString(),

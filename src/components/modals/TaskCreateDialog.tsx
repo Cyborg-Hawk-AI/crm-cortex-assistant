@@ -108,6 +108,7 @@ export function TaskCreateDialog({
         priority: values.priority,
         tags: values.tags || [],
         reporter_id: userId,
+        user_id: userId, // Added user_id field
         assignee_id: values.assignee_id || null,
         parent_task_id: null, // Added required parent_task_id field
         due_date: values.due_date ? values.due_date.toISOString() : null,
