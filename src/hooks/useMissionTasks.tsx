@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -8,6 +8,7 @@ import { Task } from '@/utils/types';
 export function useMissionTasks(missionId: string | null) {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [dueDate, setDueDate] = useState<string | null>(null);
+  const [subtasks, setSubtasks] = useState<Record<string, Task[]>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -34,14 +35,15 @@ export function useMissionTasks(missionId: string | null) {
   });
 
   const createTask = useMutation({
-    mutationFn: async (title: string) => {
+    mutationFn: async (params: { title: string; parentTaskId: string | null }) => {
       if (!missionId) throw new Error('No mission ID provided');
       
       const newTask = {
-        title,
+        title: params.title,
         status: 'open',
         priority: 'medium',
         reporter_id: missionId,
+        parent_task_id: params.parentTaskId,
         due_date: dueDate,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -56,10 +58,15 @@ export function useMissionTasks(missionId: string | null) {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       setNewTaskTitle('');
       setDueDate(null);
       queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId] });
+      
+      if (variables.parentTaskId) {
+        getSubtasks.mutate(variables.parentTaskId);
+      }
+      
       toast({
         title: "Task created",
         description: "New task added to mission"
@@ -89,8 +96,13 @@ export function useMissionTasks(missionId: string | null) {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId] });
+      
+      // If this is a subtask, we need to invalidate the parent's subtasks
+      if (data.parent_task_id) {
+        getSubtasks.mutate(data.parent_task_id);
+      }
     },
     onError: (error) => {
       toast({
@@ -100,9 +112,78 @@ export function useMissionTasks(missionId: string | null) {
       });
     }
   });
+  
+  const updateTaskTitle = useMutation({
+    mutationFn: async ({ taskId, title }: { taskId: string, title: string }) => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .update({ 
+          title,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', taskId)
+        .select()
+        .single();
+        
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to update task title: ${error.message}`,
+        variant: "destructive"
+      });
+    }
+  });
+  
+  const updateTaskDueDate = useMutation({
+    mutationFn: async ({ taskId, dueDate }: { taskId: string, dueDate: string | null }) => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .update({ 
+          due_date: dueDate,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', taskId)
+        .select()
+        .single();
+        
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to update due date: ${error.message}`,
+        variant: "destructive"
+      });
+    }
+  });
 
   const deleteTask = useMutation({
     mutationFn: async (taskId: string) => {
+      // First, find and delete any subtasks
+      const { data: subtasksToDelete } = await supabase
+        .from('tasks')
+        .select('id')
+        .eq('parent_task_id', taskId);
+      
+      if (subtasksToDelete && subtasksToDelete.length > 0) {
+        const subtaskIds = subtasksToDelete.map(subtask => subtask.id);
+        await supabase
+          .from('tasks')
+          .delete()
+          .in('id', subtaskIds);
+      }
+      
+      // Then delete the task itself
       const { error } = await supabase
         .from('tasks')
         .delete()
@@ -112,6 +193,14 @@ export function useMissionTasks(missionId: string | null) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId] });
+      
+      // Clear any cached subtasks for the deleted task
+      setSubtasks(prev => {
+        const newSubtasks = { ...prev };
+        delete newSubtasks[missionId as string];
+        return newSubtasks;
+      });
+      
       toast({
         title: "Task deleted",
         description: "Task removed from mission"
@@ -125,20 +214,59 @@ export function useMissionTasks(missionId: string | null) {
       });
     }
   });
+  
+  const getSubtasks = useMutation({
+    mutationFn: async (parentTaskId: string) => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('parent_task_id', parentTaskId)
+        .order('created_at', { ascending: true });
+        
+      if (error) throw error;
+      return { parentTaskId, subtasks: data as Task[] };
+    },
+    onSuccess: (result) => {
+      setSubtasks(prev => ({
+        ...prev,
+        [result.parentTaskId]: result.subtasks
+      }));
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to fetch subtasks: ${error.message}`,
+        variant: "destructive"
+      });
+    }
+  });
+  
+  const getTaskById = (taskId: string) => {
+    return tasks.find(task => task.id === taskId);
+  };
 
   return {
     tasks,
+    subtasks,
     isLoading,
     error,
     newTaskTitle,
     setNewTaskTitle,
     dueDate,
     setDueDate,
-    createTask: (title: string) => createTask.mutate(title),
-    updateTaskStatus: (taskId: string, status: string) => updateTaskStatus.mutate({ taskId, status }),
+    createTask: (title: string, parentTaskId: string | null) => 
+      createTask.mutate({ title, parentTaskId }),
+    updateTaskStatus: (taskId: string, status: string) => 
+      updateTaskStatus.mutate({ taskId, status }),
+    updateTaskTitle: (taskId: string, title: string) => 
+      updateTaskTitle.mutate({ taskId, title }),
+    updateTaskDueDate: (taskId: string, dueDate: string | null) => 
+      updateTaskDueDate.mutate({ taskId, dueDate }),
     deleteTask: (taskId: string) => deleteTask.mutate(taskId),
+    getSubtasks: (parentTaskId: string) => getSubtasks.mutate(parentTaskId),
+    getTaskById,
     isCreating: createTask.isPending,
-    isUpdating: updateTaskStatus.isPending,
+    isUpdating: updateTaskStatus.isPending || updateTaskTitle.isPending || updateTaskDueDate.isPending,
     isDeleting: deleteTask.isPending,
     refetch
   };

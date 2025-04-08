@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getRecentTickets } from '@/api';
 import { Bell, Filter, Plus } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { TaskList } from '@/components/mission/TaskList';
 import type { Ticket } from '@/api/tickets';
 
 interface RecentTicketsProps {
@@ -18,6 +20,7 @@ interface RecentTicketsProps {
 
 export function RecentTickets({ compact = false, fullView = false }: RecentTicketsProps) {
   const navigate = useNavigate();
+  const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null);
   
   const { data: tickets = [], isLoading, error } = useQuery({
     queryKey: ['recentTickets'],
@@ -98,13 +101,14 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
           {tickets.slice(0, compact && !fullView ? 3 : undefined).map((ticket: Ticket) => (
             <motion.div
               key={ticket.id}
-              className={`p-3 border border-[#3A4D62] rounded-md transition-all ${
+              className={`p-3 border border-[#3A4D62] rounded-md transition-all cursor-pointer ${
                 compact ? 'bg-[#1C2A3A]/60 hover:bg-[#25384D]' : 'bg-[#1C2A3A] hover:shadow-[0_0_10px_rgba(0,247,239,0.2)]'
               }`}
               whileHover={{ scale: 1.01 }}
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2 }}
+              onClick={() => setSelectedMissionId(ticket.id)}
             >
               <div className="flex justify-between items-start">
                 <div className="flex-1">
@@ -141,6 +145,20 @@ export function RecentTickets({ compact = false, fullView = false }: RecentTicke
             View All Missions
           </Button>
         </div>
+      )}
+
+      {/* Mission Tasks Dialog */}
+      {selectedMissionId && (
+        <Dialog open={!!selectedMissionId} onOpenChange={() => setSelectedMissionId(null)}>
+          <DialogContent className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9] max-w-4xl max-h-[80vh] overflow-hidden">
+            <DialogHeader>
+              <DialogTitle className="text-neon-aqua">Mission Tasks</DialogTitle>
+            </DialogHeader>
+            <div className="py-4 overflow-hidden">
+              <TaskList missionId={selectedMissionId} />
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

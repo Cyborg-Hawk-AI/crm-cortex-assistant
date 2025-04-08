@@ -31,9 +31,7 @@ export function MissionTasksSection({ missionId, compact = false }: MissionTasks
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="max-h-[400px]" hideScrollbar={true}>
-          <TaskList missionId={missionId} />
-        </ScrollArea>
+        <TaskList missionId={missionId} />
       </CardContent>
     </Card>
   );

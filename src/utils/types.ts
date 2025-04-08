@@ -33,6 +33,7 @@ export interface Task {
   due_date?: string | Date;
   assignee_id?: string;
   reporter_id?: string;
+  parent_task_id?: string | null;  // Added for subtask support
   created_by?: string;
   created_at: Date | string;
   updated_at: Date | string;
