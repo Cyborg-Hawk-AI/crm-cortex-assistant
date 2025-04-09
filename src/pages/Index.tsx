@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, LogOut } from 'lucide-react';
@@ -30,12 +31,29 @@ export default function Index() {
   
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isTaskEditorOpen, setIsTaskEditorOpen] = useState(false);
+  const [openCreateTask, setOpenCreateTask] = useState(false);
 
+  // Process location state for navigation and task opening
   useEffect(() => {
-    const state = location.state as { openTaskId?: string } | null;
+    const state = location.state as { 
+      openTaskId?: string;
+      activeTab?: string;
+      openCreateTask?: boolean;
+    } | null;
+    
     if (state?.openTaskId) {
       setSelectedTaskId(state.openTaskId);
       setIsTaskEditorOpen(true);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+    
+    if (state?.activeTab) {
+      setActiveTab(state.activeTab);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+    
+    if (state?.openCreateTask) {
+      setOpenCreateTask(true);
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location, navigate]);
@@ -160,7 +178,14 @@ export default function Index() {
               className="h-[calc(100vh-120px)] flex flex-col bg-[#25384D]/90 backdrop-blur-sm border border-[#3A4D62] rounded-lg shadow-md overflow-hidden"
             >
               <HomeButton />
-              <TasksPage />
+              <TasksPage 
+                openCreateTask={openCreateTask} 
+                setOpenCreateTask={setOpenCreateTask} 
+                selectedTaskId={selectedTaskId}
+                setSelectedTaskId={setSelectedTaskId}
+                isTaskEditorOpen={isTaskEditorOpen}
+                setIsTaskEditorOpen={setIsTaskEditorOpen}
+              />
             </motion.div>
           )}
 
@@ -228,7 +253,7 @@ export default function Index() {
         </AnimatePresence>
       </main>
 
-      {selectedTaskId && (
+      {activeTab !== 'tasks' && selectedTaskId && (
         <Dialog open={isTaskEditorOpen} onOpenChange={setIsTaskEditorOpen}>
           <DialogContent className="sm:max-w-[700px] p-0 bg-[#25384D] border-[#3A4D62]">
             <MissionTaskEditor 

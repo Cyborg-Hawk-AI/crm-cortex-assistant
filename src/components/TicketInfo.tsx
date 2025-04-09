@@ -5,9 +5,10 @@ import { Badge } from '@/components/ui/badge';
 import { Ticket } from '@/utils/types';
 import { formatDistanceToNow } from 'date-fns';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
 
 interface TicketInfoProps {
   ticket: Ticket;
@@ -24,6 +25,38 @@ export function TicketInfo({
 }: TicketInfoProps) {
   const [showDetails, setShowDetails] = useState(true);
   const navigate = useNavigate();
+  const [parentTask, setParentTask] = useState<{ id: string; title: string } | null>(null);
+
+  // Fetch parent task info if this is a subtask
+  useEffect(() => {
+    const fetchParentTask = async () => {
+      if (ticket.parent_task_id) {
+        try {
+          const { data, error } = await supabase
+            .from('tasks')
+            .select('id, title')
+            .eq('id', ticket.parent_task_id)
+            .single();
+          
+          if (error) {
+            console.error('Error fetching parent task:', error);
+            return;
+          }
+          
+          if (data) {
+            setParentTask({
+              id: data.id,
+              title: data.title
+            });
+          }
+        } catch (err) {
+          console.error('Error in parent task fetch:', err);
+        }
+      }
+    };
+    
+    fetchParentTask();
+  }, [ticket.parent_task_id]);
 
   const priorityColors = {
     low: 'bg-gradient-to-r from-blue-600/40 to-sky-600/40 text-white border-blue-400/50',
@@ -36,13 +69,18 @@ export function TicketInfo({
     open: 'bg-gradient-to-r from-purple-600/40 to-violet-600/40 text-white border-purple-400/50',
     'in-progress': 'bg-gradient-to-r from-blue-600/40 to-indigo-600/40 text-white border-blue-400/50',
     resolved: 'bg-gradient-to-r from-green-600/40 to-emerald-600/40 text-white border-green-400/50',
-    closed: 'bg-gradient-to-r from-gray-600/40 to-slate-600/40 text-white border-gray-400/50'
+    closed: 'bg-gradient-to-r from-gray-600/40 to-slate-600/40 text-white border-gray-400/50',
+    completed: 'bg-gradient-to-r from-green-600/40 to-emerald-600/40 text-white border-green-400/50'
   };
 
   const handleTaskClick = () => {
-    // Navigate to the task directly with the task ID as state instead of a URL parameter
-    // This avoids 404 errors when clicking on tasks
-    navigate('/', { state: { openTaskId: ticket.id } });
+    // Navigate to the tasks tab and open this task
+    navigate('/', { 
+      state: { 
+        activeTab: 'tasks', 
+        openTaskId: ticket.id 
+      } 
+    });
   };
 
   return (
@@ -57,10 +95,10 @@ export function TicketInfo({
         <div className="p-4">
           <div className="flex items-start justify-between">
             <div className="flex space-x-2">
-              <Badge variant="outline" className={statusColors[ticket.status]}>
+              <Badge variant="outline" className={statusColors[ticket.status] || statusColors.open}>
                 {ticket.status.replace('-', ' ')}
               </Badge>
-              <Badge variant="outline" className={priorityColors[ticket.priority]}>
+              <Badge variant="outline" className={priorityColors[ticket.priority] || priorityColors.medium}>
                 {ticket.priority}
               </Badge>
               
@@ -91,24 +129,12 @@ export function TicketInfo({
             )}
             <div className="flex items-center">
               <Clock className="h-3 w-3 mr-1" />
-              <span>Updated {formatDistanceToNow(new Date(ticket.updated_at || ticket.updatedAt), { addSuffix: true })}</span>
+              <span>Updated {formatDistanceToNow(new Date(ticket.updated_at), { addSuffix: true })}</span>
             </div>
             <div className="flex items-center">
               <AlertCircle className="h-3 w-3 mr-1" />
               <span>#{ticket.id.split('-')[0]}</span>
             </div>
-            {ticket.meetingDate && (
-              <div className="flex items-center">
-                <Calendar className="h-3 w-3 mr-1" />
-                <span>Meeting: {ticket.meetingDate.toLocaleDateString()}</span>
-              </div>
-            )}
-            {ticket.meetingAttendees && (
-              <div className="flex items-center">
-                <Users className="h-3 w-3 mr-1" />
-                <span>{ticket.meetingAttendees.length} attendees</span>
-              </div>
-            )}
           </div>
         </div>
 
@@ -124,14 +150,16 @@ export function TicketInfo({
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="p-4 pt-2 space-y-4 bg-gradient-to-br from-gray-600/70 to-gray-500/50">
-              {ticket.lastStatusUpdate && (
+              {/* Display task description */}
+              {ticket.description && (
                 <div>
-                  <h4 className="text-xs font-medium mb-1 text-primary">{ticket.lastStatusUpdate}</h4>
-                  <p className="text-xs text-white/80">{ticket.lastStatusUpdate}</p>
+                  <h4 className="text-xs font-medium mb-1 text-primary">Description</h4>
+                  <p className="text-xs text-white/80">{ticket.description}</p>
                 </div>
               )}
 
-              {ticket.summary && (
+              {/* Display summary if available */}
+              {ticket.summary && !ticket.description && (
                 <div>
                   <h4 className="text-xs font-medium mb-1 text-primary">Summary</h4>
                   <p className="text-xs text-white/80">{ticket.summary}</p>
@@ -139,12 +167,12 @@ export function TicketInfo({
               )}
 
               {/* Display parent mission info if this is a subtask */}
-              {ticket.parent_task_id && (
+              {parentTask && (
                 <div>
                   <h4 className="text-xs font-medium mb-1 text-neon-aqua">Parent Mission</h4>
                   <p className="text-xs flex items-center text-white/80">
                     <Zap className="h-3 w-3 mr-1 text-neon-aqua" />
-                    <span>Connected to mission #{ticket.parent_task_id.split('-')[0]}</span>
+                    <span>{parentTask.title}</span>
                   </p>
                 </div>
               )}

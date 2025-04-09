@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, BookOpen, Table, List, Zap } from 'lucide-react';
@@ -9,35 +9,116 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { MissionTableView } from '@/components/mission/MissionTableView';
 import { MissionCreateButton } from '@/components/mission/MissionCreateButton';
 import { MissionTaskEditor } from '@/components/mission/MissionTaskEditor';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { getCurrentUserId } from '@/lib/supabase';
 
-export function TasksPage() {
+interface TasksPageProps {
+  openCreateTask?: boolean;
+  setOpenCreateTask?: (open: boolean) => void;
+  selectedTaskId?: string | null;
+  setSelectedTaskId?: (id: string | null) => void;
+  isTaskEditorOpen?: boolean;
+  setIsTaskEditorOpen?: (open: boolean) => void;
+}
+
+export function TasksPage({
+  openCreateTask = false,
+  setOpenCreateTask = () => {},
+  selectedTaskId = null,
+  setSelectedTaskId = () => {},
+  isTaskEditorOpen = false,
+  setIsTaskEditorOpen = () => {},
+}: TasksPageProps) {
   const { toast } = useToast();
   const [viewMode, setViewMode] = useState<'table' | 'list'>('table');
-  const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null);
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [isTaskEditorOpen, setIsTaskEditorOpen] = useState(false);
+  const [localSelectedTaskId, setLocalSelectedTaskId] = useState<string | null>(selectedTaskId);
+  const [localIsTaskEditorOpen, setLocalIsTaskEditorOpen] = useState<boolean>(isTaskEditorOpen);
   
-  // Mock mission for demonstration - In a real implementation, fetch from Supabase
-  const missions = [{
-    id: "mission-main",
-    name: "Main Mission Board"
-  }];
+  // Use props values if provided, otherwise use local state
+  const effectiveSelectedTaskId = selectedTaskId !== null ? selectedTaskId : localSelectedTaskId;
+  const effectiveIsTaskEditorOpen = isTaskEditorOpen !== undefined ? isTaskEditorOpen : localIsTaskEditorOpen;
+  
+  // Fetch missions from the database
+  const { data: missions = [], isLoading: loadingMissions } = useQuery({
+    queryKey: ['missions'],
+    queryFn: async () => {
+      const userId = await getCurrentUserId();
+      if (!userId) return [];
+      
+      try {
+        // We'll consider top-level tasks (without parent_task_id) as missions
+        const { data, error } = await supabase
+          .from('tasks')
+          .select('id, title')
+          .is('parent_task_id', null)
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          console.error('Error fetching missions:', error);
+          return [];
+        }
+        
+        return data.map(mission => ({
+          id: mission.id,
+          name: mission.title
+        }));
+      } catch (err) {
+        console.error('Error in mission fetch:', err);
+        return [];
+      }
+    }
+  });
 
   // Select first mission by default
-  React.useEffect(() => {
-    if (missions.length > 0 && !selectedMissionId) {
-      setSelectedMissionId(missions[0].id);
+  useEffect(() => {
+    if (missions.length > 0 && !effectiveSelectedTaskId) {
+      handleMissionSelect(missions[0].id);
     }
-  }, [missions, selectedMissionId]);
+  }, [missions, effectiveSelectedTaskId]);
 
   const handleTaskClick = (taskId: string) => {
-    setSelectedTaskId(taskId);
-    setIsTaskEditorOpen(true);
+    if (setSelectedTaskId) {
+      setSelectedTaskId(taskId);
+    } else {
+      setLocalSelectedTaskId(taskId);
+    }
+    
+    if (setIsTaskEditorOpen) {
+      setIsTaskEditorOpen(true);
+    } else {
+      setLocalIsTaskEditorOpen(true);
+    }
   };
   
   const handleCloseTaskEditor = () => {
-    setIsTaskEditorOpen(false);
+    if (setIsTaskEditorOpen) {
+      setIsTaskEditorOpen(false);
+    } else {
+      setLocalIsTaskEditorOpen(false);
+    }
   };
+  
+  const handleMissionSelect = (missionId: string) => {
+    if (setSelectedTaskId) {
+      setSelectedTaskId(missionId);
+    } else {
+      setLocalSelectedTaskId(missionId);
+    }
+  };
+  
+  if (loadingMissions) {
+    return (
+      <div className="h-full flex items-center justify-center p-4">
+        <div className="w-full max-w-lg p-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-gray-700/50 rounded-md w-1/3"></div>
+            <div className="h-40 bg-gray-700/50 rounded-md"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   if (!missions.length) {
     return (
@@ -49,7 +130,7 @@ export function TasksPage() {
               <p className="text-sm text-[#CBD5E1] mb-6">
                 Create your first mission to get started with task management
               </p>
-              <MissionCreateButton />
+              <MissionCreateButton onMissionCreated={(missionId) => handleMissionSelect(missionId)} />
             </div>
           </CardContent>
         </Card>
@@ -87,13 +168,33 @@ export function TasksPage() {
             </Button>
           </div>
           
-          <MissionCreateButton />
+          <MissionCreateButton onMissionCreated={(missionId) => handleMissionSelect(missionId)} />
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {missions.map((mission) => (
+            <Button
+              key={mission.id}
+              variant="outline"
+              size="sm"
+              className={`whitespace-nowrap ${
+                effectiveSelectedTaskId === mission.id 
+                ? "bg-neon-green/20 border-neon-green text-neon-green" 
+                : "bg-transparent"
+              }`}
+              onClick={() => handleMissionSelect(mission.id)}
+            >
+              {mission.name}
+            </Button>
+          ))}
         </div>
       </div>
 
       <Card className="w-full bg-[#25384D] border-[#3A4D62] shadow-[0_0_15px_rgba(0,247,239,0.1)]">
         <CardContent className="p-6">
-          {selectedMissionId && (
+          {effectiveSelectedTaskId && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -101,7 +202,7 @@ export function TasksPage() {
             >
               {viewMode === 'table' ? (
                 <MissionTableView 
-                  missionId={selectedMissionId} 
+                  missionId={effectiveSelectedTaskId} 
                   onTaskClick={handleTaskClick}
                 />
               ) : (
@@ -115,11 +216,11 @@ export function TasksPage() {
       </Card>
       
       {/* Task Editor Dialog */}
-      {selectedTaskId && (
-        <Dialog open={isTaskEditorOpen} onOpenChange={setIsTaskEditorOpen}>
+      {effectiveSelectedTaskId && (
+        <Dialog open={effectiveIsTaskEditorOpen} onOpenChange={handleCloseTaskEditor}>
           <DialogContent className="sm:max-w-[700px] p-0 bg-[#25384D] border-[#3A4D62]">
             <MissionTaskEditor 
-              taskId={selectedTaskId}
+              taskId={effectiveSelectedTaskId}
               onClose={handleCloseTaskEditor}
               onRefresh={() => {}}
             />
