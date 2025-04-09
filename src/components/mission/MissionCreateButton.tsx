@@ -15,7 +15,11 @@ import { useToast } from '@/hooks/use-toast';
 import { createTask } from '@/api/tasks';
 import { useQueryClient } from '@tanstack/react-query';
 
-export function MissionCreateButton() {
+interface MissionCreateButtonProps {
+  onMissionCreated?: (missionId: string) => void;
+}
+
+export function MissionCreateButton({ onMissionCreated }: MissionCreateButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -46,11 +50,17 @@ export function MissionCreateButton() {
       
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['recentTickets'] });
+      queryClient.invalidateQueries({ queryKey: ['missions'] });
       
       toast({
         title: "Mission created",
         description: "Your new mission has been created successfully"
       });
+      
+      // Call the onMissionCreated callback if provided
+      if (onMissionCreated && newTask && newTask.id) {
+        onMissionCreated(newTask.id);
+      }
       
       setTitle('');
       setIsOpen(false);
