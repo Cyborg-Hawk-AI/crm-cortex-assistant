@@ -30,8 +30,6 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
     // Update route based on the tab
     if (tab === 'projects') {
       navigate('/projects');
-    } else if (tab === 'missions') {
-      navigate('/missions');
     } else if (tab === 'main' && location.pathname !== '/') {
       navigate('/');
     }
@@ -68,18 +66,6 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
             >
               <Grid3X3 className="h-4 w-4 mr-1" />
               Projects
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`hover:bg-[#25384D] ${
-                activeTab === 'missions' ? 'bg-[#25384D] text-neon-aqua' : 'text-[#CBD5E1]'
-              }`}
-              onClick={() => handleTabChange('missions')}
-            >
-              <Zap className="h-4 w-4 mr-1" />
-              Missions
             </Button>
             
             <Button

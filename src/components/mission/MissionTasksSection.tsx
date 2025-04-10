@@ -3,27 +3,27 @@ import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TaskList } from '@/components/mission/TaskList';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MissionCreateButton } from '@/components/mission/MissionCreateButton';
+import { ProjectCreateButton } from '@/components/projects/ProjectCreateButton';
 
-interface MissionTasksSectionProps {
-  missionId: string;
+interface ProjectTasksSectionProps {
+  projectId: string;
   compact?: boolean;
   showCreateButton?: boolean;
 }
 
-export function MissionTasksSection({ 
-  missionId, 
+export function ProjectTasksSection({ 
+  projectId, 
   compact = false,
   showCreateButton = false
-}: MissionTasksSectionProps) {
-  if (!missionId) {
+}: ProjectTasksSectionProps) {
+  if (!projectId) {
     return null;
   }
   
   if (compact) {
     return (
       <ScrollArea className="max-h-[400px]" hideScrollbar={true}>
-        <TaskList missionId={missionId} />
+        <TaskList projectId={projectId} />
       </ScrollArea>
     );
   }
@@ -36,10 +36,10 @@ export function MissionTasksSection({
           Tasks
         </CardTitle>
         
-        {showCreateButton && <MissionCreateButton />}
+        {showCreateButton && <ProjectCreateButton />}
       </CardHeader>
       <CardContent>
-        <TaskList missionId={missionId} />
+        <TaskList projectId={projectId} />
       </CardContent>
     </Card>
   );

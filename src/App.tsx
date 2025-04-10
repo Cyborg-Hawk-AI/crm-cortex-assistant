@@ -12,7 +12,7 @@ import Signup from "@/pages/auth/Signup";
 import ForgotPassword from "@/pages/auth/ForgotPassword";
 import UpdatePassword from "@/pages/auth/UpdatePassword";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { MissionsPage } from "@/components/mission/MissionsPage";
+import { ProjectsPage } from "@/components/projects/ProjectsPage";
 import { ProjectsPageWrapper } from "@/components/projects/ProjectsPageWrapper";
 
 function App() {
@@ -38,12 +38,7 @@ function App() {
             
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             
-            {/* Mission Routes */}
-            <Route path="/missions" element={<ProtectedRoute><MissionsPage /></ProtectedRoute>} />
-            <Route path="/missions/:missionId" element={<ProtectedRoute><MissionsPage /></ProtectedRoute>} />
-            <Route path="/missions/:missionId/tasks/:taskId" element={<ProtectedRoute><MissionsPage /></ProtectedRoute>} />
-            
-            {/* Project Routes */}
+            {/* Project Routes (formerly Missions) */}
             <Route path="/projects" element={<ProtectedRoute><ProjectsPageWrapper /></ProtectedRoute>} />
             <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectsPageWrapper /></ProtectedRoute>} />
             <Route path="/projects/:projectId/tasks/:taskId" element={<ProtectedRoute><ProjectsPageWrapper /></ProtectedRoute>} />
