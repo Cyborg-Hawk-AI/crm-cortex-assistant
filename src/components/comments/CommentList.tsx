@@ -51,30 +51,32 @@ export function CommentList({ comments, maxHeight = "200px" }: CommentListProps)
   }
 
   return (
-    <ScrollArea className="w-full" style={{ maxHeight }} hideScrollbar={false}>
-      <div className="space-y-4 mb-4 pr-2">
-        {comments.map((comment) => (
-          <div key={comment.id} className="flex gap-2">
-            <Avatar className="h-7 w-7 flex-shrink-0 mt-0.5">
-              <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${comment.user_id}`} />
-              <AvatarFallback>
-                {(getDisplayName(comment).substring(0, 2) || "").toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <p className="text-xs text-[#F1F5F9] mb-1 whitespace-pre-wrap break-words">{comment.content}</p>
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-medium text-[#CBD5E1]">
-                  {getDisplayName(comment)}
-                </span>
-                <span className="text-xxs text-[#718096]">
-                  {formatDate(comment.created_at)}
-                </span>
+    <div className="relative w-full" style={{ height: maxHeight }}>
+      <ScrollArea className="h-full w-full pr-4" hideScrollbar={false}>
+        <div className="space-y-4 mb-4">
+          {comments.map((comment) => (
+            <div key={comment.id} className="flex gap-2">
+              <Avatar className="h-7 w-7 flex-shrink-0 mt-0.5">
+                <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${comment.user_id}`} />
+                <AvatarFallback>
+                  {(getDisplayName(comment).substring(0, 2) || "").toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <p className="text-xs text-[#F1F5F9] mb-1 whitespace-pre-wrap break-words">{comment.content}</p>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-medium text-[#CBD5E1]">
+                    {getDisplayName(comment)}
+                  </span>
+                  <span className="text-xxs text-[#718096]">
+                    {formatDate(comment.created_at)}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
-    </ScrollArea>
+          ))}
+        </div>
+      </ScrollArea>
+    </div>
   );
 }
