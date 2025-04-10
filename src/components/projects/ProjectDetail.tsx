@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   ArrowLeft, 
   CalendarIcon, 
@@ -14,7 +16,8 @@ import {
   ListIcon, 
   MoreHorizontal,
   TableIcon,
-  BarChart3
+  BarChart3,
+  Save
 } from 'lucide-react';
 import { Project, Task, TaskView } from '@/utils/types';
 import { TaskBoard } from '@/components/projects/TaskBoard';
@@ -44,6 +47,8 @@ export function ProjectDetail({
   const [currentView, setCurrentView] = useState<TaskView>('board');
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
   const [isEditingProject, setIsEditingProject] = useState(false);
+  const [projectTitle, setProjectTitle] = useState(project.title);
+  const [projectDescription, setProjectDescription] = useState(project.description || '');
   const { toast } = useToast();
   
   const getStatusColor = (status: string) => {
@@ -119,12 +124,49 @@ export function ProjectDetail({
     }
   };
 
-  const handleEditProject = () => {
-    setIsEditingProject(true);
-    toast({
-      title: "Edit Project",
-      description: "Project editing functionality will be implemented soon.",
-    });
+  const toggleEditProject = () => {
+    if (!isEditingProject) {
+      setIsEditingProject(true);
+    } else {
+      handleSaveProjectChanges();
+    }
+  };
+
+  const handleSaveProjectChanges = async () => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ 
+          title: projectTitle,
+          description: projectDescription,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', project.id);
+        
+      if (error) throw error;
+      
+      if (onProjectUpdate) {
+        onProjectUpdate({
+          ...project,
+          title: projectTitle,
+          description: projectDescription,
+          updated_at: new Date().toISOString()
+        });
+      }
+      
+      setIsEditingProject(false);
+      toast({
+        title: "Project updated",
+        description: "Project details have been saved successfully",
+      });
+    } catch (error) {
+      console.error('Error updating project:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update project. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleMoreOptions = () => {
@@ -147,16 +189,37 @@ export function ProjectDetail({
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h2 className="text-xl font-bold text-[#F1F5F9]">{project.title}</h2>
-                <Badge className={`${getStatusColor(project.status)} px-2 py-0.5`}>
-                  {project.status}
-                </Badge>
-              </div>
-              <p className="text-sm text-[#CBD5E1] mt-1">
-                Created {new Date(project.created_at).toLocaleDateString()}
-              </p>
+            <div className="flex-grow">
+              {isEditingProject ? (
+                <div className="space-y-2">
+                  <Input
+                    value={projectTitle}
+                    onChange={(e) => setProjectTitle(e.target.value)}
+                    className="text-xl font-bold text-[#F1F5F9] bg-[#1C2A3A] border-neon-aqua/50"
+                  />
+                  <Textarea
+                    value={projectDescription}
+                    onChange={(e) => setProjectDescription(e.target.value)}
+                    placeholder="Add project description..."
+                    className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9] min-h-[60px] resize-none"
+                  />
+                </div>
+              ) : (
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <h2 className="text-xl font-bold text-[#F1F5F9]">{project.title}</h2>
+                    <Badge className={`${getStatusColor(project.status)} px-2 py-0.5`}>
+                      {project.status}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-[#CBD5E1] mt-1">
+                    Created {new Date(project.created_at).toLocaleDateString()}
+                  </p>
+                  {project.description && (
+                    <p className="text-[#CBD5E1] mt-2 text-sm">{project.description}</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -175,11 +238,20 @@ export function ProjectDetail({
             <Button 
               variant="outline" 
               size="sm" 
-              className="border-[#3A4D62]"
-              onClick={handleEditProject}
+              className={`border-[#3A4D62] ${isEditingProject ? 'bg-neon-aqua/20' : ''}`}
+              onClick={toggleEditProject}
             >
-              <Edit2Icon className="h-3.5 w-3.5 mr-1" />
-              Edit
+              {isEditingProject ? (
+                <>
+                  <Save className="h-3.5 w-3.5 mr-1" />
+                  Save
+                </>
+              ) : (
+                <>
+                  <Edit2Icon className="h-3.5 w-3.5 mr-1" />
+                  Edit
+                </>
+              )}
             </Button>
             <Button 
               variant="ghost" 
@@ -191,10 +263,7 @@ export function ProjectDetail({
             </Button>
           </div>
         </div>
-        {project.description && (
-          <p className="text-[#CBD5E1] mt-2 text-sm">{project.description}</p>
-        )}
-        {renderProgressBar()}
+        {!isEditingProject && renderProgressBar()}
       </CardHeader>
       <CardContent className="p-0 flex-grow overflow-hidden flex flex-col">
         <div className="border-b border-[#3A4D62] p-4">
