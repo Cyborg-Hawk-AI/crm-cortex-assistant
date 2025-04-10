@@ -68,6 +68,13 @@ export default function Index() {
 
   const handleSetActiveTab = (tab: string) => {
     setActiveTab(tab);
+
+    // Navigate to appropriate route when tab changes
+    if (tab === 'missions') {
+      navigate('/missions');
+    } else if (tab === 'projects') {
+      navigate('/projects');
+    }
   };
   
   const handleCloseTaskEditor = () => {
@@ -132,7 +139,9 @@ export default function Index() {
                 <TodaySyncUps />
                 
                 {/* Recent Missions */}
-                <RecentTickets onTaskClick={handleTaskClick} />
+                <RecentTickets onTaskClick={(taskId) => {
+                  navigate('/missions', { state: { openTaskId: taskId } });
+                }} />
                 
                 {/* Recent Mindboard Notes (was Activity Feed) */}
                 <RecentMindboardNotes />

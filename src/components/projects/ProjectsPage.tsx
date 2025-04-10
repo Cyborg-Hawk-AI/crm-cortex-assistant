@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Grid3X3, Zap } from 'lucide-react';
 import { Project, Task } from '@/utils/types';
@@ -13,13 +13,29 @@ import { TaskDetail } from '@/components/projects/TaskDetail';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 
-export function ProjectsPage() {
+interface ProjectsPageProps {
+  selectedProjectId?: string | null;
+  selectedTaskId?: string | null;
+}
+
+export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }: ProjectsPageProps) {
   const navigate = useNavigate();
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
+  const [internalSelectedProjectId, setInternalSelectedProjectId] = useState<string | null>(selectedProjectId);
+  const [internalSelectedTaskId, setInternalSelectedTaskId] = useState<string | null>(selectedTaskId);
+  const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(!!selectedTaskId);
   const [isNewProjectDialogOpen, setIsNewProjectDialogOpen] = useState(false);
   
+  // Sync props with internal state when they change
+  useEffect(() => {
+    if (selectedProjectId !== internalSelectedProjectId) {
+      setInternalSelectedProjectId(selectedProjectId);
+    }
+    if (selectedTaskId !== internalSelectedTaskId) {
+      setInternalSelectedTaskId(selectedTaskId);
+      setIsTaskDetailOpen(!!selectedTaskId);
+    }
+  }, [selectedProjectId, selectedTaskId]);
+
   // Fetch projects from the database
   const { data: projects = [], isLoading: loadingProjects } = useQuery({
     queryKey: ['projects'],
@@ -61,16 +77,16 @@ export function ProjectsPage() {
 
   // Fetch tasks for the selected project
   const { data: projectTasks = [], isLoading: loadingTasks } = useQuery({
-    queryKey: ['project-tasks', selectedProjectId],
+    queryKey: ['project-tasks', internalSelectedProjectId],
     queryFn: async () => {
-      if (!selectedProjectId) return [];
+      if (!internalSelectedProjectId) return [];
       
       try {
         // Fetch all tasks that have this project as their parent
         const { data, error } = await supabase
           .from('tasks')
           .select('*')
-          .eq('parent_task_id', selectedProjectId)
+          .eq('parent_task_id', internalSelectedProjectId)
           .order('created_at', { ascending: false });
           
         if (error) {
@@ -84,20 +100,20 @@ export function ProjectsPage() {
         return [];
       }
     },
-    enabled: !!selectedProjectId
+    enabled: !!internalSelectedProjectId
   });
   
   // Fetch single task details
   const { data: selectedTask, isLoading: loadingTask } = useQuery({
-    queryKey: ['task-detail', selectedTaskId],
+    queryKey: ['task-detail', internalSelectedTaskId],
     queryFn: async () => {
-      if (!selectedTaskId) return null;
+      if (!internalSelectedTaskId) return null;
       
       try {
         const { data, error } = await supabase
           .from('tasks')
           .select('*')
-          .eq('id', selectedTaskId)
+          .eq('id', internalSelectedTaskId)
           .single();
           
         if (error) {
@@ -111,21 +127,21 @@ export function ProjectsPage() {
         return null;
       }
     },
-    enabled: !!selectedTaskId
+    enabled: !!internalSelectedTaskId
   });
 
   // Fetch subtasks for the selected task
   const { data: subtasks = [], isLoading: loadingSubtasks } = useQuery({
-    queryKey: ['subtasks', selectedTaskId],
+    queryKey: ['subtasks', internalSelectedTaskId],
     queryFn: async () => {
-      if (!selectedTaskId) return [];
+      if (!internalSelectedTaskId) return [];
       
       try {
         // First try to get from subtasks table
         const { data: subtasksData, error: subtasksError } = await supabase
           .from('subtasks')
           .select('*')
-          .eq('parent_task_id', selectedTaskId)
+          .eq('parent_task_id', internalSelectedTaskId)
           .order('created_at', { ascending: true });
           
         if (!subtasksError && subtasksData && subtasksData.length > 0) {
@@ -136,7 +152,7 @@ export function ProjectsPage() {
         const { data: tasksData, error: tasksError } = await supabase
           .from('tasks')
           .select('*')
-          .eq('parent_task_id', selectedTaskId)
+          .eq('parent_task_id', internalSelectedTaskId)
           .order('created_at', { ascending: true });
           
         if (tasksError) {
@@ -164,22 +180,39 @@ export function ProjectsPage() {
         return [];
       }
     },
-    enabled: !!selectedTaskId && isTaskDetailOpen
+    enabled: !!internalSelectedTaskId && isTaskDetailOpen
   });
   
   const handleProjectClick = (projectId: string) => {
-    setSelectedProjectId(projectId);
-    setSelectedTaskId(null);
+    setInternalSelectedProjectId(projectId);
+    setInternalSelectedTaskId(null);
     setIsTaskDetailOpen(false);
+    navigate(`/projects/${projectId}`);
   };
 
   const handleTaskClick = (taskId: string) => {
-    setSelectedTaskId(taskId);
+    setInternalSelectedTaskId(taskId);
     setIsTaskDetailOpen(true);
+    
+    if (internalSelectedProjectId) {
+      navigate(`/projects/${internalSelectedProjectId}/tasks/${taskId}`);
+    }
   };
   
   const handleBackToProjects = () => {
-    setSelectedProjectId(null);
+    setInternalSelectedProjectId(null);
+    navigate('/projects');
+  };
+  
+  const handleBackToProject = () => {
+    setInternalSelectedTaskId(null);
+    setIsTaskDetailOpen(false);
+    
+    if (internalSelectedProjectId) {
+      navigate(`/projects/${internalSelectedProjectId}`);
+    } else {
+      navigate('/projects');
+    }
   };
   
   const handleCreateProject = () => {
@@ -225,14 +258,14 @@ export function ProjectsPage() {
 
   return (
     <div className="h-[calc(100vh-120px)] overflow-y-auto p-4">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex items-center justify-between mb-6">
         <div className="flex items-center">
           <Grid3X3 className="mr-2 h-5 w-5 text-neon-aqua" />
           <h2 className="text-2xl font-bold text-[#F1F5F9]">Projects</h2>
         </div>
       </div>
 
-      {!selectedProjectId ? (
+      {!internalSelectedProjectId ? (
         <ProjectsTable 
           projects={projects}
           onProjectClick={handleProjectClick}
@@ -240,7 +273,7 @@ export function ProjectsPage() {
         />
       ) : (
         <ProjectDetail
-          project={projects.find(p => p.id === selectedProjectId)!}
+          project={projects.find(p => p.id === internalSelectedProjectId)!}
           tasks={projectTasks}
           onBack={handleBackToProjects}
           onTaskSelect={handleTaskClick}
@@ -248,13 +281,18 @@ export function ProjectsPage() {
       )}
       
       {/* Task Detail Dialog */}
-      {selectedTaskId && selectedTask && (
-        <Dialog open={isTaskDetailOpen} onOpenChange={setIsTaskDetailOpen}>
+      {internalSelectedTaskId && selectedTask && (
+        <Dialog open={isTaskDetailOpen} onOpenChange={(open) => {
+          setIsTaskDetailOpen(open);
+          if (!open) {
+            handleBackToProject();
+          }
+        }}>
           <DialogContent className="sm:max-w-[700px] p-0 bg-[#25384D] border-[#3A4D62] max-h-[90vh] overflow-hidden">
             <TaskDetail
               task={selectedTask}
               subtasks={subtasks}
-              onClose={() => setIsTaskDetailOpen(false)}
+              onClose={handleBackToProject}
             />
           </DialogContent>
         </Dialog>
