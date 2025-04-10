@@ -1,14 +1,15 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Button } from '@/components/ui/button';
-import { Grid3X3, Zap } from 'lucide-react';
+import { Grid3X3 } from 'lucide-react';
 import { Project, Task } from '@/utils/types';
 import { ProjectsTable } from '@/components/projects/ProjectsTable';
 import { ProjectDetail } from '@/components/projects/ProjectDetail';
 import { TaskDetail } from '@/components/projects/TaskDetail';
+import { ProjectCreateButton } from '@/components/projects/ProjectCreateButton';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 
@@ -230,12 +231,7 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
               <p className="text-sm text-[#CBD5E1] mb-6">
                 Create your first project to organize your tasks
               </p>
-              <Button
-                onClick={handleCreateProject}
-                className="bg-neon-aqua hover:bg-neon-aqua/90 text-black"
-              >
-                Create Project
-              </Button>
+              <ProjectCreateButton onProjectCreated={handleCreateProject} />
             </div>
           </CardContent>
         </Card>
