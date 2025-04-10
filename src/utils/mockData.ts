@@ -50,7 +50,7 @@ export const mockTicket: Ticket = {
   description: "We need to update our roadmap with the new initiatives decided during our last planning session.",
   status: "In Progress",
   priority: "High",
-  assignee_id: "user-456",
+  assignee: "Sarah Johnson",
   reporter_id: "user-789",
   created_at: new Date("2023-05-15T14:32:00Z"),
   updated_at: new Date("2023-05-17T09:15:00Z"),
@@ -58,8 +58,6 @@ export const mockTicket: Ticket = {
   user_id: "user-123",
   parent_task_id: null,
   tags: ["roadmap", "planning", "product"],
-  // Supporting legacy properties while keeping the required ones
-  assignee: "Sarah Johnson",
   reporter: "Product Manager",
   created: new Date("2023-05-15T14:32:00Z"),
   updated: new Date("2023-05-17T09:15:00Z"),
@@ -92,7 +90,7 @@ export const mockTickets: Ticket[] = [
     description: "Multiple clients reporting inability to access application services.",
     status: "Urgent",
     priority: "Critical",
-    assignee_id: "user-456",
+    assignee: "Alex Wong",
     reporter_id: "user-789",
     created_at: new Date("2023-05-18T08:32:00Z"),
     updated_at: new Date("2023-05-18T09:15:00Z"),
@@ -100,8 +98,6 @@ export const mockTickets: Ticket[] = [
     parent_task_id: null,
     created_by: "user-123",
     tags: ["outage", "infrastructure", "critical"],
-    // Supporting legacy properties
-    assignee: "Alex Wong",
     reporter: "System Alert",
     created: new Date("2023-05-18T08:32:00Z"),
     updated: new Date("2023-05-18T09:15:00Z"),
@@ -132,14 +128,13 @@ export const mockTickets: Ticket[] = [
       }
     ]
   },
-  // Keep fixing the other ticket entries with similar patterns
   {
     id: "TICKET-1236",
     title: "Knowledge base article update for new API endpoints",
     description: "Documentation needs to be updated with the latest API changes.",
     status: "Open",
     priority: "Medium",
-    assignee_id: "user-456",
+    assignee: "Maria Garcia",
     reporter_id: "user-789",
     created_at: new Date("2023-05-16T10:45:00Z"),
     updated_at: new Date("2023-05-17T14:22:00Z"),
@@ -147,8 +142,6 @@ export const mockTickets: Ticket[] = [
     parent_task_id: null,
     created_by: "user-123",
     tags: ["documentation", "api", "knowledge-base"],
-    // Supporting legacy properties
-    assignee: "Maria Garcia",
     reporter: "Developer Relations",
     created: new Date("2023-05-16T10:45:00Z"),
     updated: new Date("2023-05-17T14:22:00Z"),
@@ -166,7 +159,7 @@ export const mockTickets: Ticket[] = [
     description: "Clients requesting ability to export reports in CSV format",
     status: "Under Review",
     priority: "Low",
-    assignee_id: null,
+    assignee: "Unassigned",
     reporter_id: "user-789",
     created_at: new Date("2023-05-14T09:12:00Z"),
     updated_at: new Date("2023-05-15T11:30:00Z"),
@@ -174,8 +167,6 @@ export const mockTickets: Ticket[] = [
     parent_task_id: null,
     created_by: "user-123",
     tags: ["feature-request", "reporting", "enhancement"],
-    // Supporting legacy properties
-    assignee: "Unassigned",
     reporter: "Customer Success",
     created: new Date("2023-05-14T09:12:00Z"),
     updated: new Date("2023-05-15T11:30:00Z"),
@@ -193,7 +184,7 @@ export const mockTickets: Ticket[] = [
     description: "Need to notify all clients about upcoming 2-hour maintenance window",
     status: "Planned",
     priority: "Medium",
-    assignee_id: "user-456",
+    assignee: "Communication Team",
     reporter_id: "user-789",
     created_at: new Date("2023-05-17T15:20:00Z"),
     updated_at: new Date("2023-05-17T16:45:00Z"),
@@ -201,8 +192,6 @@ export const mockTickets: Ticket[] = [
     parent_task_id: null,
     created_by: "user-123",
     tags: ["maintenance", "notification", "deployment"],
-    // Supporting legacy properties
-    assignee: "Communication Team",
     reporter: "DevOps",
     created: new Date("2023-05-17T15:20:00Z"),
     updated: new Date("2023-05-17T16:45:00Z"),
@@ -262,7 +251,6 @@ export const mockNotes: Note[] = [
     page_id: 'page-1',
     notebook_id: 'nb-1',
     linked_task_id: null,
-    // Supporting legacy properties
     sectionId: 'sec-1',
     notebookId: 'nb-1',
     pageId: 'page-1'
@@ -277,7 +265,6 @@ export const mockNotes: Note[] = [
     page_id: 'page-1',
     notebook_id: 'nb-1',
     linked_task_id: null,
-    // Supporting legacy properties
     sectionId: 'sec-1',
     notebookId: 'nb-1',
     pageId: 'page-1'
@@ -292,7 +279,6 @@ export const mockNotes: Note[] = [
     page_id: 'page-3',
     notebook_id: 'nb-1',
     linked_task_id: null,
-    // Supporting legacy properties
     sectionId: 'sec-2',
     notebookId: 'nb-1',
     pageId: 'page-3'

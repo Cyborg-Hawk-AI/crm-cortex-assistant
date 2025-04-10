@@ -473,7 +473,9 @@ export function useChatMessages() {
         content,
         sender,
         timestamp: new Date(),
-        isSystem: sender === 'system'
+        isSystem: sender === 'system',
+        conversation_id: activeConversationId || 'temp-conversation',
+        user_id: 'current-user'
       };
       return addLocalMessage(message);
     },
