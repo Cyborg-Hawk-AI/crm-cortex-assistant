@@ -118,7 +118,7 @@ export function CommentSection({
         </div>
       </div>
       
-      <CommentList comments={comments} maxHeight="300px" />
+      <CommentList comments={comments} />
     </div>
   );
 }

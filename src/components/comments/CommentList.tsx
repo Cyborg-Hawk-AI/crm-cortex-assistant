@@ -20,7 +20,7 @@ interface CommentListProps {
   maxHeight?: string;
 }
 
-export function CommentList({ comments, maxHeight = "200px" }: CommentListProps) {
+export function CommentList({ comments, maxHeight = "300px" }: CommentListProps) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleString();
@@ -51,7 +51,7 @@ export function CommentList({ comments, maxHeight = "200px" }: CommentListProps)
   }
 
   return (
-    <ScrollArea className="w-full" style={{ maxHeight }}>
+    <div className="w-full">
       <div className="space-y-4 mb-4 pr-2">
         {comments.map((comment) => (
           <div key={comment.id} className="flex gap-2">
@@ -75,6 +75,6 @@ export function CommentList({ comments, maxHeight = "200px" }: CommentListProps)
           </div>
         ))}
       </div>
-    </ScrollArea>
+    </div>
   );
 }
