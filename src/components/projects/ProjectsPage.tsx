@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
@@ -204,7 +203,6 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
   };
   
   const handleProjectCreated = (projectId: string) => {
-    // Just refresh the project list without navigating
     queryClient.invalidateQueries({ queryKey: ['projects'] });
   };
   
@@ -286,6 +284,11 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
               task={selectedTask}
               subtasks={subtasks}
               onClose={handleBackToProject}
+              onRefresh={() => {
+                queryClient.invalidateQueries({ queryKey: ['task-detail', internalSelectedTaskId] });
+                queryClient.invalidateQueries({ queryKey: ['subtasks', internalSelectedTaskId] });
+                queryClient.invalidateQueries({ queryKey: ['project-tasks', internalSelectedProjectId] });
+              }}
             />
           </DialogContent>
         </Dialog>
