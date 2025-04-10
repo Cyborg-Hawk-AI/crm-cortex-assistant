@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, 
@@ -75,7 +74,6 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [isPriorityMenuOpen, setIsPriorityMenuOpen] = useState(false);
   
-  // States for description container height
   const [descriptionHeight, setDescriptionHeight] = useState<string>('auto');
   const [descriptionOverflow, setDescriptionOverflow] = useState<boolean>(false);
   
@@ -123,7 +121,29 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
         return [];
       }
       
-      console.log('Fetched comments:', data);
+      if (data && data.length > 0) {
+        const userIds = data.map(comment => comment.user_id);
+        
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', userIds);
+          
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
+        } else if (profilesData) {
+          const profileMap: Record<string, any> = {};
+          profilesData.forEach(profile => {
+            profileMap[profile.id] = profile;
+          });
+          
+          return data.map(comment => ({
+            ...comment,
+            profiles: profileMap[comment.user_id] || {}
+          }));
+        }
+      }
+      
       return data || [];
     } catch (err) {
       console.error('Failed to fetch comments:', err);
@@ -145,12 +165,10 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
     refetchComments();
   }, []);
   
-  // Check if description has overflow content
   useEffect(() => {
     if (task.description) {
       const checkOverflow = () => {
         const descLength = task.description?.length || 0;
-        // Estimate if the description is long enough to need expansion
         setDescriptionOverflow(descLength > 150);
       };
       
