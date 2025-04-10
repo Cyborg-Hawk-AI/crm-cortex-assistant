@@ -520,7 +520,7 @@ export function TaskDetail({
   };
 
   return (
-    <div className="bg-[#25384D] flex flex-col h-full overflow-hidden">
+    <div className="bg-[#25384D] flex flex-col h-full max-h-[100vh] overflow-hidden">
       <div className="flex items-center justify-between p-4 border-b border-[#3A4D62] flex-shrink-0">
         <div className="flex items-center">
           <Button 
@@ -562,7 +562,7 @@ export function TaskDetail({
         </div>
       </div>
       
-      <ScrollArea className="flex-1 h-full" hideScrollbar={false}>
+      <ScrollArea className="flex-1" hideScrollbar={false}>
         <div className="p-4 space-y-6">
           <div>
             <div className="flex items-start justify-between">
@@ -780,7 +780,7 @@ export function TaskDetail({
             
             <div className="bg-[#1C2A3A]/50 p-2 rounded-md">
               {subtasks.length > 0 ? (
-                <div className="space-y-1 mb-2 max-h-[300px] overflow-y-auto pr-2">
+                <div className="space-y-1 mb-2 max-h-[200px] overflow-y-auto pr-2">
                   {subtasks.map(subtask => (
                     <div key={subtask.id} className="flex items-center p-2 hover:bg-[#1C2A3A] rounded-md">
                       <Checkbox 

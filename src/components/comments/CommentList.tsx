@@ -2,7 +2,6 @@
 import React from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Comment {
   id: string;
@@ -20,7 +19,7 @@ interface CommentListProps {
   maxHeight?: string;
 }
 
-export function CommentList({ comments, maxHeight = "300px" }: CommentListProps) {
+export function CommentList({ comments, maxHeight = "100%" }: CommentListProps) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleString();
