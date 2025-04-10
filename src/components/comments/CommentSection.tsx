@@ -37,23 +37,6 @@ export function CommentSection({
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-  
-  // Auto-resize the textarea as content is added
-  useEffect(() => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-    
-    const adjustHeight = () => {
-      textarea.style.height = 'auto';
-      textarea.style.height = `${textarea.scrollHeight}px`;
-    };
-    
-    textarea.addEventListener('input', adjustHeight);
-    adjustHeight(); // Initial adjustment
-    
-    return () => textarea.removeEventListener('input', adjustHeight);
-  }, []);
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
@@ -74,11 +57,6 @@ export function CommentSection({
         title: "Comment added",
         description: "Your comment has been posted",
       });
-      
-      // Reset textarea height
-      if (textareaRef.current) {
-        textareaRef.current.style.height = 'auto';
-      }
     } catch (error) {
       console.error("Error adding comment:", error);
       toast({
@@ -102,11 +80,10 @@ export function CommentSection({
         </Avatar>
         <div className="flex-1">
           <Textarea 
-            ref={textareaRef}
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Add a comment..."
-            className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9] min-h-[80px] resize-none overflow-hidden"
+            className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9] min-h-[80px]"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -128,11 +105,7 @@ export function CommentSection({
         </div>
       </div>
       
-      <CommentList 
-        comments={comments} 
-        maxHeight="300px" 
-        onRefreshComments={onRefreshComments}
-      />
+      <CommentList comments={comments} maxHeight="300px" />
     </div>
   );
 }

@@ -108,7 +108,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
     try {
       const { data, error } = await supabase
         .from('comments')
-        .select('*, profiles(*)')
+        .select('*')
         .eq('entity_id', task.id)
         .eq('entity_type', 'task')
         .order('created_at', { ascending: false });
