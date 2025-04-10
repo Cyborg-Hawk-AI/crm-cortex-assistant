@@ -51,7 +51,7 @@ export function CommentList({ comments, maxHeight = "200px" }: CommentListProps)
   }
 
   return (
-    <ScrollArea className="w-full" style={{ maxHeight }}>
+    <ScrollArea className="w-full" style={{ maxHeight }} hideScrollbar={false}>
       <div className="space-y-4 mb-4 pr-2">
         {comments.map((comment) => (
           <div key={comment.id} className="flex gap-2">

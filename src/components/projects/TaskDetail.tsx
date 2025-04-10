@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, 
@@ -14,7 +15,13 @@ import {
   Flag,
   Check,
   Plus,
-  CheckCheck
+  CheckCheck,
+  Circle,
+  CircleCheck,
+  CircleX,
+  Clock3,
+  ClockIcon,
+  AlertTriangle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -71,12 +78,29 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   const [tags, setTags] = useState<string[]>(task.tags || []);
   const [comments, setComments] = useState<any[]>([]);
   
+  // Dropdown state controls
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [isPriorityMenuOpen, setIsPriorityMenuOpen] = useState(false);
   
   const [descriptionHeight, setDescriptionHeight] = useState<string>('auto');
   const [descriptionOverflow, setDescriptionOverflow] = useState<boolean>(false);
   
+  // Status and priority configuration
+  const statusOptions = [
+    { value: 'open', label: 'Open', icon: Circle, color: 'bg-neon-purple/20 text-neon-purple border-neon-purple/30' },
+    { value: 'in-progress', label: 'In Progress', icon: Clock3, color: 'bg-neon-blue/20 text-neon-blue border-neon-blue/30' },
+    { value: 'resolved', label: 'Resolved', icon: Check, color: 'bg-neon-aqua/20 text-neon-aqua border-neon-aqua/30' },
+    { value: 'closed', label: 'Closed', icon: CircleX, color: 'bg-gray-200/20 text-gray-500 border-gray-300/30' },
+    { value: 'completed', label: 'Completed', icon: CircleCheck, color: 'bg-neon-green/20 text-neon-green border-neon-green/30' },
+  ];
+  
+  const priorityOptions = [
+    { value: 'low', label: 'Low', icon: Flag, color: 'bg-neon-aqua/20 text-neon-aqua border-neon-aqua/30' },
+    { value: 'medium', label: 'Medium', icon: Flag, color: 'bg-neon-yellow/20 text-neon-yellow border-neon-yellow/30' },
+    { value: 'high', label: 'High', icon: Flag, color: 'bg-neon-red/20 text-neon-red border-neon-red/30' },
+    { value: 'urgent', label: 'Urgent', icon: AlertTriangle, color: 'bg-neon-red/20 text-neon-red border-neon-red/30' },
+  ];
+
   const { data: profiles = {}, isLoading: loadingProfiles } = useQuery({
     queryKey: ['user-profiles'],
     queryFn: async () => {
@@ -185,35 +209,24 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
     return profile.full_name || profile.email || userId.substring(0, 8) + '...';
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'completed':
-      case 'closed':
-      case 'resolved':
-        return 'bg-neon-green/20 text-neon-green border-neon-green/30';
-      case 'in progress':
-      case 'in-progress':
-        return 'bg-neon-blue/20 text-neon-blue border-neon-blue/30';
-      case 'open':
-      case 'backlog':
-        return 'bg-neon-purple/20 text-neon-purple border-neon-purple/30';
-      default:
-        return 'bg-gray-200/20 text-gray-500 border-gray-300/30';
-    }
+  const getStatusColor = (statusValue: string) => {
+    const option = statusOptions.find(opt => opt.value === statusValue);
+    return option?.color || 'bg-gray-200/20 text-gray-500 border-gray-300/30';
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch(priority.toLowerCase()) {
-      case 'high':
-      case 'urgent':
-        return 'bg-neon-red/20 text-neon-red border-neon-red/30';
-      case 'medium':
-        return 'bg-neon-yellow/20 text-neon-yellow border-neon-yellow/30';
-      case 'low':
-        return 'bg-neon-aqua/20 text-neon-aqua border-neon-aqua/30';
-      default:
-        return 'bg-gray-200/20 text-gray-500 border-gray-300/30';
-    }
+  const getPriorityColor = (priorityValue: string) => {
+    const option = priorityOptions.find(opt => opt.value === priorityValue);
+    return option?.color || 'bg-gray-200/20 text-gray-500 border-gray-300/30';
+  };
+  
+  const getStatusIcon = (statusValue: string) => {
+    const option = statusOptions.find(opt => opt.value === statusValue);
+    return option?.icon || Circle;
+  };
+  
+  const getPriorityIcon = (priorityValue: string) => {
+    const option = priorityOptions.find(opt => opt.value === priorityValue);
+    return option?.icon || Flag;
   };
 
   const handleDescriptionSave = () => {
@@ -513,6 +526,10 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
     }
   };
 
+  // Render status icon based on current status
+  const StatusIcon = getStatusIcon(status);
+  const PriorityIcon = getPriorityIcon(priority);
+
   return (
     <div className="bg-[#25384D] flex flex-col h-full max-h-screen overflow-hidden">
       <div className="flex items-center justify-between p-4 border-b border-[#3A4D62] flex-shrink-0">
@@ -578,88 +595,79 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
               <div className="flex space-x-2">
                 <DropdownMenu open={isStatusMenuOpen} onOpenChange={setIsStatusMenuOpen}>
                   <DropdownMenuTrigger asChild>
-                    <Badge className={`${getStatusColor(status)} cursor-pointer hover:opacity-80`}>
+                    <Badge 
+                      className={`${getStatusColor(status)} cursor-pointer hover:opacity-80 flex items-center gap-1.5`}
+                    >
+                      <StatusIcon className="h-3.5 w-3.5" />
                       {status}
                     </Badge>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-50">
                     <DropdownMenuLabel>Set Status</DropdownMenuLabel>
                     <DropdownMenuSeparator className="bg-[#3A4D62]" />
-                    <DropdownMenuItem 
-                      onClick={() => handleStatusChange('open')} 
-                      className="hover:bg-[#3A4D62]/50 cursor-pointer"
-                    >
-                      {status === 'open' && <CheckCheck className="w-4 h-4 mr-2 text-neon-aqua" />}
-                      <span className={status === 'open' ? 'ml-0' : 'ml-6'}>Open</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => handleStatusChange('in-progress')} 
-                      className="hover:bg-[#3A4D62]/50 cursor-pointer"
-                    >
-                      {status === 'in-progress' && <CheckCheck className="w-4 h-4 mr-2 text-neon-aqua" />}
-                      <span className={status === 'in-progress' ? 'ml-0' : 'ml-6'}>In Progress</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => handleStatusChange('resolved')} 
-                      className="hover:bg-[#3A4D62]/50 cursor-pointer"
-                    >
-                      {status === 'resolved' && <CheckCheck className="w-4 h-4 mr-2 text-neon-aqua" />}
-                      <span className={status === 'resolved' ? 'ml-0' : 'ml-6'}>Resolved</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => handleStatusChange('closed')} 
-                      className="hover:bg-[#3A4D62]/50 cursor-pointer"
-                    >
-                      {status === 'closed' && <CheckCheck className="w-4 h-4 mr-2 text-neon-aqua" />}
-                      <span className={status === 'closed' ? 'ml-0' : 'ml-6'}>Closed</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => handleStatusChange('completed')} 
-                      className="hover:bg-[#3A4D62]/50 cursor-pointer"
-                    >
-                      {status === 'completed' && <CheckCheck className="w-4 h-4 mr-2 text-neon-aqua" />}
-                      <span className={status === 'completed' ? 'ml-0' : 'ml-6'}>Completed</span>
-                    </DropdownMenuItem>
+                    {statusOptions.map((option) => {
+                      const Icon = option.icon;
+                      const isActive = status === option.value;
+                      return (
+                        <DropdownMenuItem 
+                          key={option.value}
+                          onClick={() => handleStatusChange(option.value)} 
+                          className="hover:bg-[#3A4D62]/50 cursor-pointer flex items-center gap-2"
+                        >
+                          <Icon 
+                            className={`h-4 w-4 ${isActive ? 'text-neon-aqua' : ''}`} 
+                            aria-hidden="true" 
+                          />
+                          <span className={isActive ? 'text-neon-aqua' : ''}>{option.label}</span>
+                          {isActive && <CheckCheck className="h-4 w-4 ml-auto text-neon-aqua" />}
+                        </DropdownMenuItem>
+                      );
+                    })}
                   </DropdownMenuContent>
                 </DropdownMenu>
                 
                 <DropdownMenu open={isPriorityMenuOpen} onOpenChange={setIsPriorityMenuOpen}>
                   <DropdownMenuTrigger asChild>
-                    <Badge className={`${getPriorityColor(priority)} cursor-pointer hover:opacity-80`}>
+                    <Badge 
+                      className={`${getPriorityColor(priority)} cursor-pointer hover:opacity-80 flex items-center gap-1.5`}
+                    >
+                      <PriorityIcon 
+                        className={`h-3.5 w-3.5 ${
+                          priority === 'high' || priority === 'urgent' ? 'text-neon-red' :
+                          priority === 'medium' ? 'text-amber-500' : 'text-neon-aqua'
+                        }`} 
+                      />
                       {priority}
                     </Badge>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-50">
                     <DropdownMenuLabel>Set Priority</DropdownMenuLabel>
                     <DropdownMenuSeparator className="bg-[#3A4D62]" />
-                    <DropdownMenuItem 
-                      onClick={() => handlePriorityChange('low')} 
-                      className="hover:bg-[#3A4D62]/50 cursor-pointer"
-                    >
-                      <Flag className={`mr-2 h-3.5 w-3.5 ${priority === 'low' ? 'text-neon-aqua' : 'text-[#64748B]'}`} />
-                      Low
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => handlePriorityChange('medium')} 
-                      className="hover:bg-[#3A4D62]/50 cursor-pointer"
-                    >
-                      <Flag className={`mr-2 h-3.5 w-3.5 ${priority === 'medium' ? 'text-neon-aqua' : 'text-amber-500'}`} />
-                      Medium
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => handlePriorityChange('high')} 
-                      className="hover:bg-[#3A4D62]/50 cursor-pointer"
-                    >
-                      <Flag className={`mr-2 h-3.5 w-3.5 ${priority === 'high' ? 'text-neon-aqua' : 'text-neon-red'}`} />
-                      High
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => handlePriorityChange('urgent')} 
-                      className="hover:bg-[#3A4D62]/50 cursor-pointer"
-                    >
-                      <Flag className={`mr-2 h-3.5 w-3.5 ${priority === 'urgent' ? 'text-neon-aqua' : 'text-neon-red'}`} />
-                      Urgent
-                    </DropdownMenuItem>
+                    {priorityOptions.map((option) => {
+                      const Icon = option.icon;
+                      const isActive = priority === option.value;
+                      let iconColor = 'text-[#64748B]';
+                      
+                      if (option.value === 'high' || option.value === 'urgent') {
+                        iconColor = isActive ? 'text-neon-aqua' : 'text-neon-red';
+                      } else if (option.value === 'medium') {
+                        iconColor = isActive ? 'text-neon-aqua' : 'text-amber-500';
+                      } else {
+                        iconColor = isActive ? 'text-neon-aqua' : 'text-neon-blue';
+                      }
+                      
+                      return (
+                        <DropdownMenuItem 
+                          key={option.value}
+                          onClick={() => handlePriorityChange(option.value)} 
+                          className="hover:bg-[#3A4D62]/50 cursor-pointer flex items-center gap-2"
+                        >
+                          <Icon className={`h-4 w-4 ${iconColor}`} aria-hidden="true" />
+                          <span className={isActive ? 'text-neon-aqua' : ''}>{option.label}</span>
+                          {isActive && <CheckCheck className="h-4 w-4 ml-auto text-neon-aqua" />}
+                        </DropdownMenuItem>
+                      );
+                    })}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
