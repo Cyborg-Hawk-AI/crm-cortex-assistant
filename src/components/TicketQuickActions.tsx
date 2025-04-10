@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Bell, ClipboardCheck, MessageSquareText, History, 
@@ -9,9 +10,28 @@ import { Button } from '@/components/ui/button';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { TicketAction } from '@/utils/types';
 import { useToast } from '@/components/ui/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem,
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
 
 export function TicketQuickActions() {
   const { toast } = useToast();
+  const isMobile = useIsMobile();
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  
+  // Track window resize for responsive adjustments
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   const ticketActions: TicketAction[] = [
     {
@@ -171,11 +191,22 @@ export function TicketQuickActions() {
     'more': 'bg-medium-gray/30 text-foreground'
   };
 
+  // Determine how many actions to show based on screen width
+  const getVisibleActionCount = () => {
+    if (windowWidth < 480) return 3; // Very small screens
+    if (windowWidth < 640) return 4; // Small screens
+    if (windowWidth < 768) return 5; // Medium screens
+    return 5; // Large screens
+  };
+
+  const visibleActionCount = getVisibleActionCount();
+  const gridCols = `grid-cols-${Math.min(visibleActionCount, 5)}`;
+
   return (
     <div className="space-y-3">
       <h4 className="text-xs font-medium text-primary">Ticket Actions</h4>
-      <div className="grid grid-cols-5 gap-2">
-        {ticketActions.slice(0, 5).map((action) => (
+      <div className={`grid ${isMobile ? 'grid-cols-3' : gridCols} gap-2`}>
+        {ticketActions.slice(0, visibleActionCount).map((action) => (
           <ActionButton 
             key={action.id} 
             action={action} 
@@ -183,35 +214,46 @@ export function TicketQuickActions() {
           />
         ))}
         
-        <HoverCard>
-          <HoverCardTrigger asChild>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className={`h-12 w-12 rounded-full flex items-center justify-center shadow-sm border-0 hover:shadow-md ${actionColors.more || 'bg-medium-gray/30 text-foreground'}`}
-              title="More Actions"
-            >
-              <MoreHorizontal className="h-5 w-5" />
-            </Button>
-          </HoverCardTrigger>
-          <HoverCardContent className="w-auto p-2 bg-card backdrop-blur-sm border border-border/30">
-            <div className="grid grid-cols-2 gap-1 p-1">
-              {ticketActions.slice(5).map((action) => (
+        {/* More dropdown that changes based on screen size */}
+        {ticketActions.length > visibleActionCount && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <motion.div
+                whileHover={{ y: -3, scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+              >
                 <Button 
-                  key={action.id}
-                  variant="ghost" 
+                  variant="outline" 
                   size="sm" 
-                  onClick={action.action}
-                  className="justify-start text-xs h-8 text-foreground hover:bg-primary/10"
-                  title={action.description}
+                  className={`h-12 w-12 rounded-full flex items-center justify-center shadow-sm border-0 hover:shadow-md ${actionColors.more || 'bg-medium-gray/30 text-foreground'}`}
+                  title="More Actions"
                 >
-                  {action.icon}
-                  <span className="ml-2">{action.label}</span>
+                  <MoreHorizontal className="h-5 w-5" />
                 </Button>
-              ))}
-            </div>
-          </HoverCardContent>
-        </HoverCard>
+              </motion.div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent 
+              align="end" 
+              className="w-auto p-2 bg-card backdrop-blur-sm border border-border/30"
+            >
+              <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-1 p-1`}>
+                {ticketActions.slice(visibleActionCount).map((action) => (
+                  <Button 
+                    key={action.id}
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={action.action}
+                    className="justify-start text-xs h-8 text-foreground hover:bg-primary/10"
+                    title={action.description}
+                  >
+                    {action.icon}
+                    <span className="ml-2">{action.label}</span>
+                  </Button>
+                ))}
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
     </div>
   );

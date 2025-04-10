@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { 
   Code, FileText, ShieldAlert, MessageCircleReply, 
   Search, HelpCircle, Menu, LinkIcon, X,
-  ArrowRight
+  ArrowRight, MoreHorizontal
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useChatMessages } from '@/hooks/useChatMessages';
@@ -13,6 +13,13 @@ import { useToast } from '@/hooks/use-toast';
 import { NotionTaskSearch } from './NotionTaskSearch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ASSISTANTS } from '@/utils/assistantConfig';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem,
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
 
 export function QuickActions() {
   const [expanded, setExpanded] = useState(false);
@@ -28,6 +35,15 @@ export function QuickActions() {
     isStreaming
   } = useChatMessages();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  // Update windowWidth state when window is resized
+  React.useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const actions = [
     {
@@ -135,8 +151,33 @@ export function QuickActions() {
     }
   };
 
+  // Determine display mode based on screen width
+  const displayMode = () => {
+    if (windowWidth < 480) return 'compact'; // Ultra compact for very small screens
+    if (windowWidth < 640) return 'small';   // Smaller grid for small screens
+    return 'full';                           // Full grid for larger screens
+  };
+
   // Mock tasks for this example - in real app this would come from a hook
   const tasks = [];
+
+  const getGridCols = () => {
+    switch(displayMode()) {
+      case 'compact': return 'grid-cols-2';
+      case 'small': return 'grid-cols-3';
+      default: return 'grid-cols-3 md:grid-cols-4';
+    }
+  };
+
+  const getVisibleActions = () => {
+    if (expanded) return actions;
+    
+    switch(displayMode()) {
+      case 'compact': return actions.slice(0, 2);  // Show only 2 for very small screens
+      case 'small': return actions.slice(0, 3);    // Show 3 for small screens
+      default: return actions.slice(0, 3);         // Show 3 for larger screens by default
+    }
+  };
 
   return (
     <motion.div
@@ -147,15 +188,47 @@ export function QuickActions() {
     >
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-medium text-foreground">Quick Actions</h3>
-        <Button 
-          variant="ghost" 
-          size="sm"
-          onClick={() => setExpanded(!expanded)}
-          className="text-xs h-6 px-2 text-foreground"
-        >
-          {expanded ? 'Collapse' : 'View all'}
-          <ArrowRight className={`h-3 w-3 ml-1 transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`} />
-        </Button>
+        {displayMode() === 'compact' ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="text-xs h-6 w-6 p-0 text-foreground"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-36">
+              {actions.slice(getVisibleActions().length).map(action => (
+                <DropdownMenuItem 
+                  key={action.id}
+                  onClick={() => {
+                    if (action.action) {
+                      action.action();
+                    } else if (action.assistantId && action.assistantName) {
+                      handleAction(action.assistantId, action.assistantName, action.icon, action.label);
+                    }
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <span className={`p-1 rounded-full ${action.color}`}>{action.icon}</span>
+                  <span>{action.label}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => setExpanded(!expanded)}
+            className="text-xs h-6 px-2 text-foreground"
+          >
+            {expanded ? 'Collapse' : 'View all'}
+            <ArrowRight className={`h-3 w-3 ml-1 transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`} />
+          </Button>
+        )}
       </div>
 
       {linkedTask && (
@@ -176,8 +249,8 @@ export function QuickActions() {
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-2">
-        {actions.slice(0, expanded ? actions.length : 3).map((action) => (
+      <div className={`grid ${getGridCols()} gap-2`}>
+        {getVisibleActions().map((action) => (
           <motion.div
             key={action.id}
             initial={{ opacity: 0, scale: 0.9 }}
@@ -210,6 +283,25 @@ export function QuickActions() {
             </HoverCard>
           </motion.div>
         ))}
+
+        {!expanded && displayMode() !== 'compact' && actions.length > getVisibleActions().length && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.2 }}
+            whileHover={{ y: -2 }}
+            className="flex"
+          >
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setExpanded(true)}
+              className="w-10 h-10 p-0 rounded-full flex items-center justify-center bg-muted/80 text-foreground"
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </motion.div>
+        )}
       </div>
 
       <Dialog open={isLinkingTask} onOpenChange={setIsLinkingTask}>
