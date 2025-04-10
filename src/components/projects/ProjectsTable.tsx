@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -112,7 +111,7 @@ export function ProjectsTable({ projects, onProjectClick, onCreateProject }: Pro
     
     try {
       // Create a duplicate of the project without the ID
-      const { title, description, status, tags, user_id, reporter_id, priority } = project;
+      const { title, description, status, tags, owner_id } = project;
       
       const { data, error } = await supabase
         .from('tasks')
@@ -121,9 +120,9 @@ export function ProjectsTable({ projects, onProjectClick, onCreateProject }: Pro
           description,
           status,
           tags,
-          user_id,
-          reporter_id,
-          priority,
+          user_id: owner_id,
+          reporter_id: owner_id,
+          priority: 'medium',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -236,7 +235,7 @@ export function ProjectsTable({ projects, onProjectClick, onCreateProject }: Pro
                           </Avatar>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>{project.owner_name || project.owner_id}</p>
+                          <p>{project.owner_id}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>

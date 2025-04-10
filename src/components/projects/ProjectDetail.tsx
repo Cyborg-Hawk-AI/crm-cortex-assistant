@@ -15,7 +15,8 @@ import {
   ListIcon, 
   TableIcon,
   BarChart3,
-  Save
+  Save,
+  MoreHorizontal
 } from 'lucide-react';
 import { Project, Task, TaskView } from '@/utils/types';
 import { TaskBoard } from '@/components/projects/TaskBoard';

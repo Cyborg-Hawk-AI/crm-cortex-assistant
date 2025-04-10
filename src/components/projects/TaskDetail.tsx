@@ -110,11 +110,10 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
     try {
       const { data, error } = await supabase
         .from('comments')
-        .select('comments.*, profiles.full_name')
+        .select('*, profiles(full_name)')
         .eq('entity_id', task.id)
         .eq('entity_type', 'task')
-        .order('created_at', { ascending: false })
-        .join('profiles', { 'foreignTable': 'profiles', 'columns': ['full_name'], 'targetColumn': 'id', 'sourceColumn': 'user_id' });
+        .order('created_at', { ascending: false });
         
       if (error) {
         console.error('Error fetching comments:', error);
