@@ -1,9 +1,8 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { Task } from '@/utils/types';
+import { Task, SubTask } from '@/utils/types';
 
 export function useMissionTasks(missionId: string | null) {
   const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -114,21 +113,51 @@ export function useMissionTasks(missionId: string | null) {
     if (!currentUserId) return [];
     
     try {
-      // Check both reporter_id and user_id for filtering
-      const { data, error } = await supabase
+      // First try to fetch from the subtasks table
+      const { data: subtasksData, error: subtasksError } = await supabase
+        .from('subtasks')
+        .select('*')
+        .eq('parent_task_id', parentTaskId)
+        .or(`user_id.eq.${currentUserId},created_by.eq.${currentUserId}`)
+        .order('created_at', { ascending: true });
+        
+      if (!subtasksError && subtasksData && subtasksData.length > 0) {
+        // If we found subtasks in the dedicated subtasks table
+        console.log(`Found ${subtasksData.length} subtasks in subtasks table for parent: ${parentTaskId}`);
+        
+        // Map subtasks table entries to Task format for consistency in UI
+        return subtasksData.map(subtask => ({
+          id: subtask.id,
+          title: subtask.title,
+          description: null,
+          status: subtask.is_completed ? 'completed' : 'open',
+          priority: 'medium',
+          due_date: null,
+          assignee_id: null,
+          reporter_id: subtask.created_by || currentUserId,
+          user_id: subtask.user_id,
+          parent_task_id: subtask.parent_task_id,
+          created_at: subtask.created_at,
+          updated_at: subtask.updated_at,
+          tags: []
+        }));
+      }
+      
+      // If no results in subtasks table, try the tasks table
+      const { data: tasksData, error: tasksError } = await supabase
         .from('tasks')
         .select('*')
         .eq('parent_task_id', parentTaskId)
         .or(`reporter_id.eq.${currentUserId},user_id.eq.${currentUserId}`)
         .order('created_at', { ascending: true });
         
-      if (error) {
-        console.error(`Error fetching subtasks for ${parentTaskId}:`, error);
+      if (tasksError) {
+        console.error(`Error fetching subtasks for ${parentTaskId}:`, tasksError);
         return [];
       }
       
-      console.log(`Found ${data?.length || 0} subtasks for parent: ${parentTaskId}`);
-      return data as Task[];
+      console.log(`Found ${tasksData?.length || 0} subtasks in tasks table for parent: ${parentTaskId}`);
+      return tasksData as Task[];
     } catch (err) {
       console.error("Error fetching subtasks:", err);
       return [];
@@ -157,7 +186,8 @@ export function useMissionTasks(missionId: string | null) {
     loadAllSubtasks();
   }, [tasks, currentUserId, fetchSubtasksForParent]);
 
-  const createTask = useMutation({
+  // Create a task helper function
+  const createTaskMutation = useMutation({
     mutationFn: async (params: { 
       title: string; 
       parentTaskId: string | null; 
@@ -175,35 +205,92 @@ export function useMissionTasks(missionId: string | null) {
       
       const missionTag = missionId ? `mission:${missionId}` : null;
       
-      const newTask = {
-        title: params.title,
-        description: params.description || null,
-        status: 'open',
-        priority: 'medium',
-        reporter_id: currentUserId,
-        user_id: currentUserId, // Also set user_id to currentUserId
-        parent_task_id: params.parentTaskId,
-        due_date: dueDate,
-        assignee_id: null,
-        // Store mission ID in tags array to query related tasks
-        tags: params.parentTaskId ? [] : missionTag ? [missionTag] : [],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      
-      console.log("Creating task with data:", newTask);
-      
-      const { data, error } = await supabase
-        .from('tasks')
-        .insert(newTask)
-        .select()
-        .single();
+      // Determine if this is a subtask or a main task
+      if (params.parentTaskId) {
+        try {
+          // Create in subtasks table
+          const { data, error } = await supabase
+            .from('subtasks')
+            .insert({
+              title: params.title,
+              parent_task_id: params.parentTaskId,
+              user_id: currentUserId,
+              created_by: currentUserId,
+              is_completed: false,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+            
+          if (error) {
+            console.error("Subtask creation error:", error);
+            throw error;
+          }
+          return data;
+        } catch (subtaskError) {
+          console.error("Error creating subtask:", subtaskError);
+          
+          // Fallback to tasks table if subtasks table insertion fails
+          console.log("Falling back to tasks table for subtask creation");
+          const newTask = {
+            title: params.title,
+            description: params.description || null,
+            status: 'open',
+            priority: 'medium',
+            reporter_id: currentUserId,
+            user_id: currentUserId,
+            parent_task_id: params.parentTaskId,
+            due_date: dueDate,
+            assignee_id: null,
+            tags: [],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+          
+          const { data, error } = await supabase
+            .from('tasks')
+            .insert(newTask)
+            .select()
+            .single();
+            
+          if (error) {
+            console.error("Task creation error:", error);
+            throw error;
+          }
+          return data;
+        }
+      } else {
+        // Create a regular task
+        const newTask = {
+          title: params.title,
+          description: params.description || null,
+          status: 'open',
+          priority: 'medium',
+          reporter_id: currentUserId,
+          user_id: currentUserId,
+          parent_task_id: params.parentTaskId,
+          due_date: dueDate,
+          assignee_id: null,
+          tags: missionTag ? [missionTag] : [],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
         
-      if (error) {
-        console.error("Task creation error:", error);
-        throw error;
+        console.log("Creating task with data:", newTask);
+        
+        const { data, error } = await supabase
+          .from('tasks')
+          .insert(newTask)
+          .select()
+          .single();
+          
+        if (error) {
+          console.error("Task creation error:", error);
+          throw error;
+        }
+        return data;
       }
-      return data;
     },
     onSuccess: (data, variables) => {
       setNewTaskTitle('');
@@ -239,6 +326,28 @@ export function useMissionTasks(missionId: string | null) {
     mutationFn: async ({ taskId, status }: { taskId: string, status: string }) => {
       if (!currentUserId) throw new Error('User not authenticated');
       
+      // First try to update in subtasks table if it's a subtask
+      try {
+        const isCompletedValue = status === 'completed';
+        const { data, error } = await supabase
+          .from('subtasks')
+          .update({ 
+            is_completed: isCompletedValue,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', taskId)
+          .or(`user_id.eq.${currentUserId},created_by.eq.${currentUserId}`)
+          .select()
+          .single();
+        
+        if (!error && data) {
+          return data;
+        }
+      } catch (subtaskError) {
+        console.log("Task not found in subtasks table, trying tasks table");
+      }
+      
+      // If not found in subtasks, try tasks table
       const { data, error } = await supabase
         .from('tasks')
         .update({ 
@@ -253,7 +362,7 @@ export function useMissionTasks(missionId: string | null) {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId, currentUserId] });
       refetch();
       
@@ -265,7 +374,7 @@ export function useMissionTasks(missionId: string | null) {
     onError: (error) => {
       toast({
         title: "Error",
-        description: `Failed to update task: ${error instanceof Error ? error.message : "Unknown error"}`,
+        description: `Failed to update task status: ${error instanceof Error ? error.message : "Unknown error"}`,
         variant: "destructive"
       });
     }
@@ -275,6 +384,27 @@ export function useMissionTasks(missionId: string | null) {
     mutationFn: async ({ taskId, title }: { taskId: string, title: string }) => {
       if (!currentUserId) throw new Error('User not authenticated');
       
+      // Try subtasks table first
+      try {
+        const { data, error } = await supabase
+          .from('subtasks')
+          .update({ 
+            title,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', taskId)
+          .or(`user_id.eq.${currentUserId},created_by.eq.${currentUserId}`)
+          .select()
+          .single();
+        
+        if (!error && data) {
+          return data;
+        }
+      } catch (subtaskError) {
+        console.log("Task not found in subtasks table, trying tasks table");
+      }
+      
+      // Try tasks table if not found in subtasks
       const { data, error } = await supabase
         .from('tasks')
         .update({ 
@@ -327,7 +457,7 @@ export function useMissionTasks(missionId: string | null) {
       console.log("Description updated successfully:", data);
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       // Invalidate the appropriate cache entries to ensure UI updates
       queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId, currentUserId] });
       
@@ -426,20 +556,36 @@ export function useMissionTasks(missionId: string | null) {
     mutationFn: async (taskId: string) => {
       if (!currentUserId) throw new Error('User not authenticated');
       
-      // First, find and delete any subtasks that belong to this task
-      const { data: subtasksToDelete } = await supabase
-        .from('tasks')
-        .select('id')
-        .eq('parent_task_id', taskId)
-        .or(`reporter_id.eq.${currentUserId},user_id.eq.${currentUserId}`);
+      // Try to delete from subtasks table first
+      try {
+        const { error } = await supabase
+          .from('subtasks')
+          .delete()
+          .eq('id', taskId)
+          .or(`user_id.eq.${currentUserId},created_by.eq.${currentUserId}`);
+        
+        if (!error) {
+          return { success: true };
+        }
+      } catch (subtaskError) {
+        console.log("Task not found in subtasks table, trying tasks table");
+      }
       
-      if (subtasksToDelete && subtasksToDelete.length > 0) {
-        const subtaskIds = subtasksToDelete.map(subtask => subtask.id);
+      // First, find and delete any subtasks that belong to this task in both tables
+      try {
+        // Delete from subtasks table
+        await supabase
+          .from('subtasks')
+          .delete()
+          .eq('parent_task_id', taskId);
+          
+        // Delete from tasks table where it's a subtask
         await supabase
           .from('tasks')
           .delete()
-          .in('id', subtaskIds)
-          .or(`reporter_id.eq.${currentUserId},user_id.eq.${currentUserId}`);
+          .eq('parent_task_id', taskId);
+      } catch (err) {
+        console.error("Error deleting child tasks:", err);
       }
       
       // Then delete the task itself
@@ -450,6 +596,8 @@ export function useMissionTasks(missionId: string | null) {
         .or(`reporter_id.eq.${currentUserId},user_id.eq.${currentUserId}`);
         
       if (error) throw error;
+      
+      return { success: true };
     },
     onSuccess: (_, deletedTaskId) => {
       queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId, currentUserId] });
@@ -514,25 +662,23 @@ export function useMissionTasks(missionId: string | null) {
     missionExists,
     currentUserId,
     createTask: (title: string, parentTaskId: string | null, description?: string) => 
-      createTask.mutate({ title, parentTaskId, description }),
+      createTaskMutation.mutate({ title, parentTaskId, description }),
     updateTaskStatus: (taskId: string, status: string) => 
       updateTaskStatus.mutate({ taskId, status }),
     updateTaskTitle: (taskId: string, title: string) => 
       updateTaskTitle.mutate({ taskId, title }),
     updateTaskDescription: (taskId: string, description: string | null) => 
       updateTaskDescription.mutate({ taskId, description }),
-    updateTaskDueDate: (taskId: string, dueDate: string | null) => 
+    updateTaskDueDate: (taskId: string, dueDate: string | null) =>
       updateTaskDueDate.mutate({ taskId, dueDate }),
-    updateTaskPriority: (taskId: string, priority: string) => 
+    updateTaskPriority: (taskId: string, priority: string) =>
       updateTaskPriority.mutate({ taskId, priority }),
     deleteTask: (taskId: string) => deleteTask.mutate(taskId),
     getSubtasks: (parentTaskId: string) => getSubtasks.mutate(parentTaskId),
     getTaskById,
-    isCreating: createTask.isPending,
-    isUpdating: updateTaskStatus.isPending || updateTaskTitle.isPending || 
-                updateTaskDueDate.isPending || updateTaskDescription.isPending || 
-                updateTaskPriority.isPending,
-    isDeleting: deleteTask.isPending,
-    refetch
+    refetch,
+    isCreating: createTaskMutation.isPending,
+    isUpdating: updateTaskStatus.isPending || updateTaskTitle.isPending || updateTaskDescription.isPending,
+    isDeleting: deleteTask.isPending
   };
 }
