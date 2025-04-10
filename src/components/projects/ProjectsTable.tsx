@@ -6,6 +6,15 @@ import { Button } from '@/components/ui/button';
 import { CalendarIcon, CheckCircle2, CircleDashed, FilterIcon, MoreHorizontal, PlusCircle } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from '@/components/ui/tooltip';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +32,8 @@ interface ProjectsTableProps {
 export function ProjectsTable({ projects, onProjectClick, onCreateProject }: ProjectsTableProps) {
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleSort = (column: string) => {
     if (sortColumn === column) {
@@ -69,6 +80,73 @@ export function ProjectsTable({ projects, onProjectClick, onCreateProject }: Pro
     );
   };
 
+  const handleDeleteProject = async (e: React.MouseEvent, projectId: string) => {
+    e.stopPropagation(); // Prevent navigation
+    
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', projectId);
+        
+      if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      
+      toast({
+        title: "Project deleted",
+        description: "The project has been successfully deleted",
+      });
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete project. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDuplicateProject = async (e: React.MouseEvent, project: Project) => {
+    e.stopPropagation(); // Prevent navigation
+    
+    try {
+      // Create a duplicate of the project without the ID
+      const { title, description, status, tags, user_id, reporter_id, priority } = project;
+      
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert({
+          title: `${title} (Copy)`,
+          description,
+          status,
+          tags,
+          user_id,
+          reporter_id,
+          priority,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select();
+        
+      if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      
+      toast({
+        title: "Project duplicated",
+        description: "A copy of the project has been created",
+      });
+    } catch (error) {
+      console.error('Error duplicating project:', error);
+      toast({
+        title: "Error",
+        description: "Failed to duplicate project. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <Card className="bg-[#25384D] border-[#3A4D62] shadow-[0_0_15px_rgba(0,247,239,0.1)]">
       <CardContent className="p-0">
@@ -83,10 +161,6 @@ export function ProjectsTable({ projects, onProjectClick, onCreateProject }: Pro
             <Button variant="outline" size="sm" className="border-[#3A4D62] hover:bg-[#3A4D62]/50">
               <FilterIcon className="w-4 h-4 mr-1" />
               Filter
-            </Button>
-            <Button onClick={onCreateProject} className="bg-neon-aqua hover:bg-neon-aqua/90 text-black">
-              <PlusCircle className="w-4 h-4 mr-1" />
-              New Project
             </Button>
           </div>
         </div>
@@ -151,17 +225,21 @@ export function ProjectsTable({ projects, onProjectClick, onCreateProject }: Pro
                     </Badge>
                   </TableCell>
                   <TableCell className="p-4">
-                    <div className="flex items-center space-x-2">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${project.owner_id}`} />
-                        <AvatarFallback>
-                          {project.owner_id.substring(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm text-[#CBD5E1]">
-                        {project.owner_id.substring(0, 8)}
-                      </span>
-                    </div>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${project.owner_id}`} />
+                            <AvatarFallback>
+                              {project.owner_id.substring(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{project.owner_name || project.owner_id}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </TableCell>
                   <TableCell className="p-4">
                     {renderCompletionIndicator(
@@ -193,10 +271,16 @@ export function ProjectsTable({ projects, onProjectClick, onCreateProject }: Pro
                         <DropdownMenuItem className="text-[#F1F5F9] hover:bg-[#3A4D62]/50">
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-[#F1F5F9] hover:bg-[#3A4D62]/50">
+                        <DropdownMenuItem 
+                          className="text-[#F1F5F9] hover:bg-[#3A4D62]/50" 
+                          onClick={(e) => handleDuplicateProject(e, project)}
+                        >
                           Duplicate
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-500 hover:bg-red-500/10">
+                        <DropdownMenuItem 
+                          className="text-red-500 hover:bg-red-500/10" 
+                          onClick={(e) => handleDeleteProject(e, project.id)}
+                        >
                           Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>

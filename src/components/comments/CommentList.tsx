@@ -2,6 +2,7 @@
 import React from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Comment {
   id: string;
@@ -31,26 +32,26 @@ export function CommentList({ comments, maxHeight = "200px" }: CommentListProps)
   }
 
   return (
-    <ScrollArea className="max-h-[200px]">
+    <ScrollArea className={`max-h-[${maxHeight}]`}>
       <div className="space-y-4 mb-4 pr-2">
         {comments.map((comment) => (
           <div key={comment.id} className="flex gap-2">
-            <Avatar className="h-8 w-8">
+            <Avatar className="h-7 w-7 flex-shrink-0 mt-0.5">
               <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${comment.user_id}`} />
               <AvatarFallback>
-                {(comment.user_name || comment.user_id).substring(0, 2).toUpperCase()}
+                {(comment.user_name || "").substring(0, 2).toUpperCase() || comment.user_id.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
+              <p className="text-sm text-[#F1F5F9] mb-1">{comment.content}</p>
               <div className="flex justify-between items-center">
-                <span className="font-medium text-[#F1F5F9]">
-                  {comment.user_name || comment.user_id}
+                <span className="text-xs font-medium text-[#CBD5E1]">
+                  {comment.user_name || comment.user_id.substring(0, 8)}
                 </span>
                 <span className="text-xs text-[#718096]">
                   {formatDate(comment.created_at)}
                 </span>
               </div>
-              <p className="text-sm text-[#CBD5E1] mt-1">{comment.content}</p>
             </div>
           </div>
         ))}

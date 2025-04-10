@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +13,6 @@ import {
   Edit2Icon, 
   KanbanIcon, 
   ListIcon, 
-  MoreHorizontal,
   TableIcon,
   BarChart3,
   Save
@@ -28,6 +26,8 @@ import { ProjectTasksSection } from '@/components/projects/ProjectTasksSection';
 import { TaskCreateDialog } from '@/components/modals/TaskCreateDialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useQuery } from '@tanstack/react-query';
 
 interface ProjectDetailProps {
   project: Project;
@@ -50,6 +50,18 @@ export function ProjectDetail({
   const [projectTitle, setProjectTitle] = useState(project.title);
   const [projectDescription, setProjectDescription] = useState(project.description || '');
   const { toast } = useToast();
+  
+  const { data: ownerProfile } = useQuery({
+    queryKey: ['owner-profile', project.owner_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', project.owner_id)
+        .single();
+      return data;
+    }
+  });
   
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -176,6 +188,11 @@ export function ProjectDetail({
     });
   };
 
+  const getInitials = (name?: string) => {
+    if (!name) return project.owner_id.substring(0, 2).toUpperCase();
+    return name.split(' ').map(part => part[0]).join('').toUpperCase().substring(0, 2);
+  };
+
   return (
     <Card className="bg-[#25384D] border-[#3A4D62] shadow-[0_0_15px_rgba(0,247,239,0.1)] flex flex-col h-full">
       <CardHeader className="p-5 border-b border-[#3A4D62] flex-shrink-0">
@@ -229,12 +246,21 @@ export function ProjectDetail({
                 Updated {new Date(project.updated_at).toLocaleDateString()}
               </span>
             </div>
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${project.owner_id}`} />
-              <AvatarFallback>
-                {project.owner_id.substring(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${project.owner_id}`} />
+                    <AvatarFallback>
+                      {getInitials(ownerProfile?.full_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {ownerProfile?.full_name || 'Unknown user'}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <Button 
               variant="outline" 
               size="sm" 

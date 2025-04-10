@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, 
@@ -14,7 +13,8 @@ import {
   Calendar,
   Flag,
   Check,
-  Plus
+  Plus,
+  CheckCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +40,11 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  RadioGroup,
+  RadioGroupItem,
+  Label
 } from '@/components/ui/dropdown-menu';
 
 interface TaskDetailProps {
@@ -67,6 +72,9 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   const [priority, setPriority] = useState(task.priority);
   const [tags, setTags] = useState<string[]>(task.tags || []);
   const [comments, setComments] = useState<any[]>([]);
+  
+  const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+  const [isPriorityMenuOpen, setIsPriorityMenuOpen] = useState(false);
   
   const { data: profiles = {}, isLoading: loadingProfiles } = useQuery({
     queryKey: ['user-profiles'],
@@ -102,17 +110,23 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
     try {
       const { data, error } = await supabase
         .from('comments')
-        .select('*')
+        .select('comments.*, profiles.full_name')
         .eq('entity_id', task.id)
         .eq('entity_type', 'task')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .join('profiles', { 'foreignTable': 'profiles', 'columns': ['full_name'], 'targetColumn': 'id', 'sourceColumn': 'user_id' });
         
       if (error) {
         console.error('Error fetching comments:', error);
         return [];
       }
       
-      return data || [];
+      const transformedData = data.map(comment => ({
+        ...comment,
+        user_name: comment.profiles?.full_name || comment.user_id
+      }));
+      
+      return transformedData || [];
     } catch (err) {
       console.error('Failed to fetch comments:', err);
       return [];
@@ -325,8 +339,8 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
     }
   };
 
-  const handleAddComment = async () => {
-    if (!newComment.trim()) return;
+  const handleAddComment = async (commentContent: string) => {
+    if (!commentContent.trim()) return;
     
     try {
       const userId = await getCurrentUserId();
@@ -342,7 +356,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
       const { data, error } = await supabase
         .from('comments')
         .insert({
-          content: newComment.trim(),
+          content: commentContent.trim(),
           user_id: userId,
           entity_id: task.id,
           entity_type: 'task',
@@ -353,7 +367,6 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
       if (error) throw error;
       
       refetchComments();
-      setNewComment('');
       
       toast({
         title: "Comment added",
@@ -520,52 +533,88 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
               </h1>
             )}
             <div className="flex space-x-2">
-              <DropdownMenu>
+              <DropdownMenu open={isStatusMenuOpen} onOpenChange={setIsStatusMenuOpen}>
                 <DropdownMenuTrigger asChild>
-                  <Badge className={getStatusColor(status)}>
+                  <Badge className={`${getStatusColor(status)} cursor-pointer hover:opacity-80`}>
                     {status}
                   </Badge>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9]">
-                  <DropdownMenuItem onClick={() => handleStatusChange('open')} className="hover:bg-[#3A4D62]/50">
-                    Open
+                  <DropdownMenuLabel>Set Status</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-[#3A4D62]" />
+                  <DropdownMenuItem 
+                    onClick={() => handleStatusChange('open')} 
+                    className="hover:bg-[#3A4D62]/50 cursor-pointer"
+                  >
+                    {status === 'open' && <CheckCheck className="w-4 h-4 mr-2 text-neon-aqua" />}
+                    <span className={status === 'open' ? 'ml-0' : 'ml-6'}>Open</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleStatusChange('in-progress')} className="hover:bg-[#3A4D62]/50">
-                    In Progress
+                  <DropdownMenuItem 
+                    onClick={() => handleStatusChange('in-progress')} 
+                    className="hover:bg-[#3A4D62]/50 cursor-pointer"
+                  >
+                    {status === 'in-progress' && <CheckCheck className="w-4 h-4 mr-2 text-neon-aqua" />}
+                    <span className={status === 'in-progress' ? 'ml-0' : 'ml-6'}>In Progress</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleStatusChange('resolved')} className="hover:bg-[#3A4D62]/50">
-                    Resolved
+                  <DropdownMenuItem 
+                    onClick={() => handleStatusChange('resolved')} 
+                    className="hover:bg-[#3A4D62]/50 cursor-pointer"
+                  >
+                    {status === 'resolved' && <CheckCheck className="w-4 h-4 mr-2 text-neon-aqua" />}
+                    <span className={status === 'resolved' ? 'ml-0' : 'ml-6'}>Resolved</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleStatusChange('closed')} className="hover:bg-[#3A4D62]/50">
-                    Closed
+                  <DropdownMenuItem 
+                    onClick={() => handleStatusChange('closed')} 
+                    className="hover:bg-[#3A4D62]/50 cursor-pointer"
+                  >
+                    {status === 'closed' && <CheckCheck className="w-4 h-4 mr-2 text-neon-aqua" />}
+                    <span className={status === 'closed' ? 'ml-0' : 'ml-6'}>Closed</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleStatusChange('completed')} className="hover:bg-[#3A4D62]/50">
-                    Completed
+                  <DropdownMenuItem 
+                    onClick={() => handleStatusChange('completed')} 
+                    className="hover:bg-[#3A4D62]/50 cursor-pointer"
+                  >
+                    {status === 'completed' && <CheckCheck className="w-4 h-4 mr-2 text-neon-aqua" />}
+                    <span className={status === 'completed' ? 'ml-0' : 'ml-6'}>Completed</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
               
-              <DropdownMenu>
+              <DropdownMenu open={isPriorityMenuOpen} onOpenChange={setIsPriorityMenuOpen}>
                 <DropdownMenuTrigger asChild>
-                  <Badge className={getPriorityColor(priority)}>
+                  <Badge className={`${getPriorityColor(priority)} cursor-pointer hover:opacity-80`}>
                     {priority}
                   </Badge>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9]">
-                  <DropdownMenuItem onClick={() => handlePriorityChange('low')} className="hover:bg-[#3A4D62]/50">
-                    <Flag className="mr-2 h-3.5 w-3.5 text-[#64748B]" />
+                  <DropdownMenuLabel>Set Priority</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-[#3A4D62]" />
+                  <DropdownMenuItem 
+                    onClick={() => handlePriorityChange('low')} 
+                    className="hover:bg-[#3A4D62]/50 cursor-pointer"
+                  >
+                    <Flag className={`mr-2 h-3.5 w-3.5 ${priority === 'low' ? 'text-neon-aqua' : 'text-[#64748B]'}`} />
                     Low
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handlePriorityChange('medium')} className="hover:bg-[#3A4D62]/50">
-                    <Flag className="mr-2 h-3.5 w-3.5 text-amber-500" />
+                  <DropdownMenuItem 
+                    onClick={() => handlePriorityChange('medium')} 
+                    className="hover:bg-[#3A4D62]/50 cursor-pointer"
+                  >
+                    <Flag className={`mr-2 h-3.5 w-3.5 ${priority === 'medium' ? 'text-neon-aqua' : 'text-amber-500'}`} />
                     Medium
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handlePriorityChange('high')} className="hover:bg-[#3A4D62]/50">
-                    <Flag className="mr-2 h-3.5 w-3.5 text-neon-red" />
+                  <DropdownMenuItem 
+                    onClick={() => handlePriorityChange('high')} 
+                    className="hover:bg-[#3A4D62]/50 cursor-pointer"
+                  >
+                    <Flag className={`mr-2 h-3.5 w-3.5 ${priority === 'high' ? 'text-neon-aqua' : 'text-neon-red'}`} />
                     High
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handlePriorityChange('urgent')} className="hover:bg-[#3A4D62]/50">
-                    <Flag className="mr-2 h-3.5 w-3.5 text-neon-red" />
+                  <DropdownMenuItem 
+                    onClick={() => handlePriorityChange('urgent')} 
+                    className="hover:bg-[#3A4D62]/50 cursor-pointer"
+                  >
+                    <Flag className={`mr-2 h-3.5 w-3.5 ${priority === 'urgent' ? 'text-neon-aqua' : 'text-neon-red'}`} />
                     Urgent
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -813,40 +862,13 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
           </div>
           
           <div className="bg-[#1C2A3A]/50 p-4 rounded-md">
-            <CommentList comments={comments} />
-            
-            <div className="flex items-start gap-2 mt-3">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${task.user_id}`} />
-                <AvatarFallback>
-                  {getUserName(task.user_id).substring(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <Textarea 
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Add a comment..."
-                  className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9] min-h-[80px]"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleAddComment();
-                    }
-                  }}
-                />
-                <div className="mt-2 flex justify-end">
-                  <Button 
-                    onClick={handleAddComment}
-                    className="bg-neon-aqua hover:bg-neon-aqua/90 text-black"
-                    disabled={!newComment.trim()}
-                  >
-                    <Send className="h-3.5 w-3.5 mr-1" />
-                    Comment
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <CommentSection
+              taskId={task.id}
+              comments={comments}
+              userId={task.user_id || ''}
+              userName={getUserName(task.user_id)}
+              onAddComment={handleAddComment}
+            />
           </div>
         </div>
       </div>
