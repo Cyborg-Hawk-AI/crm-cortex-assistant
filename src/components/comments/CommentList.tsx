@@ -52,7 +52,7 @@ export function CommentList({ comments, maxHeight = "300px" }: CommentListProps)
 
   return (
     <div className="w-full">
-      <div className="space-y-4 mb-4 pr-2">
+      <div className="space-y-4 mb-4">
         {comments.map((comment) => (
           <div key={comment.id} className="flex gap-2">
             <Avatar className="h-7 w-7 flex-shrink-0 mt-0.5">

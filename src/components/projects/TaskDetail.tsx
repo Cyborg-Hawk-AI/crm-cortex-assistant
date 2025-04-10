@@ -562,385 +562,387 @@ export function TaskDetail({
         </div>
       </div>
       
-      <ScrollArea className="flex-1 overflow-auto" hideScrollbar={false}>
-        <div className="p-4 space-y-6">
-          <div>
-            <div className="flex items-start justify-between">
-              {isEditingTitle || isEditing ? (
-                <Input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="text-xl font-bold text-[#F1F5F9] bg-[#1C2A3A] border-neon-aqua/50"
-                  onBlur={() => !isEditing && saveChanges()}
-                />
-              ) : (
-                <h1 
-                  className="text-xl font-bold text-[#F1F5F9] cursor-pointer hover:text-neon-aqua/80"
-                  onClick={() => setIsEditingTitle(true)}
-                >
-                  {title}
-                </h1>
-              )}
-              <div className="flex space-x-2">
-                <DropdownMenu open={isStatusMenuOpen} onOpenChange={setIsStatusMenuOpen}>
-                  <DropdownMenuTrigger asChild>
-                    <Badge className={`${getStatusColor(status)} cursor-pointer hover:opacity-80`}>
-                      {status}
-                    </Badge>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-50">
-                    <DropdownMenuLabel>Set Status</DropdownMenuLabel>
-                    <DropdownMenuSeparator className="bg-[#3A4D62]" />
-                    <DropdownMenuItem 
-                      onClick={() => handleStatusChange('open')} 
-                      className="hover:bg-[#3A4D62]/50 cursor-pointer"
-                    >
-                      {status === 'open' && <CheckCheck className="w-4 h-4 mr-2 text-neon-aqua" />}
-                      <span className={status === 'open' ? 'ml-0' : 'ml-6'}>Open</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => handleStatusChange('in-progress')} 
-                      className="hover:bg-[#3A4D62]/50 cursor-pointer"
-                    >
-                      {status === 'in-progress' && <CheckCheck className="w-4 h-4 mr-2 text-neon-aqua" />}
-                      <span className={status === 'in-progress' ? 'ml-0' : 'ml-6'}>In Progress</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => handleStatusChange('resolved')} 
-                      className="hover:bg-[#3A4D62]/50 cursor-pointer"
-                    >
-                      {status === 'resolved' && <CheckCheck className="w-4 h-4 mr-2 text-neon-aqua" />}
-                      <span className={status === 'resolved' ? 'ml-0' : 'ml-6'}>Resolved</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => handleStatusChange('closed')} 
-                      className="hover:bg-[#3A4D62]/50 cursor-pointer"
-                    >
-                      {status === 'closed' && <CheckCheck className="w-4 h-4 mr-2 text-neon-aqua" />}
-                      <span className={status === 'closed' ? 'ml-0' : 'ml-6'}>Closed</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => handleStatusChange('completed')} 
-                      className="hover:bg-[#3A4D62]/50 cursor-pointer"
-                    >
-                      {status === 'completed' && <CheckCheck className="w-4 h-4 mr-2 text-neon-aqua" />}
-                      <span className={status === 'completed' ? 'ml-0' : 'ml-6'}>Completed</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                
-                <DropdownMenu open={isPriorityMenuOpen} onOpenChange={setIsPriorityMenuOpen}>
-                  <DropdownMenuTrigger asChild>
-                    <Badge className={`${getPriorityColor(priority)} cursor-pointer hover:opacity-80`}>
-                      {priority}
-                    </Badge>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-50">
-                    <DropdownMenuLabel>Set Priority</DropdownMenuLabel>
-                    <DropdownMenuSeparator className="bg-[#3A4D62]" />
-                    <DropdownMenuItem 
-                      onClick={() => handlePriorityChange('low')} 
-                      className="hover:bg-[#3A4D62]/50 cursor-pointer"
-                    >
-                      <Flag className={`mr-2 h-3.5 w-3.5 ${priority === 'low' ? 'text-neon-aqua' : 'text-[#64748B]'}`} />
-                      Low
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => handlePriorityChange('medium')} 
-                      className="hover:bg-[#3A4D62]/50 cursor-pointer"
-                    >
-                      <Flag className={`mr-2 h-3.5 w-3.5 ${priority === 'medium' ? 'text-neon-aqua' : 'text-amber-500'}`} />
-                      Medium
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => handlePriorityChange('high')} 
-                      className="hover:bg-[#3A4D62]/50 cursor-pointer"
-                    >
-                      <Flag className={`mr-2 h-3.5 w-3.5 ${priority === 'high' ? 'text-neon-aqua' : 'text-neon-red'}`} />
-                      High
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => handlePriorityChange('urgent')} 
-                      className="hover:bg-[#3A4D62]/50 cursor-pointer"
-                    >
-                      <Flag className={`mr-2 h-3.5 w-3.5 ${priority === 'urgent' ? 'text-neon-aqua' : 'text-neon-red'}`} />
-                      Urgent
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-4 mt-2 text-sm text-[#CBD5E1]">
-              <div className="flex items-center">
-                <Clock className="h-3.5 w-3.5 mr-1" />
-                <span>Created: {formatDate(task.created_at)}</span>
-              </div>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={cn(
-                      "justify-start text-left font-normal border-[#3A4D62] hover:border-[#64748B] hover:bg-[#3A4D62]/30",
-                      !date && "text-[#64748B]"
-                    )}
-                  >
-                    <Calendar className="mr-2 h-3.5 w-3.5" />
-                    {date ? format(date, 'MMM d, yyyy') : <span>Set due date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-[#25384D] border-[#3A4D62] z-50">
-                  <CalendarComponent
-                    mode="single"
-                    selected={date}
-                    onSelect={handleDueDateChange}
-                    initialFocus
+      <div className="flex-1 overflow-y-auto">
+        <ScrollArea className="h-full" hideScrollbar={false}>
+          <div className="p-4 space-y-6">
+            <div>
+              <div className="flex items-start justify-between">
+                {isEditingTitle || isEditing ? (
+                  <Input
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="text-xl font-bold text-[#F1F5F9] bg-[#1C2A3A] border-neon-aqua/50"
+                    onBlur={() => !isEditing && saveChanges()}
                   />
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h3 className="font-medium text-[#F1F5F9]">Description</h3>
-              {!isEditing && !isEditingDescription && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setIsEditingDescription(true)}
-                >
-                  <Edit2 className="h-3.5 w-3.5 mr-1" />
-                  Edit
-                </Button>
-              )}
-            </div>
-            
-            {isEditingDescription || isEditing ? (
-              <div className="space-y-2">
-                <Textarea 
-                  value={description} 
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full p-2 border border-[#3A4D62] rounded-md bg-[#1C2A3A] text-[#F1F5F9] min-h-[100px]"
-                  placeholder="Add a description..."
-                />
-                {!isEditing && (
-                  <div className="flex justify-end space-x-2">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => {
-                        setIsEditingDescription(false);
-                        setDescription(task.description || '');
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button 
-                      variant="default" 
-                      size="sm"
-                      onClick={handleDescriptionSave}
-                    >
-                      Save
-                    </Button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div 
-                className={`text-sm text-[#CBD5E1] bg-[#1C2A3A]/50 p-3 rounded-md cursor-pointer transition-all duration-300 ease-in-out ${
-                  isExpandedDescription ? 'max-h-none' : 'max-h-[80px] overflow-hidden relative'
-                }`}
-                onClick={toggleDescriptionExpand}
-              >
-                {task.description ? (
-                  <>
-                    <div className="whitespace-pre-wrap">{task.description}</div>
-                    {descriptionOverflow && !isExpandedDescription && (
-                      <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#1C2A3A] to-transparent pointer-events-none" />
-                    )}
-                    {descriptionOverflow && (
-                      <div className="text-xs text-neon-aqua mt-2 text-center">
-                        {isExpandedDescription ? 'Click to collapse' : 'Click to expand'}
-                      </div>
-                    )}
-                  </>
                 ) : (
-                  'No description provided. Click "Edit" to add one.'
+                  <h1 
+                    className="text-xl font-bold text-[#F1F5F9] cursor-pointer hover:text-neon-aqua/80"
+                    onClick={() => setIsEditingTitle(true)}
+                  >
+                    {title}
+                  </h1>
                 )}
+                <div className="flex space-x-2">
+                  <DropdownMenu open={isStatusMenuOpen} onOpenChange={setIsStatusMenuOpen}>
+                    <DropdownMenuTrigger asChild>
+                      <Badge className={`${getStatusColor(status)} cursor-pointer hover:opacity-80`}>
+                        {status}
+                      </Badge>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-50">
+                      <DropdownMenuLabel>Set Status</DropdownMenuLabel>
+                      <DropdownMenuSeparator className="bg-[#3A4D62]" />
+                      <DropdownMenuItem 
+                        onClick={() => handleStatusChange('open')} 
+                        className="hover:bg-[#3A4D62]/50 cursor-pointer"
+                      >
+                        {status === 'open' && <CheckCheck className="w-4 h-4 mr-2 text-neon-aqua" />}
+                        <span className={status === 'open' ? 'ml-0' : 'ml-6'}>Open</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => handleStatusChange('in-progress')} 
+                        className="hover:bg-[#3A4D62]/50 cursor-pointer"
+                      >
+                        {status === 'in-progress' && <CheckCheck className="w-4 h-4 mr-2 text-neon-aqua" />}
+                        <span className={status === 'in-progress' ? 'ml-0' : 'ml-6'}>In Progress</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => handleStatusChange('resolved')} 
+                        className="hover:bg-[#3A4D62]/50 cursor-pointer"
+                      >
+                        {status === 'resolved' && <CheckCheck className="w-4 h-4 mr-2 text-neon-aqua" />}
+                        <span className={status === 'resolved' ? 'ml-0' : 'ml-6'}>Resolved</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => handleStatusChange('closed')} 
+                        className="hover:bg-[#3A4D62]/50 cursor-pointer"
+                      >
+                        {status === 'closed' && <CheckCheck className="w-4 h-4 mr-2 text-neon-aqua" />}
+                        <span className={status === 'closed' ? 'ml-0' : 'ml-6'}>Closed</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => handleStatusChange('completed')} 
+                        className="hover:bg-[#3A4D62]/50 cursor-pointer"
+                      >
+                        {status === 'completed' && <CheckCheck className="w-4 h-4 mr-2 text-neon-aqua" />}
+                        <span className={status === 'completed' ? 'ml-0' : 'ml-6'}>Completed</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  
+                  <DropdownMenu open={isPriorityMenuOpen} onOpenChange={setIsPriorityMenuOpen}>
+                    <DropdownMenuTrigger asChild>
+                      <Badge className={`${getPriorityColor(priority)} cursor-pointer hover:opacity-80`}>
+                        {priority}
+                      </Badge>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-50">
+                      <DropdownMenuLabel>Set Priority</DropdownMenuLabel>
+                      <DropdownMenuSeparator className="bg-[#3A4D62]" />
+                      <DropdownMenuItem 
+                        onClick={() => handlePriorityChange('low')} 
+                        className="hover:bg-[#3A4D62]/50 cursor-pointer"
+                      >
+                        <Flag className={`mr-2 h-3.5 w-3.5 ${priority === 'low' ? 'text-neon-aqua' : 'text-[#64748B]'}`} />
+                        Low
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => handlePriorityChange('medium')} 
+                        className="hover:bg-[#3A4D62]/50 cursor-pointer"
+                      >
+                        <Flag className={`mr-2 h-3.5 w-3.5 ${priority === 'medium' ? 'text-neon-aqua' : 'text-amber-500'}`} />
+                        Medium
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => handlePriorityChange('high')} 
+                        className="hover:bg-[#3A4D62]/50 cursor-pointer"
+                      >
+                        <Flag className={`mr-2 h-3.5 w-3.5 ${priority === 'high' ? 'text-neon-aqua' : 'text-neon-red'}`} />
+                        High
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => handlePriorityChange('urgent')} 
+                        className="hover:bg-[#3A4D62]/50 cursor-pointer"
+                      >
+                        <Flag className={`mr-2 h-3.5 w-3.5 ${priority === 'urgent' ? 'text-neon-aqua' : 'text-neon-red'}`} />
+                        Urgent
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
-            )}
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h3 className="font-medium text-[#F1F5F9]">Subtasks</h3>
+              
+              <div className="flex items-center space-x-4 mt-2 text-sm text-[#CBD5E1]">
+                <div className="flex items-center">
+                  <Clock className="h-3.5 w-3.5 mr-1" />
+                  <span>Created: {formatDate(task.created_at)}</span>
+                </div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "justify-start text-left font-normal border-[#3A4D62] hover:border-[#64748B] hover:bg-[#3A4D62]/30",
+                        !date && "text-[#64748B]"
+                      )}
+                    >
+                      <Calendar className="mr-2 h-3.5 w-3.5" />
+                      {date ? format(date, 'MMM d, yyyy') : <span>Set due date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-[#25384D] border-[#3A4D62] z-50">
+                    <CalendarComponent
+                      mode="single"
+                      selected={date}
+                      onSelect={handleDueDateChange}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
             
-            <div className="bg-[#1C2A3A]/50 p-2 rounded-md">
-              {subtasks.length > 0 ? (
-                <div className="space-y-1 mb-2 max-h-[300px] overflow-y-auto pr-2">
-                  {subtasks.map(subtask => (
-                    <div key={subtask.id} className="flex items-center p-2 hover:bg-[#1C2A3A] rounded-md">
-                      <Checkbox 
-                        id={subtask.id}
-                        checked={subtask.is_completed}
-                        className="mr-2"
-                      />
-                      <label 
-                        htmlFor={subtask.id}
-                        className={`text-sm flex-grow cursor-pointer ${
-                          subtask.is_completed ? 'text-[#718096] line-through' : 'text-[#F1F5F9]'
-                        }`}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium text-[#F1F5F9]">Description</h3>
+                {!isEditing && !isEditingDescription && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setIsEditingDescription(true)}
+                  >
+                    <Edit2 className="h-3.5 w-3.5 mr-1" />
+                    Edit
+                  </Button>
+                )}
+              </div>
+              
+              {isEditingDescription || isEditing ? (
+                <div className="space-y-2">
+                  <Textarea 
+                    value={description} 
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full p-2 border border-[#3A4D62] rounded-md bg-[#1C2A3A] text-[#F1F5F9] min-h-[100px]"
+                    placeholder="Add a description..."
+                  />
+                  {!isEditing && (
+                    <div className="flex justify-end space-x-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => {
+                          setIsEditingDescription(false);
+                          setDescription(task.description || '');
+                        }}
                       >
-                        {subtask.title}
-                      </label>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 hover:opacity-100">
-                        <X className="h-3 w-3" />
+                        Cancel
+                      </Button>
+                      <Button 
+                        variant="default" 
+                        size="sm"
+                        onClick={handleDescriptionSave}
+                      >
+                        Save
                       </Button>
                     </div>
-                  ))}
+                  )}
                 </div>
               ) : (
-                <div className="text-sm text-[#718096] p-2 text-center mb-2">
-                  No subtasks yet. Add one below.
-                </div>
-              )}
-
-              <div className="flex items-center gap-2">
-                <Input
-                  value={newSubtaskTitle}
-                  onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                  placeholder="Add a subtask..."
-                  className="flex-1 bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleAddSubtask();
-                    }
-                  }}
-                />
-                <Button 
-                  onClick={handleAddSubtask}
-                  className="bg-neon-aqua hover:bg-neon-aqua/90 text-black"
-                  disabled={!newSubtaskTitle.trim()}
+                <div 
+                  className={`text-sm text-[#CBD5E1] bg-[#1C2A3A]/50 p-3 rounded-md cursor-pointer transition-all duration-300 ease-in-out ${
+                    isExpandedDescription ? 'max-h-none' : 'max-h-[80px] overflow-hidden relative'
+                  }`}
+                  onClick={toggleDescriptionExpand}
                 >
-                  Add
-                </Button>
+                  {task.description ? (
+                    <>
+                      <div className="whitespace-pre-wrap">{task.description}</div>
+                      {descriptionOverflow && !isExpandedDescription && (
+                        <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#1C2A3A] to-transparent pointer-events-none" />
+                      )}
+                      {descriptionOverflow && (
+                        <div className="text-xs text-neon-aqua mt-2 text-center">
+                          {isExpandedDescription ? 'Click to collapse' : 'Click to expand'}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    'No description provided. Click "Edit" to add one.'
+                  )}
+                </div>
+              )}
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium text-[#F1F5F9]">Subtasks</h3>
               </div>
-            </div>
-          </div>
-          
-          <Separator className="bg-[#3A4D62]" />
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <div className="text-sm text-[#CBD5E1]">Assignee</div>
-              {task.assignee_id ? (
-                <div className="flex items-center space-x-2">
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${task.assignee_id}`} />
-                    <AvatarFallback>
-                      {getUserName(task.assignee_id).substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm text-[#F1F5F9]">
-                    {getUserName(task.assignee_id)}
-                  </span>
-                </div>
-              ) : (
-                <Button variant="outline" size="sm" className="border-dashed border-[#3A4D62]">
-                  <User className="h-3.5 w-3.5 mr-1" />
-                  Assign
-                </Button>
-              )}
-            </div>
-            
-            <div className="space-y-1">
-              <div className="text-sm text-[#CBD5E1]">Reporter</div>
-              {task.reporter_id && (
-                <div className="flex items-center space-x-2">
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${task.reporter_id}`} />
-                    <AvatarFallback>
-                      {getUserName(task.reporter_id).substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm text-[#F1F5F9]">
-                    {getUserName(task.reporter_id)}
-                  </span>
-                </div>
-              )}
-            </div>
-            
-            <div className="col-span-2 space-y-3">
-              <div className="text-sm text-[#CBD5E1]">Tags</div>
-              <div className="space-y-3">
-                {tags && tags.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {tags.map((tag, idx) => (
-                      <Badge key={idx} variant="outline" className="bg-[#1C2A3A] flex items-center gap-1 group">
-                        {tag}
-                        <X 
-                          className="h-3 w-3 opacity-50 group-hover:opacity-100 cursor-pointer" 
-                          onClick={() => handleRemoveTag(tag)}
+              
+              <div className="bg-[#1C2A3A]/50 p-2 rounded-md">
+                {subtasks.length > 0 ? (
+                  <div className="space-y-1 mb-2 max-h-[300px] overflow-y-auto pr-2">
+                    {subtasks.map(subtask => (
+                      <div key={subtask.id} className="flex items-center p-2 hover:bg-[#1C2A3A] rounded-md">
+                        <Checkbox 
+                          id={subtask.id}
+                          checked={subtask.is_completed}
+                          className="mr-2"
                         />
-                      </Badge>
+                        <label 
+                          htmlFor={subtask.id}
+                          className={`text-sm flex-grow cursor-pointer ${
+                            subtask.is_completed ? 'text-[#718096] line-through' : 'text-[#F1F5F9]'
+                          }`}
+                        >
+                          {subtask.title}
+                        </label>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 hover:opacity-100">
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
                     ))}
                   </div>
-                ) : null}
-                
+                ) : (
+                  <div className="text-sm text-[#718096] p-2 text-center mb-2">
+                    No subtasks yet. Add one below.
+                  </div>
+                )}
+
                 <div className="flex items-center gap-2">
                   <Input
-                    value={newTag}
-                    onChange={(e) => setNewTag(e.target.value)}
-                    placeholder="Add a tag..."
+                    value={newSubtaskTitle}
+                    onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                    placeholder="Add a subtask..."
                     className="flex-1 bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
-                        handleAddTag();
+                        handleAddSubtask();
                       }
                     }}
                   />
                   <Button 
-                    onClick={handleAddTag}
-                    variant="outline"
-                    className="border-[#3A4D62]"
-                    disabled={!newTag.trim() || tags.includes(newTag.trim())}
+                    onClick={handleAddSubtask}
+                    className="bg-neon-aqua hover:bg-neon-aqua/90 text-black"
+                    disabled={!newSubtaskTitle.trim()}
                   >
-                    <Plus className="h-3.5 w-3.5 mr-1" />
                     Add
                   </Button>
                 </div>
               </div>
             </div>
-          </div>
-          
-          <Separator className="bg-[#3A4D62]" />
-          
-          <div className="space-y-4 pt-2">
-            <div className="flex items-center justify-between">
-              <h3 className="font-medium text-[#F1F5F9] flex items-center">
-                <MessageSquare className="h-4 w-4 mr-1" />
-                Comments ({comments.length})
-              </h3>
+            
+            <Separator className="bg-[#3A4D62]" />
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <div className="text-sm text-[#CBD5E1]">Assignee</div>
+                {task.assignee_id ? (
+                  <div className="flex items-center space-x-2">
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${task.assignee_id}`} />
+                      <AvatarFallback>
+                        {getUserName(task.assignee_id).substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm text-[#F1F5F9]">
+                      {getUserName(task.assignee_id)}
+                    </span>
+                  </div>
+                ) : (
+                  <Button variant="outline" size="sm" className="border-dashed border-[#3A4D62]">
+                    <User className="h-3.5 w-3.5 mr-1" />
+                    Assign
+                  </Button>
+                )}
+              </div>
+              
+              <div className="space-y-1">
+                <div className="text-sm text-[#CBD5E1]">Reporter</div>
+                {task.reporter_id && (
+                  <div className="flex items-center space-x-2">
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${task.reporter_id}`} />
+                      <AvatarFallback>
+                        {getUserName(task.reporter_id).substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm text-[#F1F5F9]">
+                      {getUserName(task.reporter_id)}
+                    </span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="col-span-2 space-y-3">
+                <div className="text-sm text-[#CBD5E1]">Tags</div>
+                <div className="space-y-3">
+                  {tags && tags.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {tags.map((tag, idx) => (
+                        <Badge key={idx} variant="outline" className="bg-[#1C2A3A] flex items-center gap-1 group">
+                          {tag}
+                          <X 
+                            className="h-3 w-3 opacity-50 group-hover:opacity-100 cursor-pointer" 
+                            onClick={() => handleRemoveTag(tag)}
+                          />
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : null}
+                  
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={newTag}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      placeholder="Add a tag..."
+                      className="flex-1 bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleAddTag();
+                        }
+                      }}
+                    />
+                    <Button 
+                      onClick={handleAddTag}
+                      variant="outline"
+                      className="border-[#3A4D62]"
+                      disabled={!newTag.trim() || tags.includes(newTag.trim())}
+                    >
+                      <Plus className="h-3.5 w-3.5 mr-1" />
+                      Add
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
             
-            <div className="bg-[#1C2A3A]/50 p-4 rounded-md">
-              <CommentSection
-                taskId={task.id}
-                comments={comments}
-                userId={task.user_id || ''}
-                userName={getUserName(task.user_id)}
-                onAddComment={handleAddComment}
-                onRefreshComments={refetchComments}
-              />
+            <Separator className="bg-[#3A4D62]" />
+            
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium text-[#F1F5F9] flex items-center">
+                  <MessageSquare className="h-4 w-4 mr-1" />
+                  Comments ({comments.length})
+                </h3>
+              </div>
+              
+              <div className="bg-[#1C2A3A]/50 p-4 rounded-md">
+                <CommentSection
+                  taskId={task.id}
+                  comments={comments}
+                  userId={task.user_id || ''}
+                  userName={getUserName(task.user_id)}
+                  onAddComment={handleAddComment}
+                  onRefreshComments={refetchComments}
+                />
+              </div>
             </div>
-          </div>
 
-          <div className="h-8"></div>
-        </div>
-      </ScrollArea>
+            <div className="h-8"></div>
+          </div>
+        </ScrollArea>
+      </div>
     </div>
   );
 }
