@@ -9,12 +9,18 @@ import { PlusCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { getCurrentUserId } from '@/lib/supabase';
+import { useNavigate } from 'react-router-dom';
 
 interface ProjectCreateButtonProps {
   onProjectCreated?: (projectId: string) => void;
+  navigateToProject?: boolean;
 }
 
-export function ProjectCreateButton({ onProjectCreated }: ProjectCreateButtonProps) {
+export function ProjectCreateButton({ 
+  onProjectCreated, 
+  navigateToProject = false 
+}: ProjectCreateButtonProps) {
+  const navigate = useNavigate();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -68,13 +74,23 @@ export function ProjectCreateButton({ onProjectCreated }: ProjectCreateButtonPro
         description: "Project created successfully",
       });
 
-      if (onProjectCreated && data) {
-        onProjectCreated(data.id);
-      }
-
       setIsDialogOpen(false);
       setTitle('');
       setDescription('');
+
+      if (data) {
+        // Only navigate if explicitly requested
+        if (navigateToProject) {
+          navigate(`/projects/${data.id}`);
+        } else {
+          // Just refresh the projects list by calling the callback if provided
+          if (onProjectCreated) {
+            onProjectCreated(data.id);
+          }
+          // For main projects page, just stay on the current page
+          // We could add a window.location.reload() here, but that's probably too heavy-handed
+        }
+      }
     } catch (error) {
       console.error('Error creating project:', error);
       toast({

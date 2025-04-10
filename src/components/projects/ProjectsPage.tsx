@@ -10,7 +10,7 @@ import { ProjectsTable } from '@/components/projects/ProjectsTable';
 import { ProjectDetail } from '@/components/projects/ProjectDetail';
 import { TaskDetail } from '@/components/projects/TaskDetail';
 import { ProjectCreateButton } from '@/components/projects/ProjectCreateButton';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 
 interface ProjectsPageProps {
@@ -20,6 +20,7 @@ interface ProjectsPageProps {
 
 export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }: ProjectsPageProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [internalSelectedProjectId, setInternalSelectedProjectId] = useState<string | null>(selectedProjectId);
   const [internalSelectedTaskId, setInternalSelectedTaskId] = useState<string | null>(selectedTaskId);
   const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(!!selectedTaskId);
@@ -202,9 +203,9 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
     }
   };
   
-  const handleCreateProject = (projectId: string) => {
-    setInternalSelectedProjectId(projectId);
-    navigate(`/projects/${projectId}`);
+  const handleProjectCreated = (projectId: string) => {
+    // Just refresh the project list without navigating
+    queryClient.invalidateQueries({ queryKey: ['projects'] });
   };
   
   if (loadingProjects) {
@@ -231,7 +232,10 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
               <p className="text-sm text-[#CBD5E1] mb-6">
                 Create your first project to organize your tasks
               </p>
-              <ProjectCreateButton onProjectCreated={handleCreateProject} />
+              <ProjectCreateButton 
+                onProjectCreated={handleProjectCreated}
+                navigateToProject={false} 
+              />
             </div>
           </CardContent>
         </Card>
@@ -248,7 +252,10 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
         </div>
         
         {!internalSelectedProjectId && (
-          <ProjectCreateButton onProjectCreated={handleCreateProject} />
+          <ProjectCreateButton 
+            onProjectCreated={handleProjectCreated} 
+            navigateToProject={false}
+          />
         )}
       </div>
 
