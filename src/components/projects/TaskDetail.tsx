@@ -42,10 +42,9 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  RadioGroup,
-  RadioGroupItem,
-  Label
 } from '@/components/ui/dropdown-menu';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 
 interface TaskDetailProps {
   task: Task;
@@ -383,6 +382,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
 
   const handleStatusChange = (newStatus: string) => {
     setStatus(newStatus as any);
+    setIsStatusMenuOpen(false);
     
     if (!isEditing) {
       try {
@@ -412,6 +412,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
 
   const handlePriorityChange = (newPriority: string) => {
     setPriority(newPriority as any);
+    setIsPriorityMenuOpen(false);
     
     if (!isEditing) {
       try {
