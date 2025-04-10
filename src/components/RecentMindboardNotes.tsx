@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { File, BookOpen, Clock, Plus, ArrowRight } from 'lucide-react';
@@ -16,13 +15,13 @@ export function RecentMindboardNotes() {
   const recentNotes = recentActivities.map((activity, index) => ({
     id: `note-${index}`,
     title: activity.description,
-    content: `This is a mindboard note about ${activity.description.toLowerCase()}`,
+    content: `This is a mindboard note about ${activity.description?.toLowerCase()}`,
     createdAt: activity.timestamp,
     notebookName: ["Work", "Personal", "Ideas", "Projects"][Math.floor(Math.random() * 4)]
   }));
 
-  const formatTime = (date: Date) => {
-    return format(date, 'MMM d, h:mm a');
+  const formatTime = (date: Date | string) => {
+    return format(date instanceof Date ? date : new Date(date), 'MMM d, h:mm a');
   };
 
   const handleCreateNotebook = (title: string) => {

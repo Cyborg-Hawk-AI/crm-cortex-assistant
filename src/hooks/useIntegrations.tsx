@@ -11,19 +11,23 @@ export function useIntegrations() {
   
   // Load integrations on first render
   useEffect(() => {
-    try {
-      const availableIntegrations = getAvailableIntegrations();
-      setIntegrations(availableIntegrations);
-    } catch (error) {
-      console.error('Error loading integrations:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load integrations',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    const fetchIntegrations = async () => {
+      try {
+        const availableIntegrations = await getAvailableIntegrations();
+        setIntegrations(availableIntegrations);
+      } catch (error) {
+        console.error('Error loading integrations:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load integrations',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchIntegrations();
   }, [toast]);
   
   const setupIntegration = async (
@@ -35,7 +39,7 @@ export function useIntegrations() {
       configureIntegration(integrationType, config);
       
       // Refresh integrations list
-      const updatedIntegrations = getAvailableIntegrations();
+      const updatedIntegrations = await getAvailableIntegrations();
       setIntegrations(updatedIntegrations);
       
       toast({

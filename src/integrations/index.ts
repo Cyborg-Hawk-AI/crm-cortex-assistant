@@ -1,3 +1,4 @@
+
 // Central integration manager
 
 import { supabase } from '@/lib/supabase';
@@ -61,7 +62,7 @@ export const configureIntegration = (
 };
 
 // Check if any integration is active
-export const hasActiveIntegration = (): boolean => {
-  const integrations = getAvailableIntegrations();
+export const hasActiveIntegration = async (): Promise<boolean> => {
+  const integrations = await getAvailableIntegrations();
   return integrations.some(integration => integration.status === 'active');
 };

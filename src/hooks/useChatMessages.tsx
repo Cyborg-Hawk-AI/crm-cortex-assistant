@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Message, Task, Assistant } from '@/utils/types';
@@ -270,7 +269,9 @@ export function useChatMessages() {
           content,
           sender: 'user',
           timestamp: new Date(),
-          isSystem: false
+          isSystem: false,
+          conversation_id: conversationId || '',
+          user_id: 'current-user' // Use a default value or get from auth context
         };
         
         addLocalMessage(userMessage);
@@ -286,7 +287,9 @@ export function useChatMessages() {
           sender: 'assistant',
           timestamp: new Date(),
           isSystem: false,
-          isStreaming: true
+          isStreaming: true,
+          conversation_id: conversationId || '',
+          user_id: 'current-user' // Use a default value or get from auth context
         };
         
         addLocalMessage(assistantMessage);
@@ -300,7 +303,6 @@ export function useChatMessages() {
           
           console.log(`Sending ${messagesForContext.length} messages for context to maintain conversation history`);
           
-          // Changed from const to let so we can reassign it
           let assistantForConversation = activeAssistant;
           if (conversation?.assistant_id) {
             assistantForConversation = {
@@ -422,7 +424,9 @@ export function useChatMessages() {
           content,
           sender,
           timestamp: new Date(),
-          isSystem: sender === 'system'
+          isSystem: sender === 'system',
+          conversation_id: conversationId || '',
+          user_id: 'current-user' // Use a default value or get from auth context
         };
         
         addLocalMessage(message);

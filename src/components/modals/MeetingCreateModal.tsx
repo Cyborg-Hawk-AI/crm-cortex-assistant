@@ -53,13 +53,13 @@ export function MeetingCreateModal({ open, onOpenChange, onSubmit }: MeetingCrea
       title,
       date: meetingDate.toISOString(), // Convert Date to string
       duration,
-      clientName,
+      client_name: clientName,
       attendees: [{
+        id: '', // Add a placeholder ID
         name: clientName,
         email: ''
       }] as any, // Cast to fix type issue
-      meeting_link: meetingLink, // Changed to meeting_link
-      meetingLink, // Keep both for compatibility
+      meeting_link: meetingLink,
       agenda
     };
     

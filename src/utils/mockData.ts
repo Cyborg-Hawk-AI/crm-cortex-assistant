@@ -44,21 +44,26 @@ const sampleCommunications: Partial<Communication>[] = [
   }
 ];
 
-export const mockTicket: Partial<Ticket> = {
+export const mockTicket: Ticket = {
   id: "TICKET-1234",
   title: "Update product roadmap with new Q3 initiatives",
   description: "We need to update our roadmap with the new initiatives decided during our last planning session.",
   status: "In Progress",
   priority: "High",
-  assignee: "Sarah Johnson", 
-  reporter: "Product Manager",
-  created: new Date("2023-05-15T14:32:00Z"),
-  updated: new Date("2023-05-17T09:15:00Z"),
+  assignee_id: "user-456",
+  reporter_id: "user-789",
   created_at: new Date("2023-05-15T14:32:00Z"),
   updated_at: new Date("2023-05-17T09:15:00Z"),
   created_by: "user-123",
-  comments: [],
+  user_id: "user-123",
+  parent_task_id: null,
   tags: ["roadmap", "planning", "product"],
+  // Supporting legacy properties while keeping the required ones
+  assignee: "Sarah Johnson",
+  reporter: "Product Manager",
+  created: new Date("2023-05-15T14:32:00Z"),
+  updated: new Date("2023-05-17T09:15:00Z"),
+  comments: [],
   related: ["DOC-456", "MEET-789"],
   customer: {
     name: "John Doe",
@@ -87,14 +92,20 @@ export const mockTickets: Ticket[] = [
     description: "Multiple clients reporting inability to access application services.",
     status: "Urgent",
     priority: "Critical",
+    assignee_id: "user-456",
+    reporter_id: "user-789",
+    created_at: new Date("2023-05-18T08:32:00Z"),
+    updated_at: new Date("2023-05-18T09:15:00Z"),
+    user_id: "user-123",
+    parent_task_id: null,
+    created_by: "user-123",
+    tags: ["outage", "infrastructure", "critical"],
+    // Supporting legacy properties
     assignee: "Alex Wong",
     reporter: "System Alert",
     created: new Date("2023-05-18T08:32:00Z"),
     updated: new Date("2023-05-18T09:15:00Z"),
-    created_at: new Date("2023-05-18T08:32:00Z"),
-    updated_at: new Date("2023-05-18T09:15:00Z"),
     comments: [],
-    tags: ["outage", "infrastructure", "critical"],
     customer: {
       name: "Enterprise Solutions Inc",
       company: "Enterprise Solutions",
@@ -121,20 +132,27 @@ export const mockTickets: Ticket[] = [
       }
     ]
   },
+  // Keep fixing the other ticket entries with similar patterns
   {
     id: "TICKET-1236",
     title: "Knowledge base article update for new API endpoints",
     description: "Documentation needs to be updated with the latest API changes.",
     status: "Open",
     priority: "Medium",
+    assignee_id: "user-456",
+    reporter_id: "user-789",
+    created_at: new Date("2023-05-16T10:45:00Z"),
+    updated_at: new Date("2023-05-17T14:22:00Z"),
+    user_id: "user-123",
+    parent_task_id: null,
+    created_by: "user-123",
+    tags: ["documentation", "api", "knowledge-base"],
+    // Supporting legacy properties
     assignee: "Maria Garcia",
     reporter: "Developer Relations",
     created: new Date("2023-05-16T10:45:00Z"),
     updated: new Date("2023-05-17T14:22:00Z"),
-    created_at: new Date("2023-05-16T10:45:00Z"),
-    updated_at: new Date("2023-05-17T14:22:00Z"),
     comments: [],
-    tags: ["documentation", "api", "knowledge-base"],
     customer: {
       name: "Developer Relations",
       company: "Internal"
@@ -148,14 +166,20 @@ export const mockTickets: Ticket[] = [
     description: "Clients requesting ability to export reports in CSV format",
     status: "Under Review",
     priority: "Low",
+    assignee_id: null,
+    reporter_id: "user-789",
+    created_at: new Date("2023-05-14T09:12:00Z"),
+    updated_at: new Date("2023-05-15T11:30:00Z"),
+    user_id: "user-123",
+    parent_task_id: null,
+    created_by: "user-123",
+    tags: ["feature-request", "reporting", "enhancement"],
+    // Supporting legacy properties
     assignee: "Unassigned",
     reporter: "Customer Success",
     created: new Date("2023-05-14T09:12:00Z"),
     updated: new Date("2023-05-15T11:30:00Z"),
-    created_at: new Date("2023-05-14T09:12:00Z"),
-    updated_at: new Date("2023-05-15T11:30:00Z"),
     comments: [],
-    tags: ["feature-request", "reporting", "enhancement"],
     customer: {
       name: "Jane Smith",
       company: "TechCorp LLC",
@@ -169,14 +193,20 @@ export const mockTickets: Ticket[] = [
     description: "Need to notify all clients about upcoming 2-hour maintenance window",
     status: "Planned",
     priority: "Medium",
+    assignee_id: "user-456",
+    reporter_id: "user-789",
+    created_at: new Date("2023-05-17T15:20:00Z"),
+    updated_at: new Date("2023-05-17T16:45:00Z"),
+    user_id: "user-123",
+    parent_task_id: null,
+    created_by: "user-123",
+    tags: ["maintenance", "notification", "deployment"],
+    // Supporting legacy properties
     assignee: "Communication Team",
     reporter: "DevOps",
     created: new Date("2023-05-17T15:20:00Z"),
     updated: new Date("2023-05-17T16:45:00Z"),
-    created_at: new Date("2023-05-17T15:20:00Z"),
-    updated_at: new Date("2023-05-17T16:45:00Z"),
     comments: [],
-    tags: ["maintenance", "notification", "deployment"],
     customer: {
       name: "All Clients",
       company: "Multiple"
@@ -186,7 +216,7 @@ export const mockTickets: Ticket[] = [
   }
 ];
 
-export const mockMessages: Partial<Message>[] = [
+export const mockMessages: Message[] = [
   {
     id: '1',
     content: 'Hello! I need help with a sync issue on the latest update.',
@@ -207,17 +237,21 @@ export const mockMessages: Partial<Message>[] = [
     id: '3',
     content: "I'm getting \"Error code: AUTH_FAILURE_5523\" whenever I try to connect to the cloud storage.",
     sender: 'user',
-    timestamp: new Date('2023-11-11T14:38:45')
+    timestamp: new Date('2023-11-11T14:38:45'),
+    user_id: 'user-123',
+    conversation_id: 'conv-123'
   },
   {
     id: '4',
     content: "Thank you for providing that error code. This specific error (AUTH_FAILURE_5523) typically indicates an authentication token expiration issue after updates. The new version likely requires a fresh authentication flow. Let me guide you through the steps to fix this:\n\n1. Log out of the application completely\n2. Clear the application cache (Settings > Storage > Clear Cache)\n3. Restart the application\n4. Log in with your credentials\n\nThis should trigger a fresh authentication process and resolve the sync issue. Would you like me to explain any of these steps in more detail?",
     sender: 'assistant',
-    timestamp: new Date('2023-11-11T14:40:12')
+    timestamp: new Date('2023-11-11T14:40:12'),
+    user_id: 'user-123',
+    conversation_id: 'conv-123'
   }
 ];
 
-export const mockNotes: Partial<Note>[] = [
+export const mockNotes: Note[] = [
   {
     id: '1',
     content: 'Authentication failure seems to be related to the new token handling system in v3.2.1',
@@ -226,8 +260,12 @@ export const mockNotes: Partial<Note>[] = [
     updated_at: new Date('2023-11-11T14:42:30'),
     timestamp: new Date('2023-11-11T14:42:30'),
     page_id: 'page-1',
+    notebook_id: 'nb-1',
+    linked_task_id: null,
+    // Supporting legacy properties
     sectionId: 'sec-1',
     notebookId: 'nb-1',
+    pageId: 'page-1'
   },
   {
     id: '2',
@@ -237,8 +275,12 @@ export const mockNotes: Partial<Note>[] = [
     updated_at: new Date('2023-11-11T14:45:22'),
     timestamp: new Date('2023-11-11T14:45:22'),
     page_id: 'page-1',
+    notebook_id: 'nb-1',
+    linked_task_id: null,
+    // Supporting legacy properties
     sectionId: 'sec-1',
     notebookId: 'nb-1',
+    pageId: 'page-1'
   },
   {
     id: '3',
@@ -248,8 +290,12 @@ export const mockNotes: Partial<Note>[] = [
     updated_at: new Date('2023-11-11T14:50:15'),
     timestamp: new Date('2023-11-11T14:50:15'),
     page_id: 'page-3',
+    notebook_id: 'nb-1',
+    linked_task_id: null,
+    // Supporting legacy properties
     sectionId: 'sec-2',
     notebookId: 'nb-1',
+    pageId: 'page-3'
   }
 ];
 

@@ -49,7 +49,10 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
           parent_task_id: task.parent_task_id,
           summary: task.description?.substring(0, 100) + (task.description?.length > 100 ? '...' : ''),
           tags: task.tags || [],
-          created_by: task.reporter_id || 'Unknown' // Add the required created_by field
+          created_by: task.reporter_id || 'Unknown',
+          user_id: task.user_id || 'Unknown',
+          reporter_id: task.reporter_id || 'Unknown',
+          assignee_id: task.assignee_id
         }));
       } catch (error) {
         console.error('Failed to fetch recent tickets:', error);
