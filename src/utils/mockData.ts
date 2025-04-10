@@ -12,14 +12,19 @@ import {
 const now = new Date();
 
 // Create some sample communications
-const sampleCommunications: Communication[] = [
+const sampleCommunications: Partial<Communication>[] = [
   {
     id: "comm-1",
     from: "John Doe (Customer)",
     message: "Just checking on the status of this ticket. Any updates?",
     date: subDays(now, 1),
     content: "Just checking on the status of this ticket. Any updates?",
-    sender: "customer"
+    sender: "customer",
+    type: "email",
+    title: "Status Update",
+    contact_id: "contact-123",
+    contact_name: "John Doe",
+    created_by: "user-123"
   },
   {
     id: "comm-2",
@@ -39,18 +44,19 @@ const sampleCommunications: Communication[] = [
   }
 ];
 
-export const mockTicket: Ticket = {
+export const mockTicket: Partial<Ticket> = {
   id: "TICKET-1234",
   title: "Update product roadmap with new Q3 initiatives",
   description: "We need to update our roadmap with the new initiatives decided during our last planning session.",
   status: "In Progress",
   priority: "High",
-  assignee: "Sarah Johnson",
+  assignee: "Sarah Johnson", 
   reporter: "Product Manager",
   created: new Date("2023-05-15T14:32:00Z"),
   updated: new Date("2023-05-17T09:15:00Z"),
   created_at: new Date("2023-05-15T14:32:00Z"),
   updated_at: new Date("2023-05-17T09:15:00Z"),
+  created_by: "user-123",
   comments: [],
   tags: ["roadmap", "planning", "product"],
   related: ["DOC-456", "MEET-789"],
@@ -180,18 +186,22 @@ export const mockTickets: Ticket[] = [
   }
 ];
 
-export const mockMessages: Message[] = [
+export const mockMessages: Partial<Message>[] = [
   {
     id: '1',
     content: 'Hello! I need help with a sync issue on the latest update.',
     sender: 'user',
-    timestamp: new Date('2023-11-11T14:35:10')
+    timestamp: new Date('2023-11-11T14:35:10'),
+    user_id: 'user-123',
+    conversation_id: 'conv-123'
   },
   {
     id: '2',
     content: "I understand you're experiencing issues with cloud synchronization after upgrading to version 3.2.1. Could you please tell me what error message you're seeing when you try to sync?",
     sender: 'assistant',
-    timestamp: new Date('2023-11-11T14:36:22')
+    timestamp: new Date('2023-11-11T14:36:22'),
+    user_id: 'user-123',
+    conversation_id: 'conv-123'
   },
   {
     id: '3',
@@ -207,7 +217,7 @@ export const mockMessages: Message[] = [
   }
 ];
 
-export const mockNotes: Note[] = [
+export const mockNotes: Partial<Note>[] = [
   {
     id: '1',
     content: 'Authentication failure seems to be related to the new token handling system in v3.2.1',
@@ -215,7 +225,7 @@ export const mockNotes: Note[] = [
     created_at: new Date('2023-11-11T14:42:30'),
     updated_at: new Date('2023-11-11T14:42:30'),
     timestamp: new Date('2023-11-11T14:42:30'),
-    pageId: 'page-1',
+    page_id: 'page-1',
     sectionId: 'sec-1',
     notebookId: 'nb-1',
   },
@@ -226,7 +236,7 @@ export const mockNotes: Note[] = [
     created_at: new Date('2023-11-11T14:45:22'),
     updated_at: new Date('2023-11-11T14:45:22'),
     timestamp: new Date('2023-11-11T14:45:22'),
-    pageId: 'page-1',
+    page_id: 'page-1',
     sectionId: 'sec-1',
     notebookId: 'nb-1',
   },
@@ -237,7 +247,7 @@ export const mockNotes: Note[] = [
     created_at: new Date('2023-11-11T14:50:15'),
     updated_at: new Date('2023-11-11T14:50:15'),
     timestamp: new Date('2023-11-11T14:50:15'),
-    pageId: 'page-3',
+    page_id: 'page-3',
     sectionId: 'sec-2',
     notebookId: 'nb-1',
   }
@@ -336,21 +346,21 @@ export const mockTasks = [
   }
 ];
 
-export const recentActivities: Activity[] = [
+export const recentActivities: Partial<Activity>[] = [
   {
     id: "activity-1",
     type: "task_updated",
     user_id: "user-1",
     description: "Updated status from 'Open' to 'In Progress' for task 'Implement login functionality'",
     timestamp: new Date(Date.now() - 1000 * 60 * 30),
-    related_id: "task-1",
-    related_type: "task",
+    entity_id: "task-1",
+    entity_type: "task",
     userId: "Alex Chen",
     content: "Updated status from 'Open' to 'In Progress' for task 'Implement login functionality'",
     relatedItem: "task-1",
     entityId: "task-1",
     entityType: "task",
-    additionalInfo: {
+    additional_info: {
       previousStatus: "Open",
       newStatus: "In Progress",
       taskId: "task-1"
@@ -362,14 +372,14 @@ export const recentActivities: Activity[] = [
     user_id: "user-2",
     description: "I've identified the issue with the payment gateway. It's related to the API version we're using.",
     timestamp: new Date(Date.now() - 1000 * 60 * 60),
-    related_id: "task-2",
-    related_type: "task",
+    entity_id: "task-2",
+    entity_type: "task",
     userId: "Sarah Williams",
     content: "I've identified the issue with the payment gateway. It's related to the API version we're using.",
     relatedItem: "task-2",
     entityId: "task-2",
     entityType: "task",
-    additionalInfo: {
+    additional_info: {
       taskId: "task-2",
       commentId: "comment-1"
     }
@@ -380,14 +390,14 @@ export const recentActivities: Activity[] = [
     user_id: "user-3",
     description: "Created meeting notes for the client onboarding session",
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-    related_id: "note-1",
-    related_type: "note",
+    entity_id: "note-1",
+    entity_type: "note",
     userId: "Mark Johnson",
     content: "Created meeting notes for the client onboarding session",
     relatedItem: "note-1",
     entityId: "note-1",
     entityType: "note",
-    additionalInfo: {
+    additional_info: {
       noteId: "note-1",
       pageId: "page-1"
     }
@@ -398,14 +408,14 @@ export const recentActivities: Activity[] = [
     user_id: "user-4",
     description: "Created new task 'Design new landing page'",
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3),
-    related_id: "task-5",
-    related_type: "task",
+    entity_id: "task-5",
+    entity_type: "task",
     userId: "John Doe",
     content: "Created new task 'Design new landing page'",
     relatedItem: "task-5",
     entityId: "task-5",
     entityType: "task",
-    additionalInfo: {
+    additional_info: {
       taskId: "task-5",
       priority: "Medium",
       assignee: "Alex Chen"
@@ -417,14 +427,14 @@ export const recentActivities: Activity[] = [
     user_id: "user-5",
     description: "Updated project requirements document with feedback from client meeting",
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5),
-    related_id: "note-2",
-    related_type: "note",
+    entity_id: "note-2",
+    entity_type: "note",
     userId: "Jane Smith",
     content: "Updated project requirements document with feedback from client meeting",
     relatedItem: "note-2",
     entityId: "note-2",
     entityType: "note",
-    additionalInfo: {
+    additional_info: {
       noteId: "note-2",
       pageId: "page-2"
     }

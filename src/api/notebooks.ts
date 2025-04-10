@@ -44,7 +44,7 @@ export const createNotebook = async (title: string): Promise<Notebook> => {
     user_id: userId,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-    sections: []
+    sections: [] // Initialize as empty array instead of undefined[]
   };
   
   try {

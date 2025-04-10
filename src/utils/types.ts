@@ -71,7 +71,7 @@ export interface Meeting {
   }>;
 }
 
-// Message interface
+// Message interface - updated to match how it's used in the codebase
 export interface Message {
   id: string;
   content: string;
@@ -80,6 +80,7 @@ export interface Message {
   user_id: string;
   timestamp: Date | string;
   isSystem?: boolean;
+  isStreaming?: boolean;
   metadata?: Record<string, any>;
 }
 
@@ -94,13 +95,18 @@ export interface Note {
   timestamp?: Date | string;
   created_at?: Date | string;
   updated_at?: Date | string;
+  // Aliases to match how they're used in the codebase
+  notebookId?: string;
+  pageId?: string;
+  sectionId?: string;
+  linkedTaskId?: string;
 }
 
 export interface Notebook {
   id: string;
   title: string;
   user_id: string;
-  sections?: string;
+  sections?: string | any[];
   created_at?: Date | string;
   updated_at?: Date | string;
 }
@@ -122,6 +128,11 @@ export interface NotePage {
   is_subpage?: boolean;
   created_at?: Date | string;
   updated_at?: Date | string;
+  // Aliases for how they're used in the codebase
+  sectionId?: string;
+  isSubpage?: boolean;
+  content?: string; // Added for NoteCanvas.tsx
+  notebook_id?: string; // Added for NoteCanvas.tsx
 }
 
 // Mindboard related interfaces
@@ -157,6 +168,7 @@ export interface MindPage {
   user_id: string;
   section_id: string;
   parent_page_id?: string;
+  parent_id?: string; // Added as alias for parent_page_id
   is_pinned?: boolean;
   position?: number;
   created_at?: Date | string;
@@ -171,6 +183,7 @@ export interface MindBlock {
   content: any;
   properties?: any;
   position?: number;
+  parent_block_id?: string; // Added to support parent-child block relationships
   created_at?: Date | string;
   updated_at?: Date | string;
 }
@@ -179,16 +192,22 @@ export interface MindBlock {
 export interface Activity {
   id: string;
   user_id: string;
+  userId?: string; // Added alias to match how it's used 
   type: string;
   entity_type: string;
+  entityType?: string;
   entity_id: string;
+  entityId?: string;
   content: string;
+  description?: string; // Added to match how it's used in components
   timestamp?: Date | string;
   additional_info?: any;
+  additionalInfo?: any;
   created_at?: Date | string;
+  relatedItem?: string; // Added to match usage in components
 }
 
-// Ticket interface
+// Ticket interface - expanded to match how it's used in the codebase
 export interface Ticket {
   id: string;
   title: string;
@@ -196,11 +215,30 @@ export interface Ticket {
   status: string;
   priority: string;
   created_by: string;
+  assignee?: string; // Added to match mockData usage
   assigned_to?: string;
+  reporter?: string;
   due_date?: Date | string;
   created_at?: Date | string;
   updated_at?: Date | string;
+  created?: Date | string;
+  updated?: Date | string;
   tags?: string[];
+  related?: string[];
+  comments?: any[];
+  customer?: {
+    name: string;
+    company?: string;
+    email?: string;
+  };
+  parent_task_id?: string; // For hierarchical relationship
+  summary?: string;
+  actionItems?: string[];
+  meetingDate?: Date;
+  meetingAttendees?: string[];
+  communications?: any[];
+  updatedAt?: Date;
+  lastStatusUpdate?: string;
 }
 
 // Integration interface
@@ -212,6 +250,7 @@ export interface Integration {
   config: any;
   status?: string;
   last_sync?: Date | string;
+  lastSync?: Date | string; // Alias
   created_at?: Date | string;
   updated_at?: Date | string;
 }
@@ -227,6 +266,7 @@ export interface Assistant {
   configuration?: any;
   created_at?: Date | string;
   updated_at?: Date | string;
+  icon?: string; // Added to match QuickActions.tsx usage
 }
 
 // MeetingAction interface for MeetingQuickActions
@@ -261,4 +301,7 @@ export interface Communication {
   created_by: string;
   created_at?: Date | string;
   updated_at?: Date | string;
+  from?: string; // Added to match mockData usage
+  message?: string; // Added to match mockData usage
+  sender?: string; // Added to match mockData usage
 }

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { Task, SubTask } from '@/utils/types';
+import { Task, SubTask, TaskStatus, TaskPriority } from '@/utils/types';
 
 export function useMissionTasks(missionId: string | null) {
   const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -119,7 +119,7 @@ export function useMissionTasks(missionId: string | null) {
           id: subtask.id,
           title: subtask.title,
           description: null,
-          status: subtask.is_completed ? 'completed' as TaskStatus : 'open' as TaskStatus,
+          status: subtask.is_completed ? ('completed' as TaskStatus) : ('open' as TaskStatus),
           priority: 'medium' as TaskPriority,
           due_date: null,
           assignee_id: null,

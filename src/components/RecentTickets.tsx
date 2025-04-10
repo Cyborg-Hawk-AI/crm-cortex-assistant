@@ -48,7 +48,8 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
           customer: { name: task.assignee_id || 'Unassigned' },
           parent_task_id: task.parent_task_id,
           summary: task.description?.substring(0, 100) + (task.description?.length > 100 ? '...' : ''),
-          tags: task.tags || []
+          tags: task.tags || [],
+          created_by: task.reporter_id || 'Unknown' // Add the required created_by field
         }));
       } catch (error) {
         console.error('Failed to fetch recent tickets:', error);

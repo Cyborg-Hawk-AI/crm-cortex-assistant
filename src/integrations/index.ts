@@ -1,33 +1,44 @@
-
 // Central integration manager
 
+import { supabase } from '@/lib/supabase';
 import { Integration } from '@/utils/types';
 import * as notionApi from './notion/api';
 
 // Get available integrations
-export const getAvailableIntegrations = (): Integration[] => {
-  return [
-    {
-      id: 'notion',
-      name: 'Notion',
-      type: 'notion',
-      status: notionApi.isNotionConfigured() ? 'active' : 'inactive',
-      lastSync: notionApi.isNotionConfigured() ? new Date() : undefined,
-    },
-    {
-      id: 'salesforce',
-      name: 'Salesforce',
-      type: 'salesforce',
-      status: 'inactive',
-    },
-    {
-      id: 'freshservice',
-      name: 'Freshservice',
-      type: 'freshservice',
-      status: 'inactive',
-    }
-  ];
-};
+export async function getAvailableIntegrations(): Promise<Integration[]> {
+  try {
+    const { data, error } = await supabase
+      .from('integrations')
+      .select('*');
+      
+    if (error) throw error;
+    
+    return data as Integration[];
+  } catch (e) {
+    console.error("Error fetching integrations:", e);
+    
+    // Return mock integrations for development
+    return [
+      {
+        id: "notion-integration",
+        name: "Notion",
+        type: "note",
+        status: "available",
+        user_id: "system",
+        config: {},
+        last_sync: null
+      },
+      {
+        id: "github-integration",
+        name: "GitHub",
+        type: "code",
+        status: "available",
+        user_id: "system",
+        config: {}
+      }
+    ];
+  }
+}
 
 // Configure an integration
 export const configureIntegration = (
