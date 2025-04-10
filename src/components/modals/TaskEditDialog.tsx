@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -37,14 +38,15 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useUsers } from '@/hooks/useUsers';
 import { updateTask } from '@/api/tasks';
+import { useToast } from '@/hooks/use-toast';
 
 const taskSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   status: z.enum(['open', 'in-progress', 'resolved', 'closed', 'completed']),
   priority: z.enum(['low', 'medium', 'high', 'urgent']),
-  due_date: z.date().optional(),
-  assignee_id: z.string().uuid('Must be a valid user ID').optional(),
+  due_date: z.date().optional().nullable(),
+  assignee_id: z.string().uuid('Must be a valid user ID').optional().nullable(),
   tags: z.array(z.string()).optional(),
 });
 
@@ -65,6 +67,7 @@ export function TaskEditDialog({
 }: TaskEditDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { users, isLoading: isLoadingUsers } = useUsers();
+  const { toast } = useToast();
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
@@ -73,8 +76,8 @@ export function TaskEditDialog({
       description: task.description || '',
       status: task.status,
       priority: task.priority,
-      due_date: task.due_date ? new Date(task.due_date) : undefined,
-      assignee_id: task.assignee_id || undefined,
+      due_date: task.due_date ? new Date(task.due_date) : null,
+      assignee_id: task.assignee_id || null,
       tags: task.tags || [],
     },
   });
@@ -86,8 +89,8 @@ export function TaskEditDialog({
       description: task.description || '',
       status: task.status,
       priority: task.priority,
-      due_date: task.due_date ? new Date(task.due_date) : undefined,
-      assignee_id: task.assignee_id || undefined,
+      due_date: task.due_date ? new Date(task.due_date) : null,
+      assignee_id: task.assignee_id || null,
       tags: task.tags || [],
     });
   }, [task, form]);
@@ -113,12 +116,48 @@ export function TaskEditDialog({
         updated_at: new Date().toISOString(),
       });
 
+      toast({
+        title: "Task updated",
+        description: "Task details have been saved successfully"
+      });
+
       onRefresh();
       onOpenChange(false);
     } catch (error) {
       console.error('Error updating task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update task",
+        variant: "destructive"
+      });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Handle immediate field updates when selections change
+  const handleFieldChange = async (field: string, value: any) => {
+    try {
+      const updatedTask = {
+        ...task,
+        [field]: value,
+        updated_at: new Date().toISOString()
+      };
+      
+      await updateTask(updatedTask);
+      onRefresh();
+      
+      toast({
+        title: "Field updated",
+        description: `${field.charAt(0).toUpperCase() + field.slice(1)} has been updated`
+      });
+    } catch (error) {
+      console.error(`Error updating ${field}:`, error);
+      toast({
+        title: "Error",
+        description: `Failed to update ${field}`,
+        variant: "destructive"
+      });
     }
   };
 
@@ -173,7 +212,10 @@ export function TaskEditDialog({
                   <FormItem>
                     <FormLabel className="text-[#F1F5F9]">Status</FormLabel>
                     <Select 
-                      onValueChange={field.onChange} 
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        handleFieldChange('status', value);
+                      }}
                       defaultValue={field.value}
                     >
                       <FormControl>
@@ -201,7 +243,10 @@ export function TaskEditDialog({
                   <FormItem>
                     <FormLabel className="text-[#F1F5F9]">Priority</FormLabel>
                     <Select 
-                      onValueChange={field.onChange} 
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        handleFieldChange('priority', value);
+                      }}
                       defaultValue={field.value}
                     >
                       <FormControl>
@@ -229,7 +274,10 @@ export function TaskEditDialog({
                 <FormItem>
                   <FormLabel className="text-[#F1F5F9]">Assignee</FormLabel>
                   <Select 
-                    onValueChange={field.onChange} 
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      handleFieldChange('assignee_id', value);
+                    }}
                     value={field.value || ''}
                     disabled={isLoadingUsers}
                   >
@@ -279,8 +327,15 @@ export function TaskEditDialog({
                     <PopoverContent className="w-auto p-0 bg-[#25384D] border-[#3A4D62]" align="start">
                       <CalendarComponent
                         mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
+                        selected={field.value || undefined}
+                        onSelect={(date) => {
+                          field.onChange(date);
+                          if (date) {
+                            handleFieldChange('due_date', date.toISOString());
+                          } else {
+                            handleFieldChange('due_date', null);
+                          }
+                        }}
                         initialFocus
                         className="bg-[#25384D] text-[#F1F5F9]"
                       />

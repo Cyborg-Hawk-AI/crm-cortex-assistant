@@ -45,6 +45,7 @@ import {
 } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface MissionTaskEditorProps {
   taskId: string;
@@ -53,6 +54,7 @@ interface MissionTaskEditorProps {
 }
 
 export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEditorProps) {
+  const { toast } = useToast();
   const { 
     tasks, 
     subtasks,
@@ -76,7 +78,6 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
     task?.due_date ? new Date(task.due_date) : undefined
   );
   const [priority, setPriority] = useState<string>(task?.priority || 'medium');
-  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
   
   // Get current project tasks for navigation
   const currentProjectId = task?.parent_task_id || null;
@@ -149,11 +150,18 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
   const handlePriorityChange = (newPriority: string) => {
     setPriority(newPriority);
     updateTaskPriority(taskId, newPriority);
+    toast({
+      title: "Priority updated",
+      description: `Task priority set to ${newPriority.charAt(0).toUpperCase() + newPriority.slice(1)}`
+    });
   };
 
   const handleStatusChange = (newStatus: string) => {
     updateTaskStatus(taskId, newStatus);
-    setStatusDropdownOpen(false);
+    toast({
+      title: "Status updated",
+      description: `Task status set to ${getStatusLabel(newStatus)}`
+    });
   };
 
   const handleCreateSubtask = () => {
@@ -286,7 +294,7 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
       {/* Properties */}
       <div className="flex items-center gap-4 px-4 py-2">
         {/* Status Dropdown */}
-        <DropdownMenu open={statusDropdownOpen} onOpenChange={setStatusDropdownOpen}>
+        <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Badge className={`px-2 py-0.5 cursor-pointer hover:opacity-90 ${getStatusColor(task.status)}`}>
               {getStatusLabel(task.status)}
