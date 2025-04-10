@@ -2,6 +2,7 @@
 import React from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Comment {
   id: string;
@@ -19,7 +20,7 @@ interface CommentListProps {
   maxHeight?: string;
 }
 
-export function CommentList({ comments, maxHeight = "100%" }: CommentListProps) {
+export function CommentList({ comments, maxHeight = "200px" }: CommentListProps) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleString();
@@ -50,8 +51,8 @@ export function CommentList({ comments, maxHeight = "100%" }: CommentListProps) 
   }
 
   return (
-    <div className="w-full">
-      <div className="space-y-4 mb-4">
+    <ScrollArea className="w-full" style={{ maxHeight }}>
+      <div className="space-y-4 mb-4 pr-2">
         {comments.map((comment) => (
           <div key={comment.id} className="flex gap-2">
             <Avatar className="h-7 w-7 flex-shrink-0 mt-0.5">
@@ -74,6 +75,6 @@ export function CommentList({ comments, maxHeight = "100%" }: CommentListProps) 
           </div>
         ))}
       </div>
-    </div>
+    </ScrollArea>
   );
 }

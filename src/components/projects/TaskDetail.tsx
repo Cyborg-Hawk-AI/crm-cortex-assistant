@@ -52,13 +52,7 @@ interface TaskDetailProps {
   onRefresh: () => void;
 }
 
-export function TaskDetail({ 
-  task, 
-  subtasks = [], 
-  onClose, 
-  onUpdate, 
-  onRefresh 
-}: TaskDetailProps) {
+export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }: TaskDetailProps) {
   const { toast } = useToast();
   const [description, setDescription] = useState(task.description || '');
   const [isEditingDescription, setIsEditingDescription] = useState(false);
@@ -520,7 +514,7 @@ export function TaskDetail({
   };
 
   return (
-    <div className="bg-[#25384D] flex flex-col h-full max-h-[100vh] overflow-hidden">
+    <div className="bg-[#25384D] flex flex-col h-full max-h-screen overflow-hidden">
       <div className="flex items-center justify-between p-4 border-b border-[#3A4D62] flex-shrink-0">
         <div className="flex items-center">
           <Button 
@@ -562,8 +556,8 @@ export function TaskDetail({
         </div>
       </div>
       
-      <ScrollArea className="flex-1" hideScrollbar={false}>
-        <div className="p-4 space-y-6">
+      <ScrollArea className="flex-1 h-[calc(100vh-5rem)]" hideScrollbar={false}>
+        <div className="p-4 space-y-6 pb-24">
           <div>
             <div className="flex items-start justify-between">
               {isEditingTitle || isEditing ? (
@@ -749,9 +743,8 @@ export function TaskDetail({
               </div>
             ) : (
               <div 
-                className={`text-sm text-[#CBD5E1] bg-[#1C2A3A]/50 p-3 rounded-md cursor-pointer transition-all duration-300 ease-in-out ${
-                  isExpandedDescription ? 'max-h-none' : 'max-h-[80px] overflow-hidden relative'
-                }`}
+                className={`text-sm text-[#CBD5E1] bg-[#1C2A3A]/50 p-3 rounded-md cursor-pointer transition-all duration-300 ease-in-out 
+                  ${isExpandedDescription ? 'max-h-none' : 'max-h-[80px] overflow-hidden'}`}
                 onClick={toggleDescriptionExpand}
               >
                 {task.description ? (
@@ -807,7 +800,7 @@ export function TaskDetail({
                   No subtasks yet. Add one below.
                 </div>
               )}
-              
+
               <div className="flex items-center gap-2">
                 <Input
                   value={newSubtaskTitle}
@@ -918,7 +911,7 @@ export function TaskDetail({
           
           <Separator className="bg-[#3A4D62]" />
           
-          <div className="space-y-4 pt-2">
+          <div className="space-y-4 mb-20 pt-2">
             <div className="flex items-center justify-between">
               <h3 className="font-medium text-[#F1F5F9] flex items-center">
                 <MessageSquare className="h-4 w-4 mr-1" />
@@ -937,8 +930,6 @@ export function TaskDetail({
               />
             </div>
           </div>
-
-          <div className="h-8"></div>
         </div>
       </ScrollArea>
     </div>
