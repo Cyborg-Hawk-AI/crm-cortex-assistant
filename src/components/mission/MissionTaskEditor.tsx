@@ -78,6 +78,7 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
     task?.due_date ? new Date(task.due_date) : undefined
   );
   const [priority, setPriority] = useState<string>(task?.priority || 'medium');
+  const [status, setStatus] = useState<string>(task?.status || 'open');
   
   // Get current project tasks for navigation
   const currentProjectId = task?.parent_task_id || null;
@@ -117,6 +118,7 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
       setTitle(task.title);
       setDate(task.due_date ? new Date(task.due_date) : undefined);
       setPriority(task.priority || 'medium');
+      setStatus(task.status || 'open');
       
       if (editor && task.description) {
         editor.commands.setContent(task.description);
@@ -145,6 +147,11 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
     setDate(newDate);
     const formattedDate = newDate ? newDate.toISOString() : null;
     updateTaskDueDate(taskId, formattedDate);
+    
+    toast({
+      title: "Date updated",
+      description: newDate ? `Due date set to ${format(newDate, 'MMM d, yyyy')}` : "Due date removed"
+    });
   };
 
   const handlePriorityChange = (newPriority: string) => {
@@ -157,6 +164,7 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
   };
 
   const handleStatusChange = (newStatus: string) => {
+    setStatus(newStatus);
     updateTaskStatus(taskId, newStatus);
     toast({
       title: "Status updated",
@@ -195,12 +203,14 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
     { value: 'low', label: 'Low', color: 'bg-neon-aqua/20 text-neon-aqua border-neon-aqua/30' },
     { value: 'medium', label: 'Medium', color: 'bg-amber-500/20 text-amber-500 border-amber-500/30' },
     { value: 'high', label: 'High', color: 'bg-neon-red/20 text-neon-red border-neon-red/30' },
+    { value: 'urgent', label: 'Urgent', color: 'bg-neon-red/40 text-neon-red border-neon-red/50' },
   ];
 
   // Status options
   const statusOptions = [
     { value: 'open', label: 'Open', color: 'bg-[#3A4D62] text-[#F1F5F9] border-[#3A4D62]/50' },
     { value: 'in-progress', label: 'In Progress', color: 'bg-neon-blue/20 text-neon-blue border-neon-blue/30' },
+    { value: 'resolved', label: 'Resolved', color: 'bg-amber-500/20 text-amber-500 border-amber-500/30' },
     { value: 'completed', label: 'Completed', color: 'bg-neon-green/20 text-neon-green border-neon-green/30' },
     { value: 'closed', label: 'Closed', color: 'bg-neon-purple/20 text-neon-purple border-neon-purple/30' },
   ];
@@ -296,22 +306,27 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
         {/* Status Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Badge className={`px-2 py-0.5 cursor-pointer hover:opacity-90 ${getStatusColor(task.status)}`}>
-              {getStatusLabel(task.status)}
+            <Badge className={`px-2 py-0.5 cursor-pointer hover:opacity-90 ${getStatusColor(status)}`}>
+              {getStatusLabel(status)}
             </Badge>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-50">
             <DropdownMenuLabel>Set Status</DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-[#3A4D62]" />
             {statusOptions.map((option) => {
-              const isActive = task.status === option.value;
+              const isActive = status === option.value;
               return (
                 <DropdownMenuItem 
                   key={option.value}
                   onClick={() => handleStatusChange(option.value)} 
                   className="hover:bg-[#3A4D62]/50 cursor-pointer flex items-center gap-2"
                 >
-                  <div className={`w-2 h-2 rounded-full ${option.value === 'completed' ? 'bg-neon-green' : option.value === 'in-progress' ? 'bg-neon-blue' : option.value === 'closed' ? 'bg-neon-purple' : 'bg-[#64748B]'}`}></div>
+                  <div className={`w-2 h-2 rounded-full ${
+                    option.value === 'completed' ? 'bg-neon-green' : 
+                    option.value === 'in-progress' ? 'bg-neon-blue' : 
+                    option.value === 'closed' ? 'bg-neon-purple' : 
+                    option.value === 'resolved' ? 'bg-amber-500' : 'bg-[#64748B]'
+                  }`}></div>
                   <span className={isActive ? 'text-neon-aqua' : ''}>{option.label}</span>
                   {isActive && <CheckCheck className="h-4 w-4 ml-auto text-neon-aqua" />}
                 </DropdownMenuItem>
@@ -334,12 +349,13 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
               {date ? format(date, 'MMM d, yyyy') : <span>Due date</span>}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 bg-[#25384D] border-[#3A4D62]">
+          <PopoverContent className="w-auto p-0 bg-[#25384D] border-[#3A4D62] z-50">
             <CalendarComponent
               mode="single"
               selected={date}
               onSelect={handleDueDateChange}
               initialFocus
+              className="bg-[#25384D] text-[#F1F5F9]"
             />
           </PopoverContent>
         </Popover>
@@ -353,6 +369,7 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
             >
               <Flag className={`mr-2 h-4 w-4 ${
                 priority === 'high' ? 'text-neon-red' :
+                priority === 'urgent' ? 'text-neon-red' :
                 priority === 'medium' ? 'text-amber-500' :
                 'text-[#64748B]'
               }`} />
@@ -366,7 +383,7 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
               const isActive = priority === option.value;
               let iconColor = 'text-[#64748B]';
               
-              if (option.value === 'high') {
+              if (option.value === 'high' || option.value === 'urgent') {
                 iconColor = isActive ? 'text-neon-aqua' : 'text-neon-red';
               } else if (option.value === 'medium') {
                 iconColor = isActive ? 'text-neon-aqua' : 'text-amber-500';

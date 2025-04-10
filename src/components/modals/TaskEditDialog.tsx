@@ -216,7 +216,7 @@ export function TaskEditDialog({
                         field.onChange(value);
                         handleFieldChange('status', value);
                       }}
-                      defaultValue={field.value}
+                      value={field.value}
                     >
                       <FormControl>
                         <SelectTrigger className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]">
@@ -247,7 +247,7 @@ export function TaskEditDialog({
                         field.onChange(value);
                         handleFieldChange('priority', value);
                       }}
-                      defaultValue={field.value}
+                      value={field.value}
                     >
                       <FormControl>
                         <SelectTrigger className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]">
