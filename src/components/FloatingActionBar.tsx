@@ -1,38 +1,28 @@
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { 
-  ChevronUp, 
-  ChevronDown, 
   Plus, 
   CalendarPlus, 
   ListTodo, 
-  BookOpen,
-  MoreHorizontal
+  BookOpen
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { TaskCreateModal } from './modals/TaskCreateModal';
 import { MeetingCreateModal } from './modals/MeetingCreateModal';
 import { NotebookCreateModal } from './modals/NotebookCreateModal';
 import { useMeetings } from '@/hooks/useMeetings';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from './ui/dropdown-menu';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 export function FloatingActionBar() {
-  const [isCollapsed, setIsCollapsed] = useState(true);
   const [activeModal, setActiveModal] = useState<'task' | 'meeting' | 'contact' | 'note' | null>(null);
   const { createMeeting } = useMeetings();
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const isMobile = useIsMobile();
   
   // Track window resize
-  useEffect(() => {
+  useState(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
     };
@@ -42,7 +32,7 @@ export function FloatingActionBar() {
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, []);
+  });
 
   // Determine display mode based on screen width
   const displayMode = () => {
@@ -85,103 +75,71 @@ export function FloatingActionBar() {
       >
         <div className="max-w-6xl mx-auto px-4">
           <div className="bg-[#25384D] border border-[#3A4D62] rounded-t-lg shadow-[0_-4px_20px_rgba(0,247,239,0.15)]">
-            <div className="flex justify-between items-center p-2 border-b border-[#3A4D62]">
-              <h3 className="text-sm font-medium text-[#F1F5F9] ml-2">Quick Actions</h3>
+            {/* Single row for Quick Actions label and buttons */}
+            <div className="flex items-center justify-between py-3 px-4">
+              <h3 className="text-sm font-medium text-[#F1F5F9]">Quick Actions</h3>
               
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsCollapsed(!isCollapsed)}
-                className="h-8 text-[#F1F5F9] hover:text-neon-aqua"
-              >
-                {isCollapsed ? (
-                  <>Expand <ChevronUp className="h-4 w-4 ml-1" /></>
-                ) : (
-                  <>Collapse <ChevronDown className="h-4 w-4 ml-1" /></>
-                )}
-              </Button>
-            </div>
-            
-            {/* Quick Action Buttons - Always Visible */}
-            <div className="p-3 flex justify-center">
-              <div className={`flex ${displayMode() === 'compact' ? 'gap-3' : 'gap-4'} items-center justify-center`}>
-                {displayMode() === 'full' ? (
-                  // Full view for larger screens
-                  quickActions.map(action => (
-                    <Button
-                      key={action.id}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleActionClick(action.id as 'task' | 'meeting' | 'note')}
-                      className={`h-10 transition-all duration-300 ${action.className}`}
-                    >
-                      {action.icon} <span className="ml-1">{action.label}</span>
-                    </Button>
-                  ))
-                ) : displayMode() === 'iconOnly' ? (
-                  // Icon-only view for small screens
-                  <TooltipProvider>
-                    {quickActions.map(action => (
-                      <Tooltip key={action.id}>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => handleActionClick(action.id as 'task' | 'meeting' | 'note')}
-                            className={`h-10 w-10 p-0 ${action.className}`}
-                          >
-                            {action.icon}
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{action.label}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    ))}
-                  </TooltipProvider>
-                ) : (
-                  // Compact view for very small screens
-                  <TooltipProvider>
-                    {quickActions.map(action => (
-                      <Tooltip key={action.id}>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => handleActionClick(action.id as 'task' | 'meeting' | 'note')}
-                            className={`h-9 w-9 p-0 ${action.className}`}
-                          >
-                            {action.icon}
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{action.label}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    ))}
-                  </TooltipProvider>
-                )}
+              <div className="flex items-center">
+                <div className={`flex ${displayMode() === 'compact' ? 'gap-2' : 'gap-3'}`}>
+                  {displayMode() === 'full' ? (
+                    // Full view for larger screens
+                    quickActions.map(action => (
+                      <Button
+                        key={action.id}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleActionClick(action.id as 'task' | 'meeting' | 'note')}
+                        className={`h-8 transition-all duration-300 ${action.className}`}
+                      >
+                        {action.icon} <span className="ml-1">{action.label}</span>
+                      </Button>
+                    ))
+                  ) : displayMode() === 'iconOnly' ? (
+                    // Icon-only view for small screens
+                    <TooltipProvider>
+                      {quickActions.map(action => (
+                        <Tooltip key={action.id}>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => handleActionClick(action.id as 'task' | 'meeting' | 'note')}
+                              className={`h-8 w-8 p-0 ${action.className}`}
+                            >
+                              {action.icon}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{action.label}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      ))}
+                    </TooltipProvider>
+                  ) : (
+                    // Compact view for very small screens
+                    <TooltipProvider>
+                      {quickActions.map(action => (
+                        <Tooltip key={action.id}>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => handleActionClick(action.id as 'task' | 'meeting' | 'note')}
+                              className={`h-7 w-7 p-0 ${action.className}`}
+                            >
+                              {action.icon}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{action.label}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      ))}
+                    </TooltipProvider>
+                  )}
+                </div>
               </div>
             </div>
-            
-            {/* Expandable Content Area */}
-            <AnimatePresence>
-              {!isCollapsed && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="overflow-hidden"
-                >
-                  <div className="p-4 text-center">
-                    <h3 className="text-xl font-bold text-[#F1F5F9] bg-clip-text text-transparent bg-gradient-to-r from-neon-aqua to-neon-purple cursor-pointer">
-                      Invite the team!
-                    </h3>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
         </div>
       </motion.div>
