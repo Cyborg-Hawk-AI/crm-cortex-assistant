@@ -10,6 +10,7 @@ interface TaskTimelineProps {
   onTaskClick: (taskId: string) => void;
 }
 
+// Define a more specific interface for our tasksByMonth structure
 interface TasksByMonth {
   [key: string]: Task[] | string;
 }
@@ -98,6 +99,14 @@ export function TaskTimeline({ tasks, onTaskClick }: TaskTimelineProps) {
     return date.toLocaleDateString('default', { day: 'numeric', month: 'short' });
   };
 
+  // Helper function to get the month name safely
+  const getMonthName = (monthKey: string): string => {
+    const nameKey = `${monthKey}-name`;
+    const name = tasksByMonth[nameKey];
+    // Ensure we only return a string
+    return typeof name === 'string' ? name : '';
+  };
+
   return (
     <div className="space-y-8">
       {Object.keys(tasksByMonth)
@@ -105,7 +114,7 @@ export function TaskTimeline({ tasks, onTaskClick }: TaskTimelineProps) {
         .map(monthKey => (
           <div key={monthKey} className="space-y-3">
             <h3 className="text-lg font-medium text-[#F1F5F9] mb-2">
-              {typeof tasksByMonth[`${monthKey}-name`] === 'string' ? tasksByMonth[`${monthKey}-name`] : ''}
+              {getMonthName(monthKey)}
             </h3>
             <div className="relative">
               <div className="absolute left-4 top-0 w-0.5 h-full bg-[#3A4D62]" />
