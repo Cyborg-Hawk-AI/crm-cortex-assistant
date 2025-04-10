@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, 
@@ -526,7 +525,6 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
     }
   };
 
-  // Render status icon based on current status
   const StatusIcon = getStatusIcon(status);
   const PriorityIcon = getPriorityIcon(priority);
 

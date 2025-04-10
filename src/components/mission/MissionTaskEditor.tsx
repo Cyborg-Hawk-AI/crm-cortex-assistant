@@ -18,7 +18,8 @@ import {
   Quote,
   Heading1,
   Heading2,
-  Heading3
+  Heading3,
+  CheckCheck
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import {
   Popover,
@@ -56,6 +59,7 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
     updateTaskDescription,
     updateTaskStatus,
     updateTaskDueDate,
+    updateTaskPriority,
     createTask,
     getSubtasks,
     isLoading,
@@ -122,7 +126,6 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      // Fix: Use currentTarget.blur() instead of target.blur()
       e.currentTarget.blur();
     }
   };
@@ -135,7 +138,7 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
 
   const handlePriorityChange = (newPriority: string) => {
     setPriority(newPriority);
-    // Update in backend would go here if there's a updateTaskPriority function
+    updateTaskPriority?.(taskId, newPriority);
   };
 
   const handleStatusChange = () => {
@@ -150,6 +153,18 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
     
     createTask(newSubtaskTitle.trim(), taskId);
     setNewSubtaskTitle('');
+  };
+
+  // Priority configuration
+  const priorityOptions = [
+    { value: 'low', label: 'Low', color: 'bg-neon-aqua/20 text-neon-aqua border-neon-aqua/30' },
+    { value: 'medium', label: 'Medium', color: 'bg-amber-500/20 text-amber-500 border-amber-500/30' },
+    { value: 'high', label: 'High', color: 'bg-neon-red/20 text-neon-red border-neon-red/30' },
+  ];
+
+  const getPriorityColor = (priorityValue: string) => {
+    const option = priorityOptions.find(opt => opt.value === priorityValue);
+    return option?.color || priorityOptions[1].color;
   };
 
   if (isLoading || !task) {
@@ -239,28 +254,33 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
               {priority.charAt(0).toUpperCase() + priority.slice(1)}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9]">
-            <DropdownMenuItem 
-              onClick={() => handlePriorityChange('low')}
-              className="hover:bg-[#3A4D62]/50"
-            >
-              <Flag className="mr-2 h-4 w-4 text-[#64748B]" />
-              Low
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => handlePriorityChange('medium')}
-              className="hover:bg-[#3A4D62]/50"
-            >
-              <Flag className="mr-2 h-4 w-4 text-amber-500" />
-              Medium
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => handlePriorityChange('high')}
-              className="hover:bg-[#3A4D62]/50"
-            >
-              <Flag className="mr-2 h-4 w-4 text-neon-red" />
-              High
-            </DropdownMenuItem>
+          <DropdownMenuContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-50">
+            <DropdownMenuLabel>Set Priority</DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-[#3A4D62]" />
+            {priorityOptions.map((option) => {
+              const isActive = priority === option.value;
+              let iconColor = 'text-[#64748B]';
+              
+              if (option.value === 'high') {
+                iconColor = isActive ? 'text-neon-aqua' : 'text-neon-red';
+              } else if (option.value === 'medium') {
+                iconColor = isActive ? 'text-neon-aqua' : 'text-amber-500';
+              } else {
+                iconColor = isActive ? 'text-neon-aqua' : 'text-neon-blue';
+              }
+              
+              return (
+                <DropdownMenuItem 
+                  key={option.value}
+                  onClick={() => handlePriorityChange(option.value)} 
+                  className="hover:bg-[#3A4D62]/50 cursor-pointer flex items-center gap-2"
+                >
+                  <Flag className={`h-4 w-4 ${iconColor}`} aria-hidden="true" />
+                  <span className={isActive ? 'text-neon-aqua' : ''}>{option.label}</span>
+                  {isActive && <CheckCheck className="h-4 w-4 ml-auto text-neon-aqua" />}
+                </DropdownMenuItem>
+              );
+            })}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
