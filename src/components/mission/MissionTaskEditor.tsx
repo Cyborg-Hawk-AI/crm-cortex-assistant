@@ -19,7 +19,9 @@ import {
   Heading1,
   Heading2,
   Heading3,
-  CheckCheck
+  CheckCheck,
+  ArrowLeft,
+  ArrowRight
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -74,6 +76,14 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
     task?.due_date ? new Date(task.due_date) : undefined
   );
   const [priority, setPriority] = useState<string>(task?.priority || 'medium');
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
+  
+  // Get current project tasks for navigation
+  const currentProjectId = task?.parent_task_id || null;
+  const projectTasks = tasks.filter(t => t.parent_task_id === currentProjectId && t.id !== currentProjectId);
+  const currentTaskIndex = projectTasks.findIndex(t => t.id === taskId);
+  const hasPreviousTask = currentTaskIndex > 0;
+  const hasNextTask = currentTaskIndex < projectTasks.length - 1 && currentTaskIndex !== -1;
 
   const editor = useEditor({
     extensions: [
@@ -138,14 +148,12 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
 
   const handlePriorityChange = (newPriority: string) => {
     setPriority(newPriority);
-    updateTaskPriority?.(taskId, newPriority);
+    updateTaskPriority(taskId, newPriority);
   };
 
-  const handleStatusChange = () => {
-    if (task) {
-      const newStatus = task.status === 'completed' ? 'open' : 'completed';
-      updateTaskStatus(taskId, newStatus);
-    }
+  const handleStatusChange = (newStatus: string) => {
+    updateTaskStatus(taskId, newStatus);
+    setStatusDropdownOpen(false);
   };
 
   const handleCreateSubtask = () => {
@@ -153,6 +161,25 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
     
     createTask(newSubtaskTitle.trim(), taskId);
     setNewSubtaskTitle('');
+  };
+  
+  const navigateToTask = (direction: 'prev' | 'next') => {
+    if (direction === 'prev' && hasPreviousTask) {
+      const prevTask = projectTasks[currentTaskIndex - 1];
+      if (prevTask) {
+        // Navigate to the previous task
+        refetch().then(() => getSubtasks(prevTask.id));
+        return prevTask.id;
+      }
+    } else if (direction === 'next' && hasNextTask) {
+      const nextTask = projectTasks[currentTaskIndex + 1];
+      if (nextTask) {
+        // Navigate to the next task
+        refetch().then(() => getSubtasks(nextTask.id));
+        return nextTask.id;
+      }
+    }
+    return null;
   };
 
   // Priority configuration
@@ -162,9 +189,27 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
     { value: 'high', label: 'High', color: 'bg-neon-red/20 text-neon-red border-neon-red/30' },
   ];
 
+  // Status options
+  const statusOptions = [
+    { value: 'open', label: 'Open', color: 'bg-[#3A4D62] text-[#F1F5F9] border-[#3A4D62]/50' },
+    { value: 'in-progress', label: 'In Progress', color: 'bg-neon-blue/20 text-neon-blue border-neon-blue/30' },
+    { value: 'completed', label: 'Completed', color: 'bg-neon-green/20 text-neon-green border-neon-green/30' },
+    { value: 'closed', label: 'Closed', color: 'bg-neon-purple/20 text-neon-purple border-neon-purple/30' },
+  ];
+
   const getPriorityColor = (priorityValue: string) => {
     const option = priorityOptions.find(opt => opt.value === priorityValue);
     return option?.color || priorityOptions[1].color;
+  };
+  
+  const getStatusColor = (statusValue: string) => {
+    const option = statusOptions.find(opt => opt.value === statusValue);
+    return option?.color || statusOptions[0].color;
+  };
+  
+  const getStatusLabel = (statusValue: string) => {
+    const option = statusOptions.find(opt => opt.value === statusValue);
+    return option?.label || 'Open';
   };
 
   if (isLoading || !task) {
@@ -177,12 +222,12 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
 
   return (
     <div className="flex flex-col h-full max-h-[80vh] overflow-hidden">
-      {/* Header */}
+      {/* Header with Navigation */}
       <div className="flex items-center justify-between p-4 pb-2">
         <div className="flex items-center gap-3">
           <Checkbox 
             checked={task.status === 'completed'} 
-            onCheckedChange={handleStatusChange}
+            onCheckedChange={() => handleStatusChange(task.status === 'completed' ? 'open' : 'completed')}
             className="rounded-full h-5 w-5"
           />
           <Input 
@@ -193,27 +238,79 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
             className="text-xl font-semibold border-none focus-visible:ring-1 focus-visible:ring-neon-aqua bg-transparent px-0"
           />
         </div>
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={onClose}
-          className="text-[#64748B] hover:text-[#F1F5F9] hover:bg-[#3A4D62]/30"
-        >
-          <X className="h-5 w-5" />
-        </Button>
+        
+        <div className="flex items-center">
+          {/* Task Navigation */}
+          <div className="flex items-center mr-2 gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              disabled={!hasPreviousTask}
+              onClick={() => {
+                const prevTaskId = navigateToTask('prev');
+                if (prevTaskId) {
+                  window.history.replaceState({}, '', `/projects/${currentProjectId}/tasks/${prevTaskId}`);
+                }
+              }}
+              className={`h-8 w-8 rounded-full ${!hasPreviousTask ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#3A4D62]/30'}`}
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              disabled={!hasNextTask}
+              onClick={() => {
+                const nextTaskId = navigateToTask('next');
+                if (nextTaskId) {
+                  window.history.replaceState({}, '', `/projects/${currentProjectId}/tasks/${nextTaskId}`);
+                }
+              }}
+              className={`h-8 w-8 rounded-full ${!hasNextTask ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#3A4D62]/30'}`}
+            >
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={onClose}
+            className="text-[#64748B] hover:text-[#F1F5F9] hover:bg-[#3A4D62]/30"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
       
       {/* Properties */}
       <div className="flex items-center gap-4 px-4 py-2">
-        <div className="flex items-center gap-1">
-          <Badge className={`px-2 py-0.5 ${
-            task.status === 'completed' 
-              ? 'bg-neon-green/20 text-neon-green border-neon-green/30' 
-              : 'bg-[#3A4D62] text-[#F1F5F9] border-[#3A4D62]/50'
-          }`}>
-            {task.status === 'completed' ? 'Completed' : 'Open'}
-          </Badge>
-        </div>
+        {/* Status Dropdown */}
+        <DropdownMenu open={statusDropdownOpen} onOpenChange={setStatusDropdownOpen}>
+          <DropdownMenuTrigger asChild>
+            <Badge className={`px-2 py-0.5 cursor-pointer hover:opacity-90 ${getStatusColor(task.status)}`}>
+              {getStatusLabel(task.status)}
+            </Badge>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-50">
+            <DropdownMenuLabel>Set Status</DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-[#3A4D62]" />
+            {statusOptions.map((option) => {
+              const isActive = task.status === option.value;
+              return (
+                <DropdownMenuItem 
+                  key={option.value}
+                  onClick={() => handleStatusChange(option.value)} 
+                  className="hover:bg-[#3A4D62]/50 cursor-pointer flex items-center gap-2"
+                >
+                  <div className={`w-2 h-2 rounded-full ${option.value === 'completed' ? 'bg-neon-green' : option.value === 'in-progress' ? 'bg-neon-blue' : option.value === 'closed' ? 'bg-neon-purple' : 'bg-[#64748B]'}`}></div>
+                  <span className={isActive ? 'text-neon-aqua' : ''}>{option.label}</span>
+                  {isActive && <CheckCheck className="h-4 w-4 ml-auto text-neon-aqua" />}
+                </DropdownMenuItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
         
         <Popover>
           <PopoverTrigger asChild>
