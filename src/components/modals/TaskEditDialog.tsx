@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -30,29 +29,23 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { Task } from '@/utils/types';
-import { Calendar as CalendarIcon } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
+import { Task, TaskStatus, TaskPriority } from '@/utils/types';
+import { Calendar } from 'lucide-react';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useUsers } from '@/hooks/useUsers';
-import { getCurrentUserId } from '@/lib/supabase';
+import { updateTask } from '@/api/tasks';
 
 const taskSchema = z.object({
-  id: z.string(),
   title: z.string().min(1, 'Title is required'),
-  description: z.string().nullable().optional(),
-  status: z.string(),
-  priority: z.string(),
+  description: z.string().optional(),
+  status: z.enum(['open', 'in-progress', 'resolved', 'closed', 'completed']),
+  priority: z.enum(['low', 'medium', 'high', 'urgent']),
   due_date: z.date().optional(),
-  assignee_id: z.string().optional().nullable(),
-  reporter_id: z.string(),
-  user_id: z.string(), // Added user_id field
-  parent_task_id: z.string().nullable().optional(),
+  assignee_id: z.string().uuid('Must be a valid user ID').optional(),
   tags: z.array(z.string()).optional(),
-  created_at: z.string(),
-  updated_at: z.string(),
 });
 
 type TaskFormValues = z.infer<typeof taskSchema>;
@@ -61,78 +54,66 @@ interface TaskEditDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   task: Task;
-  onSubmit: (data: Task) => void;
+  onRefresh: () => void;
 }
 
 export function TaskEditDialog({ 
   open, 
   onOpenChange, 
   task,
-  onSubmit 
+  onRefresh
 }: TaskEditDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { users, isLoading: isLoadingUsers } = useUsers();
-  const [userId, setUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchUserId = async () => {
-      const id = await getCurrentUserId();
-      setUserId(id);
-    };
-    fetchUserId();
-  }, []);
-
-  // Convert dates to strings and handle null values for form compatibility
-  const normalizedTask = {
-    ...task,
-    due_date: task.due_date ? new Date(task.due_date) : undefined,
-    created_at: task.created_at ? (typeof task.created_at === 'object' 
-      ? (task.created_at as Date).toISOString() 
-      : task.created_at) : new Date().toISOString(),
-    updated_at: task.updated_at ? (typeof task.updated_at === 'object' 
-      ? (task.updated_at as Date).toISOString() 
-      : task.updated_at) : new Date().toISOString(),
-  };
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
-    defaultValues: normalizedTask,
+    defaultValues: {
+      title: task.title,
+      description: task.description || '',
+      status: task.status,
+      priority: task.priority,
+      due_date: task.due_date ? new Date(task.due_date) : undefined,
+      assignee_id: task.assignee_id || undefined,
+      tags: task.tags || [],
+    },
   });
 
   useEffect(() => {
-    if (task) {
-      const formattedTask = {
-        ...task,
-        due_date: task.due_date ? new Date(task.due_date) : undefined,
-        created_at: task.created_at ? (typeof task.created_at === 'object' 
-          ? (task.created_at as Date).toISOString() 
-          : task.created_at) : new Date().toISOString(),
-        updated_at: task.updated_at ? (typeof task.updated_at === 'object' 
-          ? (task.updated_at as Date).toISOString() 
-          : task.updated_at) : new Date().toISOString(),
-      };
-      form.reset(formattedTask);
-    }
+    // Update the form values when the task prop changes
+    form.reset({
+      title: task.title,
+      description: task.description || '',
+      status: task.status,
+      priority: task.priority,
+      due_date: task.due_date ? new Date(task.due_date) : undefined,
+      assignee_id: task.assignee_id || undefined,
+      tags: task.tags || [],
+    });
   }, [task, form]);
 
   const handleSubmit = async (values: TaskFormValues) => {
     setIsSubmitting(true);
     try {
-      await onSubmit({
-        id: values.id,
+      const taskId = task.id;
+
+      await updateTask({
+        id: taskId,
         title: values.title,
         description: values.description || null,
-        status: values.status,
-        priority: values.priority,
+        status: values.status as TaskStatus,
+        priority: values.priority as TaskPriority,
         due_date: values.due_date ? values.due_date.toISOString() : null,
         assignee_id: values.assignee_id || null,
-        reporter_id: values.reporter_id,
-        user_id: values.user_id, // Include user_id in the submit
-        parent_task_id: values.parent_task_id || null,
-        tags: values.tags || [],
-        created_at: values.created_at,
+        reporter_id: task.reporter_id,
+        user_id: task.user_id,
+        parent_task_id: task.parent_task_id,
+        tags: task.tags || [],
+        created_at: task.created_at,
         updated_at: new Date().toISOString(),
       });
+
+      onRefresh();
       onOpenChange(false);
     } catch (error) {
       console.error('Error updating task:', error);
@@ -143,12 +124,10 @@ export function TaskEditDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] bg-white border border-gray-200 shadow-xl">
+      <DialogContent className="sm:max-w-[500px] bg-[#25384D] border-[#3A4D62] text-[#F1F5F9]">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#C084FC] to-[#D946EF]">
-            Edit Mission
-          </DialogTitle>
-          <DialogDescription>Make changes to your mission here</DialogDescription>
+          <DialogTitle className="text-neon-aqua">Edit Task</DialogTitle>
+          <DialogDescription className="text-[#CBD5E1]">Edit task details</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
@@ -157,15 +136,11 @@ export function TaskEditDialog({
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-medium">Title</FormLabel>
+                  <FormLabel className="text-[#F1F5F9]">Title</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="Mission title" 
-                      className="border-gray-200 focus:border-neon-purple focus:shadow-[0_0_10px_rgba(168,85,247,0.2)]" 
-                      {...field} 
-                    />
+                    <Input placeholder="Task title" {...field} className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]" />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-neon-red" />
                 </FormItem>
               )}
             />
@@ -175,17 +150,17 @@ export function TaskEditDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-medium">Description</FormLabel>
+                  <FormLabel className="text-[#F1F5F9]">Description</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Mission description (optional)" 
+                      placeholder="Task description (optional)" 
                       rows={3} 
-                      className="border-gray-200 focus:border-neon-purple focus:shadow-[0_0_10px_rgba(168,85,247,0.2)]"
                       {...field} 
                       value={field.value || ''}
+                      className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9] resize-none"
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-neon-red" />
                 </FormItem>
               )}
             />
@@ -196,24 +171,25 @@ export function TaskEditDialog({
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-medium">Status</FormLabel>
+                    <FormLabel className="text-[#F1F5F9]">Status</FormLabel>
                     <Select 
                       onValueChange={field.onChange} 
-                      value={field.value}
+                      defaultValue={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger className="border-gray-200 focus:border-neon-purple focus:shadow-[0_0_10px_rgba(168,85,247,0.2)]">
+                        <SelectTrigger className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]">
                           <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9]">
                         <SelectItem value="open">Open</SelectItem>
                         <SelectItem value="in-progress">In Progress</SelectItem>
                         <SelectItem value="resolved">Resolved</SelectItem>
                         <SelectItem value="closed">Closed</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormMessage />
+                    <FormMessage className="text-neon-red" />
                   </FormItem>
                 )}
               />
@@ -223,24 +199,24 @@ export function TaskEditDialog({
                 name="priority"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-medium">Priority</FormLabel>
+                    <FormLabel className="text-[#F1F5F9]">Priority</FormLabel>
                     <Select 
                       onValueChange={field.onChange} 
-                      value={field.value}
+                      defaultValue={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger className="border-gray-200 focus:border-neon-purple focus:shadow-[0_0_10px_rgba(168,85,247,0.2)]">
+                        <SelectTrigger className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]">
                           <SelectValue placeholder="Select priority" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9]">
                         <SelectItem value="low">Low</SelectItem>
                         <SelectItem value="medium">Medium</SelectItem>
                         <SelectItem value="high">High</SelectItem>
                         <SelectItem value="urgent">Urgent</SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormMessage />
+                    <FormMessage className="text-neon-red" />
                   </FormItem>
                 )}
               />
@@ -251,18 +227,18 @@ export function TaskEditDialog({
               name="assignee_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-medium">Assignee</FormLabel>
+                  <FormLabel className="text-[#F1F5F9]">Assignee</FormLabel>
                   <Select 
                     onValueChange={field.onChange} 
                     value={field.value || ''}
                     disabled={isLoadingUsers}
                   >
                     <FormControl>
-                      <SelectTrigger className="border-gray-200 focus:border-neon-purple focus:shadow-[0_0_10px_rgba(168,85,247,0.2)]">
+                      <SelectTrigger className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]">
                         <SelectValue placeholder="Select assignee" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9]">
                       {users.map(user => (
                         <SelectItem key={user.id} value={user.id}>
                           {user.full_name || user.email}
@@ -270,7 +246,7 @@ export function TaskEditDialog({
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormMessage />
+                  <FormMessage className="text-neon-red" />
                 </FormItem>
               )}
             />
@@ -280,15 +256,15 @@ export function TaskEditDialog({
               name="due_date"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel className="font-medium">Due Date</FormLabel>
+                  <FormLabel className="text-[#F1F5F9]">Due Date</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
                           variant={"outline"}
                           className={cn(
-                            "w-full pl-3 text-left font-normal border-gray-200 focus:border-neon-purple focus:shadow-[0_0_10px_rgba(168,85,247,0.2)]",
-                            !field.value && "text-muted-foreground"
+                            "w-full pl-3 text-left font-normal bg-[#1C2A3A] border-[#3A4D62]",
+                            !field.value && "text-[#64748B]"
                           )}
                         >
                           {field.value ? (
@@ -296,40 +272,32 @@ export function TaskEditDialog({
                           ) : (
                             <span>Pick a date</span>
                           )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          <Calendar className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
+                    <PopoverContent className="w-auto p-0 bg-[#25384D] border-[#3A4D62]" align="start">
+                      <CalendarComponent
                         mode="single"
                         selected={field.value}
                         onSelect={field.onChange}
                         initialFocus
-                        className={cn("p-3 pointer-events-auto")}
+                        className="bg-[#25384D] text-[#F1F5F9]"
                       />
                     </PopoverContent>
                   </Popover>
-                  <FormMessage />
+                  <FormMessage className="text-neon-red" />
                 </FormItem>
               )}
             />
             
-            <DialogFooter className="gap-2 sm:gap-0 mt-6">
+            <DialogFooter className="gap-2 sm:gap-0">
               <DialogClose asChild>
-                <Button 
-                  type="button" 
-                  variant="outline"
-                  className="border-gray-200 hover:border-gray-300"
-                >
+                <Button type="button" variant="outline" className="border-[#3A4D62] text-[#F1F5F9] hover:bg-[#3A4D62]/30">
                   Cancel
                 </Button>
               </DialogClose>
-              <Button 
-                type="submit" 
-                disabled={isSubmitting}
-                className="bg-gradient-to-r from-[#C084FC] to-[#D946EF] text-white hover:brightness-110 hover:shadow-[0_0_10px_rgba(168,85,247,0.3)]"
-              >
+              <Button type="submit" disabled={isSubmitting} className="bg-neon-aqua text-black hover:bg-neon-aqua/90">
                 {isSubmitting ? 'Saving...' : 'Save Changes'}
               </Button>
             </DialogFooter>

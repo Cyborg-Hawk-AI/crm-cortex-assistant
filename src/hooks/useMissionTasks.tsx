@@ -11,7 +11,6 @@ export function useMissionTasks(missionId: string | null) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Get current user ID for task creation and filtering
   const {
     data: currentUserId,
     isLoading: loadingUserId
@@ -23,7 +22,6 @@ export function useMissionTasks(missionId: string | null) {
     }
   });
 
-  // Validate the missionId exists and belongs to the current user
   const {
     data: missionExists,
     isLoading: checkingMission,
@@ -34,7 +32,6 @@ export function useMissionTasks(missionId: string | null) {
       if (!missionId || !currentUserId) return false;
       
       try {
-        // Check if the missionId exists in the tasks table
         const { data, error } = await supabase
           .from('tasks')
           .select('id')
@@ -45,7 +42,6 @@ export function useMissionTasks(missionId: string | null) {
         if (error) {
           console.error("Error checking mission existence:", error);
           
-          // If not a direct mission ID, check if it's referenced in tags
           const { data: relatedTasks, error: relatedError } = await supabase
             .from('tasks')
             .select('id')
@@ -79,11 +75,8 @@ export function useMissionTasks(missionId: string | null) {
       if (!missionId || !currentUserId) return [];
       
       try {
-        // Format the tag properly for Postgres containment operator
         const missionTag = `mission:${missionId}`;
         
-        // Get tasks associated with this mission - using OR condition to check both tag and direct ID match
-        // This query has been improved to catch all related tasks and check both reporter_id and user_id
         const { data, error } = await supabase
           .from('tasks')
           .select('*')
@@ -108,12 +101,10 @@ export function useMissionTasks(missionId: string | null) {
     refetchOnWindowFocus: true
   });
 
-  // Function to fetch all subtasks for a given parent task
   const fetchSubtasksForParent = useCallback(async (parentTaskId: string) => {
     if (!currentUserId) return [];
     
     try {
-      // First try to fetch from the subtasks table
       const { data: subtasksData, error: subtasksError } = await supabase
         .from('subtasks')
         .select('*')
@@ -122,16 +113,14 @@ export function useMissionTasks(missionId: string | null) {
         .order('created_at', { ascending: true });
         
       if (!subtasksError && subtasksData && subtasksData.length > 0) {
-        // If we found subtasks in the dedicated subtasks table
         console.log(`Found ${subtasksData.length} subtasks in subtasks table for parent: ${parentTaskId}`);
         
-        // Map subtasks table entries to Task format for consistency in UI
         return subtasksData.map(subtask => ({
           id: subtask.id,
           title: subtask.title,
           description: null,
-          status: subtask.is_completed ? 'completed' : 'open',
-          priority: 'medium',
+          status: subtask.is_completed ? 'completed' as TaskStatus : 'open' as TaskStatus,
+          priority: 'medium' as TaskPriority,
           due_date: null,
           assignee_id: null,
           reporter_id: subtask.created_by || currentUserId,
@@ -143,7 +132,6 @@ export function useMissionTasks(missionId: string | null) {
         }));
       }
       
-      // If no results in subtasks table, try the tasks table
       const { data: tasksData, error: tasksError } = await supabase
         .from('tasks')
         .select('*')
@@ -164,16 +152,13 @@ export function useMissionTasks(missionId: string | null) {
     }
   }, [currentUserId]);
 
-  // Initial load of subtasks for all top-level tasks
   useEffect(() => {
     const loadAllSubtasks = async () => {
       if (tasks && tasks.length > 0 && currentUserId) {
         const topLevelTasks = tasks.filter(task => !task.parent_task_id || task.parent_task_id === null);
         
-        // Create a new subtasks object
         const newSubtasks: Record<string, Task[]> = {};
         
-        // Fetch subtasks for each top-level task
         for (const task of topLevelTasks) {
           const subtasksForTask = await fetchSubtasksForParent(task.id);
           newSubtasks[task.id] = subtasksForTask;
@@ -186,7 +171,6 @@ export function useMissionTasks(missionId: string | null) {
     loadAllSubtasks();
   }, [tasks, currentUserId, fetchSubtasksForParent]);
 
-  // Create a task helper function
   const createTaskMutation = useMutation({
     mutationFn: async (params: { 
       title: string; 
@@ -195,7 +179,6 @@ export function useMissionTasks(missionId: string | null) {
     }) => {
       if (!currentUserId) throw new Error('User not authenticated');
       
-      // Verify the mission exists before attempting to create a task
       if (!missionExists && !params.parentTaskId) {
         await recheckMission();
         if (!missionExists) {
@@ -205,10 +188,8 @@ export function useMissionTasks(missionId: string | null) {
       
       const missionTag = missionId ? `mission:${missionId}` : null;
       
-      // Determine if this is a subtask or a main task
       if (params.parentTaskId) {
         try {
-          // Create in subtasks table
           const { data, error } = await supabase
             .from('subtasks')
             .insert({
@@ -231,7 +212,6 @@ export function useMissionTasks(missionId: string | null) {
         } catch (subtaskError) {
           console.error("Error creating subtask:", subtaskError);
           
-          // Fallback to tasks table if subtasks table insertion fails
           console.log("Falling back to tasks table for subtask creation");
           const newTask = {
             title: params.title,
@@ -261,7 +241,6 @@ export function useMissionTasks(missionId: string | null) {
           return data;
         }
       } else {
-        // Create a regular task
         const newTask = {
           title: params.title,
           description: params.description || null,
@@ -296,10 +275,8 @@ export function useMissionTasks(missionId: string | null) {
       setNewTaskTitle('');
       setDueDate(null);
       
-      // Invalidate and refetch the mission tasks query
       queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId, currentUserId] });
       
-      // Force an immediate refetch to update the UI
       setTimeout(() => {
         refetch();
       }, 100);
@@ -326,7 +303,6 @@ export function useMissionTasks(missionId: string | null) {
     mutationFn: async ({ taskId, status }: { taskId: string, status: string }) => {
       if (!currentUserId) throw new Error('User not authenticated');
       
-      // First try to update in subtasks table if it's a subtask
       try {
         const isCompletedValue = status === 'completed';
         const { data, error } = await supabase
@@ -347,7 +323,6 @@ export function useMissionTasks(missionId: string | null) {
         console.log("Task not found in subtasks table, trying tasks table");
       }
       
-      // If not found in subtasks, try tasks table
       const { data, error } = await supabase
         .from('tasks')
         .update({ 
@@ -366,7 +341,6 @@ export function useMissionTasks(missionId: string | null) {
       queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId, currentUserId] });
       refetch();
       
-      // If this is a subtask, we need to invalidate the parent's subtasks
       if (data.parent_task_id) {
         getSubtasks.mutate(data.parent_task_id);
       }
@@ -384,7 +358,6 @@ export function useMissionTasks(missionId: string | null) {
     mutationFn: async ({ taskId, title }: { taskId: string, title: string }) => {
       if (!currentUserId) throw new Error('User not authenticated');
       
-      // Try subtasks table first
       try {
         const { data, error } = await supabase
           .from('subtasks')
@@ -404,7 +377,6 @@ export function useMissionTasks(missionId: string | null) {
         console.log("Task not found in subtasks table, trying tasks table");
       }
       
-      // Try tasks table if not found in subtasks
       const { data, error } = await supabase
         .from('tasks')
         .update({ 
@@ -458,13 +430,8 @@ export function useMissionTasks(missionId: string | null) {
       return data;
     },
     onSuccess: () => {
-      // Invalidate the appropriate cache entries to ensure UI updates
       queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId, currentUserId] });
-      
-      // Force an immediate refetch
-      setTimeout(() => {
-        refetch();
-      }, 150);
+      refetch();
       
       toast({
         title: "Description updated",
@@ -556,7 +523,6 @@ export function useMissionTasks(missionId: string | null) {
     mutationFn: async (taskId: string) => {
       if (!currentUserId) throw new Error('User not authenticated');
       
-      // Try to delete from subtasks table first
       try {
         const { error } = await supabase
           .from('subtasks')
@@ -571,15 +537,12 @@ export function useMissionTasks(missionId: string | null) {
         console.log("Task not found in subtasks table, trying tasks table");
       }
       
-      // First, find and delete any subtasks that belong to this task in both tables
       try {
-        // Delete from subtasks table
         await supabase
           .from('subtasks')
           .delete()
           .eq('parent_task_id', taskId);
           
-        // Delete from tasks table where it's a subtask
         await supabase
           .from('tasks')
           .delete()
@@ -588,7 +551,6 @@ export function useMissionTasks(missionId: string | null) {
         console.error("Error deleting child tasks:", err);
       }
       
-      // Then delete the task itself
       const { error } = await supabase
         .from('tasks')
         .delete()
@@ -603,7 +565,6 @@ export function useMissionTasks(missionId: string | null) {
       queryClient.invalidateQueries({ queryKey: ['mission-tasks', missionId, currentUserId] });
       refetch();
       
-      // Clear any cached subtasks for the deleted task
       setSubtasks(prev => {
         const newSubtasks = { ...prev };
         delete newSubtasks[deletedTaskId];
