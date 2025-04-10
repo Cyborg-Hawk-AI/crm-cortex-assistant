@@ -10,6 +10,10 @@ interface TaskTimelineProps {
   onTaskClick: (taskId: string) => void;
 }
 
+interface TasksByMonth {
+  [key: string]: Task[] | string;
+}
+
 export function TaskTimeline({ tasks, onTaskClick }: TaskTimelineProps) {
   // Sort tasks by due date
   const sortedTasks = [...tasks].sort((a, b) => {
@@ -50,7 +54,7 @@ export function TaskTimeline({ tasks, onTaskClick }: TaskTimelineProps) {
   };
   
   // Group tasks by month
-  const tasksByMonth: Record<string, Task[]> = {};
+  const tasksByMonth: TasksByMonth = {};
   
   sortedTasks.forEach(task => {
     if (task.due_date) {
@@ -63,7 +67,10 @@ export function TaskTimeline({ tasks, onTaskClick }: TaskTimelineProps) {
         tasksByMonth[`${monthKey}-name`] = monthName;
       }
       
-      tasksByMonth[monthKey].push(task);
+      // Type assertion to ensure we're pushing to an array
+      if (Array.isArray(tasksByMonth[monthKey])) {
+        (tasksByMonth[monthKey] as Task[]).push(task);
+      }
     } else {
       // No due date
       if (!tasksByMonth['no-date']) {
@@ -71,7 +78,10 @@ export function TaskTimeline({ tasks, onTaskClick }: TaskTimelineProps) {
         tasksByMonth['no-date-name'] = 'No Due Date';
       }
       
-      tasksByMonth['no-date'].push(task);
+      // Type assertion to ensure we're pushing to an array
+      if (Array.isArray(tasksByMonth['no-date'])) {
+        (tasksByMonth['no-date'] as Task[]).push(task);
+      }
     }
   });
 
@@ -100,7 +110,8 @@ export function TaskTimeline({ tasks, onTaskClick }: TaskTimelineProps) {
             <div className="relative">
               <div className="absolute left-4 top-0 w-0.5 h-full bg-[#3A4D62]" />
               <div className="space-y-4">
-                {tasksByMonth[monthKey].map(task => (
+                {/* Safely render tasks by confirming it's an array and using type assertion */}
+                {Array.isArray(tasksByMonth[monthKey]) && (tasksByMonth[monthKey] as Task[]).map(task => (
                   <div 
                     key={task.id}
                     className="relative pl-10"

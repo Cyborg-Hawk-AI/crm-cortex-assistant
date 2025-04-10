@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +14,7 @@ import {
   ListIcon, 
   MoreHorizontal,
   TableIcon,
-  Timeline
+  BarChart3
 } from 'lucide-react';
 import { Project, Task, TaskView } from '@/utils/types';
 import { TaskBoard } from '@/components/projects/TaskBoard';
@@ -160,7 +159,7 @@ export function ProjectDetail({
                   value="timeline"
                   className="data-[state=active]:bg-[#3A4D62] data-[state=active]:text-white"
                 >
-                  <Timeline className="h-4 w-4 mr-2" />
+                  <BarChart3 className="h-4 w-4 mr-2" />
                   Timeline
                 </TabsTrigger>
               </TabsList>
