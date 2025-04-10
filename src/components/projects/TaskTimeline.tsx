@@ -105,7 +105,7 @@ export function TaskTimeline({ tasks, onTaskClick }: TaskTimelineProps) {
         .map(monthKey => (
           <div key={monthKey} className="space-y-3">
             <h3 className="text-lg font-medium text-[#F1F5F9] mb-2">
-              {tasksByMonth[`${monthKey}-name`]}
+              {typeof tasksByMonth[`${monthKey}-name`] === 'string' ? tasksByMonth[`${monthKey}-name`] : ''}
             </h3>
             <div className="relative">
               <div className="absolute left-4 top-0 w-0.5 h-full bg-[#3A4D62]" />
