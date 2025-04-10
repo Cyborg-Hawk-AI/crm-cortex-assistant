@@ -110,7 +110,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
     try {
       const { data, error } = await supabase
         .from('comments')
-        .select('*, profiles(full_name)')
+        .select('*')
         .eq('entity_id', task.id)
         .eq('entity_type', 'task')
         .order('created_at', { ascending: false });
@@ -120,13 +120,8 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
         return [];
       }
       
-      const transformedData = data.map(comment => ({
-        ...comment,
-        user_name: comment.profiles?.full_name || comment.user_id
-      }));
-      
-      console.log('Fetched comments:', transformedData);
-      return transformedData || [];
+      console.log('Fetched comments:', data);
+      return data || [];
     } catch (err) {
       console.error('Failed to fetch comments:', err);
       return [];
@@ -374,7 +369,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
       if (error) throw error;
       
       // Explicitly refresh comments
-      refetchComments();
+      await refetchComments();
       
       toast({
         title: "Comment added",
@@ -717,7 +712,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
               </div>
             ) : (
               <div 
-                className={`text-sm text-[#CBD5E1] bg-[#1C2A3A]/50 p-3 rounded-md cursor-pointer hover:bg-[#1C2A3A] ${isExpandedDescription ? '' : 'max-h-[100px] overflow-hidden'}`}
+                className={`text-sm text-[#CBD5E1] bg-[#1C2A3A]/50 p-3 rounded-md ${isExpandedDescription ? '' : 'max-h-[100px] overflow-hidden'}`}
                 onClick={toggleDescriptionExpand}
               >
                 {task.description || 'No description provided. Click "Edit" to add one.'}

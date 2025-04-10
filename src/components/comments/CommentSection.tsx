@@ -71,9 +71,7 @@ export function CommentSection({
 
   return (
     <div className="space-y-4">
-      <CommentList comments={comments} maxHeight="300px" />
-      
-      <div className="flex items-start gap-2 mt-3">
+      <div className="flex items-start gap-2">
         <Avatar className="h-8 w-8">
           <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${userId}`} />
           <AvatarFallback>
@@ -106,6 +104,8 @@ export function CommentSection({
           </div>
         </div>
       </div>
+      
+      <CommentList comments={comments} maxHeight="300px" />
     </div>
   );
 }
