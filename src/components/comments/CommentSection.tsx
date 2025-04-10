@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { CommentList } from './CommentList';
 import { supabase } from '@/lib/supabase';
 import { getCurrentUserId } from '@/utils/auth';
+import { useProfile } from '@/hooks/useProfile';
 
 interface Comment {
   id: string;
@@ -15,6 +16,9 @@ interface Comment {
   created_at: string;
   user_id: string;
   user_name?: string;
+  profiles?: {
+    full_name?: string;
+  };
 }
 
 interface CommentSectionProps {
@@ -37,6 +41,7 @@ export function CommentSection({
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const { profile } = useProfile();
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
@@ -69,13 +74,21 @@ export function CommentSection({
     }
   };
 
+  // Get the display name for current user
+  const getDisplayName = () => {
+    if (profile?.full_name) {
+      return profile.full_name;
+    }
+    return userName || userId.substring(0, 8);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-start gap-2">
         <Avatar className="h-8 w-8">
           <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${userId}`} />
           <AvatarFallback>
-            {(userName || userId).substring(0, 2).toUpperCase()}
+            {getDisplayName().substring(0, 2).toUpperCase()}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1">
