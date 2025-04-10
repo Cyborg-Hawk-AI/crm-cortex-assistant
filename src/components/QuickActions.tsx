@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Code, FileText, ShieldAlert, MessageCircleReply, 
@@ -39,7 +39,7 @@ export function QuickActions() {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   // Update windowWidth state when window is resized
-  React.useEffect(() => {
+  useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
