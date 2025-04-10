@@ -56,13 +56,13 @@ export function ProjectsTable({ projects, onProjectClick, onCreateProject }: Pro
     
     return (
       <div className="flex items-center space-x-2">
-        <div className="w-24 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+        <div className="w-24 h-1.5 bg-[#1C2A3A] rounded-full overflow-hidden">
           <div 
-            className="h-full bg-neon-green" 
+            className="h-full bg-gradient-to-r from-neon-aqua to-neon-blue"
             style={{ width: `${percentage}%` }}
           />
         </div>
-        <span className="text-xs text-gray-400">
+        <span className="text-xs text-[#CBD5E1]">
           {completed}/{total}
         </span>
       </div>
@@ -132,7 +132,7 @@ export function ProjectsTable({ projects, onProjectClick, onCreateProject }: Pro
               {projects.map((project) => (
                 <TableRow 
                   key={project.id} 
-                  className="hover:bg-[#1C2A3A]/50 border-[#3A4D62] cursor-pointer"
+                  className="hover:bg-[#1C2A3A]/70 border-[#3A4D62] cursor-pointer transition-colors group"
                   onClick={() => onProjectClick(project.id)}
                 >
                   <TableCell className="p-4 font-medium">
@@ -142,7 +142,7 @@ export function ProjectsTable({ projects, onProjectClick, onCreateProject }: Pro
                       ) : (
                         <CircleDashed className="w-4 h-4 text-neon-aqua" />
                       )}
-                      <span className="text-[#F1F5F9]">{project.title}</span>
+                      <span className="text-[#F1F5F9] group-hover:text-white transition-colors">{project.title}</span>
                     </div>
                   </TableCell>
                   <TableCell className="p-4">
@@ -183,7 +183,7 @@ export function ProjectsTable({ projects, onProjectClick, onCreateProject }: Pro
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-8 w-8"
+                          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <MoreHorizontal className="h-4 w-4" />

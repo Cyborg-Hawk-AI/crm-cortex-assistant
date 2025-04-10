@@ -4,29 +4,61 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ProjectsPage } from '@/components/projects/ProjectsPage';
 import { HomeButton } from '@/components/HomeButton';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
 
 export function ProjectsPageWrapper() {
   const { projectId, taskId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [projectExists, setProjectExists] = useState<boolean | null>(null);
   
+  // Check if the project exists
   useEffect(() => {
-    // Simple loading state to prevent flashing
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 300);
+    const checkProject = async () => {
+      if (!projectId) {
+        setProjectExists(null);
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        const { data, error } = await supabase
+          .from('tasks')
+          .select('id')
+          .eq('id', projectId)
+          .is('parent_task_id', null)
+          .single();
+          
+        if (error) {
+          console.error("Error checking project existence:", error);
+          setProjectExists(false);
+        } else {
+          setProjectExists(!!data);
+        }
+      } catch (err) {
+        console.error("Error in project validation:", err);
+        setProjectExists(false);
+      } finally {
+        setLoading(false);
+      }
+    };
     
-    return () => clearTimeout(timer);
-  }, [projectId, taskId]);
+    setLoading(true);
+    checkProject();
+  }, [projectId]);
   
-  // Handle any errors navigating to projects
+  // Redirect if project doesn't exist
   useEffect(() => {
-    if (projectId && !loading) {
-      // You could add validation here if needed
-      console.log(`Loading project: ${projectId}${taskId ? ` with task: ${taskId}` : ''}`);
+    if (projectExists === false && !loading) {
+      toast({
+        title: "Project not found",
+        description: "The project you're looking for doesn't exist or you don't have access to it.",
+        variant: "destructive"
+      });
+      navigate("/projects");
     }
-  }, [projectId, taskId, loading]);
+  }, [projectExists, loading, navigate, toast]);
   
   return (
     <div className="h-[calc(100vh-120px)] overflow-y-auto">
