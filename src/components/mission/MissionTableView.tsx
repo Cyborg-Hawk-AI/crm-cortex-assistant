@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -12,6 +11,8 @@ import { Task } from '@/utils/types';
 import { useMissionTasks } from '@/hooks/useMissionTasks';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
 
 export interface MissionTableViewProps {
   missionId: string;
@@ -37,7 +38,52 @@ export function MissionTableView({ missionId, onTaskClick }: MissionTableViewPro
     getSubtasks
   } = useMissionTasks(missionId);
 
-  // Sync the newTaskTitle state with the hook
+  const { data: userProfiles = {}, isLoading: loadingProfiles } = useQuery({
+    queryKey: ['user-profiles-for-mission', missionId],
+    queryFn: async () => {
+      try {
+        const userIds = new Set<string>();
+        tasks.forEach(task => {
+          if (task.assignee_id) userIds.add(task.assignee_id);
+          if (task.reporter_id) userIds.add(task.reporter_id);
+          if (task.user_id) userIds.add(task.user_id);
+        });
+        
+        if (userIds.size === 0) return {};
+        
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', Array.from(userIds));
+          
+        if (error) {
+          console.error('Error fetching user profiles:', error);
+          return {};
+        }
+        
+        const profileMap: Record<string, any> = {};
+        data?.forEach(profile => {
+          profileMap[profile.id] = profile;
+        });
+        
+        return profileMap;
+      } catch (err) {
+        console.error('Failed to fetch user profiles:', err);
+        return {};
+      }
+    },
+    enabled: tasks.length > 0
+  });
+
+  const getUserDisplayName = (userId: string | null | undefined) => {
+    if (!userId) return 'Unassigned';
+    
+    const profile = userProfiles[userId];
+    if (!profile) return userId.substring(0, 8) + '...';
+    
+    return profile.full_name || profile.email || userId.substring(0, 8) + '...';
+  };
+
   useEffect(() => {
     setHookTaskTitle(newTaskTitle);
   }, [newTaskTitle, setHookTaskTitle]);
@@ -61,7 +107,6 @@ export function MissionTableView({ missionId, onTaskClick }: MissionTableViewPro
       const newState = { ...prev };
       newState[taskId] = !prev[taskId];
       
-      // Load subtasks when expanding
       if (!prev[taskId]) {
         getSubtasks(taskId);
       }
@@ -206,7 +251,6 @@ export function MissionTableView({ missionId, onTaskClick }: MissionTableViewPro
                     </TableCell>
                   </TableRow>
                   
-                  {/* Subtasks section */}
                   {expandedTasks[task.id] && (
                     <>
                       <TableRow>

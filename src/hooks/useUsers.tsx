@@ -1,6 +1,6 @@
 
 import { useQuery } from '@tanstack/react-query';
-import { userApi } from '@/api';
+import { getUsers, getCurrentUserProfile } from '@/api/users';
 
 export function useUsers() {
   const { 
@@ -9,7 +9,7 @@ export function useUsers() {
     error 
   } = useQuery({
     queryKey: ['users'],
-    queryFn: () => userApi.getUsers(),
+    queryFn: getUsers,
   });
   
   const { 
@@ -17,7 +17,7 @@ export function useUsers() {
     isLoading: isLoadingCurrentUser 
   } = useQuery({
     queryKey: ['currentUser'],
-    queryFn: () => userApi.getCurrentUserProfile(),
+    queryFn: getCurrentUserProfile,
   });
 
   return {

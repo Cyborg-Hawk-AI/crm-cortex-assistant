@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -25,7 +24,13 @@ export function TaskList({ projectId, onTaskClick }: TaskListProps) {
         console.log(`Fetching tasks for project ID: ${projectId}`);
         const { data, error } = await supabase
           .from('tasks')
-          .select('*')
+          .select(`
+            *,
+            assignee:assignee_id (
+              full_name,
+              email
+            )
+          `)
           .eq('parent_task_id', projectId)
           .order('created_at', { ascending: false });
           
@@ -174,7 +179,7 @@ export function TaskList({ projectId, onTaskClick }: TaskListProps) {
             {task.assignee_id && (
               <Avatar className="h-6 w-6">
                 <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${task.assignee_id}`} />
-                <AvatarFallback>{task.assignee_id.substring(0, 2).toUpperCase()}</AvatarFallback>
+                <AvatarFallback>{task.assignee?.full_name ? task.assignee.full_name.substring(0, 2).toUpperCase() : task.assignee_id.substring(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
             )}
             
