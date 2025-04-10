@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, 
@@ -74,6 +75,10 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [isPriorityMenuOpen, setIsPriorityMenuOpen] = useState(false);
   
+  // States for description container height
+  const [descriptionHeight, setDescriptionHeight] = useState<string>('auto');
+  const [descriptionOverflow, setDescriptionOverflow] = useState<boolean>(false);
+  
   const { data: profiles = {}, isLoading: loadingProfiles } = useQuery({
     queryKey: ['user-profiles'],
     queryFn: async () => {
@@ -139,6 +144,19 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   useEffect(() => {
     refetchComments();
   }, []);
+  
+  // Check if description has overflow content
+  useEffect(() => {
+    if (task.description) {
+      const checkOverflow = () => {
+        const descLength = task.description?.length || 0;
+        // Estimate if the description is long enough to need expansion
+        setDescriptionOverflow(descLength > 150);
+      };
+      
+      checkOverflow();
+    }
+  }, [task.description]);
 
   const getUserName = (userId: string | null | undefined) => {
     if (!userId) return 'Unassigned';
@@ -707,12 +725,24 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
               </div>
             ) : (
               <div 
-                className={`text-sm text-[#CBD5E1] bg-[#1C2A3A]/50 p-3 rounded-md cursor-pointer ${isExpandedDescription ? '' : 'max-h-[100px] overflow-hidden'}`}
+                className={`text-sm text-[#CBD5E1] bg-[#1C2A3A]/50 p-3 rounded-md cursor-pointer transition-all duration-300 ease-in-out 
+                  ${isExpandedDescription ? 'max-h-none' : 'max-h-[80px] overflow-hidden'}`}
                 onClick={toggleDescriptionExpand}
               >
-                {task.description || 'No description provided. Click "Edit" to add one.'}
-                {(!isExpandedDescription && task.description && task.description.length > 150) && (
-                  <div className="text-xs text-neon-aqua mt-2">Click to expand...</div>
+                {task.description ? (
+                  <>
+                    <div className="whitespace-pre-wrap">{task.description}</div>
+                    {descriptionOverflow && !isExpandedDescription && (
+                      <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#1C2A3A] to-transparent pointer-events-none" />
+                    )}
+                    {descriptionOverflow && (
+                      <div className="text-xs text-neon-aqua mt-2 text-center">
+                        {isExpandedDescription ? 'Click to collapse' : 'Click to expand'}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  'No description provided. Click "Edit" to add one.'
                 )}
               </div>
             )}
