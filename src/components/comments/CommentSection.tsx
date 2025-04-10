@@ -61,48 +61,39 @@ export function CommentSection({
   };
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <h3 className="font-medium text-[#F1F5F9] flex items-center">
-          <MessageSquare className="h-4 w-4 mr-1" />
-          Comments
-        </h3>
-      </div>
+    <div className="space-y-4">
+      <CommentList comments={comments} maxHeight="300px" />
       
-      <div className="bg-[#1C2A3A]/50 p-4 rounded-md">
-        <CommentList comments={comments} maxHeight="200px" />
-        
-        <div className="flex items-start gap-2 mt-3">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${userId}`} />
-            <AvatarFallback>
-              {(userName || userId).substring(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <Textarea 
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Add a comment..."
-              className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9] min-h-[80px]"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleAddComment();
-                }
-              }}
-              disabled={isSubmitting}
-            />
-            <div className="mt-2 flex justify-end">
-              <Button 
-                onClick={handleAddComment}
-                className="bg-neon-aqua hover:bg-neon-aqua/90 text-black"
-                disabled={!newComment.trim() || isSubmitting}
-              >
-                <Send className="h-3.5 w-3.5 mr-1" />
-                {isSubmitting ? 'Posting...' : 'Comment'}
-              </Button>
-            </div>
+      <div className="flex items-start gap-2 mt-3">
+        <Avatar className="h-8 w-8">
+          <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${userId}`} />
+          <AvatarFallback>
+            {(userName || userId).substring(0, 2).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1">
+          <Textarea 
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="Add a comment..."
+            className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9] min-h-[80px]"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleAddComment();
+              }
+            }}
+            disabled={isSubmitting}
+          />
+          <div className="mt-2 flex justify-end">
+            <Button 
+              onClick={handleAddComment}
+              className="bg-neon-aqua hover:bg-neon-aqua/90 text-black"
+              disabled={!newComment.trim() || isSubmitting}
+            >
+              <Send className="h-3.5 w-3.5 mr-1" />
+              {isSubmitting ? 'Posting...' : 'Comment'}
+            </Button>
           </div>
         </div>
       </div>

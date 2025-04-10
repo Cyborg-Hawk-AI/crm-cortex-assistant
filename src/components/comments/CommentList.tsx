@@ -32,7 +32,7 @@ export function CommentList({ comments, maxHeight = "200px" }: CommentListProps)
   }
 
   return (
-    <ScrollArea className="max-h-[200px]" style={{ maxHeight }}>
+    <ScrollArea className="w-full" style={{ maxHeight }}>
       <div className="space-y-4 mb-4 pr-2">
         {comments.map((comment) => (
           <div key={comment.id} className="flex gap-2">
@@ -43,7 +43,7 @@ export function CommentList({ comments, maxHeight = "200px" }: CommentListProps)
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <p className="text-xs text-[#F1F5F9] mb-1">{comment.content}</p>
+              <p className="text-xs text-[#F1F5F9] mb-1 whitespace-pre-wrap break-words">{comment.content}</p>
               <div className="flex justify-between items-center">
                 <span className="text-xs font-medium text-[#CBD5E1]">
                   {comment.user_name || comment.user_id.substring(0, 8)}
