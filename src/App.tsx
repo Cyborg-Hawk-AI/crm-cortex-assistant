@@ -16,7 +16,6 @@ import { ProjectsPage } from "@/components/projects/ProjectsPage";
 import { ProjectsPageWrapper } from "@/components/projects/ProjectsPageWrapper";
 import { Header } from "@/components/Header";
 import { Mindboard } from "@/components/mindboard/Mindboard";
-import { GlobalFooter } from "@/components/GlobalFooter";
 
 function App() {
   const [queryClient] = useState(() => new QueryClient({
@@ -37,7 +36,7 @@ function App() {
         <AuthProvider>
           <div className="min-h-screen bg-[#171C24]">
             <Header activeTab={activeTab} setActiveTab={setActiveTab} />
-            <div className="pt-[60px] pb-[112px]"> {/* Add padding to account for fixed header and footer */}
+            <div className="pt-[60px]"> {/* Add padding to account for fixed header */}
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
@@ -57,7 +56,6 @@ function App() {
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>
-            <GlobalFooter />
             <Toaster />
           </div>
         </AuthProvider>
