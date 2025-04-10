@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, 
@@ -43,8 +42,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface TaskDetailProps {
   task: Task;
@@ -134,13 +132,11 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   });
 
   useEffect(() => {
-    // Update comments when the task changes or when taskComments updates
     console.log('Setting comments from taskComments:', taskComments);
     setComments(taskComments);
   }, [taskComments, task.id]);
 
   useEffect(() => {
-    // Initial fetch of comments when the component mounts
     refetchComments();
   }, []);
 
@@ -368,7 +364,6 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
         
       if (error) throw error;
       
-      // Explicitly refresh comments
       await refetchComments();
       
       toast({
@@ -525,7 +520,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
         </div>
       </div>
       
-      <div className="flex-grow overflow-y-auto">
+      <ScrollArea className="flex-grow overflow-y-auto">
         <div className="p-4 space-y-6">
           <div>
             <div className="flex items-start justify-between">
@@ -712,11 +707,11 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
               </div>
             ) : (
               <div 
-                className={`text-sm text-[#CBD5E1] bg-[#1C2A3A]/50 p-3 rounded-md ${isExpandedDescription ? '' : 'max-h-[100px] overflow-hidden'}`}
+                className={`text-sm text-[#CBD5E1] bg-[#1C2A3A]/50 p-3 rounded-md cursor-pointer ${isExpandedDescription ? '' : 'max-h-[100px] overflow-hidden'}`}
                 onClick={toggleDescriptionExpand}
               >
                 {task.description || 'No description provided. Click "Edit" to add one.'}
-                {(!isExpandedDescription && task.description && task.description.length > 200) && (
+                {(!isExpandedDescription && task.description && task.description.length > 150) && (
                   <div className="text-xs text-neon-aqua mt-2">Click to expand...</div>
                 )}
               </div>
@@ -868,7 +863,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
           
           <Separator className="bg-[#3A4D62]" />
           
-          <div className="space-y-2">
+          <div className="space-y-4 mb-10">
             <div className="flex items-center justify-between">
               <h3 className="font-medium text-[#F1F5F9] flex items-center">
                 <MessageSquare className="h-4 w-4 mr-1" />
@@ -888,7 +883,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
             </div>
           </div>
         </div>
-      </div>
+      </ScrollArea>
     </div>
   );
 }
