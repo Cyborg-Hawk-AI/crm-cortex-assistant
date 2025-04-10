@@ -478,7 +478,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   };
 
   return (
-    <div className="bg-[#25384D] flex flex-col h-full overflow-hidden">
+    <div className="bg-[#25384D] flex flex-col h-full max-h-screen overflow-hidden">
       <div className="flex items-center justify-between p-4 border-b border-[#3A4D62] flex-shrink-0">
         <div className="flex items-center">
           <Button 
@@ -520,8 +520,8 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
         </div>
       </div>
       
-      <ScrollArea className="flex-grow overflow-y-auto">
-        <div className="p-4 space-y-6">
+      <ScrollArea className="flex-1 h-[calc(100vh-5rem)]" hideScrollbar={false}>
+        <div className="p-4 space-y-6 pb-24">
           <div>
             <div className="flex items-start justify-between">
               {isEditingTitle || isEditing ? (
@@ -863,7 +863,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
           
           <Separator className="bg-[#3A4D62]" />
           
-          <div className="space-y-4 mb-10">
+          <div className="space-y-4 mb-20 pt-2">
             <div className="flex items-center justify-between">
               <h3 className="font-medium text-[#F1F5F9] flex items-center">
                 <MessageSquare className="h-4 w-4 mr-1" />
