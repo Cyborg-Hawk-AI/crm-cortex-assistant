@@ -34,28 +34,30 @@ function App() {
     <Router>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <Header activeTab={activeTab} setActiveTab={setActiveTab} />
-          <div className="pt-[60px]"> {/* Add padding to account for fixed header */}
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/update-password" element={<UpdatePassword />} />
-              
-              <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-              
-              {/* Project Routes (formerly Missions) */}
-              <Route path="/projects" element={<ProtectedRoute><ProjectsPageWrapper /></ProtectedRoute>} />
-              <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectsPageWrapper /></ProtectedRoute>} />
-              <Route path="/projects/:projectId/tasks/:taskId" element={<ProtectedRoute><ProjectsPageWrapper /></ProtectedRoute>} />
-              
-              {/* Mindboard Route */}
-              <Route path="/mindboard" element={<ProtectedRoute><Mindboard /></ProtectedRoute>} />
-              
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+          <div className="min-h-screen bg-[#171C24]">
+            <Header activeTab={activeTab} setActiveTab={setActiveTab} />
+            <div className="pt-[60px]"> {/* Add padding to account for fixed header */}
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/update-password" element={<UpdatePassword />} />
+                
+                <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+                
+                {/* Project Routes (formerly Missions) */}
+                <Route path="/projects" element={<ProtectedRoute><ProjectsPageWrapper /></ProtectedRoute>} />
+                <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectsPageWrapper /></ProtectedRoute>} />
+                <Route path="/projects/:projectId/tasks/:taskId" element={<ProtectedRoute><ProjectsPageWrapper /></ProtectedRoute>} />
+                
+                {/* Mindboard Route */}
+                <Route path="/mindboard" element={<ProtectedRoute><Mindboard /></ProtectedRoute>} />
+                
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </div>
+            <Toaster />
           </div>
-          <Toaster />
         </AuthProvider>
       </QueryClientProvider>
     </Router>

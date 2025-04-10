@@ -1,8 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, LogOut } from 'lucide-react';
-import { Header } from '@/components/Header';
+import { LogOut } from 'lucide-react';
 import { ChatLayout } from '@/components/ChatLayout';
 import { ScratchpadNotes } from '@/components/ScratchpadNotes';
 import { Button } from '@/components/ui/button';
@@ -33,7 +31,6 @@ export default function Index() {
   const [isTaskEditorOpen, setIsTaskEditorOpen] = useState(false);
   const [openCreateTask, setOpenCreateTask] = useState(false);
 
-  // Process location state for navigation and task opening
   useEffect(() => {
     const state = location.state as { 
       openTaskId?: string;
@@ -66,21 +63,6 @@ export default function Index() {
     setActiveTab('scratchpad');
   };
 
-  const handleSetActiveTab = (tab: string) => {
-    setActiveTab(tab);
-
-    // Navigate to appropriate route when tab changes
-    if (tab === 'missions') {
-      navigate('/missions');
-    } else if (tab === 'projects') {
-      navigate('/projects');
-    }
-  };
-  
-  const handleCloseTaskEditor = () => {
-    setIsTaskEditorOpen(false);
-  };
-
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -104,10 +86,12 @@ export default function Index() {
     setIsTaskEditorOpen(true);
   };
 
+  const handleCloseTaskEditor = () => {
+    setIsTaskEditorOpen(false);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#1C2A3A] text-[#F1F5F9]">
-      <Header activeTab={activeTab} setActiveTab={handleSetActiveTab} />
-
       <main className="flex-1 container py-4 max-w-6xl">
         <AnimatePresence mode="wait">
           {activeTab === 'main' && (

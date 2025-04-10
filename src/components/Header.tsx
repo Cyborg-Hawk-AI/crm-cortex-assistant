@@ -2,13 +2,11 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
-  BookOpen, 
-  Grid3X3, 
-  Home, 
   MessageSquare, 
+  ClipboardCheck, 
+  BookOpen, 
   Settings
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { UserMenu } from '@/components/UserMenu';
 
 interface HeaderProps {
@@ -24,7 +22,7 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
     setActiveTab(tab);
     
     // Update route based on the tab
-    if (tab === 'projects') {
+    if (tab === 'projects' || tab === 'missions') {
       navigate('/projects');
     } else if (tab === 'mindboard') {
       navigate('/mindboard');
@@ -38,77 +36,62 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
   };
   
   return (
-    <header className="border-b border-gray-800 bg-[#141F2A]/95 backdrop-blur-sm fixed top-0 left-0 right-0 z-50">
+    <header className="bg-[#141F2A] fixed top-0 left-0 right-0 z-50">
       <div className="container flex justify-between items-center h-[60px]">
         <div className="flex items-center">
-          <div className="text-xl font-bold mr-6 bg-clip-text text-transparent bg-gradient-to-r from-neon-aqua to-neon-purple">
-            Action<span className="text-neon-aqua">it</span>
+          <div className="text-xl font-bold mr-8">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-neon-aqua to-teal-400">
+              action.it
+            </span>
           </div>
-          
-          <nav className="flex space-x-1 transition-all">
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`hover:bg-[#25384D] ${
-                activeTab === 'main' ? 'bg-[#25384D] text-neon-aqua' : 'text-[#CBD5E1]'
-              }`}
-              onClick={() => handleTabChange('main')}
-            >
-              <Home className="h-4 w-4 mr-1" />
-              Home
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`hover:bg-[#25384D] ${
-                activeTab === 'projects' ? 'bg-[#25384D] text-neon-aqua' : 'text-[#CBD5E1]'
-              }`}
-              onClick={() => handleTabChange('projects')}
-            >
-              <Grid3X3 className="h-4 w-4 mr-1" />
-              Projects
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`hover:bg-[#25384D] ${
-                activeTab === 'mindboard' ? 'bg-[#25384D] text-neon-aqua' : 'text-[#CBD5E1]'
-              }`}
-              onClick={() => handleTabChange('mindboard')}
-            >
-              <BookOpen className="h-4 w-4 mr-1" />
-              Mindboard
-            </Button>
-          </nav>
         </div>
         
-        <div className="flex items-center space-x-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`hover:bg-[#25384D] ${
-              activeTab === 'chat' ? 'bg-[#25384D] text-neon-aqua' : 'text-[#CBD5E1]'
-            }`}
+        <nav className="flex space-x-6 transition-all">
+          <button
+            className={`py-4 px-6 flex items-center ${
+              activeTab === 'chat' ? 'text-purple-400' : 'text-[#CBD5E1]'
+            } hover:bg-[#1C2A3A] transition-colors`}
             onClick={() => handleTabChange('chat')}
           >
-            <MessageSquare className="h-4 w-4 mr-1" />
+            <MessageSquare className="h-5 w-5 mr-2" />
             ActionBot
-          </Button>
+          </button>
           
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`hover:bg-[#25384D] ${
-              activeTab === 'settings' ? 'bg-[#25384D] text-neon-aqua' : 'text-[#CBD5E1]'
-            }`}
+          <button
+            className={`py-4 px-6 flex items-center ${
+              activeTab === 'projects' ? 'text-green-400' : 'text-[#CBD5E1]'
+            } hover:bg-[#1C2A3A] transition-colors`}
+            onClick={() => handleTabChange('projects')}
+          >
+            <ClipboardCheck className="h-5 w-5 mr-2" />
+            Missions
+          </button>
+          
+          <button
+            className={`py-4 px-6 flex items-center ${
+              activeTab === 'mindboard' ? 'text-blue-400' : 'text-[#CBD5E1]'
+            } hover:bg-[#1C2A3A] transition-colors`}
+            onClick={() => handleTabChange('mindboard')}
+          >
+            <BookOpen className="h-5 w-5 mr-2" />
+            Mindboard
+          </button>
+          
+          <button
+            className={`py-4 px-6 flex items-center ${
+              activeTab === 'settings' ? 'text-orange-400' : 'text-[#CBD5E1]'
+            } hover:bg-[#1C2A3A] transition-colors`}
             onClick={() => handleTabChange('settings')}
           >
-            <Settings className="h-4 w-4 mr-1" />
-            Settings
-          </Button>
-          
+            <Settings className="h-5 w-5 mr-2" />
+            Control Deck
+          </button>
+        </nav>
+        
+        <div className="flex items-center">
+          <div className="text-sm font-medium text-orange-400 mr-4">
+            v1.0.0
+          </div>
           <UserMenu />
         </div>
       </div>
