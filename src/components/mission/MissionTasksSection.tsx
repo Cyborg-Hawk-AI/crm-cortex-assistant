@@ -1,10 +1,14 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TaskList } from '@/components/mission/TaskList';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import { TaskCreateDialog } from '@/components/modals/TaskCreateDialog';
+import { supabase } from '@/lib/supabase';
+import { useToast } from '@/hooks/use-toast';
+import { Task } from '@/utils/types';
 
 interface ProjectTasksSectionProps {
   projectId: string;
@@ -17,9 +21,45 @@ export function ProjectTasksSection({
   compact = false,
   showCreateButton = false
 }: ProjectTasksSectionProps) {
+  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
+  const { toast } = useToast();
+
   if (!projectId) {
     return null;
   }
+  
+  const handleCreateTask = async (taskData: Omit<Task, 'id'>) => {
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert({ 
+          ...taskData, 
+          parent_task_id: projectId 
+        })
+        .select()
+        .single();
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Task created",
+        description: `Task "${taskData.title}" has been created successfully.`,
+      });
+      
+      // Trigger refetch of tasks
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+      
+    } catch (error) {
+      console.error('Error creating task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create task. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
   
   if (compact) {
     return (
@@ -42,6 +82,7 @@ export function ProjectTasksSection({
             size="sm" 
             variant="outline" 
             className="border-[#3A4D62] hover:bg-[#3A4D62]/30"
+            onClick={() => setIsCreateTaskOpen(true)}
           >
             <Plus className="h-3.5 w-3.5 mr-1" />
             New Task
@@ -51,6 +92,13 @@ export function ProjectTasksSection({
       <CardContent>
         <TaskList projectId={projectId} />
       </CardContent>
+
+      {/* Task Create Dialog */}
+      <TaskCreateDialog
+        open={isCreateTaskOpen}
+        onOpenChange={setIsCreateTaskOpen}
+        onSubmit={handleCreateTask}
+      />
     </Card>
   );
 }

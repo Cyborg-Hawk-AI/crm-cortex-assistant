@@ -21,6 +21,9 @@ import { TaskBoard } from '@/components/projects/TaskBoard';
 import { TaskTable } from '@/components/projects/TaskTable';
 import { TaskTimeline } from '@/components/projects/TaskTimeline';
 import { TaskList } from '@/components/mission/TaskList';
+import { TaskCreateDialog } from '@/components/modals/TaskCreateDialog';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
 
 interface ProjectDetailProps {
   project: Project;
@@ -38,6 +41,9 @@ export function ProjectDetail({
   onProjectUpdate
 }: ProjectDetailProps) {
   const [currentView, setCurrentView] = useState<TaskView>('board');
+  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
+  const [isEditingProject, setIsEditingProject] = useState(false);
+  const { toast } = useToast();
   
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -80,6 +86,55 @@ export function ProjectDetail({
     );
   };
 
+  const handleCreateTask = async (taskData: Omit<Task, 'id'>) => {
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert({ 
+          ...taskData, 
+          parent_task_id: project.id 
+        })
+        .select()
+        .single();
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Task created",
+        description: `Task "${taskData.title}" has been created successfully.`,
+      });
+      
+      // Trigger refetch of tasks - we would ideally pass this up to the ProjectsPage
+      // but for now we'll use a simple refresh approach
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+      
+    } catch (error) {
+      console.error('Error creating task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create task. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleEditProject = () => {
+    setIsEditingProject(true);
+    toast({
+      title: "Edit feature",
+      description: "Project editing functionality will be implemented soon.",
+    });
+  };
+
+  const handleMoreOptions = () => {
+    toast({
+      title: "More options",
+      description: "Additional project options will be implemented soon.",
+    });
+  };
+
   return (
     <Card className="bg-[#25384D] border-[#3A4D62] shadow-[0_0_15px_rgba(0,247,239,0.1)] flex flex-col h-full">
       <CardHeader className="p-5 border-b border-[#3A4D62] flex-shrink-0">
@@ -118,11 +173,21 @@ export function ProjectDetail({
                 {project.owner_id.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <Button variant="outline" size="sm" className="border-[#3A4D62]">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="border-[#3A4D62]"
+              onClick={handleEditProject}
+            >
               <Edit2Icon className="h-3.5 w-3.5 mr-1" />
               Edit
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8"
+              onClick={handleMoreOptions}
+            >
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </div>
@@ -164,7 +229,10 @@ export function ProjectDetail({
                 </TabsTrigger>
               </TabsList>
               
-              <Button className="bg-neon-aqua text-black hover:bg-neon-aqua/90">
+              <Button 
+                className="bg-neon-aqua text-black hover:bg-neon-aqua/90"
+                onClick={() => setIsCreateTaskOpen(true)}
+              >
                 Add Task
               </Button>
             </div>
@@ -190,6 +258,13 @@ export function ProjectDetail({
           <TaskList projectId={project.id} onTaskClick={onTaskSelect} />
         </div>
       </CardContent>
+
+      {/* Task Create Dialog */}
+      <TaskCreateDialog
+        open={isCreateTaskOpen}
+        onOpenChange={setIsCreateTaskOpen}
+        onSubmit={handleCreateTask}
+      />
     </Card>
   );
 }
