@@ -77,14 +77,12 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   const [tags, setTags] = useState<string[]>(task.tags || []);
   const [comments, setComments] = useState<any[]>([]);
   
-  // Dropdown state controls
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [isPriorityMenuOpen, setIsPriorityMenuOpen] = useState(false);
   
   const [descriptionHeight, setDescriptionHeight] = useState<string>('auto');
   const [descriptionOverflow, setDescriptionOverflow] = useState<boolean>(false);
   
-  // Status and priority configuration
   const statusOptions = [
     { value: 'open', label: 'Open', icon: Circle, color: 'bg-neon-purple/20 text-neon-purple border-neon-purple/30' },
     { value: 'in-progress', label: 'In Progress', icon: Clock3, color: 'bg-neon-blue/20 text-neon-blue border-neon-blue/30' },
