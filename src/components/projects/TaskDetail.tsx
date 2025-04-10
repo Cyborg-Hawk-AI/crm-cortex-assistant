@@ -28,7 +28,6 @@ import { Task, SubTask } from '@/utils/types';
 import { useToast } from '@/hooks/use-toast';
 import { createSubtask, updateTask } from '@/api/tasks';
 import { CommentSection } from '@/components/comments/CommentSection';
-import { CommentList } from '@/components/comments/CommentList';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
@@ -59,6 +58,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   const { toast } = useToast();
   const [description, setDescription] = useState(task.description || '');
   const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [isExpandedDescription, setIsExpandedDescription] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [title, setTitle] = useState(task.title);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
@@ -125,6 +125,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
         user_name: comment.profiles?.full_name || comment.user_id
       }));
       
+      console.log('Fetched comments:', transformedData);
       return transformedData || [];
     } catch (err) {
       console.error('Failed to fetch comments:', err);
@@ -138,8 +139,15 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   });
 
   useEffect(() => {
+    // Update comments when the task changes or when taskComments updates
+    console.log('Setting comments from taskComments:', taskComments);
     setComments(taskComments);
-  }, [taskComments]);
+  }, [taskComments, task.id]);
+
+  useEffect(() => {
+    // Initial fetch of comments when the component mounts
+    refetchComments();
+  }, []);
 
   const getUserName = (userId: string | null | undefined) => {
     if (!userId) return 'Unassigned';
@@ -365,6 +373,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
         
       if (error) throw error;
       
+      // Explicitly refresh comments
       refetchComments();
       
       toast({
@@ -469,6 +478,12 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
           variant: "destructive",
         });
       }
+    }
+  };
+
+  const toggleDescriptionExpand = () => {
+    if (!isEditing && !isEditingDescription) {
+      setIsExpandedDescription(!isExpandedDescription);
     }
   };
 
@@ -702,10 +717,13 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
               </div>
             ) : (
               <div 
-                className="text-sm text-[#CBD5E1] bg-[#1C2A3A]/50 p-3 rounded-md cursor-pointer hover:bg-[#1C2A3A]"
-                onClick={() => setIsEditingDescription(true)}
+                className={`text-sm text-[#CBD5E1] bg-[#1C2A3A]/50 p-3 rounded-md cursor-pointer hover:bg-[#1C2A3A] ${isExpandedDescription ? '' : 'max-h-[100px] overflow-hidden'}`}
+                onClick={toggleDescriptionExpand}
               >
-                {task.description || 'No description provided. Click to add one.'}
+                {task.description || 'No description provided. Click "Edit" to add one.'}
+                {(!isExpandedDescription && task.description && task.description.length > 200) && (
+                  <div className="text-xs text-neon-aqua mt-2">Click to expand...</div>
+                )}
               </div>
             )}
           </div>
@@ -870,6 +888,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
                 userId={task.user_id || ''}
                 userName={getUserName(task.user_id)}
                 onAddComment={handleAddComment}
+                onRefreshComments={refetchComments}
               />
             </div>
           </div>

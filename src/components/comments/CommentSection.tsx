@@ -1,11 +1,13 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Send, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { CommentList } from './CommentList';
+import { supabase } from '@/lib/supabase';
+import { getCurrentUserId } from '@/utils/auth';
 
 interface Comment {
   id: string;
@@ -21,6 +23,7 @@ interface CommentSectionProps {
   userId: string;
   userName?: string;
   onAddComment?: (comment: string) => Promise<void>;
+  onRefreshComments?: () => void;
 }
 
 export function CommentSection({ 
@@ -28,7 +31,8 @@ export function CommentSection({
   comments = [], 
   userId,
   userName,
-  onAddComment 
+  onAddComment,
+  onRefreshComments
 }: CommentSectionProps) {
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,6 +45,11 @@ export function CommentSection({
     try {
       if (onAddComment) {
         await onAddComment(newComment.trim());
+        
+        // After adding, trigger the parent to refresh the comments
+        if (onRefreshComments) {
+          onRefreshComments();
+        }
       }
       
       setNewComment('');

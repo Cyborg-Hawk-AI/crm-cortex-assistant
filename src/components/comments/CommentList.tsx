@@ -10,6 +10,9 @@ interface Comment {
   created_at: string;
   user_id: string;
   user_name?: string;
+  profiles?: {
+    full_name?: string;
+  };
 }
 
 interface CommentListProps {
@@ -39,14 +42,14 @@ export function CommentList({ comments, maxHeight = "200px" }: CommentListProps)
             <Avatar className="h-7 w-7 flex-shrink-0 mt-0.5">
               <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${comment.user_id}`} />
               <AvatarFallback>
-                {(comment.user_name || "").substring(0, 2).toUpperCase() || comment.user_id.substring(0, 2).toUpperCase()}
+                {(comment.user_name || comment.profiles?.full_name || "").substring(0, 2).toUpperCase() || comment.user_id.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
               <p className="text-xs text-[#F1F5F9] mb-1 whitespace-pre-wrap break-words">{comment.content}</p>
               <div className="flex justify-between items-center">
                 <span className="text-xs font-medium text-[#CBD5E1]">
-                  {comment.user_name || comment.user_id.substring(0, 8)}
+                  {comment.user_name || comment.profiles?.full_name || comment.user_id.substring(0, 8)}
                 </span>
                 <span className="text-xxs text-[#718096]">
                   {formatDate(comment.created_at)}
