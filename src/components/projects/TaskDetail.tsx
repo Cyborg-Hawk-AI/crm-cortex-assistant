@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, 
@@ -33,6 +34,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { getCurrentUserId } from '@/utils/auth';
 import {
   DropdownMenu,
   DropdownMenuContent,
