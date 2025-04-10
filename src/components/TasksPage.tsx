@@ -2,16 +2,18 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, BookOpen, Table, List, Zap } from 'lucide-react';
+import { PlusCircle, BookOpen, Table, List, Zap, Grid3X3 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MissionTableView } from '@/components/mission/MissionTableView';
 import { MissionCreateButton } from '@/components/mission/MissionCreateButton';
 import { MissionTaskEditor } from '@/components/mission/MissionTaskEditor';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { getCurrentUserId } from '@/lib/supabase';
+import { ProjectsPage } from '@/components/projects/ProjectsPage';
 
 interface TasksPageProps {
   openCreateTask?: boolean;
@@ -31,6 +33,7 @@ export function TasksPage({
   setIsTaskEditorOpen = () => {},
 }: TasksPageProps) {
   const { toast } = useToast();
+  const [activeView, setActiveView] = useState<string>('projects'); // 'projects' or 'missions'
   const [viewMode, setViewMode] = useState<'table' | 'list'>('table');
   const [localSelectedTaskId, setLocalSelectedTaskId] = useState<string | null>(selectedTaskId);
   const [localIsTaskEditorOpen, setLocalIsTaskEditorOpen] = useState<boolean>(isTaskEditorOpen);
@@ -70,12 +73,12 @@ export function TasksPage({
     }
   });
 
-  // Select first mission by default
+  // Select first mission by default for the missions tab
   useEffect(() => {
-    if (missions.length > 0 && !effectiveSelectedTaskId) {
+    if (missions.length > 0 && !effectiveSelectedTaskId && activeView === 'missions') {
       handleMissionSelect(missions[0].id);
     }
-  }, [missions, effectiveSelectedTaskId]);
+  }, [missions, effectiveSelectedTaskId, activeView]);
 
   const handleTaskClick = (taskId: string) => {
     if (setSelectedTaskId) {
@@ -119,113 +122,117 @@ export function TasksPage({
       </div>
     );
   }
-  
-  if (!missions.length) {
-    return (
-      <div className="h-full flex items-center justify-center p-4">
-        <Card className="w-full max-w-lg bg-[#25384D] border-[#3A4D62]">
-          <CardContent className="pt-6 flex flex-col items-center">
-            <div className="text-center">
-              <h3 className="text-lg font-medium text-[#F1F5F9] mb-2">Welcome to Missions</h3>
-              <p className="text-sm text-[#CBD5E1] mb-6">
-                Create your first mission to get started with task management
-              </p>
-              <MissionCreateButton onMissionCreated={(missionId) => handleMissionSelect(missionId)} />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
-    <div className="h-[calc(100vh-120px)] overflow-y-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center">
-          <Zap className="mr-2 h-5 w-5 text-neon-green" />
-          <h2 className="text-2xl font-bold text-[#F1F5F9]">Missions</h2>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <div className="bg-[#1C2A3A] rounded-md p-1 flex">
-            <Button 
-              variant={viewMode === 'table' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('table')}
-              className={`rounded-sm ${viewMode === 'table' ? 'bg-neon-aqua text-black' : 'text-[#CBD5E1]'}`}
-            >
-              <Table className="h-4 w-4 mr-1" />
-              Table
-            </Button>
-            <Button 
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-              className={`rounded-sm ${viewMode === 'list' ? 'bg-neon-aqua text-black' : 'text-[#CBD5E1]'}`}
-            >
-              <List className="h-4 w-4 mr-1" />
-              List
-            </Button>
-          </div>
+    <div className="h-[calc(100vh-120px)] overflow-y-auto">
+      <div className="p-4 pb-0">
+        <div className="flex justify-between items-center mb-6">
+          <Tabs 
+            defaultValue={activeView}
+            value={activeView}
+            onValueChange={setActiveView}
+          >
+            <TabsList className="bg-[#1C2A3A]">
+              <TabsTrigger value="projects" className="data-[state=active]:bg-[#3A4D62]">
+                <Grid3X3 className="h-4 w-4 mr-2" />
+                Projects
+              </TabsTrigger>
+              <TabsTrigger value="missions" className="data-[state=active]:bg-[#3A4D62]">
+                <Zap className="h-4 w-4 mr-2" />
+                Missions
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
           
-          <MissionCreateButton onMissionCreated={(missionId) => handleMissionSelect(missionId)} />
-        </div>
-      </div>
-
-      <div className="mb-4">
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {missions.map((mission) => (
-            <Button
-              key={mission.id}
-              variant="outline"
-              size="sm"
-              className={`whitespace-nowrap ${
-                effectiveSelectedTaskId === mission.id 
-                ? "bg-neon-green/20 border-neon-green text-neon-green" 
-                : "bg-transparent"
-              }`}
-              onClick={() => handleMissionSelect(mission.id)}
-            >
-              {mission.name}
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      <Card className="w-full bg-[#25384D] border-[#3A4D62] shadow-[0_0_15px_rgba(0,247,239,0.1)]">
-        <CardContent className="p-6">
-          {effectiveSelectedTaskId && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              {viewMode === 'table' ? (
-                <MissionTableView 
-                  missionId={effectiveSelectedTaskId} 
-                  onTaskClick={handleTaskClick}
-                />
-              ) : (
-                <div className="p-4 text-center text-[#CBD5E1]">
-                  <p>List view coming soon</p>
-                </div>
-              )}
-            </motion.div>
+          {activeView === 'missions' && (
+            <div className="flex items-center gap-2">
+              <div className="bg-[#1C2A3A] rounded-md p-1 flex">
+                <Button 
+                  variant={viewMode === 'table' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('table')}
+                  className={`rounded-sm ${viewMode === 'table' ? 'bg-neon-aqua text-black' : 'text-[#CBD5E1]'}`}
+                >
+                  <Table className="h-4 w-4 mr-1" />
+                  Table
+                </Button>
+                <Button 
+                  variant={viewMode === 'list' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                  className={`rounded-sm ${viewMode === 'list' ? 'bg-neon-aqua text-black' : 'text-[#CBD5E1]'}`}
+                >
+                  <List className="h-4 w-4 mr-1" />
+                  List
+                </Button>
+              </div>
+              
+              <MissionCreateButton onMissionCreated={(missionId) => handleMissionSelect(missionId)} />
+            </div>
           )}
-        </CardContent>
-      </Card>
-      
-      {/* Task Editor Dialog */}
-      {effectiveSelectedTaskId && (
-        <Dialog open={effectiveIsTaskEditorOpen} onOpenChange={handleCloseTaskEditor}>
-          <DialogContent className="sm:max-w-[700px] p-0 bg-[#25384D] border-[#3A4D62]">
-            <MissionTaskEditor 
-              taskId={effectiveSelectedTaskId}
-              onClose={handleCloseTaskEditor}
-              onRefresh={() => {}}
-            />
-          </DialogContent>
-        </Dialog>
+        </div>
+      </div>
+
+      {activeView === 'projects' ? (
+        <ProjectsPage />
+      ) : (
+        <div className="p-4">
+          <div className="mb-4">
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {missions.map((mission) => (
+                <Button
+                  key={mission.id}
+                  variant="outline"
+                  size="sm"
+                  className={`whitespace-nowrap ${
+                    effectiveSelectedTaskId === mission.id 
+                    ? "bg-neon-green/20 border-neon-green text-neon-green" 
+                    : "bg-transparent"
+                  }`}
+                  onClick={() => handleMissionSelect(mission.id)}
+                >
+                  {mission.name}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <Card className="w-full bg-[#25384D] border-[#3A4D62] shadow-[0_0_15px_rgba(0,247,239,0.1)]">
+            <CardContent className="p-6">
+              {effectiveSelectedTaskId && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {viewMode === 'table' ? (
+                    <MissionTableView 
+                      missionId={effectiveSelectedTaskId} 
+                      onTaskClick={handleTaskClick}
+                    />
+                  ) : (
+                    <div className="p-4 text-center text-[#CBD5E1]">
+                      <p>List view coming soon</p>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </CardContent>
+          </Card>
+          
+          {/* Task Editor Dialog for Missions view */}
+          {effectiveSelectedTaskId && (
+            <Dialog open={effectiveIsTaskEditorOpen} onOpenChange={handleCloseTaskEditor}>
+              <DialogContent className="sm:max-w-[700px] p-0 bg-[#25384D] border-[#3A4D62]">
+                <MissionTaskEditor 
+                  taskId={effectiveSelectedTaskId}
+                  onClose={handleCloseTaskEditor}
+                  onRefresh={() => {}}
+                />
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
       )}
     </div>
   );

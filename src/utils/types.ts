@@ -1,4 +1,3 @@
-
 // Define task priority and status types based on what's in the database
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type TaskStatus = 'open' | 'in-progress' | 'resolved' | 'closed' | 'completed';
@@ -71,6 +70,22 @@ export interface Meeting {
   }>;
 }
 
+// Project interface for the new Notion-like Project management
+export interface Project {
+  id: string;
+  title: string;
+  description: string | null;
+  owner_id: string;
+  status: string;
+  created_at: string | Date;
+  updated_at: string | Date;
+  tags: string[];
+  cover_image?: string;
+  icon?: string;
+  task_count?: number;
+  completed_count?: number;
+}
+
 // Message interface - updated to match how it's used in the codebase
 export interface Message {
   id: string;
@@ -95,7 +110,6 @@ export interface Note {
   timestamp?: Date | string;
   created_at?: Date | string;
   updated_at?: Date | string;
-  // Aliases to match how they're used in the codebase
   notebookId?: string;
   pageId?: string;
   sectionId?: string;
@@ -128,11 +142,10 @@ export interface NotePage {
   is_subpage?: boolean;
   created_at?: Date | string;
   updated_at?: Date | string;
-  // Aliases for how they're used in the codebase
   sectionId?: string;
   isSubpage?: boolean;
-  content?: string; // Added for NoteCanvas.tsx
-  notebook_id?: string; // Added for NoteCanvas.tsx
+  content?: string;
+  notebook_id?: string;
 }
 
 // Mindboard related interfaces
@@ -168,7 +181,7 @@ export interface MindPage {
   user_id: string;
   section_id: string;
   parent_page_id?: string;
-  parent_id?: string; // Added as alias for parent_page_id
+  parent_id?: string;
   is_pinned?: boolean;
   position?: number;
   created_at?: Date | string;
@@ -183,7 +196,7 @@ export interface MindBlock {
   content: any;
   properties?: any;
   position?: number;
-  parent_block_id?: string; // Added to support parent-child block relationships
+  parent_block_id?: string;
   created_at?: Date | string;
   updated_at?: Date | string;
 }
@@ -192,19 +205,19 @@ export interface MindBlock {
 export interface Activity {
   id: string;
   user_id: string;
-  userId?: string; // Added alias to match how it's used 
+  userId?: string;
   type: string;
   entity_type: string;
   entityType?: string;
   entity_id: string;
   entityId?: string;
   content: string;
-  description?: string; // Added to match how it's used in components
+  description?: string;
   timestamp?: Date | string;
   additional_info?: any;
   additionalInfo?: any;
   created_at?: Date | string;
-  relatedItem?: string; // Added to match usage in components
+  relatedItem?: string;
 }
 
 // Ticket interface - expanded to match how it's used in the codebase
@@ -226,8 +239,8 @@ export interface Ticket {
   tags?: string[];
   related?: string[];
   comments?: any[];
-  user_id?: string; // Add the missing user_id property
-  parent_task_id?: string; // For hierarchical relationship
+  user_id?: string;
+  parent_task_id?: string;
   summary?: string;
   actionItems?: string[];
   meetingDate?: Date;
@@ -251,7 +264,7 @@ export interface Integration {
   config: any;
   status?: string;
   last_sync?: Date | string;
-  lastSync?: Date | string; // Alias
+  lastSync?: Date | string;
   created_at?: Date | string;
   updated_at?: Date | string;
 }
@@ -267,7 +280,7 @@ export interface Assistant {
   configuration?: any;
   created_at?: Date | string;
   updated_at?: Date | string;
-  icon?: string; // Added to match QuickActions.tsx usage
+  icon?: string;
 }
 
 // MeetingAction interface for MeetingQuickActions
@@ -302,7 +315,23 @@ export interface Communication {
   created_by: string;
   created_at?: Date | string;
   updated_at?: Date | string;
-  from?: string; // Added to match mockData usage
-  message?: string; // Added to match mockData usage
-  sender?: string; // Added to match mockData usage
+  from?: string;
+  message?: string;
+  sender?: string;
 }
+
+// Comment interface for tasks and projects
+export interface Comment {
+  id: string;
+  content: string;
+  user_id: string;
+  entity_id: string;
+  entity_type: 'task' | 'project';
+  created_at: string | Date;
+  updated_at: string | Date;
+  author_name?: string;
+  author_avatar?: string;
+}
+
+// TaskView type for different views
+export type TaskView = 'table' | 'board' | 'timeline';
