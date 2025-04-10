@@ -1,16 +1,12 @@
 
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { 
-  AlignJustify, 
-  BarChartBig, 
   BookOpen, 
   Grid3X3, 
   Home, 
   MessageSquare, 
-  Settings, 
-  Zap 
+  Settings
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UserMenu } from '@/components/UserMenu';
@@ -30,8 +26,14 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
     // Update route based on the tab
     if (tab === 'projects') {
       navigate('/projects');
+    } else if (tab === 'mindboard') {
+      navigate('/mindboard');
     } else if (tab === 'main' && location.pathname !== '/') {
       navigate('/');
+    } else if (tab === 'settings') {
+      // Navigate to settings when implemented
+    } else if (tab === 'chat') {
+      // Navigate to chat when implemented
     }
   };
   
@@ -39,11 +41,11 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
     <header className="border-b border-gray-800 bg-[#141F2A]/95 backdrop-blur-sm fixed top-0 left-0 right-0 z-50">
       <div className="container flex justify-between items-center h-[60px]">
         <div className="flex items-center">
-          <div className="text-xl font-bold mr-8 bg-clip-text text-transparent bg-gradient-to-r from-neon-aqua to-neon-purple">
+          <div className="text-xl font-bold mr-6 bg-clip-text text-transparent bg-gradient-to-r from-neon-aqua to-neon-purple">
             Action<span className="text-neon-aqua">it</span>
           </div>
           
-          <nav className="hidden md:flex space-x-1 transition-all">
+          <nav className="flex space-x-1 transition-all">
             <Button
               variant="ghost"
               size="sm"
@@ -99,18 +101,6 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
             variant="ghost"
             size="sm"
             className={`hover:bg-[#25384D] ${
-              activeTab === 'scratchpad' ? 'bg-[#25384D] text-neon-aqua' : 'text-[#CBD5E1]'
-            }`}
-            onClick={() => handleTabChange('scratchpad')}
-          >
-            <BarChartBig className="h-4 w-4 mr-1" />
-            Scratchpad
-          </Button>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`hover:bg-[#25384D] ${
               activeTab === 'settings' ? 'bg-[#25384D] text-neon-aqua' : 'text-[#CBD5E1]'
             }`}
             onClick={() => handleTabChange('settings')}
@@ -120,15 +110,6 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
           </Button>
           
           <UserMenu />
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            className="md:hidden"
-            onClick={() => {}}
-          >
-            <AlignJustify className="h-4 w-4" />
-          </Button>
         </div>
       </div>
     </header>

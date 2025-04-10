@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
@@ -25,7 +24,6 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
   const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(!!selectedTaskId);
   const [isNewProjectDialogOpen, setIsNewProjectDialogOpen] = useState(false);
   
-  // Sync props with internal state when they change
   useEffect(() => {
     if (selectedProjectId !== internalSelectedProjectId) {
       setInternalSelectedProjectId(selectedProjectId);
@@ -36,13 +34,10 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
     }
   }, [selectedProjectId, selectedTaskId]);
 
-  // Fetch projects from the database
   const { data: projects = [], isLoading: loadingProjects } = useQuery({
     queryKey: ['projects'],
     queryFn: async () => {
       try {
-        // Here we're treating top-level tasks as "projects" for now
-        // In a real implementation, you'd have a dedicated projects table
         const { data, error } = await supabase
           .from('tasks')
           .select('*')
@@ -54,7 +49,6 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
           return [];
         }
         
-        // Transform the data to match the Project interface
         return data.map(task => ({
           id: task.id,
           title: task.title,
@@ -64,7 +58,6 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
           created_at: task.created_at,
           updated_at: task.updated_at,
           tags: task.tags || [],
-          // These would normally come from a COUNT query in real implementation
           task_count: Math.floor(Math.random() * 10) + 1,
           completed_count: Math.floor(Math.random() * 5)
         })) as Project[];
@@ -75,14 +68,12 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
     }
   });
 
-  // Fetch tasks for the selected project
   const { data: projectTasks = [], isLoading: loadingTasks } = useQuery({
     queryKey: ['project-tasks', internalSelectedProjectId],
     queryFn: async () => {
       if (!internalSelectedProjectId) return [];
       
       try {
-        // Fetch all tasks that have this project as their parent
         const { data, error } = await supabase
           .from('tasks')
           .select('*')
@@ -103,7 +94,6 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
     enabled: !!internalSelectedProjectId
   });
   
-  // Fetch single task details
   const { data: selectedTask, isLoading: loadingTask } = useQuery({
     queryKey: ['task-detail', internalSelectedTaskId],
     queryFn: async () => {
@@ -130,14 +120,12 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
     enabled: !!internalSelectedTaskId
   });
 
-  // Fetch subtasks for the selected task
   const { data: subtasks = [], isLoading: loadingSubtasks } = useQuery({
     queryKey: ['subtasks', internalSelectedTaskId],
     queryFn: async () => {
       if (!internalSelectedTaskId) return [];
       
       try {
-        // First try to get from subtasks table
         const { data: subtasksData, error: subtasksError } = await supabase
           .from('subtasks')
           .select('*')
@@ -148,7 +136,6 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
           return subtasksData;
         }
         
-        // If no subtasks in subtasks table, check tasks table
         const { data: tasksData, error: tasksError } = await supabase
           .from('tasks')
           .select('*')
@@ -160,7 +147,6 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
           return [];
         }
         
-        // Convert tasks to subtasks format if needed
         if (tasksData && tasksData.length > 0) {
           return tasksData.map(task => ({
             id: task.id,
@@ -182,7 +168,7 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
     },
     enabled: !!internalSelectedTaskId && isTaskDetailOpen
   });
-  
+
   const handleProjectClick = (projectId: string) => {
     setInternalSelectedProjectId(projectId);
     setInternalSelectedTaskId(null);
@@ -215,8 +201,9 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
     }
   };
   
-  const handleCreateProject = () => {
-    setIsNewProjectDialogOpen(true);
+  const handleCreateProject = (projectId: string) => {
+    setInternalSelectedProjectId(projectId);
+    navigate(`/projects/${projectId}`);
   };
   
   if (loadingProjects) {
@@ -263,13 +250,17 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
           <Grid3X3 className="mr-2 h-5 w-5 text-neon-aqua" />
           <h2 className="text-2xl font-bold text-[#F1F5F9]">Projects</h2>
         </div>
+        
+        {!internalSelectedProjectId && (
+          <ProjectCreateButton onProjectCreated={handleCreateProject} />
+        )}
       </div>
 
       {!internalSelectedProjectId ? (
         <ProjectsTable 
           projects={projects}
           onProjectClick={handleProjectClick}
-          onCreateProject={handleCreateProject}
+          onCreateProject={() => setIsNewProjectDialogOpen(true)}
         />
       ) : (
         <ProjectDetail
@@ -280,7 +271,6 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
         />
       )}
       
-      {/* Task Detail Dialog */}
       {internalSelectedTaskId && selectedTask && (
         <Dialog open={isTaskDetailOpen} onOpenChange={(open) => {
           setIsTaskDetailOpen(open);

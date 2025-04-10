@@ -15,6 +15,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ProjectsPage } from "@/components/projects/ProjectsPage";
 import { ProjectsPageWrapper } from "@/components/projects/ProjectsPageWrapper";
 import { Header } from "@/components/Header";
+import { Mindboard } from "@/components/mindboard/Mindboard";
 
 function App() {
   const [queryClient] = useState(() => new QueryClient({
@@ -47,6 +48,9 @@ function App() {
               <Route path="/projects" element={<ProtectedRoute><ProjectsPageWrapper /></ProtectedRoute>} />
               <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectsPageWrapper /></ProtectedRoute>} />
               <Route path="/projects/:projectId/tasks/:taskId" element={<ProtectedRoute><ProjectsPageWrapper /></ProtectedRoute>} />
+              
+              {/* Mindboard Route */}
+              <Route path="/mindboard" element={<ProtectedRoute><Mindboard /></ProtectedRoute>} />
               
               <Route path="*" element={<NotFound />} />
             </Routes>

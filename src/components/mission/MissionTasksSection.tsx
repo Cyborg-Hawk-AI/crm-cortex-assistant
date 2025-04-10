@@ -9,6 +9,7 @@ import { TaskCreateDialog } from '@/components/modals/TaskCreateDialog';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { Task } from '@/utils/types';
+import { Input } from '@/components/ui/input';
 
 interface ProjectTasksSectionProps {
   projectId: string;
@@ -22,6 +23,9 @@ export function ProjectTasksSection({
   showCreateButton = false
 }: ProjectTasksSectionProps) {
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
+  const [quickTaskTitle, setQuickTaskTitle] = useState('');
+  const [isAddingQuickTask, setIsAddingQuickTask] = useState(false);
+  const [isSubmittingTask, setIsSubmittingTask] = useState(false);
   const { toast } = useToast();
 
   if (!projectId) {
@@ -30,6 +34,7 @@ export function ProjectTasksSection({
   
   const handleCreateTask = async (taskData: Omit<Task, 'id'>) => {
     try {
+      setIsSubmittingTask(true);
       const { data, error } = await supabase
         .from('tasks')
         .insert({ 
@@ -58,6 +63,51 @@ export function ProjectTasksSection({
         description: "Failed to create task. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setIsSubmittingTask(false);
+    }
+  };
+
+  const handleQuickTaskSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    
+    if (!quickTaskTitle.trim()) return;
+    
+    try {
+      setIsSubmittingTask(true);
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert({ 
+          title: quickTaskTitle,
+          parent_task_id: projectId 
+        })
+        .select()
+        .single();
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Task created",
+        description: `Task "${quickTaskTitle}" has been created successfully.`,
+      });
+      
+      setQuickTaskTitle('');
+      setIsAddingQuickTask(false);
+      
+      // Trigger refetch of tasks
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+      
+    } catch (error) {
+      console.error('Error creating quick task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create task. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmittingTask(false);
     }
   };
   
@@ -77,12 +127,12 @@ export function ProjectTasksSection({
           Tasks
         </CardTitle>
         
-        {showCreateButton && (
+        {showCreateButton && !isAddingQuickTask && (
           <Button 
             size="sm" 
             variant="outline" 
             className="border-[#3A4D62] hover:bg-[#3A4D62]/30"
-            onClick={() => setIsCreateTaskOpen(true)}
+            onClick={() => setIsAddingQuickTask(true)}
           >
             <Plus className="h-3.5 w-3.5 mr-1" />
             New Task
@@ -90,6 +140,38 @@ export function ProjectTasksSection({
         )}
       </CardHeader>
       <CardContent>
+        {isAddingQuickTask && (
+          <form 
+            onSubmit={handleQuickTaskSubmit} 
+            className="mb-4 flex items-center space-x-2"
+          >
+            <Input 
+              value={quickTaskTitle}
+              onChange={(e) => setQuickTaskTitle(e.target.value)}
+              placeholder="Enter task name and press Enter"
+              className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]"
+              autoFocus
+            />
+            <Button 
+              type="submit"
+              size="sm"
+              disabled={isSubmittingTask || !quickTaskTitle.trim()}
+              className="bg-neon-aqua hover:bg-neon-aqua/90 text-black"
+            >
+              {isSubmittingTask ? "Adding..." : "Add"}
+            </Button>
+            <Button 
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => setIsAddingQuickTask(false)}
+              className="text-[#CBD5E1]"
+            >
+              Cancel
+            </Button>
+          </form>
+        )}
+        
         <TaskList projectId={projectId} />
       </CardContent>
 

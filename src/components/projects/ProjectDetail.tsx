@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -104,8 +103,6 @@ export function ProjectDetail({
         description: `Task "${taskData.title}" has been created successfully.`,
       });
       
-      // Trigger refetch of tasks - we would ideally pass this up to the ProjectsPage
-      // but for now we'll use a simple refresh approach
       setTimeout(() => {
         window.location.reload();
       }, 500);
@@ -123,14 +120,14 @@ export function ProjectDetail({
   const handleEditProject = () => {
     setIsEditingProject(true);
     toast({
-      title: "Edit feature",
+      title: "Edit Project",
       description: "Project editing functionality will be implemented soon.",
     });
   };
 
   const handleMoreOptions = () => {
     toast({
-      title: "More options",
+      title: "More Options",
       description: "Additional project options will be implemented soon.",
     });
   };
@@ -255,7 +252,7 @@ export function ProjectDetail({
         
         <div className="p-4 border-t border-[#3A4D62]">
           <h3 className="text-[#F1F5F9] font-medium mb-2">Project Tasks</h3>
-          <TaskList projectId={project.id} onTaskClick={onTaskSelect} />
+          <ProjectTasksSection projectId={project.id} showCreateButton={true} />
         </div>
       </CardContent>
 
