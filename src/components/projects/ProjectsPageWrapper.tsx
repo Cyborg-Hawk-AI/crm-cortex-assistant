@@ -25,7 +25,7 @@ export function ProjectsPageWrapper() {
       try {
         const { data, error } = await supabase
           .from('tasks')
-          .select('id')
+          .select('id, title, status')
           .eq('id', projectId)
           .is('parent_task_id', null)
           .single();
@@ -34,6 +34,7 @@ export function ProjectsPageWrapper() {
           console.error("Error checking project existence:", error);
           setProjectExists(false);
         } else {
+          console.log("Project data found:", data);
           setProjectExists(!!data);
         }
       } catch (err) {

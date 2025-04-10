@@ -3,7 +3,8 @@ import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TaskList } from '@/components/mission/TaskList';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ProjectCreateButton } from '@/components/projects/ProjectCreateButton';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 
 interface ProjectTasksSectionProps {
   projectId: string;
@@ -36,7 +37,16 @@ export function ProjectTasksSection({
           Tasks
         </CardTitle>
         
-        {showCreateButton && <ProjectCreateButton />}
+        {showCreateButton && (
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="border-[#3A4D62] hover:bg-[#3A4D62]/30"
+          >
+            <Plus className="h-3.5 w-3.5 mr-1" />
+            New Task
+          </Button>
+        )}
       </CardHeader>
       <CardContent>
         <TaskList projectId={projectId} />

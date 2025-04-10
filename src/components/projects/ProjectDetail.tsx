@@ -1,10 +1,10 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   ArrowLeft, 
@@ -20,6 +20,7 @@ import { Project, Task, TaskView } from '@/utils/types';
 import { TaskBoard } from '@/components/projects/TaskBoard';
 import { TaskTable } from '@/components/projects/TaskTable';
 import { TaskTimeline } from '@/components/projects/TaskTimeline';
+import { TaskList } from '@/components/mission/TaskList';
 
 interface ProjectDetailProps {
   project: Project;
@@ -39,7 +40,7 @@ export function ProjectDetail({
   const [currentView, setCurrentView] = useState<TaskView>('board');
   
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case 'completed':
       case 'done':
         return 'bg-neon-green/20 text-neon-green border-neon-green/30';
@@ -134,10 +135,9 @@ export function ProjectDetail({
       <CardContent className="p-0 flex-grow overflow-hidden flex flex-col">
         <div className="border-b border-[#3A4D62] p-4">
           <Tabs 
-            defaultValue={currentView} 
+            defaultValue="board"
             value={currentView}
             onValueChange={(value) => setCurrentView(value as TaskView)}
-            className="w-full"
           >
             <div className="flex justify-between items-center">
               <TabsList className="bg-[#1C2A3A] p-1">
@@ -168,20 +168,27 @@ export function ProjectDetail({
                 Add Task
               </Button>
             </div>
+        
+            <div className="mt-4">
+              <ScrollArea className="h-[calc(100vh-320px)]">
+                <TabsContent value="board" className="m-0 mt-0">
+                  <TaskBoard tasks={tasks} onTaskClick={onTaskSelect} />
+                </TabsContent>
+                <TabsContent value="table" className="m-0 mt-0">
+                  <TaskTable tasks={tasks} onTaskClick={onTaskSelect} />
+                </TabsContent>
+                <TabsContent value="timeline" className="m-0 mt-0">
+                  <TaskTimeline tasks={tasks} onTaskClick={onTaskSelect} />
+                </TabsContent>
+              </ScrollArea>
+            </div>
           </Tabs>
         </div>
         
-        <ScrollArea className="flex-1 p-4">
-          <TabsContent value="board" className="m-0 h-full">
-            <TaskBoard tasks={tasks} onTaskClick={onTaskSelect} />
-          </TabsContent>
-          <TabsContent value="table" className="m-0 h-full">
-            <TaskTable tasks={tasks} onTaskClick={onTaskSelect} />
-          </TabsContent>
-          <TabsContent value="timeline" className="m-0 h-full">
-            <TaskTimeline tasks={tasks} onTaskClick={onTaskSelect} />
-          </TabsContent>
-        </ScrollArea>
+        <div className="p-4 border-t border-[#3A4D62]">
+          <h3 className="text-[#F1F5F9] font-medium mb-2">Project Tasks</h3>
+          <TaskList projectId={project.id} onTaskClick={onTaskSelect} />
+        </div>
       </CardContent>
     </Card>
   );

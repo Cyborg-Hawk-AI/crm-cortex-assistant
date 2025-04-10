@@ -22,13 +22,19 @@ export function TaskList({ projectId, onTaskClick }: TaskListProps) {
     queryKey: ['project-tasks', projectId],
     queryFn: async () => {
       try {
+        console.log(`Fetching tasks for project ID: ${projectId}`);
         const { data, error } = await supabase
           .from('tasks')
           .select('*')
           .eq('parent_task_id', projectId)
           .order('created_at', { ascending: false });
           
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching tasks:', error);
+          throw error;
+        }
+        
+        console.log(`Found ${data?.length || 0} tasks for project: ${projectId}`);
         return data || [];
       } catch (err) {
         console.error('Error fetching tasks:', err);
