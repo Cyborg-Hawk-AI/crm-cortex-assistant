@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, 
@@ -58,7 +57,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const [newComment, setNewComment] = useState('');
   const [newTag, setNewTag] = useState('');
-  const [isEditing, setIsEditing] = useState(false); // Global edit mode
+  const [isEditing, setIsEditing] = useState(false);
   const [date, setDate] = useState<Date | undefined>(
     task.due_date ? new Date(task.due_date) : undefined
   );
@@ -67,7 +66,6 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   const [tags, setTags] = useState<string[]>(task.tags || []);
   const [comments, setComments] = useState<any[]>([]);
   
-  // Fetch user profiles to display names instead of UUIDs
   const { data: profiles = {}, isLoading: loadingProfiles } = useQuery({
     queryKey: ['user-profiles'],
     queryFn: async () => {
@@ -85,7 +83,6 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
           return {};
         }
         
-        // Convert array to object with id as key
         const profileMap: Record<string, any> = {};
         data?.forEach(profile => {
           profileMap[profile.id] = profile;
@@ -99,7 +96,6 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
     }
   });
 
-  // Fetch task comments
   const fetchComments = async () => {
     try {
       const { data, error } = await supabase
@@ -121,7 +117,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
     }
   };
 
-  const { data: taskComments = [] } = useQuery({
+  const { data: taskComments = [], refetch: refetchComments } = useQuery({
     queryKey: ['task-comments', task.id],
     queryFn: fetchComments
   });
@@ -138,7 +134,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
     
     return profile.full_name || profile.email || userId.substring(0, 8) + '...';
   };
-  
+
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'completed':
@@ -155,7 +151,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
         return 'bg-gray-200/20 text-gray-500 border-gray-300/30';
     }
   };
-  
+
   const getPriorityColor = (priority: string) => {
     switch(priority.toLowerCase()) {
       case 'high':
@@ -169,12 +165,12 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
         return 'bg-gray-200/20 text-gray-500 border-gray-300/30';
     }
   };
-  
+
   const handleDescriptionSave = () => {
     setIsEditingDescription(false);
     saveChanges();
   };
-  
+
   const formatDate = (dateString: string | null | Date) => {
     if (!dateString) return null;
     const date = new Date(dateString);
@@ -188,11 +184,9 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   const toggleGlobalEdit = () => {
     setIsEditing(!isEditing);
     if (!isEditing) {
-      // When entering edit mode, also enable individual sections
       setIsEditingDescription(true);
       setIsEditingTitle(true);
     } else {
-      // When exiting edit mode, save all changes
       saveChanges();
     }
   };
@@ -220,7 +214,6 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
         onRefresh();
       }
 
-      // Reset editing states
       setIsEditingTitle(false);
       setIsEditingDescription(false);
       setIsEditing(false);
@@ -233,7 +226,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
       });
     }
   };
-  
+
   const handleAddSubtask = async () => {
     if (!newSubtaskTitle.trim()) return;
     
@@ -274,7 +267,6 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
     setTags(updatedTags);
     setNewTag('');
     
-    // Auto-save tags if not in global edit mode
     if (!isEditing) {
       try {
         updateTask({
@@ -305,7 +297,6 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
     const updatedTags = tags.filter(tag => tag !== tagToRemove);
     setTags(updatedTags);
     
-    // Auto-save tags if not in global edit mode
     if (!isEditing) {
       try {
         updateTask({
@@ -336,22 +327,30 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
     if (!newComment.trim()) return;
     
     try {
+      const userId = await getCurrentUserId();
+      if (!userId) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to add comments",
+          variant: "destructive"
+        });
+        return;
+      }
+      
       const { data, error } = await supabase
         .from('comments')
         .insert({
           content: newComment.trim(),
-          user_id: task.user_id, // Current user ID
+          user_id: userId,
           entity_id: task.id,
           entity_type: 'task',
           created_at: new Date().toISOString()
         })
-        .select()
-        .single();
+        .select();
         
       if (error) throw error;
       
-      // Add the new comment to the list
-      setComments(prevComments => [data, ...prevComments]);
+      refetchComments();
       setNewComment('');
       
       toast({
@@ -363,7 +362,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
       toast({
         title: "Error",
         description: "Failed to add comment. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
@@ -371,7 +370,6 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   const handleStatusChange = (newStatus: string) => {
     setStatus(newStatus as any);
     
-    // Auto-save if not in global edit mode
     if (!isEditing) {
       try {
         updateTask({
@@ -401,7 +399,6 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   const handlePriorityChange = (newPriority: string) => {
     setPriority(newPriority as any);
     
-    // Auto-save if not in global edit mode
     if (!isEditing) {
       try {
         updateTask({
@@ -431,7 +428,6 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   const handleDueDateChange = (newDate: Date | undefined) => {
     setDate(newDate);
     
-    // Auto-save if not in global edit mode
     if (!isEditing) {
       try {
         updateTask({
@@ -459,7 +455,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
       }
     }
   };
-  
+
   return (
     <div className="bg-[#25384D] flex flex-col h-full">
       <div className="flex items-center justify-between p-4 border-b border-[#3A4D62]">
@@ -696,7 +692,6 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
               </div>
             )}
 
-            {/* Always visible add subtask form */}
             <div className="flex items-center gap-2">
               <Input
                 value={newSubtaskTitle}
@@ -816,10 +811,8 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
           </div>
           
           <div className="bg-[#1C2A3A]/50 p-4 rounded-md">
-            {/* Comments with scrolling */}
             <CommentList comments={comments} />
             
-            {/* Inline comment editor */}
             <div className="flex items-start gap-2 mt-3">
               <Avatar className="h-8 w-8">
                 <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${task.user_id}`} />
