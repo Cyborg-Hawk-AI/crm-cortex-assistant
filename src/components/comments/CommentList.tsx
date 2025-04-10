@@ -12,6 +12,7 @@ interface Comment {
   user_name?: string;
   profiles?: {
     full_name?: string;
+    email?: string;
   };
 }
 

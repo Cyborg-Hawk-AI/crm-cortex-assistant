@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, 
@@ -75,7 +74,6 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [isPriorityMenuOpen, setIsPriorityMenuOpen] = useState(false);
   
-  // States for description container height
   const [descriptionHeight, setDescriptionHeight] = useState<string>('auto');
   const [descriptionOverflow, setDescriptionOverflow] = useState<boolean>(false);
   
@@ -113,7 +111,10 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
     try {
       const { data, error } = await supabase
         .from('comments')
-        .select('*')
+        .select(`
+          *,
+          profiles:user_id(full_name, email)
+        `)
         .eq('entity_id', task.id)
         .eq('entity_type', 'task')
         .order('created_at', { ascending: false });
@@ -145,12 +146,10 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
     refetchComments();
   }, []);
   
-  // Check if description has overflow content
   useEffect(() => {
     if (task.description) {
       const checkOverflow = () => {
         const descLength = task.description?.length || 0;
-        // Estimate if the description is long enough to need expansion
         setDescriptionOverflow(descLength > 150);
       };
       
