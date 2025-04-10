@@ -215,7 +215,7 @@ export interface Ticket {
   status: string;
   priority: string;
   created_by: string;
-  assignee?: string; // Added to match mockData usage
+  assignee?: string;
   assigned_to?: string;
   reporter?: string;
   due_date?: Date | string;
@@ -226,11 +226,7 @@ export interface Ticket {
   tags?: string[];
   related?: string[];
   comments?: any[];
-  customer?: {
-    name: string;
-    company?: string;
-    email?: string;
-  };
+  user_id?: string; // Add the missing user_id property
   parent_task_id?: string; // For hierarchical relationship
   summary?: string;
   actionItems?: string[];
@@ -239,6 +235,11 @@ export interface Ticket {
   communications?: any[];
   updatedAt?: Date;
   lastStatusUpdate?: string;
+  customer?: {
+    name: string;
+    company?: string;
+    email?: string;
+  };
 }
 
 // Integration interface
