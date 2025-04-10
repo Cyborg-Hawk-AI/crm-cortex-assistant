@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,7 @@ import { TaskBoard } from '@/components/projects/TaskBoard';
 import { TaskTable } from '@/components/projects/TaskTable';
 import { TaskTimeline } from '@/components/projects/TaskTimeline';
 import { TaskList } from '@/components/mission/TaskList';
+import { ProjectTasksSection } from '@/components/projects/ProjectTasksSection';
 import { TaskCreateDialog } from '@/components/modals/TaskCreateDialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
