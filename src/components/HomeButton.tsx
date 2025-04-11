@@ -8,8 +8,7 @@ export const HomeButton = () => {
   const navigate = useNavigate();
   
   const goHome = () => {
-    // Navigate to home and set active tab to 'main' to show Command View
-    navigate('/', { state: { activeTab: 'main' } });
+    navigate('/');
   };
 
   return (

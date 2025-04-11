@@ -6,7 +6,6 @@ import * as chatHistoryService from '@/services/chatHistoryService';
 import { useToast } from '@/hooks/use-toast';
 import { useAssistantConfig } from '@/hooks/useAssistantConfig';
 import { useProjects } from '@/hooks/useProjects';
-import { useModelSelection } from '@/hooks/useModelSelection';
 import { Message, Assistant, Task } from '@/utils/types';
 
 export function useChatMessages() {
@@ -18,7 +17,6 @@ export function useChatMessages() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { activeProjectId } = useProjects();
-  const { selectedModel } = useModelSelection();
   
   const { getAssistantConfig } = useAssistantConfig();
   
@@ -46,10 +44,9 @@ export function useChatMessages() {
         try {
           // Update the chatHistoryService to handle project_id properly
           await chatHistoryService.updateConversation(newConversation.id, { 
-            project_id: activeProjectId,
-            model_provider: selectedModel.provider // Store the selected model provider
+            project_id: activeProjectId 
           });
-          console.log(`Associated conversation ${newConversation.id} with project ${activeProjectId} and model ${selectedModel.provider}`);
+          console.log(`Associated conversation ${newConversation.id} with project ${activeProjectId}`);
         } catch (error) {
           console.error('Failed to associate conversation with project:', error);
         }
@@ -65,7 +62,7 @@ export function useChatMessages() {
       });
       throw error;
     }
-  }, [toast, activeProjectId, selectedModel.provider]);
+  }, [toast, activeProjectId]);
 
   // Send a message mutation with streaming support
   const sendMessageMutation = useMutation({
@@ -156,21 +153,13 @@ export function useChatMessages() {
           
           let streamedContent = '';
           
-          // Get the model provider for this conversation
-          const conversation = await chatHistoryService.updateConversation(convId, {
-            model_provider: selectedModel.provider
-          });
-          
-          console.log(`Using model provider: ${selectedModel.provider} for conversation ${convId}`);
-          
-          // Start streaming from the assistant using the appropriate model
+          // Start streaming from the assistant
           const streamResponse = await fetch('/api/chat/stream', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               conversationId: convId,
-              assistantId: assistantId,
-              modelProvider: selectedModel.provider
+              assistantId: assistantId
             })
           });
           
@@ -237,7 +226,7 @@ export function useChatMessages() {
         variant: 'destructive'
       });
     }
-  }, [activeConversationId, sendMessageMutation, queryClient, toast, getAssistantConfig, selectedModel.provider]);
+  }, [activeConversationId, sendMessageMutation, queryClient, toast, getAssistantConfig]);
 
   // Clear all messages in a conversation
   const clearMessages = useCallback(async (conversationId: string | null = activeConversationId) => {
