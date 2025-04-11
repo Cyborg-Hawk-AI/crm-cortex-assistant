@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -5,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { PlusCircle, MoreHorizontal, ArrowUpCircle, CircleDot, CheckCircle2, X, Calendar, ChevronRight, ChevronDown, Clock } from 'lucide-react';
 import { Task } from '@/utils/types';
 import { useMissionTasks } from '@/hooks/useMissionTasks';
@@ -117,6 +117,15 @@ export function MissionTableView({ missionId, onTaskClick }: MissionTableViewPro
   
   const handleStatusChange = (taskId: string, status: string) => {
     updateTaskStatus(taskId, status);
+  };
+  
+  const handleDeleteSubtask = (subtaskId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    deleteTask(subtaskId);
+    toast({
+      title: "Subtask deleted",
+      description: "The subtask has been removed"
+    });
   };
   
   const getStatusIcon = (status: string) => {
@@ -243,7 +252,6 @@ export function MissionTableView({ missionId, onTaskClick }: MissionTableViewPro
                         className="h-8 w-8"
                         onClick={(e) => {
                           e.stopPropagation();
-                          // Additional actions menu would go here
                         }}
                       >
                         <MoreHorizontal className="h-4 w-4" />
@@ -294,17 +302,14 @@ export function MissionTableView({ missionId, onTaskClick }: MissionTableViewPro
                                           {subtask.title}
                                         </span>
                                       </div>
-                                      <div className="opacity-0 group-hover:opacity-100 flex items-center">
+                                      <div className="flex items-center">
                                         <Button
                                           variant="ghost"
                                           size="icon"
-                                          className="h-6 w-6"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            deleteTask(subtask.id);
-                                          }}
+                                          className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                                          onClick={(e) => handleDeleteSubtask(subtask.id, e)}
                                         >
-                                          <X className="h-3 w-3" />
+                                          <X className="h-3 w-3 text-[#94A3B8] hover:text-[#E11D48]" />
                                         </Button>
                                       </div>
                                     </div>

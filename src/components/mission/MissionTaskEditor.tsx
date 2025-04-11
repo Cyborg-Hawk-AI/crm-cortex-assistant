@@ -19,7 +19,8 @@ import {
   Heading3,
   CheckCheck,
   ArrowLeft,
-  ArrowRight
+  ArrowRight,
+  Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -51,6 +52,7 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
     updateTaskPriority,
     createTask,
     getSubtasks,
+    deleteTask,
     isLoading,
     refetch
   } = useMissionTasks(taskId);
@@ -133,6 +135,19 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
     
     createTask(newSubtaskTitle.trim(), taskId);
     setNewSubtaskTitle('');
+  };
+  
+  const handleDeleteSubtask = (subtaskId: string) => {
+    deleteTask(subtaskId);
+    toast({
+      title: "Subtask deleted",
+      description: "The subtask has been removed",
+    });
+  };
+  
+  const handleToggleSubtaskStatus = (subtaskId: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'completed' ? 'open' : 'completed';
+    updateTaskStatus(subtaskId, newStatus);
   };
   
   const navigateToTask = (direction: 'prev' | 'next') => {
@@ -349,7 +364,7 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
                 >
                   <Checkbox 
                     checked={subtask.status === 'completed'}
-                    onCheckedChange={() => updateTaskStatus(subtask.id, subtask.status === 'completed' ? 'open' : 'completed')}
+                    onCheckedChange={() => handleToggleSubtaskStatus(subtask.id, subtask.status)}
                     className="rounded-full"
                   />
                   <span className={cn(
@@ -358,6 +373,14 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
                   )}>
                     {subtask.title}
                   </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:bg-[#3A4D62]/50"
+                    onClick={() => handleDeleteSubtask(subtask.id)}
+                  >
+                    <X className="h-3.5 w-3.5 text-[#94A3B8] hover:text-[#E11D48]" />
+                  </Button>
                 </div>
               ))
             ) : (
