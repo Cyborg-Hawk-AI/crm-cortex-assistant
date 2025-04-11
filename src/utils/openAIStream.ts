@@ -5,7 +5,7 @@ import { StreamingCallbacks } from './streamTypes';
 const OPENAI_API_URL = 'https://api.openai.com/v1';
 const DEFAULT_MODEL = 'gpt-4o-mini';
 // Using the provided OpenAI key 
-const OPENAI_API_KEY = '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';
+const OPENAI_API_KEY = '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';
 
 export interface StreamOptions {
   model?: string;
