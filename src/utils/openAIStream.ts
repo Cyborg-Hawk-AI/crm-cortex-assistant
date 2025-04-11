@@ -1,5 +1,5 @@
 
-import { createParser, ParsedEvent, ReconnectInterval } from 'eventsource-parser';
+import { createParser } from 'eventsource-parser';
 import { ModelProvider } from '@/hooks/useModelSelection';
 
 export type ChatCompletionRequestMessage = {
@@ -74,38 +74,36 @@ export async function createOpenAIStream(
     // Create a streaming response
     const stream = new ReadableStream({
       async start(controller) {
-        // Create parser using the proper interface provided by eventsource-parser
-        const parser = createParser({
-          onparse(event: ParsedEvent | ReconnectInterval) {
-            if (event.type === 'event') {
-              const data = event.data;
+        // Create parser with the correct interface
+        const parser = createParser(event => {
+          if (event.type === 'event') {
+            const data = event.data;
+            
+            // Handle event completion
+            if (data === '[DONE]') {
+              controller.close();
+              return;
+            }
+            
+            try {
+              const json = JSON.parse(data);
               
-              // Handle event completion
-              if (data === '[DONE]') {
-                controller.close();
-                return;
+              // Extract content based on provider
+              let content = '';
+              if (provider === 'openai') {
+                content = json.choices[0]?.delta?.content || '';
+              } else { // deepseek
+                content = json.choices[0]?.delta?.content || '';
               }
               
-              try {
-                const json = JSON.parse(data);
-                
-                // Extract content based on provider
-                let content = '';
-                if (provider === 'openai') {
-                  content = json.choices[0]?.delta?.content || '';
-                } else { // deepseek
-                  content = json.choices[0]?.delta?.content || '';
-                }
-                
-                if (content) {
-                  callbacks.onChunk(content);
-                  const queue = encoder.encode(content);
-                  controller.enqueue(queue);
-                }
-              } catch (e) {
-                console.error('Error parsing stream:', e);
-                controller.error(e);
+              if (content) {
+                callbacks.onChunk(content);
+                const queue = encoder.encode(content);
+                controller.enqueue(queue);
               }
+            } catch (e) {
+              console.error('Error parsing stream:', e);
+              controller.error(e);
             }
           }
         });
