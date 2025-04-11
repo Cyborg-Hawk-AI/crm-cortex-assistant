@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Message } from '@/utils/types';
 import { Message as MessageComponent } from '@/components/Message';
 import { QuickActions } from '@/components/QuickActions';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ChatSectionProps {
   activeConversationId: string | null;
@@ -21,6 +22,7 @@ export function ChatSection({
   isLoading
 }: ChatSectionProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
   const {
     inputValue,
     setInputValue,

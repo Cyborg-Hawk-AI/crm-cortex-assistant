@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { MessageSquarePlus, Plus, Trash, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,13 +14,18 @@ interface ConversationSidebarProps {
   startNewConversation: (title?: string) => Promise<string>;
 }
 
-export function ConversationSidebar({ 
+export const ConversationSidebar = forwardRef<{setIsOpen: (open: boolean) => void}, ConversationSidebarProps>(({ 
   activeConversationId, 
   setActiveConversationId,
   startNewConversation
-}: ConversationSidebarProps) {
+}, ref) => {
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false); // Changed to false by default
+
+  // Expose the setIsOpen method via ref
+  useImperativeHandle(ref, () => ({
+    setIsOpen
+  }));
 
   const { 
     data: conversations = [], 
@@ -89,19 +94,19 @@ export function ConversationSidebar({
 
   return (
     <>
-      {/* Sidebar Expander */}
+      {/* Sidebar Expander - Now more visible with animation */}
       {!isOpen && (
         <div 
-          className="h-full flex items-center cursor-pointer bg-background/50 border-r border-border/30 hover:bg-accent/10 transition-colors"
+          className="h-full flex items-center cursor-pointer bg-gradient-to-r from-neon-purple/20 to-transparent hover:from-neon-purple/40 transition-all duration-300 border-r border-neon-purple/20"
           onClick={toggleSidebar}
         >
-          <div className="p-1">
-            <ChevronRight size={16} className="text-muted-foreground" />
+          <div className="p-2 bg-white rounded-full shadow-lg mr-[-12px] neon-glow-purple">
+            <ChevronRight size={16} className="text-neon-purple animate-pulse" />
           </div>
         </div>
       )}
       
-      <div className={`h-full ${isOpen ? 'w-64' : 'w-0'} bg-sidebar transition-all duration-300 border-r border-border/30`}>
+      <div className={`h-full ${isOpen ? 'w-72' : 'w-0'} bg-gradient-to-b from-[#f8f9ff] to-[#f1f0fb] transition-all duration-300 border-r border-neon-purple/20 shadow-lg`}>
         {isMobile && (
           <Button 
             variant="ghost" 
@@ -109,26 +114,26 @@ export function ConversationSidebar({
             className="absolute top-3 right-3 z-50 md:hidden"
             onClick={toggleSidebar}
           >
-            {isOpen ? <MessageSquarePlus /> : <MessageSquarePlus />}
+            <MessageSquarePlus />
           </Button>
         )}
 
         <div className={`flex flex-col h-full overflow-hidden ${isOpen ? 'opacity-100' : 'opacity-0'}`}>
-          {/* Add close button for desktop */}
+          {/* Close button with more visible styling */}
           {!isMobile && isOpen && (
             <Button 
               variant="ghost" 
               size="icon" 
-              className="absolute top-3 right-3"
+              className="absolute top-3 right-3 hover:bg-neon-purple/10 rounded-full"
               onClick={toggleSidebar}
             >
-              <ChevronLeft size={16} />
+              <ChevronLeft size={16} className="text-neon-purple" />
             </Button>
           )}
           
-          <div className="p-3">
+          <div className="p-4">
             <Button 
-              className="w-full justify-start gap-2 bg-primary/10 hover:bg-primary/20 text-primary"
+              className="w-full justify-start gap-2 bg-gradient-to-r from-neon-purple to-neon-blue text-white rounded-full shadow-md hover:shadow-lg hover:brightness-110 transition-all"
               onClick={handleNewConversation}
             >
               <Plus size={16} />
@@ -136,26 +141,37 @@ export function ConversationSidebar({
             </Button>
           </div>
           
-          <Separator />
+          <Separator className="bg-neon-purple/20" />
           
-          <div className="flex-1 overflow-y-auto py-2">
+          <div className="flex-1 overflow-y-auto py-3 px-2">
             {isLoading ? (
-              <div className="p-4 text-center text-gray-500">Loading conversations...</div>
+              <div className="flex justify-center p-4">
+                <div className="loading-dots flex items-center">
+                  <div className="h-2 w-2 bg-neon-purple rounded-full mx-1 animate-pulse"></div>
+                  <div className="h-2 w-2 bg-neon-purple rounded-full mx-1 animate-pulse" style={{animationDelay: '0.2s'}}></div>
+                  <div className="h-2 w-2 bg-neon-purple rounded-full mx-1 animate-pulse" style={{animationDelay: '0.4s'}}></div>
+                </div>
+              </div>
             ) : conversations.length === 0 ? (
-              <div className="p-4 text-center text-gray-500">No conversations yet</div>
+              <div className="p-4 text-center text-gray-500 italic">No conversations yet</div>
             ) : (
-              <div className="space-y-1 px-2">
+              <div className="space-y-2 px-2">
                 {conversations.map((conversation) => (
                   <div
                     key={conversation.id}
                     className={`
-                      flex justify-between items-center rounded-md px-3 py-2 cursor-pointer 
-                      ${activeConversationId === conversation.id ? 'bg-accent/30 text-accent-foreground' : 'hover:bg-accent/10'}
+                      group flex justify-between items-center rounded-xl px-3 py-2.5 cursor-pointer hover-scale
+                      transition-all duration-200 border hover:border-neon-purple/30
+                      ${activeConversationId === conversation.id 
+                        ? 'bg-white shadow-md border-neon-purple/30 neon-glow-purple' 
+                        : 'bg-white/60 border-transparent hover:bg-white hover:shadow-sm'}
                     `}
                     onClick={() => handleConversationClick(conversation.id)}
                   >
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">{conversation.title}</div>
+                      <div className={`font-medium truncate ${activeConversationId === conversation.id ? 'text-neon-purple' : ''}`}>
+                        {conversation.title}
+                      </div>
                       <div className="text-xs text-muted-foreground truncate">
                         {formatDate(conversation.updated_at)}
                       </div>
@@ -165,7 +181,7 @@ export function ConversationSidebar({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:opacity-100 focus:opacity-100"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:opacity-100 focus:opacity-100 hover:bg-red-100 hover:text-red-500 rounded-full transition-all"
                           onClick={(e) => handleDeleteConversation(conversation.id, e)}
                         >
                           <Trash size={14} />
@@ -182,4 +198,6 @@ export function ConversationSidebar({
       </div>
     </>
   );
-}
+});
+
+ConversationSidebar.displayName = 'ConversationSidebar';

@@ -29,9 +29,9 @@
 }
 
 @keyframes pulse-border {
-  0% { border-color: rgba(168, 85, 247, 0.1); }
-  50% { border-color: rgba(168, 85, 247, 0.5); }
-  100% { border-color: rgba(168, 85, 247, 0.1); }
+  0% { border-color: rgba(168, 85, 247, 0.1); box-shadow: 0 0 5px rgba(168, 85, 247, 0.1); }
+  50% { border-color: rgba(168, 85, 247, 0.5); box-shadow: 0 0 10px rgba(168, 85, 247, 0.3); }
+  100% { border-color: rgba(168, 85, 247, 0.1); box-shadow: 0 0 5px rgba(168, 85, 247, 0.1); }
 }
 
 .pulse-border {
@@ -47,6 +47,17 @@
 
 .animate-blink {
   animation: blink-cursor 1s infinite;
+}
+
+/* Add bubble pop-in animation */
+@keyframes bubble-pop {
+  0% { transform: scale(0.95); opacity: 0; }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.bubble-pop-in {
+  animation: bubble-pop 0.3s ease-out forwards;
 }
 
 /* Markdown content styling */
@@ -85,4 +96,41 @@
   padding-left: 1em;
   margin: 0.5em 0;
   color: rgba(0, 0, 0, 0.6);
+}
+
+/* Enhanced conversation list item hover effects */
+.conversation-item {
+  transition: all 0.2s ease;
+  border-radius: 12px;
+}
+
+.conversation-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.15);
+}
+
+/* Sidebar animations */
+@keyframes slide-in {
+  from { transform: translateX(-100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.sidebar-slide-in {
+  animation: slide-in 0.3s ease-out forwards;
+}
+
+/* Improved action button styling */
+.action-button-enhanced {
+  background: linear-gradient(90deg, hsla(277, 75%, 84%, 1) 0%, hsla(297, 50%, 51%, 1) 100%);
+  border-radius: 20px;
+  padding: 8px 16px;
+  color: white;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(168, 85, 247, 0.3);
+}
+
+.action-button-enhanced:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
 }
