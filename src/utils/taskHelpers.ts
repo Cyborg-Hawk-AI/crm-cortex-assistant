@@ -14,7 +14,7 @@ export const updateTaskField = async (
   options?: TaskUpdateOptions
 ): Promise<Task> => {
   try {
-    console.log(`Updating task ${task.id} field ${field} to:`, value);
+    console.log(`[DEBUG-updateTaskField] Starting update for task ${task.id}, field: ${field}, value:`, value);
     
     // Create a copy of the task with the updated field
     const updatedTask = {
@@ -23,23 +23,30 @@ export const updateTaskField = async (
       updated_at: new Date().toISOString()
     };
     
+    console.log(`[DEBUG-updateTaskField] Prepared updated task:`, updatedTask);
+    
     // For date fields, ensure proper formatting
     if (field === 'due_date' && value instanceof Date) {
       updatedTask.due_date = value.toISOString();
+      console.log(`[DEBUG-updateTaskField] Formatted date to ISO string:`, updatedTask.due_date);
     }
     
     // Send update to backend
+    console.log(`[DEBUG-updateTaskField] Sending update to backend...`);
     const result = await updateTask(updatedTask);
+    console.log(`[DEBUG-updateTaskField] Backend update successful, result:`, result);
     
     if (options?.onSuccess) {
+      console.log(`[DEBUG-updateTaskField] Calling onSuccess callback`);
       options.onSuccess();
     }
     
     return result;
   } catch (error) {
-    console.error(`Error updating ${field}:`, error);
+    console.error(`[DEBUG-updateTaskField] Error updating ${field}:`, error);
     
     if (options?.onError) {
+      console.log(`[DEBUG-updateTaskField] Calling onError callback`);
       options.onError(error);
     }
     
@@ -48,6 +55,8 @@ export const updateTaskField = async (
 };
 
 export const getStatusDisplayInfo = (status: TaskStatus) => {
+  console.log(`[DEBUG-getStatusDisplayInfo] Getting display info for status: ${status}`);
+  
   switch (status) {
     case 'open':
       return { 
@@ -80,6 +89,7 @@ export const getStatusDisplayInfo = (status: TaskStatus) => {
         dotColor: 'bg-neon-purple'
       };
     default:
+      console.log(`[DEBUG-getStatusDisplayInfo] Unknown status: ${status}, using default`);
       return { 
         label: 'Open', 
         color: 'bg-[#3A4D62] text-[#F1F5F9] border-[#3A4D62]/50',
@@ -89,6 +99,8 @@ export const getStatusDisplayInfo = (status: TaskStatus) => {
 };
 
 export const getPriorityDisplayInfo = (priority: TaskPriority) => {
+  console.log(`[DEBUG-getPriorityDisplayInfo] Getting display info for priority: ${priority}`);
+  
   switch (priority) {
     case 'low':
       return {
@@ -115,6 +127,7 @@ export const getPriorityDisplayInfo = (priority: TaskPriority) => {
         iconColor: 'text-neon-red'
       };
     default:
+      console.log(`[DEBUG-getPriorityDisplayInfo] Unknown priority: ${priority}, using default`);
       return {
         label: 'Medium',
         color: 'bg-amber-500/20 text-amber-500 border-amber-500/30',

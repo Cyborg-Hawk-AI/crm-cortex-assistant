@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Flag, CheckCheck } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { 
@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 
 interface PriorityOption {
   value: string;
@@ -21,11 +22,19 @@ interface PriorityOption {
 interface TaskPriorityDropdownProps {
   currentPriority: string;
   onChange: (priority: string) => void;
+  displayAsBadge?: boolean;
 }
 
-export function TaskPriorityDropdown({ currentPriority, onChange }: TaskPriorityDropdownProps) {
+export function TaskPriorityDropdown({ 
+  currentPriority, 
+  onChange,
+  displayAsBadge = false
+}: TaskPriorityDropdownProps) {
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+  console.log('[DEBUG-TaskPriorityDropdown] Component rendered with priority:', currentPriority);
 
   // Priority configuration
   const priorityOptions: PriorityOption[] = [
@@ -46,15 +55,25 @@ export function TaskPriorityDropdown({ currentPriority, onChange }: TaskPriority
     return 'text-neon-blue';
   };
 
+  useEffect(() => {
+    console.log('[DEBUG-TaskPriorityDropdown] Dropdown open state:', isOpen);
+  }, [isOpen]);
+
   const handlePriorityChange = async (newPriority: string) => {
+    console.log(`[DEBUG-TaskPriorityDropdown] Priority change requested: ${currentPriority} -> ${newPriority}`);
     setIsUpdating(true);
     try {
+      console.log(`[DEBUG-TaskPriorityDropdown] Before calling onChange handler`);
       await onChange(newPriority);
+      console.log(`[DEBUG-TaskPriorityDropdown] After calling onChange handler, update successful`);
+      
       toast({
         title: "Priority updated",
         description: `Task priority set to ${newPriority.charAt(0).toUpperCase() + newPriority.slice(1)}`
       });
     } catch (error) {
+      console.error(`[DEBUG-TaskPriorityDropdown] Error updating priority:`, error);
+      
       toast({
         title: "Error",
         description: "Failed to update priority",
@@ -62,22 +81,46 @@ export function TaskPriorityDropdown({ currentPriority, onChange }: TaskPriority
       });
     } finally {
       setIsUpdating(false);
+      console.log('[DEBUG-TaskPriorityDropdown] Update process completed');
     }
   };
 
+  const TriggerComponent = displayAsBadge ? (
+    <Badge 
+      className={`px-2 py-0.5 cursor-pointer hover:opacity-90 ${getPriorityColor(currentPriority)} flex items-center gap-1`}
+      onClick={() => {
+        console.log('[DEBUG-TaskPriorityDropdown] Badge trigger clicked, attempting to open dropdown');
+      }}
+    >
+      <Flag className={`h-3.5 w-3.5 ${getFlagColor(currentPriority)}`} aria-hidden="true" />
+      {currentPriority.charAt(0).toUpperCase() + currentPriority.slice(1)}
+    </Badge>
+  ) : (
+    <Button
+      variant="outline"
+      size="sm"
+      className="border-[#3A4D62] hover:border-[#64748B] hover:bg-[#3A4D62]/30"
+      onClick={() => {
+        console.log('[DEBUG-TaskPriorityDropdown] Button trigger clicked, attempting to open dropdown');
+      }}
+    >
+      <Flag className={`mr-2 h-4 w-4 ${getFlagColor(currentPriority)}`} />
+      {currentPriority.charAt(0).toUpperCase() + currentPriority.slice(1)}
+    </Button>
+  );
+
   return (
-    <DropdownMenu>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild disabled={isUpdating}>
-        <Button
-          variant="outline"
-          size="sm"
-          className="border-[#3A4D62] hover:border-[#64748B] hover:bg-[#3A4D62]/30"
-        >
-          <Flag className={`mr-2 h-4 w-4 ${getFlagColor(currentPriority)}`} />
-          {currentPriority.charAt(0).toUpperCase() + currentPriority.slice(1)}
-        </Button>
+        {TriggerComponent}
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-50">
+      <DropdownMenuContent 
+        className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-50"
+        onCloseAutoFocus={(e) => {
+          console.log('[DEBUG-TaskPriorityDropdown] Dropdown closing with autoFocus event');
+          e.preventDefault();
+        }}
+      >
         <DropdownMenuLabel>Set Priority</DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-[#3A4D62]" />
         {priorityOptions.map((option) => {
@@ -95,7 +138,10 @@ export function TaskPriorityDropdown({ currentPriority, onChange }: TaskPriority
           return (
             <DropdownMenuItem 
               key={option.value}
-              onClick={() => handlePriorityChange(option.value)} 
+              onClick={() => {
+                console.log(`[DEBUG-TaskPriorityDropdown] Option clicked: ${option.value}`);
+                handlePriorityChange(option.value);
+              }} 
               className="hover:bg-[#3A4D62]/50 cursor-pointer flex items-center gap-2"
             >
               <Flag className={`h-4 w-4 ${iconColor}`} aria-hidden="true" />

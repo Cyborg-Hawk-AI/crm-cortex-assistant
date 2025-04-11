@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CheckCheck } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -26,6 +26,9 @@ interface TaskStatusDropdownProps {
 export function TaskStatusDropdown({ currentStatus, onChange }: TaskStatusDropdownProps) {
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+  console.log('[DEBUG-TaskStatusDropdown] Component rendered with status:', currentStatus);
 
   // Status options
   const statusOptions: StatusOption[] = [
@@ -46,15 +49,25 @@ export function TaskStatusDropdown({ currentStatus, onChange }: TaskStatusDropdo
     return option?.label || 'Open';
   };
 
+  useEffect(() => {
+    console.log('[DEBUG-TaskStatusDropdown] Dropdown open state:', isOpen);
+  }, [isOpen]);
+
   const handleStatusChange = async (newStatus: string) => {
+    console.log(`[DEBUG-TaskStatusDropdown] Status change requested: ${currentStatus} -> ${newStatus}`);
     setIsUpdating(true);
     try {
+      console.log(`[DEBUG-TaskStatusDropdown] Before calling onChange handler`);
       await onChange(newStatus);
+      console.log(`[DEBUG-TaskStatusDropdown] After calling onChange handler, update successful`);
+      
       toast({
         title: "Status updated",
         description: `Task status set to ${getStatusLabel(newStatus)}`
       });
     } catch (error) {
+      console.error(`[DEBUG-TaskStatusDropdown] Error updating status:`, error);
+      
       toast({
         title: "Error",
         description: "Failed to update status",
@@ -62,17 +75,29 @@ export function TaskStatusDropdown({ currentStatus, onChange }: TaskStatusDropdo
       });
     } finally {
       setIsUpdating(false);
+      console.log('[DEBUG-TaskStatusDropdown] Update process completed');
     }
   };
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild disabled={isUpdating}>
-        <Badge className={`px-2 py-0.5 cursor-pointer hover:opacity-90 ${getStatusColor(currentStatus)}`}>
+        <Badge 
+          className={`px-2 py-0.5 cursor-pointer hover:opacity-90 ${getStatusColor(currentStatus)}`}
+          onClick={() => {
+            console.log('[DEBUG-TaskStatusDropdown] Trigger clicked, attempting to open dropdown');
+          }}
+        >
           {getStatusLabel(currentStatus)}
         </Badge>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-50">
+      <DropdownMenuContent 
+        className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-50"
+        onCloseAutoFocus={(e) => {
+          console.log('[DEBUG-TaskStatusDropdown] Dropdown closing with autoFocus event');
+          e.preventDefault();
+        }}
+      >
         <DropdownMenuLabel>Set Status</DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-[#3A4D62]" />
         {statusOptions.map((option) => {
@@ -80,7 +105,10 @@ export function TaskStatusDropdown({ currentStatus, onChange }: TaskStatusDropdo
           return (
             <DropdownMenuItem 
               key={option.value}
-              onClick={() => handleStatusChange(option.value)} 
+              onClick={() => {
+                console.log(`[DEBUG-TaskStatusDropdown] Option clicked: ${option.value}`);
+                handleStatusChange(option.value);
+              }} 
               className="hover:bg-[#3A4D62]/50 cursor-pointer flex items-center gap-2"
             >
               <div className={`w-2 h-2 rounded-full ${
