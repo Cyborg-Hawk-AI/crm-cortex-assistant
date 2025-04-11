@@ -25,16 +25,11 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
   const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(!!selectedTaskId);
   const [isNewProjectDialogOpen, setIsNewProjectDialogOpen] = useState(false);
   
-  console.log('[DEBUG-ProjectsPage] Initial render, selectedProjectId:', selectedProjectId);
-  console.log('[DEBUG-ProjectsPage] Initial render, selectedTaskId:', selectedTaskId);
-  
   useEffect(() => {
     if (selectedProjectId !== internalSelectedProjectId) {
-      console.log(`[DEBUG-ProjectsPage] Updating internal project ID: ${internalSelectedProjectId} -> ${selectedProjectId}`);
       setInternalSelectedProjectId(selectedProjectId);
     }
     if (selectedTaskId !== internalSelectedTaskId) {
-      console.log(`[DEBUG-ProjectsPage] Updating internal task ID: ${internalSelectedTaskId} -> ${selectedTaskId}`);
       setInternalSelectedTaskId(selectedTaskId);
       setIsTaskDetailOpen(!!selectedTaskId);
     }
@@ -106,7 +101,6 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
       if (!internalSelectedTaskId) return null;
       
       try {
-        console.log(`[DEBUG-ProjectsPage] Fetching task details for task ID: ${internalSelectedTaskId}`);
         const { data, error } = await supabase
           .from('tasks')
           .select('*')
@@ -118,7 +112,6 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
           return null;
         }
         
-        console.log(`[DEBUG-ProjectsPage] Task details fetched successfully:`, data);
         return data as Task;
       } catch (err) {
         console.error('Failed to fetch task details:', err);
@@ -178,7 +171,6 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
   });
 
   const handleProjectClick = (projectId: string) => {
-    console.log(`[DEBUG-ProjectsPage] Project clicked: ${projectId}`);
     setInternalSelectedProjectId(projectId);
     setInternalSelectedTaskId(null);
     setIsTaskDetailOpen(false);
@@ -186,7 +178,6 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
   };
 
   const handleTaskClick = (taskId: string) => {
-    console.log(`[DEBUG-ProjectsPage] Task clicked: ${taskId}`);
     setInternalSelectedTaskId(taskId);
     setIsTaskDetailOpen(true);
     
@@ -196,13 +187,11 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
   };
   
   const handleBackToProjects = () => {
-    console.log('[DEBUG-ProjectsPage] Navigating back to projects');
     setInternalSelectedProjectId(null);
     navigate('/projects');
   };
   
   const handleBackToProject = () => {
-    console.log('[DEBUG-ProjectsPage] Navigating back to project');
     setInternalSelectedTaskId(null);
     setIsTaskDetailOpen(false);
     
@@ -214,14 +203,7 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
   };
   
   const handleProjectCreated = (projectId: string) => {
-    console.log(`[DEBUG-ProjectsPage] Project created: ${projectId}`);
     queryClient.invalidateQueries({ queryKey: ['projects'] });
-  };
-  
-  const handleTaskUpdate = (updatedTask: Task) => {
-    console.log(`[DEBUG-ProjectsPage] Task updated:`, updatedTask);
-    queryClient.invalidateQueries({ queryKey: ['task-detail', internalSelectedTaskId] });
-    queryClient.invalidateQueries({ queryKey: ['project-tasks', internalSelectedProjectId] });
   };
   
   if (loadingProjects) {
@@ -292,7 +274,6 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
       
       {internalSelectedTaskId && selectedTask && (
         <Dialog open={isTaskDetailOpen} onOpenChange={(open) => {
-          console.log(`[DEBUG-ProjectsPage] Task detail dialog open state changed: ${isTaskDetailOpen} -> ${open}`);
           setIsTaskDetailOpen(open);
           if (!open) {
             handleBackToProject();
@@ -303,9 +284,7 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
               task={selectedTask}
               subtasks={subtasks}
               onClose={handleBackToProject}
-              onUpdate={handleTaskUpdate}
               onRefresh={() => {
-                console.log('[DEBUG-ProjectsPage] Task detail refresh requested');
                 queryClient.invalidateQueries({ queryKey: ['task-detail', internalSelectedTaskId] });
                 queryClient.invalidateQueries({ queryKey: ['subtasks', internalSelectedTaskId] });
                 queryClient.invalidateQueries({ queryKey: ['project-tasks', internalSelectedProjectId] });

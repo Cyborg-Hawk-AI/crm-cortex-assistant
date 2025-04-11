@@ -1,545 +1,941 @@
-// Import necessary components and utilities
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  AlertTriangle,
+  ArrowLeft, 
+  Clock, 
+  Edit2, 
+  MessageSquare, 
+  MoreHorizontal, 
+  PlusCircle, 
+  Tag, 
+  User, 
+  X,
+  Send,
   Calendar,
+  Flag,
   Check,
+  Plus,
   CheckCheck,
   Circle,
+  CircleCheck,
   CircleX,
   Clock3,
-  Clock4,
-  Flag, 
-  MessageSquareText,
-  Trash2,
-  User,
-  X
+  ClockIcon,
+  AlertTriangle
 } from 'lucide-react';
-import { Task, SubTask } from '@/utils/types';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Separator } from '@/components/ui/separator';
-import { format, parseISO } from 'date-fns';
-import { TaskStatusDropdown } from '@/components/mission/TaskStatusDropdown';
-import { TaskPriorityDropdown } from '@/components/mission/TaskPriorityDropdown';
+import { Task, SubTask } from '@/utils/types';
 import { useToast } from '@/hooks/use-toast';
-import { updateTaskField } from '@/utils/taskHelpers';
+import { createSubtask, updateTask } from '@/api/tasks';
+import { CommentSection } from '@/components/comments/CommentSection';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { getCurrentUserId } from '@/utils/auth';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
-// TaskDetail component props
 interface TaskDetailProps {
   task: Task;
-  subtasks?: SubTask[] | any[]; // Add the subtasks property
+  subtasks?: SubTask[];
   onClose: () => void;
-  onUpdate: (updatedTask: Task) => void; // Required prop
-  onDelete?: (taskId: string) => void;
-  onRefresh?: () => void; // Optional refresh callback
+  onUpdate?: (task: Task) => void;
+  onRefresh: () => void;
 }
 
-// TaskDetail component
-export function TaskDetail({ 
-  task, 
-  subtasks = [], 
-  onClose, 
-  onUpdate, 
-  onDelete, 
-  onRefresh 
-}: TaskDetailProps) {
-  // State for form fields and UI
-  const [title, setTitle] = useState<string>(task.title);
-  const [description, setDescription] = useState<string>(task.description || '');
-  const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
-  const [isEditingDescription, setIsEditingDescription] = useState<boolean>(false);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [descriptionOverflow, setDescriptionOverflow] = useState<boolean>(false);
+export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }: TaskDetailProps) {
   const { toast } = useToast();
+  const [description, setDescription] = useState(task.description || '');
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [isExpandedDescription, setIsExpandedDescription] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [title, setTitle] = useState(task.title);
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
+  const [newComment, setNewComment] = useState('');
+  const [newTag, setNewTag] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [date, setDate] = useState<Date | undefined>(
+    task.due_date ? new Date(task.due_date) : undefined
+  );
+  const [status, setStatus] = useState(task.status);
+  const [priority, setPriority] = useState(task.priority);
+  const [tags, setTags] = useState<string[]>(task.tags || []);
+  const [comments, setComments] = useState<any[]>([]);
   
-  console.log(`[DEBUG-TaskDetail] Component rendered with task:`, task);
-  console.log(`[DEBUG-TaskDetail] Subtasks received:`, subtasks);
-  console.log(`[DEBUG-TaskDetail] onUpdate prop available:`, !!onUpdate);
-  console.log(`[DEBUG-TaskDetail] onRefresh prop available:`, !!onRefresh);
+  const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+  const [isPriorityMenuOpen, setIsPriorityMenuOpen] = useState(false);
+  
+  const [descriptionHeight, setDescriptionHeight] = useState<string>('auto');
+  const [descriptionOverflow, setDescriptionOverflow] = useState<boolean>(false);
   
   const statusOptions = [
     { value: 'open', label: 'Open', icon: Circle, color: 'bg-[#3A4D62] text-[#F1F5F9] border-[#3A4D62]/50' },
     { value: 'in-progress', label: 'In Progress', icon: Clock3, color: 'bg-neon-blue/20 text-neon-blue border-neon-blue/30' },
     { value: 'resolved', label: 'Resolved', icon: Check, color: 'bg-neon-aqua/20 text-neon-aqua border-neon-aqua/30' },
     { value: 'closed', label: 'Closed', icon: CircleX, color: 'bg-gray-200/20 text-gray-500 border-gray-300/30' },
-    { value: 'completed', label: 'Completed', icon: CheckCheck, color: 'bg-neon-green/20 text-neon-green border-neon-green/30' }
+    { value: 'completed', label: 'Completed', icon: CircleCheck, color: 'bg-neon-green/20 text-neon-green border-neon-green/30' },
   ];
   
   const priorityOptions = [
-    { value: 'low', label: 'Low', icon: Flag, color: 'bg-neon-blue/20 text-neon-blue border-neon-blue/30' },
-    { value: 'medium', label: 'Medium', icon: Flag, color: 'bg-amber-500/20 text-amber-500 border-amber-500/30' },
+    { value: 'low', label: 'Low', icon: Flag, color: 'bg-neon-aqua/20 text-neon-aqua border-neon-aqua/30' },
+    { value: 'medium', label: 'Medium', icon: Flag, color: 'bg-neon-yellow/20 text-neon-yellow border-neon-yellow/30' },
     { value: 'high', label: 'High', icon: Flag, color: 'bg-neon-red/20 text-neon-red border-neon-red/30' },
-    { value: 'urgent', label: 'Urgent', icon: AlertTriangle, color: 'bg-neon-purple/20 text-neon-purple border-neon-purple/30' }
+    { value: 'urgent', label: 'Urgent', icon: AlertTriangle, color: 'bg-neon-red/20 text-neon-red border-neon-red/30' },
   ];
-  
-  const descriptionRef = useRef<HTMLDivElement>(null);
-  
-  // Check if description has overflow for "Show more" button
-  useEffect(() => {
-    const checkOverflow = () => {
-      const element = descriptionRef.current;
-      if (element) {
-        setDescriptionOverflow(
-          element.scrollHeight > element.clientHeight || element.scrollWidth > element.clientWidth
-        );
-      }
-    };
-    
-    checkOverflow();
-    window.addEventListener('resize', checkOverflow);
-    return () => window.removeEventListener('resize', checkOverflow);
-  }, [description]);
 
-  // Format the status display
-  const getStatusDisplay = () => {
-    const status = statusOptions.find(s => s.value === task.status) || statusOptions[0];
-    const StatusIcon = status.icon;
-    return { ...status, icon: StatusIcon };
-  };
-  
-  // Format the priority display
-  const getPriorityDisplay = () => {
-    const priority = priorityOptions.find(p => p.value === task.priority) || priorityOptions[0];
-    const PriorityIcon = priority.icon;
-    return { ...priority, icon: PriorityIcon };
-  };
-
-  // Get formatted date strings
-  const formatDate = (dateString?: string | null) => {
-    if (!dateString) return 'No date set';
-    try {
-      console.log(`[DEBUG-TaskDetail] Formatting date: ${dateString}, type: ${typeof dateString}`);
-      
-      // Check if dateString is a Date object or a string and format accordingly
-      if (typeof dateString === 'object') {
-        return format(dateString as Date, 'PPP');
-      }
-      // Otherwise treat as a string
-      return format(parseISO(dateString), 'PPP');
-    } catch (e) {
-      console.error(`[DEBUG-TaskDetail] Error formatting date:`, e);
-      return 'Invalid date';
-    }
-  };
-
-  // Handle task title change
-  const handleTitleSave = async () => {
-    console.log(`[DEBUG-TaskDetail] Saving title: "${title}"`);
-    
-    if (title.trim() === '') {
-      console.log(`[DEBUG-TaskDetail] Title validation failed - empty title`);
-      toast({
-        title: "Invalid title",
-        description: "Title cannot be empty",
-        variant: "destructive"
-      });
-      setTitle(task.title);
-      setIsEditingTitle(false);
-      return;
-    }
-    
-    if (title === task.title) {
-      console.log(`[DEBUG-TaskDetail] Title unchanged, skipping update`);
-      setIsEditingTitle(false);
-      return;
-    }
-    
-    setIsSubmitting(true);
-    try {
-      console.log(`[DEBUG-TaskDetail] Updating task title from "${task.title}" to "${title}"`);
-      const updatedTask = await updateTaskField(
-        task,
-        'title',
-        title,
-        {
-          onSuccess: () => {
-            toast({
-              title: "Title updated",
-              description: "Task title has been updated"
-            });
-          }
-        }
-      );
-      
-      console.log(`[DEBUG-TaskDetail] Title update successful:`, updatedTask);
-      onUpdate(updatedTask);
-    } catch (error) {
-      console.error(`[DEBUG-TaskDetail] Error saving title:`, error);
-      setTitle(task.title);
-      toast({
-        title: "Error",
-        description: "Failed to update task title",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
-      setIsEditingTitle(false);
-    }
-  };
-
-  // Handle description change
-  const handleDescriptionSave = async () => {
-    console.log(`[DEBUG-TaskDetail] Saving description`);
-    
-    if (description === task.description) {
-      console.log(`[DEBUG-TaskDetail] Description unchanged, skipping update`);
-      setIsEditingDescription(false);
-      return;
-    }
-    
-    setIsSubmitting(true);
-    try {
-      console.log(`[DEBUG-TaskDetail] Updating task description`);
-      const updatedTask = await updateTaskField(
-        task,
-        'description',
-        description,
-        {
-          onSuccess: () => {
-            toast({
-              title: "Description updated",
-              description: "Task description has been updated"
-            });
-          }
-        }
-      );
-      
-      console.log(`[DEBUG-TaskDetail] Description update successful:`, updatedTask);
-      onUpdate(updatedTask);
-    } catch (error) {
-      console.error(`[DEBUG-TaskDetail] Error saving description:`, error);
-      setDescription(task.description || '');
-      toast({
-        title: "Error",
-        description: "Failed to update task description",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
-      setIsEditingDescription(false);
-    }
-  };
-
-  // Handle task status update
-  const handleStatusChange = async (newStatus: string) => {
-    console.log(`[DEBUG-TaskDetail] Status change requested: ${task.status} -> ${newStatus}`);
-    
-    if (newStatus === task.status) {
-      console.log(`[DEBUG-TaskDetail] Status unchanged, skipping update`);
-      return;
-    }
-    
-    try {
-      console.log(`[DEBUG-TaskDetail] Updating task status to "${newStatus}"`);
-      const updatedTask = await updateTaskField(
-        task,
-        'status',
-        newStatus,
-        {
-          onSuccess: () => {
-            console.log(`[DEBUG-TaskDetail] Status update successful`);
-            toast({
-              title: "Status updated",
-              description: `Task status has been changed to ${getStatusDisplay().label}`
-            });
-          }
-        }
-      );
-      
-      console.log(`[DEBUG-TaskDetail] Status update completed, task data:`, updatedTask);
-      onUpdate(updatedTask);
-      if (onRefresh) onRefresh(); // Call onRefresh if it exists
-    } catch (error) {
-      console.error(`[DEBUG-TaskDetail] Error updating status:`, error);
-      toast({
-        title: "Error",
-        description: "Failed to update task status",
-        variant: "destructive"
-      });
-    }
-  };
-
-  // Handle task priority update
-  const handlePriorityChange = async (newPriority: string) => {
-    console.log(`[DEBUG-TaskDetail] Priority change requested: ${task.priority} -> ${newPriority}`);
-    
-    if (newPriority === task.priority) {
-      console.log(`[DEBUG-TaskDetail] Priority unchanged, skipping update`);
-      return;
-    }
-    
-    try {
-      console.log(`[DEBUG-TaskDetail] Updating task priority to "${newPriority}"`);
-      const updatedTask = await updateTaskField(
-        task,
-        'priority',
-        newPriority,
-        {
-          onSuccess: () => {
-            console.log(`[DEBUG-TaskDetail] Priority update successful`);
-            toast({
-              title: "Priority updated",
-              description: `Task priority has been changed to ${getPriorityDisplay().label}`
-            });
-          }
-        }
-      );
-      
-      console.log(`[DEBUG-TaskDetail] Priority update completed, task data:`, updatedTask);
-      onUpdate(updatedTask);
-      if (onRefresh) onRefresh(); // Call onRefresh if it exists
-    } catch (error) {
-      console.error(`[DEBUG-TaskDetail] Error updating priority:`, error);
-      toast({
-        title: "Error",
-        description: "Failed to update task priority",
-        variant: "destructive"
-      });
-    }
-  };
-
-  // Handle task deletion
-  const handleDeleteTask = () => {
-    console.log(`[DEBUG-TaskDetail] Delete task requested for task ${task.id}`);
-    if (onDelete) {
-      onDelete(task.id);
-    }
-  };
-
-  // Handle keyboard shortcuts for editing
-  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleTitleSave();
-    } else if (e.key === 'Escape') {
-      setTitle(task.title);
-      setIsEditingTitle(false);
-    }
-  };
-
-  const handleDescriptionKeyDown = (e: React.KeyboardEvent) => {
-    if (e.ctrlKey && e.key === 'Enter') {
-      e.preventDefault();
-      handleDescriptionSave();
-    } else if (e.key === 'Escape') {
-      setDescription(task.description || '');
-      setIsEditingDescription(false);
-    }
-  };
-
-  // Component render
-  return (
-    <>
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex-1">
-          {isEditingTitle ? (
-            <div className="pr-4">
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                onBlur={handleTitleSave}
-                onKeyDown={handleTitleKeyDown}
-                className="text-xl font-semibold bg-[#1C2A3A] border-neon-aqua/50"
-                autoFocus
-                disabled={isSubmitting}
-              />
-            </div>
-          ) : (
-            <h2 
-              className="text-xl font-semibold line-clamp-2 hover:bg-[#1C2A3A]/50 px-2 py-1 rounded cursor-pointer"
-              onClick={() => {
-                console.log('[DEBUG-TaskDetail] Title clicked, entering edit mode');
-                setIsEditingTitle(true);
-              }}
-            >
-              {title}
-            </h2>
-          )}
-          
-          <div className="text-[#CBD5E1] text-sm mt-1">
-            <span>Created: {formatDate(task.created_at)}</span>
-            {task.due_date && (
-              <span className="ml-4">Due: {formatDate(task.due_date)}</span>
-            )}
-          </div>
-        </div>
+  const { data: profiles = {}, isLoading: loadingProfiles } = useQuery({
+    queryKey: ['user-profiles'],
+    queryFn: async () => {
+      try {
+        const userIds = [task.assignee_id, task.reporter_id, task.user_id].filter(Boolean);
+        if (userIds.length === 0) return {};
         
-        <div className="flex items-center gap-2">
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', userIds);
+          
+        if (error) {
+          console.error('Error fetching user profiles:', error);
+          return {};
+        }
+        
+        const profileMap: Record<string, any> = {};
+        data?.forEach(profile => {
+          profileMap[profile.id] = profile;
+        });
+        
+        return profileMap;
+      } catch (err) {
+        console.error('Failed to fetch user profiles:', err);
+        return {};
+      }
+    }
+  });
+
+  const fetchComments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('comments')
+        .select('*')
+        .eq('entity_id', task.id)
+        .eq('entity_type', 'task')
+        .order('created_at', { ascending: false });
+        
+      if (error) {
+        console.error('Error fetching comments:', error);
+        return [];
+      }
+      
+      if (data && data.length > 0) {
+        const userIds = data.map(comment => comment.user_id);
+        
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', userIds);
+          
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
+        } else if (profilesData) {
+          const profileMap: Record<string, any> = {};
+          profilesData.forEach(profile => {
+            profileMap[profile.id] = profile;
+          });
+          
+          return data.map(comment => ({
+            ...comment,
+            profiles: profileMap[comment.user_id] || {}
+          }));
+        }
+      }
+      
+      return data || [];
+    } catch (err) {
+      console.error('Failed to fetch comments:', err);
+      return [];
+    }
+  };
+
+  const { data: taskComments = [], refetch: refetchComments } = useQuery({
+    queryKey: ['task-comments', task.id],
+    queryFn: fetchComments
+  });
+
+  useEffect(() => {
+    console.log('Setting comments from taskComments:', taskComments);
+    setComments(taskComments);
+  }, [taskComments, task.id]);
+
+  useEffect(() => {
+    refetchComments();
+  }, []);
+  
+  useEffect(() => {
+    if (task.description) {
+      const checkOverflow = () => {
+        const descLength = task.description?.length || 0;
+        setDescriptionOverflow(descLength > 150);
+      };
+      
+      checkOverflow();
+    }
+  }, [task.description]);
+
+  const getUserName = (userId: string | null | undefined) => {
+    if (!userId) return 'Unassigned';
+    
+    const profile = profiles[userId];
+    if (!profile) return userId.substring(0, 8) + '...';
+    
+    return profile.full_name || profile.email || userId.substring(0, 8) + '...';
+  };
+
+  const getStatusColor = (statusValue: string) => {
+    const option = statusOptions.find(opt => opt.value === statusValue);
+    return option?.color || 'bg-gray-200/20 text-gray-500 border-gray-300/30';
+  };
+
+  const getPriorityColor = (priorityValue: string) => {
+    const option = priorityOptions.find(opt => opt.value === priorityValue);
+    return option?.color || 'bg-gray-200/20 text-gray-500 border-gray-300/30';
+  };
+  
+  const getStatusIcon = (statusValue: string) => {
+    const option = statusOptions.find(opt => opt.value === statusValue);
+    return option?.icon || Circle;
+  };
+  
+  const getPriorityIcon = (priorityValue: string) => {
+    const option = priorityOptions.find(opt => opt.value === priorityValue);
+    return option?.icon || Flag;
+  };
+
+  const handleDescriptionSave = () => {
+    setIsEditingDescription(false);
+    saveChanges();
+  };
+
+  const formatDate = (dateString: string | null | Date) => {
+    if (!dateString) return null;
+    const date = new Date(dateString);
+    return date.toLocaleDateString('default', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  };
+
+  const toggleGlobalEdit = () => {
+    setIsEditing(!isEditing);
+    if (!isEditing) {
+      setIsEditingDescription(true);
+      setIsEditingTitle(true);
+    } else {
+      saveChanges();
+    }
+  };
+
+  const saveChanges = async () => {
+    try {
+      const updatedTask = {
+        ...task,
+        title,
+        description,
+        status,
+        priority,
+        due_date: date ? date.toISOString() : null,
+        tags
+      };
+      
+      await updateTask(updatedTask);
+      
+      toast({
+        title: "Changes saved",
+        description: "Task has been updated successfully",
+      });
+      
+      if (onRefresh) {
+        onRefresh();
+      }
+
+      setIsEditingTitle(false);
+      setIsEditingDescription(false);
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error saving changes:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save changes. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddSubtask = async () => {
+    if (!newSubtaskTitle.trim()) return;
+    
+    try {
+      await createSubtask({
+        title: newSubtaskTitle,
+        parent_task_id: task.id,
+        user_id: task.user_id,
+        is_completed: false,
+        created_by: task.user_id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+      
+      setNewSubtaskTitle('');
+      toast({
+        title: "Subtask added",
+        description: "New subtask has been created",
+      });
+      
+      if (onRefresh) {
+        onRefresh();
+      }
+    } catch (error) {
+      console.error("Error creating subtask:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create subtask. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddTag = () => {
+    if (!newTag.trim() || tags.includes(newTag.trim())) return;
+    
+    const updatedTags = [...tags, newTag.trim()];
+    setTags(updatedTags);
+    setNewTag('');
+    
+    if (!isEditing) {
+      try {
+        updateTask({
+          ...task,
+          tags: updatedTags
+        });
+        
+        toast({
+          title: "Tag added",
+          description: "Tag has been added to the task",
+        });
+        
+        if (onRefresh) {
+          onRefresh();
+        }
+      } catch (error) {
+        console.error("Error adding tag:", error);
+        toast({
+          title: "Error",
+          description: "Failed to add tag. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    const updatedTags = tags.filter(tag => tag !== tagToRemove);
+    setTags(updatedTags);
+    
+    if (!isEditing) {
+      try {
+        updateTask({
+          ...task,
+          tags: updatedTags
+        });
+        
+        toast({
+          title: "Tag removed",
+          description: "Tag has been removed from the task",
+        });
+        
+        if (onRefresh) {
+          onRefresh();
+        }
+      } catch (error) {
+        console.error("Error removing tag:", error);
+        toast({
+          title: "Error",
+          description: "Failed to remove tag. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleAddComment = async (commentContent: string) => {
+    if (!commentContent.trim()) return;
+    
+    try {
+      const userId = await getCurrentUserId();
+      if (!userId) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to add comments",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      const { data, error } = await supabase
+        .from('comments')
+        .insert({
+          content: commentContent.trim(),
+          user_id: userId,
+          entity_id: task.id,
+          entity_type: 'task',
+          created_at: new Date().toISOString()
+        })
+        .select();
+        
+      if (error) throw error;
+      
+      await refetchComments();
+      
+      toast({
+        title: "Comment added",
+        description: "Your comment has been posted",
+      });
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add comment. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleStatusChange = (newStatus: string) => {
+    setStatus(newStatus as any);
+    setIsStatusMenuOpen(false);
+    
+    if (!isEditing) {
+      try {
+        updateTask({
+          ...task,
+          status: newStatus as any
+        });
+        
+        toast({
+          title: "Status updated",
+          description: `Task status changed to ${newStatus}`,
+        });
+        
+        if (onRefresh) {
+          onRefresh();
+        }
+      } catch (error) {
+        console.error("Error updating status:", error);
+        toast({
+          title: "Error",
+          description: "Failed to update status. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handlePriorityChange = (newPriority: string) => {
+    setPriority(newPriority as any);
+    setIsPriorityMenuOpen(false);
+    
+    if (!isEditing) {
+      try {
+        updateTask({
+          ...task,
+          priority: newPriority as any
+        });
+        
+        toast({
+          title: "Priority updated",
+          description: `Task priority changed to ${newPriority}`,
+        });
+        
+        if (onRefresh) {
+          onRefresh();
+        }
+      } catch (error) {
+        console.error("Error updating priority:", error);
+        toast({
+          title: "Error",
+          description: "Failed to update priority. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleDueDateChange = (newDate: Date | undefined) => {
+    setDate(newDate);
+    
+    if (!isEditing) {
+      try {
+        updateTask({
+          ...task,
+          due_date: newDate ? newDate.toISOString() : null
+        });
+        
+        toast({
+          title: "Due date updated",
+          description: newDate 
+            ? `Due date set to ${format(newDate, 'MMM d, yyyy')}` 
+            : "Due date removed",
+        });
+        
+        if (onRefresh) {
+          onRefresh();
+        }
+      } catch (error) {
+        console.error("Error updating due date:", error);
+        toast({
+          title: "Error",
+          description: "Failed to update due date. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const toggleDescriptionExpand = () => {
+    if (!isEditing && !isEditingDescription) {
+      setIsExpandedDescription(!isExpandedDescription);
+    }
+  };
+
+  const StatusIcon = getStatusIcon(status);
+  const PriorityIcon = getPriorityIcon(priority);
+
+  return (
+    <div className="bg-[#25384D] flex flex-col h-full max-h-screen overflow-hidden">
+      <div className="flex items-center justify-between p-4 border-b border-[#3A4D62] flex-shrink-0">
+        <div className="flex items-center">
           <Button 
             variant="ghost" 
-            size="sm"
-            className="h-8 w-8 p-0 hover:bg-[#3A4D62]/50"
-            onClick={() => {
-              console.log('[DEBUG-TaskDetail] Close button clicked');
-              onClose();
-            }}
+            size="icon" 
+            className="h-8 w-8 mr-2" 
+            onClick={onClose}
           >
-            <X className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h2 className="text-lg font-medium text-[#F1F5F9]">
+            Task Details
+          </h2>
+        </div>
+        <div className="flex items-center space-x-2">
+          {isEditing ? (
+            <Button 
+              variant="default"
+              size="sm" 
+              className="bg-neon-aqua text-black hover:bg-neon-aqua/80"
+              onClick={saveChanges}
+            >
+              Save All
+            </Button>
+          ) : (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="border-[#3A4D62]"
+              onClick={toggleGlobalEdit}
+            >
+              <Edit2 className="h-3.5 w-3.5 mr-1" />
+              Edit
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <MoreHorizontal className="h-4 w-4" />
           </Button>
         </div>
       </div>
-
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex space-x-2">
-          <div 
-            className="relative" 
-            onClick={() => {
-              console.log('[DEBUG-TaskDetail] Status area clicked manually');
-            }}
-          >
-            <TaskStatusDropdown
-              currentStatus={task.status || 'open'}
-              onChange={handleStatusChange}
-            />
-          </div>
-          
-          <div 
-            className="relative"
-            onClick={() => {
-              console.log('[DEBUG-TaskDetail] Priority area clicked manually');
-            }}
-          >
-            <TaskPriorityDropdown
-              currentPriority={task.priority || 'medium'}
-              onChange={handlePriorityChange}
-              displayAsBadge={true}
-            />
-          </div>
-        </div>
-        
-        <div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-neon-red border-neon-red/30 hover:bg-neon-red/10"
-            onClick={handleDeleteTask}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete
-          </Button>
-        </div>
-      </div>
-
-      <Separator className="my-4" />
-
-      <div className="space-y-4">
-        <div>
-          <h3 className="text-[#F1F5F9] font-medium mb-2 flex items-center">
-            <MessageSquareText className="h-4 w-4 mr-2 opacity-70" />
-            Description
-          </h3>
-          {isEditingDescription ? (
-            <div className="mt-2">
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                onBlur={handleDescriptionSave}
-                onKeyDown={handleDescriptionKeyDown}
-                className="min-h-[120px] bg-[#1C2A3A] border-[#3A4D62] resize-y"
-                placeholder="Add a description..."
-                autoFocus
-                disabled={isSubmitting}
-              />
-              <div className="flex justify-end mt-2 space-x-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {
-                    console.log('[DEBUG-TaskDetail] Description edit cancelled');
-                    setDescription(task.description || '');
-                    setIsEditingDescription(false);
-                  }}
+      
+      <ScrollArea className="flex-1 h-[calc(100vh-5rem)]" hideScrollbar={false}>
+        <div className="p-4 space-y-6 pb-24">
+          <div>
+            <div className="flex items-start justify-between">
+              {isEditingTitle || isEditing ? (
+                <Input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="text-xl font-bold text-[#F1F5F9] bg-[#1C2A3A] border-neon-aqua/50"
+                  onBlur={() => !isEditing && saveChanges()}
+                />
+              ) : (
+                <h1 
+                  className="text-xl font-bold text-[#F1F5F9] cursor-pointer hover:text-neon-aqua/80"
+                  onClick={() => setIsEditingTitle(true)}
                 >
-                  Cancel
-                </Button>
-                <Button 
-                  size="sm"
-                  onClick={handleDescriptionSave}
-                  disabled={isSubmitting}
-                >
-                  Save
-                </Button>
+                  {title}
+                </h1>
+              )}
+              <div className="flex space-x-2">
+                <DropdownMenu open={isStatusMenuOpen} onOpenChange={setIsStatusMenuOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <Badge 
+                      className={`${getStatusColor(status)} cursor-pointer hover:opacity-80 flex items-center gap-1.5`}
+                    >
+                      <StatusIcon className="h-3.5 w-3.5" />
+                      {status}
+                    </Badge>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-50">
+                    <DropdownMenuLabel>Set Status</DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-[#3A4D62]" />
+                    {statusOptions.map((option) => {
+                      const Icon = option.icon;
+                      const isActive = status === option.value;
+                      return (
+                        <DropdownMenuItem 
+                          key={option.value}
+                          onClick={() => handleStatusChange(option.value)} 
+                          className="hover:bg-[#3A4D62]/50 cursor-pointer flex items-center gap-2"
+                        >
+                          <Icon 
+                            className={`h-4 w-4 ${isActive ? 'text-neon-aqua' : ''}`} 
+                            aria-hidden="true" 
+                          />
+                          <span className={isActive ? 'text-neon-aqua' : ''}>{option.label}</span>
+                          {isActive && <CheckCheck className="h-4 w-4 ml-auto text-neon-aqua" />}
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                
+                <DropdownMenu open={isPriorityMenuOpen} onOpenChange={setIsPriorityMenuOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <Badge 
+                      className={`${getPriorityColor(priority)} cursor-pointer hover:opacity-80 flex items-center gap-1.5`}
+                    >
+                      <PriorityIcon 
+                        className={`h-3.5 w-3.5 ${
+                          priority === 'high' || priority === 'urgent' ? 'text-neon-red' :
+                          priority === 'medium' ? 'text-amber-500' : 'text-neon-aqua'
+                        }`} 
+                      />
+                      {priority}
+                    </Badge>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-50">
+                    <DropdownMenuLabel>Set Priority</DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-[#3A4D62]" />
+                    {priorityOptions.map((option) => {
+                      const Icon = option.icon;
+                      const isActive = priority === option.value;
+                      let iconColor = 'text-[#64748B]';
+                      
+                      if (option.value === 'high' || option.value === 'urgent') {
+                        iconColor = isActive ? 'text-neon-aqua' : 'text-neon-red';
+                      } else if (option.value === 'medium') {
+                        iconColor = isActive ? 'text-neon-aqua' : 'text-amber-500';
+                      } else {
+                        iconColor = isActive ? 'text-neon-aqua' : 'text-neon-blue';
+                      }
+                      
+                      return (
+                        <DropdownMenuItem 
+                          key={option.value}
+                          onClick={() => handlePriorityChange(option.value)} 
+                          className="hover:bg-[#3A4D62]/50 cursor-pointer flex items-center gap-2"
+                        >
+                          <Icon className={`h-4 w-4 ${iconColor}`} aria-hidden="true" />
+                          <span className={isActive ? 'text-neon-aqua' : ''}>{option.label}</span>
+                          {isActive && <CheckCheck className="h-4 w-4 ml-auto text-neon-aqua" />}
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
-          ) : (
-            <div
-              className="prose prose-invert max-w-none hover:bg-[#1C2A3A]/50 p-2 rounded cursor-pointer"
-              onClick={() => {
-                console.log('[DEBUG-TaskDetail] Description area clicked, entering edit mode');
-                setIsEditingDescription(true);
-              }}
-            >
-              <div
-                ref={descriptionRef}
-                className={`${descriptionOverflow ? 'max-h-[120px]' : ''} overflow-hidden`}
-              >
-                {description ? (
-                  <div dangerouslySetInnerHTML={{ __html: description }} />
-                ) : (
-                  <p className="text-[#64748B] italic">No description provided. Click to add one.</p>
-                )}
+            
+            <div className="flex items-center space-x-4 mt-2 text-sm text-[#CBD5E1]">
+              <div className="flex items-center">
+                <Clock className="h-3.5 w-3.5 mr-1" />
+                <span>Created: {formatDate(task.created_at)}</span>
               </div>
-              {descriptionOverflow && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      "justify-start text-left font-normal border-[#3A4D62] hover:border-[#64748B] hover:bg-[#3A4D62]/30",
+                      !date && "text-[#64748B]"
+                    )}
+                  >
+                    <Calendar className="mr-2 h-3.5 w-3.5" />
+                    {date ? format(date, 'MMM d, yyyy') : <span>Set due date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-[#25384D] border-[#3A4D62] z-50">
+                  <CalendarComponent
+                    mode="single"
+                    selected={date}
+                    onSelect={handleDueDateChange}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-[#F1F5F9]">Description</h3>
+              {!isEditing && !isEditingDescription && (
                 <Button 
-                  variant="link" 
+                  variant="ghost" 
                   size="sm" 
-                  className="mt-2 p-0 h-auto text-neon-aqua"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsEditingDescription(true);
-                  }}
+                  onClick={() => setIsEditingDescription(true)}
                 >
-                  Show more
+                  <Edit2 className="h-3.5 w-3.5 mr-1" />
+                  Edit
                 </Button>
               )}
             </div>
-          )}
-        </div>
-        
-        <Separator />
-        
-        <div>
-          <h3 className="text-[#F1F5F9] font-medium mb-2 flex items-center">
-            <User className="h-4 w-4 mr-2 opacity-70" />
-            Assigned to
-          </h3>
-          <Badge variant="outline" className="border-[#3A4D62] text-[#CBD5E1]">
-            {task.assignee_id || 'Unassigned'}
-          </Badge>
-        </div>
-        
-        {task.parent_task_id && (
-          <>
-            <Separator />
-            <div>
-              <h3 className="text-[#F1F5F9] font-medium mb-2">Parent Task</h3>
-              <Badge variant="outline" className="border-[#3A4D62] text-[#CBD5E1]">
-                {task.parent_task_id}
-              </Badge>
+            
+            {isEditingDescription || isEditing ? (
+              <div className="space-y-2">
+                <Textarea 
+                  value={description} 
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full p-2 border border-[#3A4D62] rounded-md bg-[#1C2A3A] text-[#F1F5F9] min-h-[100px]"
+                  placeholder="Add a description..."
+                />
+                {!isEditing && (
+                  <div className="flex justify-end space-x-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => {
+                        setIsEditingDescription(false);
+                        setDescription(task.description || '');
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      variant="default" 
+                      size="sm"
+                      onClick={handleDescriptionSave}
+                    >
+                      Save
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div 
+                className={`text-sm text-[#CBD5E1] bg-[#1C2A3A]/50 p-3 rounded-md cursor-pointer transition-all duration-300 ease-in-out 
+                  ${isExpandedDescription ? 'max-h-none' : 'max-h-[80px] overflow-hidden'}`}
+                onClick={toggleDescriptionExpand}
+              >
+                {task.description ? (
+                  <>
+                    <div className="whitespace-pre-wrap">{task.description}</div>
+                    {descriptionOverflow && !isExpandedDescription && (
+                      <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#1C2A3A] to-transparent pointer-events-none" />
+                    )}
+                    {descriptionOverflow && (
+                      <div className="text-xs text-neon-aqua mt-2 text-center">
+                        {isExpandedDescription ? 'Click to collapse' : 'Click to expand'}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  'No description provided. Click "Edit" to add one.'
+                )}
+              </div>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-[#F1F5F9]">Subtasks</h3>
             </div>
-          </>
-        )}
-        
-        {task.tags && task.tags.length > 0 && (
-          <>
-            <Separator />
-            <div>
-              <h3 className="text-[#F1F5F9] font-medium mb-2">Tags</h3>
-              <div className="flex flex-wrap gap-2">
-                {task.tags.map((tag, index) => (
-                  <Badge key={index} variant="outline" className="border-[#3A4D62] text-[#CBD5E1]">
-                    {tag}
-                  </Badge>
-                ))}
+            
+            <div className="bg-[#1C2A3A]/50 p-2 rounded-md">
+              {subtasks.length > 0 ? (
+                <div className="space-y-1 mb-2 max-h-[200px] overflow-y-auto pr-2">
+                  {subtasks.map(subtask => (
+                    <div key={subtask.id} className="flex items-center p-2 hover:bg-[#1C2A3A] rounded-md">
+                      <Checkbox 
+                        id={subtask.id}
+                        checked={subtask.is_completed}
+                        className="mr-2"
+                      />
+                      <label 
+                        htmlFor={subtask.id}
+                        className={`text-sm flex-grow cursor-pointer ${
+                          subtask.is_completed ? 'text-[#718096] line-through' : 'text-[#F1F5F9]'
+                        }`}
+                      >
+                        {subtask.title}
+                      </label>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 hover:opacity-100">
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-[#718096] p-2 text-center mb-2">
+                  No subtasks yet. Add one below.
+                </div>
+              )}
+
+              <div className="flex items-center gap-2">
+                <Input
+                  value={newSubtaskTitle}
+                  onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                  placeholder="Add a subtask..."
+                  className="flex-1 bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleAddSubtask();
+                    }
+                  }}
+                />
+                <Button 
+                  onClick={handleAddSubtask}
+                  className="bg-neon-aqua hover:bg-neon-aqua/90 text-black"
+                  disabled={!newSubtaskTitle.trim()}
+                >
+                  Add
+                </Button>
               </div>
             </div>
-          </>
-        )}
-      </div>
-    </>
+          </div>
+          
+          <Separator className="bg-[#3A4D62]" />
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <div className="text-sm text-[#CBD5E1]">Assignee</div>
+              {task.assignee_id ? (
+                <div className="flex items-center space-x-2">
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${task.assignee_id}`} />
+                    <AvatarFallback>
+                      {getUserName(task.assignee_id).substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm text-[#F1F5F9]">
+                    {getUserName(task.assignee_id)}
+                  </span>
+                </div>
+              ) : (
+                <Button variant="outline" size="sm" className="border-dashed border-[#3A4D62]">
+                  <User className="h-3.5 w-3.5 mr-1" />
+                  Assign
+                </Button>
+              )}
+            </div>
+            
+            <div className="space-y-1">
+              <div className="text-sm text-[#CBD5E1]">Reporter</div>
+              {task.reporter_id && (
+                <div className="flex items-center space-x-2">
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${task.reporter_id}`} />
+                    <AvatarFallback>
+                      {getUserName(task.reporter_id).substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm text-[#F1F5F9]">
+                    {getUserName(task.reporter_id)}
+                  </span>
+                </div>
+              )}
+            </div>
+            
+            <div className="col-span-2 space-y-3">
+              <div className="text-sm text-[#CBD5E1]">Tags</div>
+              <div className="space-y-3">
+                {tags && tags.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {tags.map((tag, idx) => (
+                      <Badge key={idx} variant="outline" className="bg-[#1C2A3A] flex items-center gap-1 group">
+                        {tag}
+                        <X 
+                          className="h-3 w-3 opacity-50 group-hover:opacity-100 cursor-pointer" 
+                          onClick={() => handleRemoveTag(tag)}
+                        />
+                      </Badge>
+                    ))}
+                  </div>
+                ) : null}
+                
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    placeholder="Add a tag..."
+                    className="flex-1 bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleAddTag();
+                      }
+                    }}
+                  />
+                  <Button 
+                    onClick={handleAddTag}
+                    variant="outline"
+                    className="border-[#3A4D62]"
+                    disabled={!newTag.trim() || tags.includes(newTag.trim())}
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1" />
+                    Add
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <Separator className="bg-[#3A4D62]" />
+          
+          <div className="space-y-4 mb-20 pt-2">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-[#F1F5F9] flex items-center">
+                <MessageSquare className="h-4 w-4 mr-1" />
+                Comments ({comments.length})
+              </h3>
+            </div>
+            
+            <div className="bg-[#1C2A3A]/50 p-4 rounded-md">
+              <CommentSection
+                taskId={task.id}
+                comments={comments}
+                userId={task.user_id || ''}
+                userName={getUserName(task.user_id)}
+                onAddComment={handleAddComment}
+                onRefreshComments={refetchComments}
+              />
+            </div>
+          </div>
+        </div>
+      </ScrollArea>
+    </div>
   );
 }
