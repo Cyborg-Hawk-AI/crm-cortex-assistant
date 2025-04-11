@@ -5,7 +5,7 @@ This document provides a centralized reference for all environment-specific conf
 
 ## 📌 API & Model Configuration
 
-### OpenAI
+### OpenAI (ActionAlpha)
 
 | Configuration | Value/Variable | Files |
 |---------------|----------------|-------|
@@ -13,6 +13,14 @@ This document provides a centralized reference for all environment-specific conf
 | Default Model | `gpt-4o-mini` | - `src/utils/openAIStream.ts` |
 | Assistant IDs | Default: `asst_koI8HIazZW995Gtva0Vrxsdj` <br> Code Review: `asst_DNvRDxjXyLfOUrS19Y47UXWd` <br> Documentation: `asst_DNvRDxjXyLfOUrS19Y47UXWd` <br> Risk Assessment: `asst_nvOnVn672V8Y5jt6oL5uOnMZ` <br> Summarizer: `asst_paFlSxWI8GJjq0POrDEus3w5` <br> Search: `asst_CQeVBcwjhcMnSeCMsVPGAUW6` <br> Help: `asst_xdPa8uCiILzGm4iakfEgRBAS` <br> Menu: `asst_xdPa8uCiILzGm4iakfEgRBAS` <br> History: `asst_xdPa8uCiILzGm4iakfEgRBAS` | - `src/utils/assistantConfig.ts` <br> - `src/services/openaiClient.ts` |
 | API URL | `https://api.openai.com/v1` | - `src/utils/openAIStream.ts` <br> - `src/services/openaiClient.ts` |
+
+### DeepSeek (ActionOmega)
+
+| Configuration | Value/Variable | Files |
+|---------------|----------------|-------|
+| API Key | Placeholder: `YOUR_DEEPSEEK_API_KEY` | - `src/utils/deepSeekStream.ts` |
+| Default Model | `deepseek-reasoner` | - `src/utils/deepSeekStream.ts` |
+| API URL | `https://api.deepseek.com` | - `src/utils/deepSeekStream.ts` |
 
 ## 🛠️ AI Modes & Assistant Logic
 
@@ -23,6 +31,17 @@ Each assistant mode is configured in `src/utils/assistantConfig.ts` with the fol
 - `name`: Display name for the assistant
 - `prompt`: System instructions for the AI
 - `contextPrompt`: Instructions for context handling
+
+### Model Selection
+
+The application supports switching between two AI models:
+- ActionAlpha (OpenAI): Default model using OpenAI's API
+- ActionOmega (DeepSeek): Alternative model using DeepSeek Reasoner API
+
+This is configured in the following files:
+- `src/hooks/useModelSelection.ts` - Model selection state management
+- `src/components/ModelToggle.tsx` - UI toggle component
+- `src/hooks/useChatMessages.ts` - Integration with messaging system
 
 ### Assistant Types and Mappings
 
@@ -44,6 +63,7 @@ The following files handle assistant selection and switching:
 - `src/hooks/useChatMessages.tsx` - Core hook that manages assistant selection and messaging
 - `src/hooks/useAssistantConfig.ts` - Hook for retrieving assistant configurations
 - `src/services/assistantService.ts` - Service for assistant operations
+- `src/hooks/useModelSelection.ts` - Hook for selecting between different AI providers
 
 ## 🔐 Supabase & Auth
 
@@ -65,16 +85,20 @@ Authentication is handled through Supabase Auth with the following files involve
 ## 🌐 External Services
 
 Currently, the application primarily relies on:
-1. **OpenAI** - For AI assistant functionality
-2. **Supabase** - For database, authentication, and backend functions
+1. **OpenAI (ActionAlpha)** - For primary AI assistant functionality
+2. **DeepSeek (ActionOmega)** - For alternative AI assistant functionality
+3. **Supabase** - For database, authentication, and backend functions
 
 There are no additional external services (email providers, analytics platforms, vector databases) configured at this time.
 
 ## ✅ Quick Reference: Where to Update Configuration Values
 
-### If you want to update OpenAI API Key
+### If you want to update OpenAI API Key (ActionAlpha)
 - Update in `src/utils/openAIStream.ts` - Variable: `OPENAI_API_KEY`
 - Update in `src/services/openaiClient.ts` - Variable: `HARDCODED_API_KEY`
+
+### If you want to update DeepSeek API Key (ActionOmega)
+- Update in `src/utils/deepSeekStream.ts` - Variable: `DEEPSEEK_API_KEY`
 
 ### If you want to update OpenAI Assistant IDs
 - Update in `src/utils/assistantConfig.ts` - Object: `ASSISTANTS`
@@ -83,6 +107,9 @@ There are no additional external services (email providers, analytics platforms,
 ### If you want to update OpenAI Model
 - Update in `src/utils/openAIStream.ts` - Variable: `DEFAULT_MODEL`
 - Update in `src/services/openaiClient.ts` - When calling the API (various functions)
+
+### If you want to update DeepSeek Model
+- Update in `src/utils/deepSeekStream.ts` - Variable: `DEFAULT_MODEL`
 
 ### If you want to update Supabase Configuration
 - Update in `src/integrations/supabase/client.ts` - Variables: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`
@@ -94,3 +121,4 @@ There are no additional external services (email providers, analytics platforms,
 2. **Secure API Keys** - Avoid hardcoding API keys in the codebase; use secure storage methods
 3. **Version Control** - Keep this document updated as new configurations are added or modified
 4. **Error Handling** - Ensure robust error handling for failed API connections or misconfigured services
+

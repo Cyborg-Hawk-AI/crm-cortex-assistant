@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as messagesApi from '@/api/messages';
@@ -7,6 +6,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useAssistantConfig } from '@/hooks/useAssistantConfig';
 import { useProjects } from '@/hooks/useProjects';
 import { Message, Assistant, Task } from '@/utils/types';
+import { createOpenAIStream } from '@/utils/openAIStream';
+import { createDeepSeekStream } from '@/utils/deepSeekStream';
+import { ModelType } from '@/hooks/useModelSelection';
 
 export function useChatMessages() {
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
@@ -20,7 +22,6 @@ export function useChatMessages() {
   
   const { getAssistantConfig } = useAssistantConfig();
   
-  // Fetch messages for active conversation
   const { 
     data: messages = [],
     isLoading,
@@ -32,17 +33,14 @@ export function useChatMessages() {
     enabled: !!activeConversationId
   });
 
-  // Create a new conversation
   const startConversation = useCallback(async (title?: string) => {
     try {
       console.log(`Starting new conversation with title: ${title || 'New conversation'}`);
       const newConversation = await messagesApi.createConversation(title);
       console.log('Created conversation:', newConversation);
       
-      // If there's an active project, associate this conversation with it
       if (activeProjectId) {
         try {
-          // Update the chatHistoryService to handle project_id properly
           await chatHistoryService.updateConversation(newConversation.id, { 
             project_id: activeProjectId 
           });
@@ -64,7 +62,6 @@ export function useChatMessages() {
     }
   }, [toast, activeProjectId]);
 
-  // Send a message mutation with streaming support
   const sendMessageMutation = useMutation({
     mutationFn: async ({ content, sender, conversationId }: { content: string; sender: 'user' | 'assistant' | 'system'; conversationId: string }) => {
       return messagesApi.sendMessage(conversationId, content, sender);
@@ -83,7 +80,6 @@ export function useChatMessages() {
     }
   });
 
-  // Clear messages mutation
   const clearMessagesMutation = useMutation({
     mutationFn: async (conversationId: string | null) => {
       if (!conversationId) return false;
@@ -102,7 +98,6 @@ export function useChatMessages() {
     }
   });
 
-  // Add message helper function
   const addMessage = useCallback((content: string, sender: 'user' | 'assistant' | 'system') => {
     if (!activeConversationId) return null;
     return sendMessageMutation.mutateAsync({ 
@@ -112,98 +107,141 @@ export function useChatMessages() {
     });
   }, [activeConversationId, sendMessageMutation]);
 
-  // Set active assistant
   const setActiveAssistant = useCallback(async (assistant: Assistant) => {
     setActiveAssistantState(assistant);
     return assistant;
   }, []);
 
-  // Link task to conversation
   const linkTaskToConversation = useCallback(async (task: Task | null) => {
     setLinkedTask(task);
     return task;
   }, []);
 
-  // Send a message with streaming response
-  const sendMessage = useCallback(async (content: string, sender: 'user' | 'assistant' | 'system' = 'user', conversationId?: string | null) => {
+  const sendMessage = useCallback(async (
+    content: string, 
+    sender: 'user' | 'assistant' | 'system' = 'user', 
+    conversationId?: string | null,
+    modelType: ModelType = 'openai'
+  ) => {
     const convId = conversationId || activeConversationId;
     if (!content.trim() || !convId) return;
 
     try {
-      console.log(`Sending ${sender} message to conversation ${convId}`);
+      console.log(`Sending ${sender} message to conversation ${convId} using model: ${modelType}`);
       
-      // Send the user's message
       await sendMessageMutation.mutateAsync({ content, sender, conversationId: convId });
       
-      // Only stream a response if this is a user message
       if (sender === 'user') {
         setIsStreaming(true);
         
-        // Get the assistant configuration to use
         const { assistantId, onStartStreaming, onToken, onComplete, onError } = getAssistantConfig();
         
         try {
-          // Create a message ID for the streaming message
           const tempMessageId = crypto.randomUUID();
           
-          // Notify that streaming is starting
           if (onStartStreaming) {
             onStartStreaming(tempMessageId);
           }
           
           let streamedContent = '';
           
-          // Start streaming from the assistant
-          const streamResponse = await fetch('/api/chat/stream', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              conversationId: convId,
-              assistantId: assistantId
-            })
-          });
+          const messagesForContext = await messagesApi.getMessages(convId);
           
-          if (!streamResponse.ok || !streamResponse.body) {
-            throw new Error(`Stream response error: ${streamResponse.statusText}`);
+          const messageHistory = messagesForContext.map(msg => ({
+            role: msg.sender === 'user' ? 'user' : 'assistant',
+            content: msg.content
+          }));
+          
+          if (activeAssistant) {
+            messageHistory.unshift({
+              role: 'system',
+              content: `You are ${activeAssistant.name || 'an AI assistant'}. ${activeAssistant.description || ''}`
+            });
+          } else {
+            messageHistory.unshift({
+              role: 'system',
+              content: modelType === 'openai' 
+                ? 'You are ActionAlpha, an engineering assistant designed to help with coding tasks and technical problems powered by OpenAI.'
+                : 'You are ActionOmega, an engineering assistant designed to help with coding tasks and technical problems powered by DeepSeek.'
+            });
           }
           
-          // Create a reader for the stream
-          const reader = streamResponse.body.getReader();
-          const decoder = new TextDecoder();
-          
-          let isDone = false;
-          while (!isDone) {
-            const { value, done } = await reader.read();
-            isDone = done;
-            
-            if (done) break;
-            
-            const chunk = decoder.decode(value, { stream: true });
-            streamedContent += chunk;
-            
-            // Notify about new content
-            if (onToken) {
-              onToken(tempMessageId, chunk, streamedContent);
-            }
+          if (modelType === 'openai') {
+            await createOpenAIStream(
+              { messages: messageHistory },
+              {
+                onStart: () => {
+                  console.log('Starting to stream OpenAI response');
+                },
+                onChunk: (chunk: string) => {
+                  if (!chunk || typeof chunk !== 'string') return;
+                  
+                  streamedContent += chunk;
+                  
+                  if (onToken) {
+                    onToken(tempMessageId, chunk, streamedContent);
+                  }
+                },
+                onComplete: async (finalResponse: string) => {
+                  streamedContent = finalResponse;
+                  
+                  if (onComplete) {
+                    onComplete(tempMessageId, streamedContent);
+                  }
+                  
+                  await sendMessageMutation.mutateAsync({ 
+                    content: streamedContent, 
+                    sender: 'assistant', 
+                    conversationId: convId 
+                  });
+                  
+                  setIsStreaming(false);
+                  queryClient.invalidateQueries({ queryKey: ['messages', convId] });
+                  queryClient.invalidateQueries({ queryKey: ['conversations'] });
+                },
+                onError
+              }
+            );
+          } else {
+            await createDeepSeekStream(
+              { messages: messageHistory },
+              {
+                onStart: () => {
+                  console.log('Starting to stream DeepSeek response');
+                },
+                onChunk: (chunk: string) => {
+                  if (!chunk || typeof chunk !== 'string') return;
+                  
+                  streamedContent += chunk;
+                  
+                  if (onToken) {
+                    onToken(tempMessageId, chunk, streamedContent);
+                  }
+                },
+                onComplete: async (finalResponse: string) => {
+                  streamedContent = finalResponse;
+                  
+                  if (onComplete) {
+                    onComplete(tempMessageId, streamedContent);
+                  }
+                  
+                  await sendMessageMutation.mutateAsync({ 
+                    content: streamedContent, 
+                    sender: 'assistant', 
+                    conversationId: convId 
+                  });
+                  
+                  setIsStreaming(false);
+                  queryClient.invalidateQueries({ queryKey: ['messages', convId] });
+                  queryClient.invalidateQueries({ queryKey: ['conversations'] });
+                },
+                onError
+              }
+            );
           }
-          
-          // Save the complete message
-          if (streamedContent) {
-            await messagesApi.sendMessage(convId, streamedContent, 'assistant');
-          }
-          
-          // Notify that streaming is complete
-          if (onComplete) {
-            onComplete(tempMessageId, streamedContent);
-          }
-          
-          // Refresh the messages
-          queryClient.invalidateQueries({ queryKey: ['messages', convId] });
-          queryClient.invalidateQueries({ queryKey: ['conversations'] });
         } catch (error) {
           console.error('Error in stream processing:', error);
           
-          // Notify about error
           if (onError) {
             onError(error as Error);
           } else {
@@ -226,9 +264,8 @@ export function useChatMessages() {
         variant: 'destructive'
       });
     }
-  }, [activeConversationId, sendMessageMutation, queryClient, toast, getAssistantConfig]);
+  }, [activeConversationId, sendMessageMutation, queryClient, toast, getAssistantConfig, activeAssistant]);
 
-  // Clear all messages in a conversation
   const clearMessages = useCallback(async (conversationId: string | null = activeConversationId) => {
     if (!conversationId) return;
     await clearMessagesMutation.mutateAsync(conversationId);
@@ -248,7 +285,6 @@ export function useChatMessages() {
     isSending: sendMessageMutation.isPending,
     isStreaming,
     startConversation,
-    // Add the missing properties that QuickActions.tsx needs
     addMessage,
     activeAssistant,
     setActiveAssistant,

@@ -1,4 +1,5 @@
 
+
 /* Add this to your existing chat.css file */
 
 .animate-slideDown {
@@ -46,4 +47,34 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+.model-toggle {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.3);
+  border-radius: 14px;
+  padding: 2px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  transition: all 0.2s ease;
+}
+
+.model-toggle:hover {
+  border-color: rgba(148, 163, 184, 0.4);
+  box-shadow: 0 0 8px rgba(148, 163, 184, 0.2);
+}
+
+.model-toggle-button {
+  border-radius: 12px;
+  padding: 4px 8px;
+  font-size: 12px;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.model-toggle-button.selected {
+  background: rgba(20, 184, 166, 0.2);
+  box-shadow: 0 0 8px rgba(20, 184, 166, 0.2);
 }

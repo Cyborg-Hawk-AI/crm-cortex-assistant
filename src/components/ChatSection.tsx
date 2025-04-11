@@ -8,11 +8,15 @@ import { Message } from '@/utils/types';
 import { Message as MessageComponent } from '@/components/Message';
 import { QuickActions } from '@/components/QuickActions';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { ModelToggle } from '@/components/ModelToggle';
+import { useModelSelection } from '@/hooks/useModelSelection';
+
 interface ChatSectionProps {
   activeConversationId: string | null;
   messages: Message[];
   isLoading: boolean;
 }
+
 export function ChatSection({
   activeConversationId,
   messages,
@@ -20,6 +24,7 @@ export function ChatSection({
 }: ChatSectionProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  const { selectedModel, toggleModel } = useModelSelection();
   const {
     inputValue,
     setInputValue,
@@ -34,6 +39,7 @@ export function ChatSection({
   const {
     toast
   } = useToast();
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({
       behavior: 'smooth'
@@ -42,6 +48,7 @@ export function ChatSection({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
     try {
@@ -49,10 +56,10 @@ export function ChatSection({
         console.log("Creating a new conversation as part of sending the first message");
         const newConversationId = await startConversation('New conversation');
         setActiveConversationId(newConversationId);
-        await sendMessage(inputValue, 'user', newConversationId);
+        await sendMessage(inputValue, 'user', newConversationId, selectedModel);
       } else {
         console.log(`Sending message to active conversation: ${activeConversationId}`);
-        await sendMessage(inputValue, 'user', activeConversationId);
+        await sendMessage(inputValue, 'user', activeConversationId, selectedModel);
       }
       setInputValue('');
     } catch (error) {
@@ -64,12 +71,14 @@ export function ChatSection({
       });
     }
   };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && !isComposing) {
       e.preventDefault();
       handleSendMessage();
     }
   };
+
   const handleClearChat = async () => {
     if (window.confirm('Are you sure you want to clear this conversation?')) {
       await clearMessages(activeConversationId);
@@ -79,6 +88,7 @@ export function ChatSection({
       });
     }
   };
+
   if (isLoading) {
     return <div className="flex flex-col h-full justify-center items-center text-muted-foreground">
         <div className="loading-dots flex items-center">
@@ -93,6 +103,7 @@ export function ChatSection({
         <p className="mt-4 font-medium">Initializing ActionBot...</p>
       </div>;
   }
+
   if (messages.length === 0) {
     return <div className="flex flex-col h-full justify-center items-center p-4 text-center">
         <div className="max-w-md actionbot-card p-8 rounded-xl border border-gray-100 shadow-lg bg-teal-950">
@@ -119,6 +130,7 @@ export function ChatSection({
         </div>
       </div>;
   }
+
   return <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-1 overflow-y-auto p-4 space-y-5 bg-gradient-to-br from-white to-gray-50 bg-slate-900">
         {messages.map((message: Message) => <MessageComponent key={message.id} message={message} />)}
@@ -138,11 +150,16 @@ export function ChatSection({
         
         <div className="relative">
           <Textarea value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyDown={handleKeyDown} onCompositionStart={() => setIsComposing(true)} onCompositionEnd={() => setIsComposing(false)} placeholder="Type your engineering question here..." className="min-h-[80px] resize-none pr-12 rounded-md border border-neon-purple/30 focus:border-neon-purple focus:shadow-[0_0_8px_rgba(168,85,247,0.2)] transition-all" disabled={isSending || isStreaming || !activeConversationId} />
+          
+          <div className="absolute right-14 bottom-2">
+            <ModelToggle currentModel={selectedModel} onToggle={toggleModel} />
+          </div>
+          
           <Button size="icon" className="absolute right-2 bottom-2 bg-gradient-to-r from-[#C084FC] to-[#D946EF] text-white hover:brightness-110 hover:shadow-[0_0_8px_rgba(168,85,247,0.4)]" onClick={handleSendMessage} disabled={!inputValue.trim() || isSending || isStreaming || !activeConversationId}>
             <Send className="h-4 w-4" />
           </Button>
           
-          {(isSending || isStreaming) && <div className="absolute right-14 bottom-4 text-xs text-muted-foreground">
+          {(isSending || isStreaming) && <div className="absolute right-14 bottom-12 text-xs text-muted-foreground">
               <div className="flex items-center">
                 <div className="h-2 w-2 bg-neon-purple rounded-full mr-1 animate-pulse"></div>
                 <div className="h-2 w-2 bg-neon-purple rounded-full mx-1 animate-pulse" style={{
