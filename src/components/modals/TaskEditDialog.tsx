@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -138,18 +137,33 @@ export function TaskEditDialog({
   // Handle immediate field updates when selections change
   const handleFieldChange = async (field: string, value: any) => {
     try {
+      console.log(`Updating ${field} to`, value);
+      
+      // Create a copy of the task with the updated field
       const updatedTask = {
         ...task,
         [field]: value,
         updated_at: new Date().toISOString()
       };
       
+      // For date fields, ensure proper formatting
+      if (field === 'due_date' && value instanceof Date) {
+        updatedTask.due_date = value.toISOString();
+      }
+      
+      // Update the form value to keep UI in sync
+      form.setValue(field as any, value);
+      
+      // Send update to backend
       await updateTask(updatedTask);
+      
+      // Refresh task list
       onRefresh();
       
+      // Show confirmation toast
       toast({
-        title: "Field updated",
-        description: `${field.charAt(0).toUpperCase() + field.slice(1)} has been updated`
+        title: `${field.charAt(0).toUpperCase() + field.slice(1)} updated`,
+        description: `Task ${field} has been updated successfully`
       });
     } catch (error) {
       console.error(`Error updating ${field}:`, error);
@@ -158,6 +172,9 @@ export function TaskEditDialog({
         description: `Failed to update ${field}`,
         variant: "destructive"
       });
+      
+      // Reset form to previous value on error
+      form.setValue(field as any, task[field as keyof Task]);
     }
   };
 
@@ -331,7 +348,7 @@ export function TaskEditDialog({
                         onSelect={(date) => {
                           field.onChange(date);
                           if (date) {
-                            handleFieldChange('due_date', date.toISOString());
+                            handleFieldChange('due_date', date);
                           } else {
                             handleFieldChange('due_date', null);
                           }

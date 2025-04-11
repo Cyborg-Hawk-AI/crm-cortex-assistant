@@ -7,8 +7,6 @@ import {
   X, 
   Calendar, 
   Flag, 
-  Clock, 
-  User, 
   Check,
   Bold, 
   Italic, 
@@ -23,29 +21,16 @@ import {
   ArrowLeft,
   ArrowRight
 } from 'lucide-react';
-import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useMissionTasks } from '@/hooks/useMissionTasks';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { TaskStatusDropdown } from './TaskStatusDropdown';
+import { TaskPriorityDropdown } from './TaskPriorityDropdown';
+import { TaskDueDatePicker } from './TaskDueDatePicker';
 
 interface MissionTaskEditorProps {
   taskId: string;
@@ -143,35 +128,6 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
     }
   };
 
-  const handleDueDateChange = (newDate: Date | undefined) => {
-    setDate(newDate);
-    const formattedDate = newDate ? newDate.toISOString() : null;
-    updateTaskDueDate(taskId, formattedDate);
-    
-    toast({
-      title: "Date updated",
-      description: newDate ? `Due date set to ${format(newDate, 'MMM d, yyyy')}` : "Due date removed"
-    });
-  };
-
-  const handlePriorityChange = (newPriority: string) => {
-    setPriority(newPriority);
-    updateTaskPriority(taskId, newPriority);
-    toast({
-      title: "Priority updated",
-      description: `Task priority set to ${newPriority.charAt(0).toUpperCase() + newPriority.slice(1)}`
-    });
-  };
-
-  const handleStatusChange = (newStatus: string) => {
-    setStatus(newStatus);
-    updateTaskStatus(taskId, newStatus);
-    toast({
-      title: "Status updated",
-      description: `Task status set to ${getStatusLabel(newStatus)}`
-    });
-  };
-
   const handleCreateSubtask = () => {
     if (!newSubtaskTitle.trim()) return;
     
@@ -198,38 +154,6 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
     return null;
   };
 
-  // Priority configuration
-  const priorityOptions = [
-    { value: 'low', label: 'Low', color: 'bg-neon-aqua/20 text-neon-aqua border-neon-aqua/30' },
-    { value: 'medium', label: 'Medium', color: 'bg-amber-500/20 text-amber-500 border-amber-500/30' },
-    { value: 'high', label: 'High', color: 'bg-neon-red/20 text-neon-red border-neon-red/30' },
-    { value: 'urgent', label: 'Urgent', color: 'bg-neon-red/40 text-neon-red border-neon-red/50' },
-  ];
-
-  // Status options
-  const statusOptions = [
-    { value: 'open', label: 'Open', color: 'bg-[#3A4D62] text-[#F1F5F9] border-[#3A4D62]/50' },
-    { value: 'in-progress', label: 'In Progress', color: 'bg-neon-blue/20 text-neon-blue border-neon-blue/30' },
-    { value: 'resolved', label: 'Resolved', color: 'bg-amber-500/20 text-amber-500 border-amber-500/30' },
-    { value: 'completed', label: 'Completed', color: 'bg-neon-green/20 text-neon-green border-neon-green/30' },
-    { value: 'closed', label: 'Closed', color: 'bg-neon-purple/20 text-neon-purple border-neon-purple/30' },
-  ];
-
-  const getPriorityColor = (priorityValue: string) => {
-    const option = priorityOptions.find(opt => opt.value === priorityValue);
-    return option?.color || priorityOptions[1].color;
-  };
-  
-  const getStatusColor = (statusValue: string) => {
-    const option = statusOptions.find(opt => opt.value === statusValue);
-    return option?.color || statusOptions[0].color;
-  };
-  
-  const getStatusLabel = (statusValue: string) => {
-    const option = statusOptions.find(opt => opt.value === statusValue);
-    return option?.label || 'Open';
-  };
-
   if (isLoading || !task) {
     return (
       <div className="flex justify-center items-center p-12">
@@ -245,7 +169,11 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
         <div className="flex items-center gap-3">
           <Checkbox 
             checked={task.status === 'completed'} 
-            onCheckedChange={() => handleStatusChange(task.status === 'completed' ? 'open' : 'completed')}
+            onCheckedChange={() => {
+              const newStatus = task.status === 'completed' ? 'open' : 'completed';
+              setStatus(newStatus);
+              updateTaskStatus(taskId, newStatus);
+            }}
             className="rounded-full h-5 w-5"
           />
           <Input 
@@ -304,107 +232,31 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
       {/* Properties */}
       <div className="flex items-center gap-4 px-4 py-2">
         {/* Status Dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Badge className={`px-2 py-0.5 cursor-pointer hover:opacity-90 ${getStatusColor(status)}`}>
-              {getStatusLabel(status)}
-            </Badge>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-50">
-            <DropdownMenuLabel>Set Status</DropdownMenuLabel>
-            <DropdownMenuSeparator className="bg-[#3A4D62]" />
-            {statusOptions.map((option) => {
-              const isActive = status === option.value;
-              return (
-                <DropdownMenuItem 
-                  key={option.value}
-                  onClick={() => handleStatusChange(option.value)} 
-                  className="hover:bg-[#3A4D62]/50 cursor-pointer flex items-center gap-2"
-                >
-                  <div className={`w-2 h-2 rounded-full ${
-                    option.value === 'completed' ? 'bg-neon-green' : 
-                    option.value === 'in-progress' ? 'bg-neon-blue' : 
-                    option.value === 'closed' ? 'bg-neon-purple' : 
-                    option.value === 'resolved' ? 'bg-amber-500' : 'bg-[#64748B]'
-                  }`}></div>
-                  <span className={isActive ? 'text-neon-aqua' : ''}>{option.label}</span>
-                  {isActive && <CheckCheck className="h-4 w-4 ml-auto text-neon-aqua" />}
-                </DropdownMenuItem>
-              );
-            })}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <TaskStatusDropdown 
+          currentStatus={status} 
+          onChange={(newStatus) => {
+            setStatus(newStatus);
+            return updateTaskStatus(taskId, newStatus);
+          }} 
+        />
         
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className={cn(
-                "justify-start text-left font-normal border-[#3A4D62] hover:border-[#64748B] hover:bg-[#3A4D62]/30",
-                !date && "text-[#64748B]"
-              )}
-            >
-              <Calendar className="mr-2 h-4 w-4" />
-              {date ? format(date, 'MMM d, yyyy') : <span>Due date</span>}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 bg-[#25384D] border-[#3A4D62] z-50">
-            <CalendarComponent
-              mode="single"
-              selected={date}
-              onSelect={handleDueDateChange}
-              initialFocus
-              className="bg-[#25384D] text-[#F1F5F9]"
-            />
-          </PopoverContent>
-        </Popover>
+        {/* Due Date Picker */}
+        <TaskDueDatePicker
+          date={date}
+          onChange={(newDate) => {
+            setDate(newDate || undefined);
+            return updateTaskDueDate(taskId, newDate ? newDate.toISOString() : null);
+          }}
+        />
         
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-[#3A4D62] hover:border-[#64748B] hover:bg-[#3A4D62]/30"
-            >
-              <Flag className={`mr-2 h-4 w-4 ${
-                priority === 'high' ? 'text-neon-red' :
-                priority === 'urgent' ? 'text-neon-red' :
-                priority === 'medium' ? 'text-amber-500' :
-                'text-[#64748B]'
-              }`} />
-              {priority.charAt(0).toUpperCase() + priority.slice(1)}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-50">
-            <DropdownMenuLabel>Set Priority</DropdownMenuLabel>
-            <DropdownMenuSeparator className="bg-[#3A4D62]" />
-            {priorityOptions.map((option) => {
-              const isActive = priority === option.value;
-              let iconColor = 'text-[#64748B]';
-              
-              if (option.value === 'high' || option.value === 'urgent') {
-                iconColor = isActive ? 'text-neon-aqua' : 'text-neon-red';
-              } else if (option.value === 'medium') {
-                iconColor = isActive ? 'text-neon-aqua' : 'text-amber-500';
-              } else {
-                iconColor = isActive ? 'text-neon-aqua' : 'text-neon-blue';
-              }
-              
-              return (
-                <DropdownMenuItem 
-                  key={option.value}
-                  onClick={() => handlePriorityChange(option.value)} 
-                  className="hover:bg-[#3A4D62]/50 cursor-pointer flex items-center gap-2"
-                >
-                  <Flag className={`h-4 w-4 ${iconColor}`} aria-hidden="true" />
-                  <span className={isActive ? 'text-neon-aqua' : ''}>{option.label}</span>
-                  {isActive && <CheckCheck className="h-4 w-4 ml-auto text-neon-aqua" />}
-                </DropdownMenuItem>
-              );
-            })}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Priority Dropdown */}
+        <TaskPriorityDropdown
+          currentPriority={priority}
+          onChange={(newPriority) => {
+            setPriority(newPriority);
+            return updateTaskPriority(taskId, newPriority);
+          }}
+        />
       </div>
       
       <Separator className="my-2 bg-[#3A4D62]/50" />
