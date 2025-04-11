@@ -77,4 +77,22 @@
 .model-toggle-button.selected {
   background: rgba(20, 184, 166, 0.2);
   box-shadow: 0 0 8px rgba(20, 184, 166, 0.2);
+  font-weight: 600;
+}
+
+/* Added highlighting styles for model toggle buttons */
+.model-toggle-button.selected {
+  position: relative;
+}
+
+.model-toggle-button.selected::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
 }

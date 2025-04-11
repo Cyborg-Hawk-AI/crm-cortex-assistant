@@ -19,7 +19,7 @@ export const ModelToggle = ({ currentModel, onToggle }: ModelToggleProps) => {
             <TooltipTrigger asChild>
               <ToggleGroupItem 
                 value="openai" 
-                className={`model-toggle-button ${currentModel === 'openai' ? 'selected' : ''}`}
+                className={`model-toggle-button ${currentModel === 'openai' ? 'selected bg-cyan-950/60 text-neon-aqua shadow-[0_0_10px_rgba(20,184,166,0.3)]' : ''}`}
                 aria-label="Select ActionAlpha (OpenAI)"
                 onClick={() => {
                   if (currentModel !== 'openai') onToggle();
@@ -38,7 +38,7 @@ export const ModelToggle = ({ currentModel, onToggle }: ModelToggleProps) => {
             <TooltipTrigger asChild>
               <ToggleGroupItem 
                 value="deepseek" 
-                className={`model-toggle-button ${currentModel === 'deepseek' ? 'selected' : ''}`}
+                className={`model-toggle-button ${currentModel === 'deepseek' ? 'selected bg-purple-950/60 text-neon-purple shadow-[0_0_10px_rgba(168,85,247,0.3)]' : ''}`}
                 aria-label="Select ActionOmega (DeepSeek)"
                 onClick={() => {
                   if (currentModel !== 'deepseek') onToggle();

@@ -26,6 +26,7 @@ export const MODEL_OPTIONS: Record<ModelType, ModelOption> = {
 };
 
 export const useModelSelection = () => {
+  // Explicitly set default to 'openai' (Alpha)
   const [selectedModel, setSelectedModel] = useState<ModelType>('openai');
 
   const toggleModel = () => {

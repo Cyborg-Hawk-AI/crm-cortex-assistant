@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2, AlertTriangle, Folder } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -197,12 +196,6 @@ export function ChatSection({
           <div className="flex justify-end mt-4">
             <ModelToggle currentModel={selectedModel} onToggle={toggleModel} />
           </div>
-
-          <div className="mt-6 text-center">
-            <Button variant="outline" className="text-neon-aqua border-neon-aqua/30 hover:border-neon-aqua/50" onClick={navigateToDashboard}>
-              Return to Dashboard
-            </Button>
-          </div>
         </div>
       </div>;
   }
@@ -230,9 +223,6 @@ export function ChatSection({
           
           {/* Model Selection */}
           <div className="flex space-x-2">
-            <Button variant="outline" size="sm" className="text-neon-aqua border-neon-aqua/30 hover:border-neon-aqua/50" onClick={navigateToDashboard}>
-              Dashboard
-            </Button>
             <div className="model-toggle">
               <ModelToggle currentModel={selectedModel} onToggle={toggleModel} />
             </div>
