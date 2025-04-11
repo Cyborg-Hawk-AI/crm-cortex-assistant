@@ -918,7 +918,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
             </div>
             
             <div className="bg-[#1C2A3A]/50 p-2 rounded-md">
-              {subtasks.length > 0 ? (
+              {subtasks && subtasks.length > 0 ? (
                 <div className="space-y-1 mb-2 max-h-[200px] overflow-y-auto pr-2">
                   {subtasks.map(subtask => (
                     <div key={subtask.id} className="flex items-center p-2 hover:bg-[#1C2A3A] rounded-md group">
@@ -988,6 +988,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
               comments={comments}
               onAddComment={handleAddComment}
               userId={task.user_id}
+              onRefreshComments={refetchComments}
             />
           </div>
           
