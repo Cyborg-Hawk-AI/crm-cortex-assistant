@@ -108,6 +108,24 @@ export function TaskDetail({
     return { ...priority, icon: PriorityIcon };
   };
 
+  // Get formatted date strings
+  const formatDate = (dateString?: string | null) => {
+    if (!dateString) return 'No date set';
+    try {
+      console.log(`[DEBUG-TaskDetail] Formatting date: ${dateString}, type: ${typeof dateString}`);
+      
+      // Check if dateString is a Date object or a string and format accordingly
+      if (typeof dateString === 'object') {
+        return format(dateString as Date, 'PPP');
+      }
+      // Otherwise treat as a string
+      return format(parseISO(dateString), 'PPP');
+    } catch (e) {
+      console.error(`[DEBUG-TaskDetail] Error formatting date:`, e);
+      return 'Invalid date';
+    }
+  };
+
   // Handle task title change
   const handleTitleSave = async () => {
     console.log(`[DEBUG-TaskDetail] Saving title: "${title}"`);
@@ -289,24 +307,6 @@ export function TaskDetail({
     console.log(`[DEBUG-TaskDetail] Delete task requested for task ${task.id}`);
     if (onDelete) {
       onDelete(task.id);
-    }
-  };
-
-  // Get formatted date strings
-  const formatDate = (dateString?: string | null) => {
-    if (!dateString) return 'No date set';
-    try {
-      console.log(`[DEBUG-TaskDetail] Formatting date: ${dateString}, type: ${typeof dateString}`);
-      
-      // Check if dateString is a Date object first, then handle accordingly
-      if (typeof dateString === 'object' && dateString instanceof Date) {
-        return format(dateString, 'PPP');
-      }
-      // Otherwise treat as a string
-      return format(parseISO(dateString as string), 'PPP');
-    } catch (e) {
-      console.error(`[DEBUG-TaskDetail] Error formatting date:`, e);
-      return 'Invalid date';
     }
   };
 
