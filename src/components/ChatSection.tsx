@@ -135,7 +135,7 @@ export function ChatSection({
           {selectedModel === 'deepseek' && (
             <Alert className="mb-4 bg-amber-900/30 text-amber-200 border-amber-600/50">
               <AlertTriangle className="h-4 w-4 mr-2" />
-              <span>DeepSeek requires API configuration. <a href="#" className="underline">Configure API key</a></span>
+              <span>DeepSeek requires API configuration. Please add your API key in the settings.</span>
             </Alert>
           )}
           

@@ -3,9 +3,10 @@ import { StreamingCallbacks } from './streamTypes';
 
 // DeepSeek API configuration
 const DEEPSEEK_API_URL = 'https://api.deepseek.com';
-const DEFAULT_MODEL = 'deepseek-chat'; // Changed from deepseek-reasoner to deepseek-chat per documentation
-// API key will be replaced with user-provided key via Supabase secrets
-const DEEPSEEK_API_KEY = Deno.env?.get('DEEPSEEK_API_KEY') || ''; 
+const DEFAULT_MODEL = 'deepseek-chat'; // Using deepseek-chat model per documentation
+// API key should be retrieved from environment variables in a secure way
+// For frontend-only apps, we'll need to have the user provide their API key
+const DEEPSEEK_API_KEY = ''; // Empty by default, will be provided through configuration
 
 export interface StreamOptions {
   model?: string;

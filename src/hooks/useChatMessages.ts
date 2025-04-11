@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as messagesApi from '@/api/messages';
@@ -241,10 +240,8 @@ export function useChatMessages() {
                     queryClient.invalidateQueries({ queryKey: ['conversations'] });
                   },
                   onError: (error) => {
-                    // Handle DeepSeek specific errors
                     console.error('DeepSeek API error:', error);
                     
-                    // Check for API key error
                     if (error.message.includes('API key') || error.message.includes('401')) {
                       toast({
                         title: 'DeepSeek API Key Error',
@@ -252,12 +249,7 @@ export function useChatMessages() {
                         variant: 'destructive'
                       });
                       
-                      // Fallback to OpenAI if there's an API key error with DeepSeek
-                      console.log('Falling back to OpenAI due to DeepSeek API key error');
                       setIsStreaming(false);
-                      
-                      // Optionally switch model selection back to OpenAI
-                      // This would require passing setSelectedModel from useModelSelection
                     } else if (onError) {
                       onError(error);
                     }
@@ -267,7 +259,6 @@ export function useChatMessages() {
             } catch (deepseekError) {
               console.error('Failed to use DeepSeek:', deepseekError);
               
-              // Show user-friendly error
               toast({
                 title: 'DeepSeek Error',
                 description: 'Failed to use DeepSeek API. Please check your configuration or try again later.',
