@@ -87,7 +87,7 @@ export async function createOpenAIStream(
               
               if (content) {
                 fullText += content;
-                callbacks.onChunk(fullText);
+                callbacks.onChunk(content);
               }
             } catch (e) {
               console.error('Error parsing SSE line:', line, e);

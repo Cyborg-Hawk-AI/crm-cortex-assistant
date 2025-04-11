@@ -334,7 +334,7 @@ export function useChatMessages() {
               onChunk: (chunk: string) => {
                 if (!chunk || typeof chunk !== 'string') return;
                 
-                fullResponse = chunk;
+                fullResponse += chunk;
                 
                 setLocalMessages(prev => 
                   prev.map(msg => 

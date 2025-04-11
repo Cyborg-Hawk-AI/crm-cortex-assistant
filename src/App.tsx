@@ -5,6 +5,8 @@ import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-route
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
 
+import "./components/chat.css"; // Import our new CSS file
+
 import Index from "@/pages/Index";
 import NotFound from "@/pages/NotFound";
 import Login from "@/pages/auth/Login";
