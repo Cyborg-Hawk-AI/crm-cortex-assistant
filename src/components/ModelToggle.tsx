@@ -13,10 +13,10 @@ interface ModelToggleProps {
 export const ModelToggle = ({ currentModel, onToggle }: ModelToggleProps) => {
   return (
     <TooltipProvider>
-      <div className="flex items-center gap-1">
-        <Tooltip delayDuration={300}>
-          <TooltipTrigger asChild>
-            <div>
+      <div className="flex items-center">
+        <ToggleGroup type="single" value={currentModel} className="flex items-center gap-1">
+          <Tooltip delayDuration={300}>
+            <TooltipTrigger asChild>
               <ToggleGroupItem 
                 value="openai" 
                 className={`model-toggle-button ${currentModel === 'openai' ? 'selected' : ''}`}
@@ -28,16 +28,14 @@ export const ModelToggle = ({ currentModel, onToggle }: ModelToggleProps) => {
                 <span className="text-xs font-medium">Α</span>
                 <span className="hidden sm:inline text-xs ml-1">Alpha</span>
               </ToggleGroupItem>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="top">
-            <p>{MODEL_OPTIONS.openai.name} ({MODEL_OPTIONS.openai.description})</p>
-          </TooltipContent>
-        </Tooltip>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              <p>{MODEL_OPTIONS.openai.name} ({MODEL_OPTIONS.openai.description})</p>
+            </TooltipContent>
+          </Tooltip>
 
-        <Tooltip delayDuration={300}>
-          <TooltipTrigger asChild>
-            <div>
+          <Tooltip delayDuration={300}>
+            <TooltipTrigger asChild>
               <ToggleGroupItem 
                 value="deepseek" 
                 className={`model-toggle-button ${currentModel === 'deepseek' ? 'selected' : ''}`}
@@ -49,12 +47,12 @@ export const ModelToggle = ({ currentModel, onToggle }: ModelToggleProps) => {
                 <span className="text-xs font-medium">Ω</span>
                 <span className="hidden sm:inline text-xs ml-1">Omega</span>
               </ToggleGroupItem>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="top">
-            <p>{MODEL_OPTIONS.deepseek.name} ({MODEL_OPTIONS.deepseek.description})</p>
-          </TooltipContent>
-        </Tooltip>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              <p>{MODEL_OPTIONS.deepseek.name} ({MODEL_OPTIONS.deepseek.description})</p>
+            </TooltipContent>
+          </Tooltip>
+        </ToggleGroup>
       </div>
     </TooltipProvider>
   );
