@@ -1,4 +1,3 @@
-
 import { Task, SubTask } from '@/utils/types';
 import { supabase, getCurrentUserId } from '@/lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
@@ -101,8 +100,26 @@ export const updateTask = async (task: Task): Promise<Task> => {
 
 // Delete a task - verify ownership via reporter_id or user_id
 export const deleteTask = async (taskId: string): Promise<void> => {
+  console.log(`API: Attempting to delete task with ID: ${taskId}`);
   const userId = await getCurrentUserId();
   if (!userId) throw new Error('User must be authenticated to delete tasks');
+  
+  // First try to delete from subtasks table
+  try {
+    const { error: subtaskError } = await supabase
+      .from('subtasks')
+      .delete()
+      .eq('id', taskId);
+    
+    if (!subtaskError) {
+      console.log(`Successfully deleted subtask: ${taskId}`);
+      return;
+    } else {
+      console.log(`No subtask found with ID ${taskId} or error occurred: ${subtaskError.message}. Trying tasks table.`);
+    }
+  } catch (err) {
+    console.log(`Error checking subtasks table: ${err}. Proceeding to check tasks table.`);
+  }
   
   // Verify task belongs to current user
   const { data: existingTask, error: checkError } = await supabase
@@ -128,6 +145,8 @@ export const deleteTask = async (taskId: string): Promise<void> => {
     console.error('Error deleting task:', error);
     throw new Error(error.message);
   }
+  
+  console.log(`Successfully deleted task: ${taskId}`);
 };
 
 // Create subtask with parent_task_id, reporter_id and user_id

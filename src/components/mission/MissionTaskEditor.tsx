@@ -138,6 +138,7 @@ export function MissionTaskEditor({ taskId, onClose, onRefresh }: MissionTaskEdi
   };
   
   const handleDeleteSubtask = (subtaskId: string) => {
+    console.log("Deleting subtask:", subtaskId);
     deleteTask(subtaskId);
     toast({
       title: "Subtask deleted",
