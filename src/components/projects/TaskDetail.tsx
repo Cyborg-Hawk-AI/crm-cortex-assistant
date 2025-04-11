@@ -84,7 +84,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   const [descriptionOverflow, setDescriptionOverflow] = useState<boolean>(false);
   
   const statusOptions = [
-    { value: 'open', label: 'Open', icon: Circle, color: 'bg-neon-purple/20 text-neon-purple border-neon-purple/30' },
+    { value: 'open', label: 'Open', icon: Circle, color: 'bg-[#3A4D62] text-[#F1F5F9] border-[#3A4D62]/50' },
     { value: 'in-progress', label: 'In Progress', icon: Clock3, color: 'bg-neon-blue/20 text-neon-blue border-neon-blue/30' },
     { value: 'resolved', label: 'Resolved', icon: Check, color: 'bg-neon-aqua/20 text-neon-aqua border-neon-aqua/30' },
     { value: 'closed', label: 'Closed', icon: CircleX, color: 'bg-gray-200/20 text-gray-500 border-gray-300/30' },
