@@ -74,9 +74,8 @@ export async function createOpenAIStream(
     // Create a streaming response
     const stream = new ReadableStream({
       async start(controller) {
-        // Fixed parser implementation - using a callback function directly
-        // which matches what the createParser function expects in this version
-        const parser = createParser(function(event) {
+        // Create parser with the correct interface implementation
+        const parser = createParser((event) => {
           if (event.type === 'event') {
             const data = event.data;
             
