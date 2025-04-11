@@ -26,6 +26,9 @@ interface TaskPriorityDropdownProps {
 export function TaskPriorityDropdown({ currentPriority, onChange }: TaskPriorityDropdownProps) {
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+  console.log("[TaskPriorityDropdown] Rendering with priority:", currentPriority);
 
   // Priority configuration
   const priorityOptions: PriorityOption[] = [
@@ -47,7 +50,9 @@ export function TaskPriorityDropdown({ currentPriority, onChange }: TaskPriority
   };
 
   const handlePriorityChange = async (newPriority: string) => {
+    console.log("[TaskPriorityDropdown] Priority change requested:", newPriority);
     setIsUpdating(true);
+    setIsOpen(false);
     try {
       await onChange(newPriority);
       toast({
@@ -65,19 +70,25 @@ export function TaskPriorityDropdown({ currentPriority, onChange }: TaskPriority
     }
   };
 
+  console.log("[TaskPriorityDropdown] Current open state:", isOpen);
+
   return (
-    <DropdownMenu>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild disabled={isUpdating}>
         <Button
           variant="outline"
           size="sm"
           className="border-[#3A4D62] hover:border-[#64748B] hover:bg-[#3A4D62]/30"
+          onClick={() => {
+            console.log("[TaskPriorityDropdown] Button clicked, toggling dropdown");
+            setIsOpen(!isOpen);
+          }}
         >
           <Flag className={`mr-2 h-4 w-4 ${getFlagColor(currentPriority)}`} />
           {currentPriority.charAt(0).toUpperCase() + currentPriority.slice(1)}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-50">
+      <DropdownMenuContent align="start" className="z-[999]">
         <DropdownMenuLabel>Set Priority</DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-[#3A4D62]" />
         {priorityOptions.map((option) => {
@@ -95,7 +106,10 @@ export function TaskPriorityDropdown({ currentPriority, onChange }: TaskPriority
           return (
             <DropdownMenuItem 
               key={option.value}
-              onClick={() => handlePriorityChange(option.value)} 
+              onClick={() => {
+                console.log("[TaskPriorityDropdown] Option clicked:", option.value);
+                handlePriorityChange(option.value);
+              }} 
               className="hover:bg-[#3A4D62]/50 cursor-pointer flex items-center gap-2"
             >
               <Flag className={`h-4 w-4 ${iconColor}`} aria-hidden="true" />

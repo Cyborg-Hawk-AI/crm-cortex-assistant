@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, 
@@ -78,14 +77,14 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   const [tags, setTags] = useState<string[]>(task.tags || []);
   const [comments, setComments] = useState<any[]>([]);
   
-  const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
-  const [isPriorityMenuOpen, setIsPriorityMenuOpen] = useState(false);
+  const [statusMenuOpen, setStatusMenuOpen] = useState(false);
+  const [priorityMenuOpen, setPriorityMenuOpen] = useState(false);
   
   const [descriptionHeight, setDescriptionHeight] = useState<string>('auto');
   const [descriptionOverflow, setDescriptionOverflow] = useState<boolean>(false);
   
-  console.log("[TaskDetail] Initial render with status:", status, "priority:", priority);
-  console.log("[TaskDetail] Initial state - isStatusMenuOpen:", isStatusMenuOpen, "isPriorityMenuOpen:", isPriorityMenuOpen);
+  console.log("[TaskDetail] Rendering with status:", status, "priority:", priority);
+  console.log("[TaskDetail] Current menu states - statusMenuOpen:", statusMenuOpen, "priorityMenuOpen:", priorityMenuOpen);
   
   const statusOptions = [
     { value: 'open', label: 'Open', icon: Circle, color: 'bg-[#3A4D62] text-[#F1F5F9] border-[#3A4D62]/50' },
@@ -102,14 +101,13 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
     { value: 'urgent', label: 'Urgent', icon: AlertTriangle, color: 'bg-neon-red/20 text-neon-red border-neon-red/30' },
   ];
 
-  // Log state changes
   useEffect(() => {
-    console.log("[TaskDetail] isStatusMenuOpen changed to:", isStatusMenuOpen);
-  }, [isStatusMenuOpen]);
+    console.log("[TaskDetail] statusMenuOpen changed to:", statusMenuOpen);
+  }, [statusMenuOpen]);
 
   useEffect(() => {
-    console.log("[TaskDetail] isPriorityMenuOpen changed to:", isPriorityMenuOpen);
-  }, [isPriorityMenuOpen]);
+    console.log("[TaskDetail] priorityMenuOpen changed to:", priorityMenuOpen);
+  }, [priorityMenuOpen]);
 
   const { data: profiles = {}, isLoading: loadingProfiles } = useQuery({
     queryKey: ['user-profiles'],
@@ -451,7 +449,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   const handleStatusChange = (newStatus: string) => {
     console.log("[TaskDetail] handleStatusChange called with:", newStatus);
     setStatus(newStatus as any);
-    setIsStatusMenuOpen(false);
+    setStatusMenuOpen(false);
     
     if (!isEditing) {
       try {
@@ -482,7 +480,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   const handlePriorityChange = (newPriority: string) => {
     console.log("[TaskDetail] handlePriorityChange called with:", newPriority);
     setPriority(newPriority as any);
-    setIsPriorityMenuOpen(false);
+    setPriorityMenuOpen(false);
     
     if (!isEditing) {
       try {
@@ -547,23 +545,23 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
     }
   };
 
-  const StatusIcon = getStatusIcon(status);
-  const PriorityIcon = getPriorityIcon(priority);
+  const StatusIcon = status ? statusOptions.find(opt => opt.value === status)?.icon || Circle : Circle;
+  const PriorityIcon = priority ? priorityOptions.find(opt => opt.value === priority)?.icon || Flag : Flag;
   
   const handleStatusDropdownToggle = (open: boolean) => {
     console.log("[TaskDetail] Status dropdown toggled to:", open);
     console.log("[TaskDetail] Dropdown DOM element present:", !!document.querySelector('[data-status-dropdown]'));
-    setIsStatusMenuOpen(open);
+    setStatusMenuOpen(open);
   };
   
   const handlePriorityDropdownToggle = (open: boolean) => {
     console.log("[TaskDetail] Priority dropdown toggled to:", open);
     console.log("[TaskDetail] Dropdown DOM element present:", !!document.querySelector('[data-priority-dropdown]'));
-    setIsPriorityMenuOpen(open);
+    setPriorityMenuOpen(open);
   };
   
-  console.log("[TaskDetail] Before render - isStatusMenuOpen:", isStatusMenuOpen);
-  console.log("[TaskDetail] Before render - isPriorityMenuOpen:", isPriorityMenuOpen);
+  console.log("[TaskDetail] Before render - statusMenuOpen:", statusMenuOpen);
+  console.log("[TaskDetail] Before render - priorityMenuOpen:", priorityMenuOpen);
 
   return (
     <div className="bg-[#25384D] flex flex-col h-full max-h-screen overflow-hidden">
@@ -629,14 +627,15 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
               )}
               <div className="flex space-x-2">
                 <DropdownMenu 
-                  open={isStatusMenuOpen} 
+                  open={statusMenuOpen} 
                   onOpenChange={handleStatusDropdownToggle}
                 >
                   <DropdownMenuTrigger asChild>
                     <Badge 
                       className={`${getStatusColor(status)} cursor-pointer hover:opacity-80 flex items-center gap-1.5`}
                       onClick={() => {
-                        console.log("[TaskDetail] Status badge clicked - current state:", isStatusMenuOpen);
+                        console.log("[TaskDetail] Status badge clicked, current state:", statusMenuOpen);
+                        setStatusMenuOpen(!statusMenuOpen);
                       }}
                       data-status-dropdown
                     >
@@ -686,14 +685,15 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
                 </DropdownMenu>
                 
                 <DropdownMenu 
-                  open={isPriorityMenuOpen} 
+                  open={priorityMenuOpen} 
                   onOpenChange={handlePriorityDropdownToggle}
                 >
                   <DropdownMenuTrigger asChild>
                     <Badge 
                       className={`${getPriorityColor(priority)} cursor-pointer hover:opacity-80 flex items-center gap-1.5`}
                       onClick={() => {
-                        console.log("[TaskDetail] Priority badge clicked - current state:", isPriorityMenuOpen);
+                        console.log("[TaskDetail] Priority badge clicked, current state:", priorityMenuOpen);
+                        setPriorityMenuOpen(!priorityMenuOpen);
                       }}
                       data-priority-dropdown
                     >
