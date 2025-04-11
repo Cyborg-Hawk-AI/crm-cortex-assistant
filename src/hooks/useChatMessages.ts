@@ -6,11 +6,14 @@ import * as chatHistoryService from '@/services/chatHistoryService';
 import { useToast } from '@/hooks/use-toast';
 import { useAssistantConfig } from '@/hooks/useAssistantConfig';
 import { useProjects } from '@/hooks/useProjects';
+import { Message, Assistant, Task } from '@/utils/types';
 
 export function useChatMessages() {
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
+  const [linkedTask, setLinkedTask] = useState<Task | null>(null);
+  const [activeAssistant, setActiveAssistantState] = useState<Assistant | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { activeProjectId } = useProjects();
@@ -39,6 +42,7 @@ export function useChatMessages() {
       // If there's an active project, associate this conversation with it
       if (activeProjectId) {
         try {
+          // Update the chatHistoryService to handle project_id properly
           await chatHistoryService.updateConversation(newConversation.id, { 
             project_id: activeProjectId 
           });
@@ -97,6 +101,28 @@ export function useChatMessages() {
       });
     }
   });
+
+  // Add message helper function
+  const addMessage = useCallback((content: string, sender: 'user' | 'assistant' | 'system') => {
+    if (!activeConversationId) return null;
+    return sendMessageMutation.mutateAsync({ 
+      content, 
+      sender, 
+      conversationId: activeConversationId 
+    });
+  }, [activeConversationId, sendMessageMutation]);
+
+  // Set active assistant
+  const setActiveAssistant = useCallback(async (assistant: Assistant) => {
+    setActiveAssistantState(assistant);
+    return assistant;
+  }, []);
+
+  // Link task to conversation
+  const linkTaskToConversation = useCallback(async (task: Task | null) => {
+    setLinkedTask(task);
+    return task;
+  }, []);
 
   // Send a message with streaming response
   const sendMessage = useCallback(async (content: string, sender: 'user' | 'assistant' | 'system' = 'user', conversationId?: string | null) => {
@@ -221,6 +247,12 @@ export function useChatMessages() {
     clearMessages,
     isSending: sendMessageMutation.isPending,
     isStreaming,
-    startConversation
+    startConversation,
+    // Add the missing properties that QuickActions.tsx needs
+    addMessage,
+    activeAssistant,
+    setActiveAssistant,
+    linkedTask,
+    linkTaskToConversation
   };
 }
