@@ -444,3 +444,43 @@ export const assignConversationToProject = async (conversationId: string, projec
 
   return true;
 };
+
+// Add this new function to update conversation titles
+export const updateConversationTitle = async (conversationId: string, title: string): Promise<boolean> => {
+  const userId = await getCurrentUserId();
+  
+  if (!userId) {
+    throw new Error('User not authenticated');
+  }
+
+  // Verify the user has access to this conversation
+  const { data: conversation, error: convError } = await supabase
+    .from('conversations')
+    .select()
+    .eq('id', conversationId)
+    .eq('user_id', userId)
+    .single();
+
+  if (convError) {
+    console.error('Error fetching conversation:', convError);
+    return false;
+  }
+
+  // Update the conversation title
+  const { error } = await supabase
+    .from('conversations')
+    .update({ 
+      title,
+      updated_at: new Date().toISOString() 
+    })
+    .eq('id', conversationId)
+    .eq('user_id', userId);
+
+  if (error) {
+    console.error('Error updating conversation title:', error);
+    return false;
+  }
+
+  console.log(`Successfully updated conversation ${conversationId} title to "${title}"`);
+  return true;
+};

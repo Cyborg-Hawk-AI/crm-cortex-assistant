@@ -12,6 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { updateConversationTitle } from '@/api/messages';
 
 interface ConversationSidebarProps {
   activeConversationId: string | null;
@@ -37,8 +38,12 @@ export const ConversationSidebar = forwardRef<{
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedConversationForMove, setSelectedConversationForMove] = useState<string | null>(null);
   const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
+  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
+  const [selectedConversationForRename, setSelectedConversationForRename] = useState<string | null>(null);
+  const [newConversationTitle, setNewConversationTitle] = useState('');
+  const [isDeleteProjectDialogOpen, setIsDeleteProjectDialogOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
 
-  // Get projects data
   const {
     projects,
     isLoadingProjects,
@@ -52,7 +57,6 @@ export const ConversationSidebar = forwardRef<{
     isUpdatingProject
   } = useProjects();
 
-  // Expose the setIsOpen method via ref
   useImperativeHandle(ref, () => ({
     setIsOpen
   }));
@@ -77,8 +81,6 @@ export const ConversationSidebar = forwardRef<{
   }, [isOpen]);
 
   const handleNewConversation = async () => {
-    // We'll no longer create a conversation here, we'll just reset the active ID
-    // so the user sees the "Start new conversation" screen
     setActiveConversationId(null);
     if (isMobile) setIsOpen(false);
   };
@@ -100,7 +102,7 @@ export const ConversationSidebar = forwardRef<{
       if (remainingConversations.length > 0) {
         setActiveConversationId(remainingConversations[0].id);
       } else {
-        setActiveConversationId(null); // Just show the empty state instead of creating a new conversation
+        setActiveConversationId(null);
       }
     }
   };
@@ -134,12 +136,16 @@ export const ConversationSidebar = forwardRef<{
     setIsEditDialogOpen(true);
   };
 
-  const handleDeleteProject = (projectId: string) => {
-    if (window.confirm('Are you sure you want to delete this project? Conversations will be unassigned from it but not deleted.')) {
-      deleteProject(projectId);
-      if (projectId === activeProjectId) {
-        setActiveProjectId(null);
-      }
+  const handleDeleteProjectPrompt = (projectId: string) => {
+    setProjectToDelete(projectId);
+    setIsDeleteProjectDialogOpen(true);
+  };
+
+  const handleConfirmDeleteProject = async () => {
+    if (projectToDelete) {
+      await deleteProject(projectToDelete);
+      setIsDeleteProjectDialogOpen(false);
+      setProjectToDelete(null);
     }
   };
 
@@ -153,6 +159,22 @@ export const ConversationSidebar = forwardRef<{
       moveConversationToProject(selectedConversationForMove, projectId);
       setSelectedConversationForMove(null);
       setIsMoveDialogOpen(false);
+    }
+  };
+
+  const handleRenameConversation = (conversationId: string, currentTitle: string) => {
+    setSelectedConversationForRename(conversationId);
+    setNewConversationTitle(currentTitle);
+    setIsRenameDialogOpen(true);
+  };
+
+  const handleConfirmRename = async () => {
+    if (selectedConversationForRename && newConversationTitle.trim()) {
+      await updateConversationTitle(selectedConversationForRename, newConversationTitle.trim());
+      refetchConversations();
+      setIsRenameDialogOpen(false);
+      setSelectedConversationForRename(null);
+      setNewConversationTitle('');
     }
   };
 
@@ -170,15 +192,13 @@ export const ConversationSidebar = forwardRef<{
     setIsOpen(!isOpen);
   };
 
-  // Filter conversations based on active project
   const filteredConversations = conversations.filter(conversation => 
     activeProjectId 
       ? conversation.project_id === activeProjectId 
-      : !conversation.project_id // Show conversations without a project when no project selected
+      : !conversation.project_id
   );
 
   return <>
-      {/* Sidebar Expander - Now more visible with animation */}
       {!isOpen && <div className="h-full flex items-center cursor-pointer bg-gradient-to-r from-neon-purple/20 to-transparent hover:from-neon-purple/40 transition-all duration-300 border-r border-neon-purple/20" onClick={toggleSidebar}>
           <div className="p-2 bg-white rounded-full shadow-lg mr-[-12px] neon-glow-purple">
             <ChevronRight size={16} className="text-neon-purple animate-pulse" />
@@ -191,7 +211,6 @@ export const ConversationSidebar = forwardRef<{
           </Button>}
 
         <div className={`flex flex-col h-full overflow-hidden ${isOpen ? 'opacity-100' : 'opacity-0'}`}>
-          {/* Close button with more visible styling */}
           {!isMobile && isOpen && <Button variant="ghost" size="icon" className="absolute top-3 right-3 hover:bg-neon-purple/10 rounded-full" onClick={toggleSidebar}>
               <ChevronLeft size={16} className="text-neon-purple" />
             </Button>}
@@ -296,7 +315,7 @@ export const ConversationSidebar = forwardRef<{
                     className="w-full justify-start"
                     onClick={() => handleMoveToProject('')}
                   >
-                    <span className="flex-1 text-left">No Project (Unassigned)</span>
+                    <span className="flex-1 text-left">Open Chats</span>
                   </Button>
                   {projects.map(project => (
                     <Button 
@@ -312,6 +331,51 @@ export const ConversationSidebar = forwardRef<{
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsMoveDialogOpen(false)}>Cancel</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            
+            <Dialog open={isRenameDialogOpen} onOpenChange={setIsRenameDialogOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Rename Conversation</DialogTitle>
+                  <DialogDescription>
+                    Enter a new name for this conversation.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="conversation-name">Conversation Name</Label>
+                    <Input 
+                      id="conversation-name" 
+                      value={newConversationTitle}
+                      onChange={(e) => setNewConversationTitle(e.target.value)}
+                      placeholder="Enter conversation name"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsRenameDialogOpen(false)}>Cancel</Button>
+                  <Button onClick={handleConfirmRename} disabled={!newConversationTitle.trim()}>
+                    Rename
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            
+            <Dialog open={isDeleteProjectDialogOpen} onOpenChange={setIsDeleteProjectDialogOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Delete Project</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to delete this project? All associated chats will be moved to Open Chats.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsDeleteProjectDialogOpen(false)}>Cancel</Button>
+                  <Button variant="destructive" onClick={handleConfirmDeleteProject}>
+                    Delete Project
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -334,7 +398,6 @@ export const ConversationSidebar = forwardRef<{
               </div>
             ) : (
               <div className="space-y-6 px-2">
-                {/* Open Chats section (formerly Unassigned) */}
                 <div className="space-y-2">
                   <button 
                     onClick={() => setActiveProjectId(null)}
@@ -404,6 +467,18 @@ export const ConversationSidebar = forwardRef<{
                                         className="w-full justify-start text-sm"
                                         onClick={(e) => {
                                           e.stopPropagation();
+                                          handleRenameConversation(conversation.id, conversation.title);
+                                        }}
+                                      >
+                                        <Edit className="mr-2 h-4 w-4" />
+                                        Rename
+                                      </Button>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        className="w-full justify-start text-sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
                                           handleMoveConversation(conversation.id);
                                         }}
                                       >
@@ -431,61 +506,55 @@ export const ConversationSidebar = forwardRef<{
                   )}
                 </div>
                 
-                {/* Projects section */}
                 {projects.map(project => (
                   <div key={project.id} className="space-y-2">
-                    <button 
-                      onClick={() => setActiveProjectId(project.id === activeProjectId ? null : project.id)}
-                      className={`w-full text-left font-medium px-2 py-1 rounded hover:bg-white/10 transition-colors flex items-center justify-between ${activeProjectId === project.id ? 'bg-white/20 text-white' : 'text-gray-300'}`}
-                    >
-                      <span className="flex items-center truncate pr-2">
-                        <Folder className="mr-2 h-4 w-4 flex-shrink-0" />
-                        <span className="truncate">{project.name}</span>
-                      </span>
-                      <div className="flex items-center">
-                        <Popover>
-                          <PopoverTrigger asChild>
+                    <div className="flex items-center justify-between">
+                      <button 
+                        onClick={() => setActiveProjectId(project.id === activeProjectId ? null : project.id)}
+                        className={`flex-grow text-left font-medium px-2 py-1 rounded hover:bg-white/10 transition-colors flex items-center justify-between ${activeProjectId === project.id ? 'bg-white/20 text-white' : 'text-gray-300'}`}
+                      >
+                        <span className="flex items-center truncate pr-2">
+                          <Folder className="mr-2 h-4 w-4 flex-shrink-0" />
+                          <span className="truncate">{project.name}</span>
+                        </span>
+                        <ChevronRight className={`h-4 w-4 transition-transform ${activeProjectId === project.id ? 'rotate-90' : ''}`} />
+                      </button>
+                      
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:opacity-100 focus:opacity-100 hover:bg-white/10 rounded-full transition-all ml-1"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreVertical size={14} />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-48" side="right">
+                          <div className="space-y-1">
                             <Button 
                               variant="ghost" 
-                              size="icon" 
-                              className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:opacity-100 focus:opacity-100 hover:bg-white/10 rounded-full transition-all mr-1"
-                              onClick={(e) => e.stopPropagation()}
+                              size="sm" 
+                              className="w-full justify-start text-sm"
+                              onClick={() => handleEditProject(project.id, project.name, project.description || '')}
                             >
-                              <MoreVertical size={14} />
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit Project
                             </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-48" side="right">
-                            <div className="space-y-1">
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="w-full justify-start text-sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleEditProject(project.id, project.name, project.description || '');
-                                }}
-                              >
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit Project
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="w-full justify-start text-sm text-red-500 hover:text-red-600 hover:bg-red-100/10"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteProject(project.id);
-                                }}
-                              >
-                                <Trash className="mr-2 h-4 w-4" />
-                                Delete Project
-                              </Button>
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                        <ChevronRight className={`h-4 w-4 transition-transform ${activeProjectId === project.id ? 'rotate-90' : ''}`} />
-                      </div>
-                    </button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="w-full justify-start text-sm text-red-500 hover:text-red-600 hover:bg-red-100/10"
+                              onClick={() => handleDeleteProjectPrompt(project.id)}
+                            >
+                              <Trash className="mr-2 h-4 w-4" />
+                              Delete Project
+                            </Button>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
                     
                     {activeProjectId === project.id && (
                       <div className="ml-3 space-y-1 animate-slideDown">
