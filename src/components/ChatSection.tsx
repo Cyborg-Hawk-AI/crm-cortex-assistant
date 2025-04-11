@@ -7,6 +7,7 @@ import { useChatMessages } from '@/hooks/useChatMessages';
 import { useToast } from '@/hooks/use-toast';
 import { Message } from '@/utils/types';
 import { Message as MessageComponent } from '@/components/Message';
+import { QuickActions } from '@/components/QuickActions';
 
 interface ChatSectionProps {
   activeConversationId: string | null;
@@ -136,6 +137,9 @@ export function ChatSection({
       </div>
       
       <div className="border-t border-gray-200 bg-white p-4">
+        {/* Quick Actions Section */}
+        <QuickActions />
+        
         <div className="flex justify-between items-center mb-2">
           <Button variant="outline" size="sm" className="text-muted-foreground hover:text-neon-red hover:border-neon-red/30 hover:shadow-[0_0_8px_rgba(244,63,94,0.2)]" onClick={handleClearChat} disabled={!activeConversationId}>
             <Trash2 className="h-4 w-4 mr-1" />
