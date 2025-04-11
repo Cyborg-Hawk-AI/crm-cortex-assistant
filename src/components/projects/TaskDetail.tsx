@@ -298,8 +298,9 @@ export function TaskDetail({
     if (!dateString) return 'No date set';
     try {
       console.log(`[DEBUG-TaskDetail] Formatting date: ${dateString}, type: ${typeof dateString}`);
-      // FIX: Using type checking instead of instanceof for date objects
-      return format(new Date(dateString), 'PPP');
+      // Fix: Convert string or Date to Date object and then format
+      const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+      return format(date, 'PPP');
     } catch (e) {
       console.error(`[DEBUG-TaskDetail] Error formatting date:`, e);
       return 'Invalid date';
