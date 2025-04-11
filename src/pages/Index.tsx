@@ -20,12 +20,20 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { MissionTaskEditor } from '@/components/mission/MissionTaskEditor';
 import { TasksPage } from '@/components/TasksPage';
 
-export default function Index() {
-  const [activeTab, setActiveTab] = useState<string>('main');
+interface IndexProps {
+  activeTab?: string;
+  setActiveTab?: (tab: string) => void;
+}
+
+export default function Index({ activeTab: propActiveTab, setActiveTab: propSetActiveTab }: IndexProps) {
+  const [localActiveTab, setLocalActiveTab] = useState<string>('main');
   const { signOut } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
+  
+  const activeTab = propActiveTab || localActiveTab;
+  const setActiveTab = propSetActiveTab || setLocalActiveTab;
   
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isTaskEditorOpen, setIsTaskEditorOpen] = useState(false);
@@ -53,7 +61,7 @@ export default function Index() {
       setOpenCreateTask(true);
       navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [location, navigate]);
+  }, [location, navigate, setActiveTab]);
 
   const handleOpenChat = () => {
     setActiveTab('chat');

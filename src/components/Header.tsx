@@ -50,9 +50,15 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
     } else if (tab === 'main' && location.pathname !== '/') {
       navigate('/');
     } else if (tab === 'settings') {
-      // Navigate to settings when implemented
+      navigate('/');  // Navigate to home with settings tab active
+      setTimeout(() => {
+        setActiveTab('settings');
+      }, 100);
     } else if (tab === 'chat') {
-      // Navigate to chat when implemented
+      navigate('/');  // Navigate to home with chat tab active
+      setTimeout(() => {
+        setActiveTab('chat');
+      }, 100);
     }
   };
   
