@@ -1,114 +1,142 @@
 
-import { StreamingCallbacks } from './streamTypes';
+import { createParser, ParsedEvent, ReconnectInterval } from 'eventsource-parser';
+import { ModelProvider } from '@/hooks/useModelSelection';
 
-// OpenAI API configuration
-const OPENAI_API_URL = 'https://api.openai.com/v1';
-const DEFAULT_MODEL = 'gpt-4o-mini';
-// Using the provided OpenAI key 
-const OPENAI_API_KEY = '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';
+export type ChatCompletionRequestMessage = {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+};
 
-export interface StreamOptions {
+export type OpenAIStreamPayload = {
   model?: string;
+  messages: ChatCompletionRequestMessage[];
   temperature?: number;
+  top_p?: number;
+  frequency_penalty?: number;
+  presence_penalty?: number;
   max_tokens?: number;
-  messages: Array<{ role: string; content: string }>;
-}
+  stream?: boolean;
+  n?: number;
+};
 
-/**
- * Creates a streaming request to the OpenAI API
- */
 export async function createOpenAIStream(
-  options: StreamOptions,
-  callbacks: StreamingCallbacks
-): Promise<() => boolean> {
+  payload: OpenAIStreamPayload,
+  callbacks: {
+    onStart: () => void;
+    onChunk: (chunk: string) => void;
+    onComplete: (fullResponse: string) => void;
+    onError: (error: Error) => void;
+  },
+  provider: ModelProvider = 'openai'
+) {
   try {
     callbacks.onStart();
     
-    const response = await fetch(`${OPENAI_API_URL}/chat/completions`, {
-      method: 'POST',
+    // Different API URLs based on provider
+    const apiUrl = provider === 'openai' 
+      ? 'https://api.openai.com/v1/chat/completions'
+      : 'https://api.deepseek.com/v1/chat/completions';
+    
+    // Different model based on provider
+    const model = provider === 'openai'
+      ? 'gpt-4-turbo'  // Using a placeholder - replace with your actual OpenAI model
+      : 'deepseek-reasoner';
+    
+    // Get API key (would need to be fetched from secure storage)
+    const apiKey = provider === 'openai'
+      ? process.env.OPENAI_API_KEY || 'PLACEHOLDER_OPENAI_API_KEY'
+      : process.env.DEEPSEEK_API_KEY || 'PLACEHOLDER_DEEPSEEK_API_KEY';
+      
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+    
+    // Create the request payload
+    const requestPayload = {
+      ...payload,
+      model,
+      stream: true
+    };
+    
+    const res = await fetch(apiUrl, {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        model: options.model || DEFAULT_MODEL,
-        messages: options.messages,
-        temperature: options.temperature ?? 0.7,
-        max_tokens: options.max_tokens,
-        stream: true,
-      }),
+      method: 'POST',
+      body: JSON.stringify(requestPayload),
     });
     
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`OpenAI API error: ${response.status} ${error}`);
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`API error: ${res.status} - ${errorText}`);
     }
     
-    // Streaming setup
-    const reader = response.body?.getReader();
-    if (!reader) {
-      throw new Error('Failed to get reader from response');
-    }
-    
-    const decoder = new TextDecoder('utf-8');
-    let fullText = '';
-    let isComplete = false;
-    
-    const processStream = async () => {
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          
-          if (done) {
-            console.log('Stream complete');
-            isComplete = true;
-            callbacks.onComplete(fullText);
-            break;
-          }
-          
-          // Decode the chunk
-          const chunk = decoder.decode(value, { stream: true });
-          
-          // Process the SSE format
-          const lines = chunk
-            .split('\n')
-            .filter(line => line.trim() !== '')
-            .map(line => line.replace(/^data: /, '').trim());
-          
-          for (const line of lines) {
-            if (line === '[DONE]') {
-              isComplete = true;
-              continue;
+    // Create a streaming response
+    const stream = new ReadableStream({
+      async start(controller) {
+        function onParse(event: ParsedEvent | ReconnectInterval) {
+          if (event.type === 'event') {
+            const data = event.data;
+            
+            // Handle event completion
+            if (data === '[DONE]') {
+              controller.close();
+              return;
             }
             
             try {
-              const json = JSON.parse(line);
-              const content = json.choices[0]?.delta?.content || '';
+              const json = JSON.parse(data);
+              
+              // Extract content based on provider
+              let content = '';
+              if (provider === 'openai') {
+                content = json.choices[0]?.delta?.content || '';
+              } else { // deepseek
+                content = json.choices[0]?.delta?.content || '';
+              }
               
               if (content) {
-                fullText += content;
                 callbacks.onChunk(content);
+                const queue = encoder.encode(content);
+                controller.enqueue(queue);
               }
             } catch (e) {
-              console.error('Error parsing SSE line:', line, e);
+              console.error('Error parsing stream:', e);
+              controller.error(e);
             }
           }
         }
-      } catch (error) {
-        console.error('Error in stream processing:', error);
-        callbacks.onError(error instanceof Error ? error : new Error(String(error)));
-        isComplete = true;
-      }
-    };
+        
+        // Set up the parser
+        const parser = createParser(onParse);
+        
+        // Process the stream
+        if (res.body) {
+          const reader = res.body.getReader();
+          let done = false;
+          let fullContent = '';
+          
+          while (!done) {
+            const { value, done: doneReading } = await reader.read();
+            done = doneReading;
+            
+            if (done) {
+              callbacks.onComplete(fullContent);
+              break;
+            }
+            
+            const chunk = decoder.decode(value, { stream: true });
+            parser.feed(chunk);
+            fullContent += chunk;
+          }
+        }
+      },
+    });
     
-    // Start processing the stream
-    processStream();
-    
-    // Return function to check if streaming is complete
-    return () => isComplete;
+    return stream;
   } catch (error) {
-    console.error('Failed to create stream:', error);
-    callbacks.onError(error instanceof Error ? error : new Error(String(error)));
-    return () => true; // Return a function that indicates streaming is complete due to error
+    console.error('Error in createOpenAIStream:', error);
+    callbacks.onError(error as Error);
+    return null;
   }
 }

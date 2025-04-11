@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Message, Task, Assistant } from '@/utils/types';
@@ -6,6 +7,7 @@ import * as assistantService from '@/services/assistantService';
 import { v4 as uuidv4 } from 'uuid';
 import * as messagesApi from '@/api/messages';
 import { createOpenAIStream } from '@/utils/openAIStream';
+import { useModelSelection } from '@/hooks/useModelSelection';
 
 export function useChatMessages() {
   const { toast } = useToast();
@@ -18,6 +20,7 @@ export function useChatMessages() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const isInitialLoadDone = useRef(false);
+  const { selectedModel } = useModelSelection();
   
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
   
@@ -87,9 +90,18 @@ export function useChatMessages() {
 
   const startConversation = async (title?: string): Promise<string> => {
     try {
+      // Create a conversation with the currently selected model provider
       const conversation = await messagesApi.createConversation(title);
+      
+      // Update the conversation with the selected model provider
+      await chatHistoryService.updateConversation(conversation.id, {
+        model_provider: selectedModel.provider
+      });
+      
       setActiveConversationId(conversation.id);
       setLocalMessages([]);
+      
+      console.log(`Created new conversation with model provider: ${selectedModel.provider}`);
       return conversation.id;
     } catch (error) {
       console.error('Error starting conversation:', error);
@@ -302,9 +314,9 @@ export function useChatMessages() {
         try {
           const messagesForContext = await messagesApi.getMessages(conversationId);
           
-          console.log(`Sending ${messagesForContext.length} messages for context to maintain conversation history`);
+          console.log(`Using ${messagesForContext.length} messages for context with model provider: ${selectedModel.provider}`);
           
-          // Format messages for OpenAI API
+          // Format messages for the API
           const messageHistory = messagesForContext.map(msg => ({
             role: msg.sender === 'user' ? 'user' : 'assistant',
             content: msg.content
@@ -323,12 +335,25 @@ export function useChatMessages() {
             });
           }
           
+          // Add model-specific system prompts
+          if (selectedModel.provider === 'deepseek') {
+            messageHistory.unshift({
+              role: 'system',
+              content: 'You are ActionOmega, powered by DeepSeek Reasoner, a powerful AI designed to help engineers solve complex problems with precision and clarity.'
+            });
+          } else {
+            messageHistory.unshift({
+              role: 'system',
+              content: 'You are ActionAlpha, powered by OpenAI, an advanced AI that helps engineers with coding, debugging, and technical guidance.'
+            });
+          }
+          
           // Create the stream directly from the frontend
           await createOpenAIStream(
             { messages: messageHistory },
             {
               onStart: () => {
-                console.log('Starting to stream assistant response');
+                console.log(`Starting to stream ${selectedModel.name} response`);
               },
               onChunk: (chunk: string) => {
                 if (!chunk || typeof chunk !== 'string') return;
@@ -367,7 +392,7 @@ export function useChatMessages() {
                 setIsSending(false);
               },
               onError: (error) => {
-                console.error('Error in assistant response:', error);
+                console.error(`Error in ${selectedModel.name} response:`, error);
                 const errorMessage = `Error: ${error.message}`;
                 
                 setLocalMessages(prev => 
@@ -391,7 +416,8 @@ export function useChatMessages() {
                   variant: 'destructive'
                 });
               }
-            }
+            },
+            selectedModel.provider // Pass the model provider to use the appropriate API
           );
         } catch (error: any) {
           console.error('Error in sendMessage:', error);
@@ -466,7 +492,8 @@ export function useChatMessages() {
     saveMessage,
     addLocalMessage,
     startConversation,
-    toast
+    toast,
+    selectedModel
   ]);
 
   return {
