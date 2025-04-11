@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -146,14 +147,13 @@ export function ChatSection({
             <Trash2 className="h-4 w-4 mr-1" />
             Clear conversation
           </Button>
+          
+          {/* Model Selection - moved to right side */}
+          <ModelToggle currentModel={selectedModel} onToggle={toggleModel} />
         </div>
         
         <div className="relative">
           <Textarea value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyDown={handleKeyDown} onCompositionStart={() => setIsComposing(true)} onCompositionEnd={() => setIsComposing(false)} placeholder="Type your engineering question here..." className="min-h-[80px] resize-none pr-12 rounded-md border border-neon-purple/30 focus:border-neon-purple focus:shadow-[0_0_8px_rgba(168,85,247,0.2)] transition-all" disabled={isSending || isStreaming || !activeConversationId} />
-          
-          <div className="absolute right-14 bottom-2">
-            <ModelToggle currentModel={selectedModel} onToggle={toggleModel} />
-          </div>
           
           <Button size="icon" className="absolute right-2 bottom-2 bg-gradient-to-r from-[#C084FC] to-[#D946EF] text-white hover:brightness-110 hover:shadow-[0_0_8px_rgba(168,85,247,0.4)]" onClick={handleSendMessage} disabled={!inputValue.trim() || isSending || isStreaming || !activeConversationId}>
             <Send className="h-4 w-4" />

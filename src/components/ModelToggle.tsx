@@ -1,9 +1,9 @@
 
 import React from 'react';
 import { ModelType } from '@/hooks/useModelSelection';
-import { Toggle } from '@/components/ui/toggle';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ToggleLeft, ToggleRight } from 'lucide-react';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { MODEL_OPTIONS } from '@/hooks/useModelSelection';
 
 interface ModelToggleProps {
   currentModel: ModelType;
@@ -15,21 +15,35 @@ export const ModelToggle = ({ currentModel, onToggle }: ModelToggleProps) => {
     <TooltipProvider>
       <Tooltip delayDuration={300}>
         <TooltipTrigger asChild>
-          <Toggle 
-            pressed={currentModel === 'deepseek'} 
-            onPressedChange={() => onToggle()}
-            className="h-8 w-8 p-0 data-[state=on]:bg-teal-900 data-[state=on]:text-white hover:bg-teal-800"
-            aria-label="Toggle AI model"
-          >
-            {currentModel === 'openai' ? (
-              <ToggleLeft className="h-4 w-4" />
-            ) : (
-              <ToggleRight className="h-4 w-4" />
-            )}
-          </Toggle>
+          <div className="model-toggle p-1">
+            <ToggleGroup type="single" value={currentModel} onValueChange={(value) => {
+              if (value) onToggle();
+            }} className="flex items-center gap-1">
+              <ToggleGroupItem 
+                value="openai" 
+                className={`model-toggle-button ${currentModel === 'openai' ? 'selected' : ''}`}
+                aria-label="Select ActionAlpha (OpenAI)"
+              >
+                <span className="text-xs font-medium">Α</span>
+                <span className="hidden sm:inline text-xs ml-1">Alpha</span>
+              </ToggleGroupItem>
+              <ToggleGroupItem 
+                value="deepseek" 
+                className={`model-toggle-button ${currentModel === 'deepseek' ? 'selected' : ''}`}
+                aria-label="Select ActionOmega (DeepSeek)"
+              >
+                <span className="text-xs font-medium">Ω</span>
+                <span className="hidden sm:inline text-xs ml-1">Omega</span>
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </div>
         </TooltipTrigger>
         <TooltipContent side="top">
-          <p>{currentModel === 'openai' ? 'ActionAlpha (OpenAI)' : 'ActionOmega (DeepSeek)'}</p>
+          <p>
+            {currentModel === 'openai' 
+              ? `${MODEL_OPTIONS.openai.name} (${MODEL_OPTIONS.openai.description})` 
+              : `${MODEL_OPTIONS.deepseek.name} (${MODEL_OPTIONS.deepseek.description})`}
+          </p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

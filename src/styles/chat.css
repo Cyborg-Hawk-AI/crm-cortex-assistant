@@ -1,5 +1,4 @@
 
-
 /* Add this to your existing chat.css file */
 
 .animate-slideDown {
@@ -49,6 +48,7 @@
   background-clip: text;
 }
 
+/* Enhanced model toggle styling */
 .model-toggle {
   display: inline-flex;
   align-items: center;
