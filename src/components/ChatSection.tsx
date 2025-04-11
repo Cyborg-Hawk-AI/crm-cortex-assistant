@@ -12,13 +12,11 @@ import { ModelToggle } from '@/components/ModelToggle';
 import { useModelSelection } from '@/hooks/useModelSelection';
 import { Alert } from '@/components/ui/alert';
 import { useNavigate } from 'react-router-dom';
-
 interface ChatSectionProps {
   activeConversationId: string | null;
   messages: Message[];
   isLoading: boolean;
 }
-
 export function ChatSection({
   activeConversationId,
   messages,
@@ -27,7 +25,10 @@ export function ChatSection({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const { selectedModel, toggleModel } = useModelSelection();
+  const {
+    selectedModel,
+    toggleModel
+  } = useModelSelection();
   const {
     inputValue,
     setInputValue,
@@ -43,21 +44,17 @@ export function ChatSection({
   const {
     toast
   } = useToast();
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({
       behavior: 'smooth'
     });
   };
-
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
     setApiError(null);
-
     try {
       if (!activeConversationId) {
         console.log("Creating a new conversation as part of sending the first message");
@@ -71,7 +68,6 @@ export function ChatSection({
       setInputValue('');
     } catch (error: any) {
       console.error('Error sending message:', error);
-      
       if (error.message?.includes('API key') && selectedModel === 'deepseek') {
         setApiError('DeepSeek API key is missing or invalid. The service requires configuration.');
       } else {
@@ -83,14 +79,12 @@ export function ChatSection({
       }
     }
   };
-
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && !isComposing) {
       e.preventDefault();
       handleSendMessage();
     }
   };
-
   const handleClearChat = async () => {
     if (window.confirm('Are you sure you want to clear this conversation?')) {
       await clearMessages(activeConversationId);
@@ -100,11 +94,13 @@ export function ChatSection({
       });
     }
   };
-
   const navigateToDashboard = () => {
-    navigate('/', { state: { activeTab: 'main' } });
+    navigate('/', {
+      state: {
+        activeTab: 'main'
+      }
+    });
   };
-
   if (isLoading) {
     return <div className="flex flex-col h-full justify-center items-center text-muted-foreground">
         <div className="loading-dots flex items-center">
@@ -119,10 +115,9 @@ export function ChatSection({
         <p className="mt-4 font-medium">Initializing ActionBot...</p>
       </div>;
   }
-
   if (messages.length === 0) {
     return <div className="flex flex-col h-full justify-center items-center p-4 text-center">
-        <div className="max-w-md actionbot-card p-8 rounded-xl border border-gray-100 shadow-lg bg-teal-950">
+        <div className="max-w-md actionbot-card p-8 rounded-xl border border-gray-100 shadow-lg bg-cyan-950">
           <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-[#C084FC] to-[#D946EF] rounded-full flex items-center justify-center text-white shadow-[0_0_15px_rgba(168,85,247,0.3)]">
             <Send className="h-6 w-6" />
           </div>
@@ -137,12 +132,10 @@ export function ChatSection({
               </Button>)}
           </div>
           
-          {selectedModel === 'deepseek' && (
-            <Alert className="mb-4 bg-amber-900/30 text-amber-200 border-amber-600/50">
+          {selectedModel === 'deepseek' && <Alert className="mb-4 bg-amber-900/30 text-amber-200 border-amber-600/50">
               <AlertTriangle className="h-4 w-4 mr-2" />
               <span>DeepSeek requires API configuration. Please add your API key in the settings.</span>
-            </Alert>
-          )}
+            </Alert>}
           
           <div className="relative">
             <Textarea value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyDown={handleKeyDown} onCompositionStart={() => setIsComposing(true)} onCompositionEnd={() => setIsComposing(false)} placeholder="Type your engineering question here..." className="min-h-[80px] resize-none pr-12 rounded-md border border-neon-purple/30 focus:border-neon-purple focus:shadow-[0_0_8px_rgba(168,85,247,0.2)] transition-all" />
@@ -156,18 +149,13 @@ export function ChatSection({
           </div>
 
           <div className="mt-6 text-center">
-            <Button
-              variant="outline"
-              className="text-neon-aqua border-neon-aqua/30 hover:border-neon-aqua/50"
-              onClick={navigateToDashboard}
-            >
+            <Button variant="outline" className="text-neon-aqua border-neon-aqua/30 hover:border-neon-aqua/50" onClick={navigateToDashboard}>
               Return to Dashboard
             </Button>
           </div>
         </div>
       </div>;
   }
-
   return <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-1 overflow-y-auto p-4 space-y-5 bg-gradient-to-br from-white to-gray-50 bg-slate-900">
         {messages.map((message: Message) => <MessageComponent key={message.id} message={message} />)}
@@ -178,12 +166,10 @@ export function ChatSection({
         {/* Quick Actions Section */}
         <QuickActions />
         
-        {apiError && (
-          <Alert className="mb-4 bg-amber-900/30 text-amber-200 border-amber-600/50">
+        {apiError && <Alert className="mb-4 bg-amber-900/30 text-amber-200 border-amber-600/50">
             <AlertTriangle className="h-4 w-4 mr-2" />
             <span>{apiError}</span>
-          </Alert>
-        )}
+          </Alert>}
         
         <div className="flex justify-between items-center mb-2">
           <Button variant="outline" size="sm" className="text-muted-foreground hover:text-neon-red hover:border-neon-red/30 hover:shadow-[0_0_8px_rgba(244,63,94,0.2)]" onClick={handleClearChat} disabled={!activeConversationId}>
@@ -193,12 +179,7 @@ export function ChatSection({
           
           {/* Model Selection */}
           <div className="flex space-x-2">
-            <Button
-              variant="outline" 
-              size="sm"
-              className="text-neon-aqua border-neon-aqua/30 hover:border-neon-aqua/50"
-              onClick={navigateToDashboard}
-            >
+            <Button variant="outline" size="sm" className="text-neon-aqua border-neon-aqua/30 hover:border-neon-aqua/50" onClick={navigateToDashboard}>
               Dashboard
             </Button>
             <div className="model-toggle">
