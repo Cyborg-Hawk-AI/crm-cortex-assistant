@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,13 +8,11 @@ import { Message } from '@/utils/types';
 import { Message as MessageComponent } from '@/components/Message';
 import { QuickActions } from '@/components/QuickActions';
 import { useIsMobile } from '@/hooks/use-mobile';
-
 interface ChatSectionProps {
   activeConversationId: string | null;
   messages: Message[];
   isLoading: boolean;
 }
-
 export function ChatSection({
   activeConversationId,
   messages,
@@ -37,17 +34,14 @@ export function ChatSection({
   const {
     toast
   } = useToast();
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({
       behavior: 'smooth'
     });
   };
-
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
     try {
@@ -70,14 +64,12 @@ export function ChatSection({
       });
     }
   };
-
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && !isComposing) {
       e.preventDefault();
       handleSendMessage();
     }
   };
-
   const handleClearChat = async () => {
     if (window.confirm('Are you sure you want to clear this conversation?')) {
       await clearMessages(activeConversationId);
@@ -87,7 +79,6 @@ export function ChatSection({
       });
     }
   };
-
   if (isLoading) {
     return <div className="flex flex-col h-full justify-center items-center text-muted-foreground">
         <div className="loading-dots flex items-center">
@@ -102,7 +93,6 @@ export function ChatSection({
         <p className="mt-4 font-medium">Initializing ActionBot...</p>
       </div>;
   }
-
   if (messages.length === 0) {
     return <div className="flex flex-col h-full justify-center items-center p-4 text-center">
         <div className="max-w-md actionbot-card p-8 rounded-xl border border-gray-100 shadow-lg bg-teal-950">
@@ -129,16 +119,13 @@ export function ChatSection({
         </div>
       </div>;
   }
-
   return <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-1 overflow-y-auto p-4 space-y-5 bg-gradient-to-br from-white to-gray-50">
-        {messages.map((message: Message) => (
-          <MessageComponent key={message.id} message={message} />
-        ))}
+        {messages.map((message: Message) => <MessageComponent key={message.id} message={message} />)}
         <div ref={messagesEndRef} />
       </div>
       
-      <div className="border-t border-gray-200 bg-white p-4">
+      <div className="border-t border-gray-200 p-4 bg-slate-700">
         {/* Quick Actions Section */}
         <QuickActions />
         
@@ -150,22 +137,8 @@ export function ChatSection({
         </div>
         
         <div className="relative">
-          <Textarea 
-            value={inputValue} 
-            onChange={e => setInputValue(e.target.value)} 
-            onKeyDown={handleKeyDown} 
-            onCompositionStart={() => setIsComposing(true)} 
-            onCompositionEnd={() => setIsComposing(false)} 
-            placeholder="Type your engineering question here..." 
-            className="min-h-[80px] resize-none pr-12 rounded-md border border-neon-purple/30 focus:border-neon-purple focus:shadow-[0_0_8px_rgba(168,85,247,0.2)] transition-all" 
-            disabled={isSending || isStreaming || !activeConversationId} 
-          />
-          <Button 
-            size="icon" 
-            className="absolute right-2 bottom-2 bg-gradient-to-r from-[#C084FC] to-[#D946EF] text-white hover:brightness-110 hover:shadow-[0_0_8px_rgba(168,85,247,0.4)]" 
-            onClick={handleSendMessage} 
-            disabled={!inputValue.trim() || isSending || isStreaming || !activeConversationId}
-          >
+          <Textarea value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyDown={handleKeyDown} onCompositionStart={() => setIsComposing(true)} onCompositionEnd={() => setIsComposing(false)} placeholder="Type your engineering question here..." className="min-h-[80px] resize-none pr-12 rounded-md border border-neon-purple/30 focus:border-neon-purple focus:shadow-[0_0_8px_rgba(168,85,247,0.2)] transition-all" disabled={isSending || isStreaming || !activeConversationId} />
+          <Button size="icon" className="absolute right-2 bottom-2 bg-gradient-to-r from-[#C084FC] to-[#D946EF] text-white hover:brightness-110 hover:shadow-[0_0_8px_rgba(168,85,247,0.4)]" onClick={handleSendMessage} disabled={!inputValue.trim() || isSending || isStreaming || !activeConversationId}>
             <Send className="h-4 w-4" />
           </Button>
           
