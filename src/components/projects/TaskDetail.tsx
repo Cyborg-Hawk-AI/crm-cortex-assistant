@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, 
@@ -568,10 +567,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
     try {
       await deleteTask(subtaskId);
       
-      // Filter out the deleted subtask from the local state
       const updatedSubtasks = subtasks.filter(subtask => subtask.id !== subtaskId);
-      // Since this is just a local operation and doesn't affect the stored subtasks array,
-      // we'll rely on the onRefresh call to update the UI through parent rerender
       
       if (onRefresh) {
         onRefresh();
@@ -958,7 +954,8 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
             <CommentSection 
               taskId={task.id}
               comments={comments}
-              onAddComment={handleAddComment} 
+              onAddComment={handleAddComment}
+              userId={task.user_id}
             />
           </div>
           

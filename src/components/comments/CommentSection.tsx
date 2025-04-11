@@ -24,7 +24,7 @@ interface Comment {
 interface CommentSectionProps {
   taskId: string;
   comments: Comment[];
-  userId: string;
+  userId?: string; // Make userId optional
   userName?: string;
   onAddComment?: (comment: string) => Promise<void>;
   onRefreshComments?: () => void;
@@ -42,6 +42,17 @@ export function CommentSection({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { profile } = useProfile();
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  // Get the current user ID on component mount
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const id = await getCurrentUserId();
+      setCurrentUserId(id);
+    };
+    
+    fetchUserId();
+  }, []);
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
@@ -79,14 +90,14 @@ export function CommentSection({
     if (profile?.full_name) {
       return profile.full_name;
     }
-    return userName || userId.substring(0, 8);
+    return userName || (currentUserId && currentUserId.substring(0, 8)) || 'User';
   };
 
   return (
     <div className="space-y-4">
       <div className="flex items-start gap-2">
         <Avatar className="h-8 w-8">
-          <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${userId}`} />
+          <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${currentUserId || userId || 'user'}`} />
           <AvatarFallback>
             {getDisplayName().substring(0, 2).toUpperCase()}
           </AvatarFallback>
