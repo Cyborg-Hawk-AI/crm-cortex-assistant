@@ -6,7 +6,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 import "./components/chat.css"; // Import our new CSS file
-import "./styles/chat.css"; // Import additional CSS
 
 import Index from "@/pages/Index";
 import NotFound from "@/pages/NotFound";
@@ -20,7 +19,6 @@ import { ProjectsPageWrapper } from "@/components/projects/ProjectsPageWrapper";
 import { Header } from "@/components/Header";
 import { Mindboard } from "@/components/mindboard/Mindboard";
 import { FloatingActionBar } from "@/components/FloatingActionBar";
-import { MissionsPage } from "@/components/mission/MissionsPage";
 
 function App() {
   const [queryClient] = useState(() => new QueryClient({
@@ -51,22 +49,17 @@ function App() {
                 
                 <Route path="/" element={
                   <ProtectedRoute>
-                    <Index activeTab={activeTab} setActiveTab={setActiveTab} key="index-page" />
+                    <Index activeTab={activeTab} setActiveTab={setActiveTab} />
                   </ProtectedRoute>
                 } />
                 
-                {/* Project Routes with key prop to ensure re-render */}
-                <Route path="/projects" element={<ProtectedRoute><ProjectsPageWrapper key="projects-page" /></ProtectedRoute>} />
-                <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectsPageWrapper key="project-detail" /></ProtectedRoute>} />
-                <Route path="/projects/:projectId/tasks/:taskId" element={<ProtectedRoute><ProjectsPageWrapper key="project-task" /></ProtectedRoute>} />
+                {/* Project Routes (formerly Missions) */}
+                <Route path="/projects" element={<ProtectedRoute><ProjectsPageWrapper /></ProtectedRoute>} />
+                <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectsPageWrapper /></ProtectedRoute>} />
+                <Route path="/projects/:projectId/tasks/:taskId" element={<ProtectedRoute><ProjectsPageWrapper /></ProtectedRoute>} />
                 
-                {/* Mission Routes with key prop */}
-                <Route path="/missions" element={<ProtectedRoute><MissionsPage key="missions-page" /></ProtectedRoute>} />
-                <Route path="/missions/:missionId" element={<ProtectedRoute><MissionsPage key="mission-detail" /></ProtectedRoute>} />
-                <Route path="/missions/:missionId/tasks/:taskId" element={<ProtectedRoute><MissionsPage key="mission-task" /></ProtectedRoute>} />
-                
-                {/* Mindboard Route with key prop */}
-                <Route path="/mindboard" element={<ProtectedRoute><Mindboard key="mindboard-page" /></ProtectedRoute>} />
+                {/* Mindboard Route */}
+                <Route path="/mindboard" element={<ProtectedRoute><Mindboard /></ProtectedRoute>} />
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
