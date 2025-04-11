@@ -3,9 +3,9 @@ import { StreamingCallbacks } from './streamTypes';
 
 // DeepSeek API configuration
 const DEEPSEEK_API_URL = 'https://api.deepseek.com';
-const DEFAULT_MODEL = 'deepseek-reasoner';
-// Placeholder API key - should be properly secured
-const DEEPSEEK_API_KEY = 'YOUR_DEEPSEEK_API_KEY'; 
+const DEFAULT_MODEL = 'deepseek-chat'; // Changed from deepseek-reasoner to deepseek-chat per documentation
+// API key will be replaced with user-provided key via Supabase secrets
+const DEEPSEEK_API_KEY = Deno.env?.get('DEEPSEEK_API_KEY') || ''; 
 
 export interface StreamOptions {
   model?: string;
@@ -24,11 +24,17 @@ export async function createDeepSeekStream(
   try {
     callbacks.onStart();
     
-    // Prepare messages without any reasoning_content as per DeepSeek docs
+    if (!DEEPSEEK_API_KEY) {
+      throw new Error('DeepSeek API key is not configured. Please set the DEEPSEEK_API_KEY in your environment variables.');
+    }
+    
+    // Prepare messages as per DeepSeek docs - each message needs role and content
     const cleanMessages = options.messages.map(msg => ({
       role: msg.role,
       content: msg.content
     }));
+    
+    console.log(`Sending ${cleanMessages.length} messages to DeepSeek`);
     
     const response = await fetch(`${DEEPSEEK_API_URL}/v1/chat/completions`, {
       method: 'POST',
@@ -46,8 +52,9 @@ export async function createDeepSeekStream(
     });
     
     if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`DeepSeek API error: ${response.status} ${error}`);
+      const errorText = await response.text();
+      console.error(`DeepSeek API error (${response.status}): ${errorText}`);
+      throw new Error(`DeepSeek API error: ${response.status} ${errorText}`);
     }
     
     // Streaming setup

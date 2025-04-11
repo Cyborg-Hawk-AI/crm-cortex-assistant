@@ -1,5 +1,6 @@
+
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Trash2 } from 'lucide-react';
+import { Send, Trash2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useChatMessages } from '@/hooks/useChatMessages';
@@ -10,6 +11,7 @@ import { QuickActions } from '@/components/QuickActions';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ModelToggle } from '@/components/ModelToggle';
 import { useModelSelection } from '@/hooks/useModelSelection';
+import { Alert } from '@/components/ui/alert';
 
 interface ChatSectionProps {
   activeConversationId: string | null;
@@ -36,6 +38,7 @@ export function ChatSection({
     setActiveConversationId
   } = useChatMessages();
   const [isComposing, setIsComposing] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
   const {
     toast
   } = useToast();
@@ -45,12 +48,15 @@ export function ChatSection({
       behavior: 'smooth'
     });
   };
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
+    setApiError(null);
+
     try {
       if (!activeConversationId) {
         console.log("Creating a new conversation as part of sending the first message");
@@ -62,13 +68,18 @@ export function ChatSection({
         await sendMessage(inputValue, 'user', activeConversationId, selectedModel);
       }
       setInputValue('');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending message:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to send message. Please try again.',
-        variant: 'destructive'
-      });
+      
+      if (error.message?.includes('API key') && selectedModel === 'deepseek') {
+        setApiError('DeepSeek API key is missing or invalid. The service requires configuration.');
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to send message. Please try again.',
+          variant: 'destructive'
+        });
+      }
     }
   };
 
@@ -121,11 +132,22 @@ export function ChatSection({
               </Button>)}
           </div>
           
+          {selectedModel === 'deepseek' && (
+            <Alert className="mb-4 bg-amber-900/30 text-amber-200 border-amber-600/50">
+              <AlertTriangle className="h-4 w-4 mr-2" />
+              <span>DeepSeek requires API configuration. <a href="#" className="underline">Configure API key</a></span>
+            </Alert>
+          )}
+          
           <div className="relative">
             <Textarea value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyDown={handleKeyDown} onCompositionStart={() => setIsComposing(true)} onCompositionEnd={() => setIsComposing(false)} placeholder="Type your engineering question here..." className="min-h-[80px] resize-none pr-12 rounded-md border border-neon-purple/30 focus:border-neon-purple focus:shadow-[0_0_8px_rgba(168,85,247,0.2)] transition-all" />
             <Button size="icon" className="absolute right-2 bottom-2 bg-gradient-to-r from-[#C084FC] to-[#D946EF] text-white hover:brightness-110 hover:shadow-[0_0_8px_rgba(168,85,247,0.4)]" onClick={handleSendMessage} disabled={!inputValue.trim() || isSending}>
               <Send className="h-4 w-4" />
             </Button>
+          </div>
+          
+          <div className="flex justify-end mt-4">
+            <ModelToggle currentModel={selectedModel} onToggle={toggleModel} />
           </div>
         </div>
       </div>;
@@ -140,6 +162,13 @@ export function ChatSection({
       <div className="border-t border-gray-200 p-4 bg-slate-700">
         {/* Quick Actions Section */}
         <QuickActions />
+        
+        {apiError && (
+          <Alert className="mb-4 bg-amber-900/30 text-amber-200 border-amber-600/50">
+            <AlertTriangle className="h-4 w-4 mr-2" />
+            <span>{apiError}</span>
+          </Alert>
+        )}
         
         <div className="flex justify-between items-center mb-2">
           <Button variant="outline" size="sm" className="text-muted-foreground hover:text-neon-red hover:border-neon-red/30 hover:shadow-[0_0_8px_rgba(244,63,94,0.2)]" onClick={handleClearChat} disabled={!activeConversationId}>

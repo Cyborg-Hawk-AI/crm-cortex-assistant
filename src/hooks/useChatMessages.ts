@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as messagesApi from '@/api/messages';
@@ -203,41 +204,78 @@ export function useChatMessages() {
               }
             );
           } else {
-            await createDeepSeekStream(
-              { messages: messageHistory },
-              {
-                onStart: () => {
-                  console.log('Starting to stream DeepSeek response');
+            try {
+              await createDeepSeekStream(
+                { 
+                  messages: messageHistory,
+                  model: 'deepseek-chat'  // Specify the model explicitly
                 },
-                onChunk: (chunk: string) => {
-                  if (!chunk || typeof chunk !== 'string') return;
-                  
-                  streamedContent += chunk;
-                  
-                  if (onToken) {
-                    onToken(tempMessageId, chunk, streamedContent);
+                {
+                  onStart: () => {
+                    console.log('Starting to stream DeepSeek response');
+                  },
+                  onChunk: (chunk: string) => {
+                    if (!chunk || typeof chunk !== 'string') return;
+                    
+                    streamedContent += chunk;
+                    
+                    if (onToken) {
+                      onToken(tempMessageId, chunk, streamedContent);
+                    }
+                  },
+                  onComplete: async (finalResponse: string) => {
+                    streamedContent = finalResponse;
+                    
+                    if (onComplete) {
+                      onComplete(tempMessageId, streamedContent);
+                    }
+                    
+                    await sendMessageMutation.mutateAsync({ 
+                      content: streamedContent, 
+                      sender: 'assistant', 
+                      conversationId: convId 
+                    });
+                    
+                    setIsStreaming(false);
+                    queryClient.invalidateQueries({ queryKey: ['messages', convId] });
+                    queryClient.invalidateQueries({ queryKey: ['conversations'] });
+                  },
+                  onError: (error) => {
+                    // Handle DeepSeek specific errors
+                    console.error('DeepSeek API error:', error);
+                    
+                    // Check for API key error
+                    if (error.message.includes('API key') || error.message.includes('401')) {
+                      toast({
+                        title: 'DeepSeek API Key Error',
+                        description: 'The DeepSeek API key is invalid or missing. Please add a valid API key in the settings.',
+                        variant: 'destructive'
+                      });
+                      
+                      // Fallback to OpenAI if there's an API key error with DeepSeek
+                      console.log('Falling back to OpenAI due to DeepSeek API key error');
+                      setIsStreaming(false);
+                      
+                      // Optionally switch model selection back to OpenAI
+                      // This would require passing setSelectedModel from useModelSelection
+                    } else if (onError) {
+                      onError(error);
+                    }
                   }
-                },
-                onComplete: async (finalResponse: string) => {
-                  streamedContent = finalResponse;
-                  
-                  if (onComplete) {
-                    onComplete(tempMessageId, streamedContent);
-                  }
-                  
-                  await sendMessageMutation.mutateAsync({ 
-                    content: streamedContent, 
-                    sender: 'assistant', 
-                    conversationId: convId 
-                  });
-                  
-                  setIsStreaming(false);
-                  queryClient.invalidateQueries({ queryKey: ['messages', convId] });
-                  queryClient.invalidateQueries({ queryKey: ['conversations'] });
-                },
-                onError
-              }
-            );
+                }
+              );
+            } catch (deepseekError) {
+              console.error('Failed to use DeepSeek:', deepseekError);
+              
+              // Show user-friendly error
+              toast({
+                title: 'DeepSeek Error',
+                description: 'Failed to use DeepSeek API. Please check your configuration or try again later.',
+                variant: 'destructive'
+              });
+              
+              setIsStreaming(false);
+            }
           }
         } catch (error) {
           console.error('Error in stream processing:', error);
