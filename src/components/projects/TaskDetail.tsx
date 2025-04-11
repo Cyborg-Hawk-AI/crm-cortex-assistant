@@ -16,7 +16,7 @@ import {
   User,
   X
 } from 'lucide-react';
-import { Task } from '@/utils/types';
+import { Task, SubTask } from '@/utils/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,13 +32,15 @@ import { updateTaskField } from '@/utils/taskHelpers';
 // TaskDetail component props
 interface TaskDetailProps {
   task: Task;
+  subtasks?: SubTask[] | any[]; // Add the subtasks property
   onClose: () => void;
   onUpdate: (updatedTask: Task) => void;
   onDelete?: (taskId: string) => void;
+  onRefresh?: () => void; // Make onRefresh optional
 }
 
 // TaskDetail component
-export function TaskDetail({ task, onClose, onUpdate, onDelete }: TaskDetailProps) {
+export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onDelete, onRefresh }: TaskDetailProps) {
   // State for form fields and UI
   const [title, setTitle] = useState<string>(task.title);
   const [description, setDescription] = useState<string>(task.description || '');
@@ -47,6 +49,9 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: TaskDetailProp
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [descriptionOverflow, setDescriptionOverflow] = useState<boolean>(false);
   const { toast } = useToast();
+  
+  console.log(`[DEBUG-TaskDetail] Component rendered with task:`, task);
+  console.log(`[DEBUG-TaskDetail] Subtasks received:`, subtasks);
   
   const statusOptions = [
     { value: 'open', label: 'Open', icon: Circle, color: 'bg-[#3A4D62] text-[#F1F5F9] border-[#3A4D62]/50' },
@@ -221,6 +226,7 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: TaskDetailProp
       
       console.log(`[DEBUG-TaskDetail] Status update completed, task data:`, updatedTask);
       onUpdate(updatedTask);
+      if (onRefresh) onRefresh(); // Call onRefresh if it exists
     } catch (error) {
       console.error(`[DEBUG-TaskDetail] Error updating status:`, error);
       toast({
@@ -259,6 +265,7 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: TaskDetailProp
       
       console.log(`[DEBUG-TaskDetail] Priority update completed, task data:`, updatedTask);
       onUpdate(updatedTask);
+      if (onRefresh) onRefresh(); // Call onRefresh if it exists
     } catch (error) {
       console.error(`[DEBUG-TaskDetail] Error updating priority:`, error);
       toast({
@@ -281,7 +288,9 @@ export function TaskDetail({ task, onClose, onUpdate, onDelete }: TaskDetailProp
   const formatDate = (dateString?: string | null) => {
     if (!dateString) return 'No date set';
     try {
-      return format(new Date(dateString), 'PPP');
+      // Fix: Ensure we're passing a string to format by converting Date objects if needed
+      const dateValue = typeof dateString === 'string' ? dateString : dateString.toISOString();
+      return format(new Date(dateValue), 'PPP');
     } catch (e) {
       console.error(`[DEBUG-TaskDetail] Error formatting date:`, e);
       return 'Invalid date';

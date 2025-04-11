@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { getPriorityDisplayInfo } from '@/utils/taskHelpers';
 
 interface PriorityOption {
   value: string;

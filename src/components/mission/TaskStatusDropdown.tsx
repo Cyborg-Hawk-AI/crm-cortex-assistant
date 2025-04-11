@@ -11,12 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
-
-interface StatusOption {
-  value: string;
-  label: string;
-  color: string;
-}
+import { getStatusDisplayInfo } from '@/utils/taskHelpers';
 
 interface TaskStatusDropdownProps {
   currentStatus: string;
@@ -31,7 +26,7 @@ export function TaskStatusDropdown({ currentStatus, onChange }: TaskStatusDropdo
   console.log('[DEBUG-TaskStatusDropdown] Component rendered with status:', currentStatus);
 
   // Status options
-  const statusOptions: StatusOption[] = [
+  const statusOptions = [
     { value: 'open', label: 'Open', color: 'bg-[#3A4D62] text-[#F1F5F9] border-[#3A4D62]/50' },
     { value: 'in-progress', label: 'In Progress', color: 'bg-neon-blue/20 text-neon-blue border-neon-blue/30' },
     { value: 'resolved', label: 'Resolved', color: 'bg-amber-500/20 text-amber-500 border-amber-500/30' },
