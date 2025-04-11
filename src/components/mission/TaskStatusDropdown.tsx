@@ -24,6 +24,7 @@ export function TaskStatusDropdown({ currentStatus, onChange }: TaskStatusDropdo
   const [isOpen, setIsOpen] = useState(false);
 
   console.log('[DEBUG-TaskStatusDropdown] Component rendered with status:', currentStatus);
+  console.log('[DEBUG-TaskStatusDropdown] Current isOpen state:', isOpen);
 
   // Status options
   const statusOptions = [
@@ -45,7 +46,7 @@ export function TaskStatusDropdown({ currentStatus, onChange }: TaskStatusDropdo
   };
 
   useEffect(() => {
-    console.log('[DEBUG-TaskStatusDropdown] Dropdown open state:', isOpen);
+    console.log('[DEBUG-TaskStatusDropdown] Dropdown open state changed to:', isOpen);
   }, [isOpen]);
 
   const handleStatusChange = async (newStatus: string) => {
@@ -70,17 +71,22 @@ export function TaskStatusDropdown({ currentStatus, onChange }: TaskStatusDropdo
       });
     } finally {
       setIsUpdating(false);
-      console.log('[DEBUG-TaskStatusDropdown] Update process completed');
+      setIsOpen(false);
+      console.log('[DEBUG-TaskStatusDropdown] Update process completed, dropdown closed');
     }
   };
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+    <DropdownMenu open={isOpen} onOpenChange={(open) => {
+      console.log('[DEBUG-TaskStatusDropdown] onOpenChange triggered with:', open);
+      setIsOpen(open);
+    }}>
       <DropdownMenuTrigger asChild disabled={isUpdating}>
         <Badge 
           className={`px-2 py-0.5 cursor-pointer hover:opacity-90 ${getStatusColor(currentStatus)}`}
-          onClick={() => {
-            console.log('[DEBUG-TaskStatusDropdown] Trigger clicked, attempting to open dropdown');
+          onClick={(e) => {
+            console.log('[DEBUG-TaskStatusDropdown] Badge clicked, current isOpen:', isOpen);
+            e.stopPropagation();
           }}
         >
           {getStatusLabel(currentStatus)}

@@ -36,6 +36,8 @@ export function TaskPriorityDropdown({
   const [isOpen, setIsOpen] = useState(false);
 
   console.log('[DEBUG-TaskPriorityDropdown] Component rendered with priority:', currentPriority);
+  console.log('[DEBUG-TaskPriorityDropdown] Current isOpen state:', isOpen);
+  console.log('[DEBUG-TaskPriorityDropdown] displayAsBadge:', displayAsBadge);
 
   // Priority configuration
   const priorityOptions: PriorityOption[] = [
@@ -57,7 +59,7 @@ export function TaskPriorityDropdown({
   };
 
   useEffect(() => {
-    console.log('[DEBUG-TaskPriorityDropdown] Dropdown open state:', isOpen);
+    console.log('[DEBUG-TaskPriorityDropdown] Dropdown open state changed to:', isOpen);
   }, [isOpen]);
 
   const handlePriorityChange = async (newPriority: string) => {
@@ -82,15 +84,17 @@ export function TaskPriorityDropdown({
       });
     } finally {
       setIsUpdating(false);
-      console.log('[DEBUG-TaskPriorityDropdown] Update process completed');
+      setIsOpen(false);
+      console.log('[DEBUG-TaskPriorityDropdown] Update process completed, dropdown closed');
     }
   };
 
   const TriggerComponent = displayAsBadge ? (
     <Badge 
       className={`px-2 py-0.5 cursor-pointer hover:opacity-90 ${getPriorityColor(currentPriority)} flex items-center gap-1`}
-      onClick={() => {
-        console.log('[DEBUG-TaskPriorityDropdown] Badge trigger clicked, attempting to open dropdown');
+      onClick={(e) => {
+        console.log('[DEBUG-TaskPriorityDropdown] Badge trigger clicked');
+        e.stopPropagation();
       }}
     >
       <Flag className={`h-3.5 w-3.5 ${getFlagColor(currentPriority)}`} aria-hidden="true" />
@@ -101,8 +105,9 @@ export function TaskPriorityDropdown({
       variant="outline"
       size="sm"
       className="border-[#3A4D62] hover:border-[#64748B] hover:bg-[#3A4D62]/30"
-      onClick={() => {
-        console.log('[DEBUG-TaskPriorityDropdown] Button trigger clicked, attempting to open dropdown');
+      onClick={(e) => {
+        console.log('[DEBUG-TaskPriorityDropdown] Button trigger clicked');
+        e.stopPropagation();
       }}
     >
       <Flag className={`mr-2 h-4 w-4 ${getFlagColor(currentPriority)}`} />
@@ -111,7 +116,10 @@ export function TaskPriorityDropdown({
   );
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+    <DropdownMenu open={isOpen} onOpenChange={(open) => {
+      console.log('[DEBUG-TaskPriorityDropdown] onOpenChange triggered with:', open);
+      setIsOpen(open);
+    }}>
       <DropdownMenuTrigger asChild disabled={isUpdating}>
         {TriggerComponent}
       </DropdownMenuTrigger>

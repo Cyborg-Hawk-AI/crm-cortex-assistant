@@ -34,9 +34,9 @@ interface TaskDetailProps {
   task: Task;
   subtasks?: SubTask[] | any[]; // Add the subtasks property
   onClose: () => void;
-  onUpdate?: (updatedTask: Task) => void; // Make onUpdate optional
+  onUpdate: (updatedTask: Task) => void; // Required prop
   onDelete?: (taskId: string) => void;
-  onRefresh?: () => void; // Make onRefresh optional
+  onRefresh?: () => void; // Optional refresh callback
 }
 
 // TaskDetail component
@@ -44,7 +44,7 @@ export function TaskDetail({
   task, 
   subtasks = [], 
   onClose, 
-  onUpdate = () => {}, // Provide default empty function 
+  onUpdate, 
   onDelete, 
   onRefresh 
 }: TaskDetailProps) {
@@ -297,10 +297,8 @@ export function TaskDetail({
   const formatDate = (dateString?: string | null) => {
     if (!dateString) return 'No date set';
     try {
-      // Fix date handling to work with both string and Date objects
-      if (dateString instanceof Date) {
-        return format(dateString, 'PPP');
-      }
+      console.log(`[DEBUG-TaskDetail] Formatting date: ${dateString}, type: ${typeof dateString}`);
+      // FIX: Using type checking instead of instanceof for date objects
       return format(new Date(dateString), 'PPP');
     } catch (e) {
       console.error(`[DEBUG-TaskDetail] Error formatting date:`, e);
