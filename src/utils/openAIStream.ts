@@ -1,5 +1,5 @@
 
-import { createParser, ParsedEvent, ReconnectInterval } from 'eventsource-parser';
+import { createParser } from 'eventsource-parser';
 import { ModelProvider } from '@/hooks/useModelSelection';
 
 export type ChatCompletionRequestMessage = {
@@ -74,7 +74,8 @@ export async function createOpenAIStream(
     // Create a streaming response
     const stream = new ReadableStream({
       async start(controller) {
-        function onParse(event: ParsedEvent | ReconnectInterval) {
+        // Updated parser function to match the current eventsource-parser API
+        const parser = createParser((event) => {
           if (event.type === 'event') {
             const data = event.data;
             
@@ -105,10 +106,7 @@ export async function createOpenAIStream(
               controller.error(e);
             }
           }
-        }
-        
-        // Set up the parser
-        const parser = createParser(onParse);
+        });
         
         // Process the stream
         if (res.body) {
