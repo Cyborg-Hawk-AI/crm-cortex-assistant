@@ -13,12 +13,12 @@ export const MODEL_OPTIONS: Record<ModelType, ModelOption> = {
   openai: {
     id: 'openai',
     name: 'ActionAlpha',
-    description: 'Powered by OpenAI'
+    description: 'ActionBot Core'
   },
   deepseek: {
     id: 'deepseek',
     name: 'ActionOmega',
-    description: 'Powered by DeepSeek Reasoner'
+    description: 'DeepCognition Protocol'
   }
 };
 

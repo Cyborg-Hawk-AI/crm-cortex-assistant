@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -148,8 +147,10 @@ export function ChatSection({
             Clear conversation
           </Button>
           
-          {/* Model Selection - moved to right side */}
-          <ModelToggle currentModel={selectedModel} onToggle={toggleModel} />
+          {/* Model Selection */}
+          <div className="model-toggle">
+            <ModelToggle currentModel={selectedModel} onToggle={toggleModel} />
+          </div>
         </div>
         
         <div className="relative">
