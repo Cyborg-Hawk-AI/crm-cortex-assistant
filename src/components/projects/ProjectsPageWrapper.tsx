@@ -28,7 +28,7 @@ export function ProjectsPageWrapper() {
           .select('id, title, status')
           .eq('id', projectId)
           .is('parent_task_id', null)
-          .single();
+          .maybeSingle(); // Using maybeSingle instead of single to avoid errors
           
         if (error) {
           console.error("Error checking project existence:", error);
