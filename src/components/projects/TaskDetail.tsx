@@ -34,13 +34,20 @@ interface TaskDetailProps {
   task: Task;
   subtasks?: SubTask[] | any[]; // Add the subtasks property
   onClose: () => void;
-  onUpdate: (updatedTask: Task) => void;
+  onUpdate?: (updatedTask: Task) => void; // Make onUpdate optional
   onDelete?: (taskId: string) => void;
   onRefresh?: () => void; // Make onRefresh optional
 }
 
 // TaskDetail component
-export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onDelete, onRefresh }: TaskDetailProps) {
+export function TaskDetail({ 
+  task, 
+  subtasks = [], 
+  onClose, 
+  onUpdate = () => {}, // Provide default empty function 
+  onDelete, 
+  onRefresh 
+}: TaskDetailProps) {
   // State for form fields and UI
   const [title, setTitle] = useState<string>(task.title);
   const [description, setDescription] = useState<string>(task.description || '');
@@ -52,6 +59,8 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onDelete, o
   
   console.log(`[DEBUG-TaskDetail] Component rendered with task:`, task);
   console.log(`[DEBUG-TaskDetail] Subtasks received:`, subtasks);
+  console.log(`[DEBUG-TaskDetail] onUpdate prop available:`, !!onUpdate);
+  console.log(`[DEBUG-TaskDetail] onRefresh prop available:`, !!onRefresh);
   
   const statusOptions = [
     { value: 'open', label: 'Open', icon: Circle, color: 'bg-[#3A4D62] text-[#F1F5F9] border-[#3A4D62]/50' },
@@ -288,9 +297,11 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onDelete, o
   const formatDate = (dateString?: string | null) => {
     if (!dateString) return 'No date set';
     try {
-      // Fix: Ensure we're passing a string to format by converting Date objects if needed
-      const dateValue = typeof dateString === 'string' ? dateString : dateString.toISOString();
-      return format(new Date(dateValue), 'PPP');
+      // Fix date handling to work with both string and Date objects
+      if (dateString instanceof Date) {
+        return format(dateString, 'PPP');
+      }
+      return format(new Date(dateString), 'PPP');
     } catch (e) {
       console.error(`[DEBUG-TaskDetail] Error formatting date:`, e);
       return 'Invalid date';
