@@ -33,10 +33,19 @@ export const useModelSelection = () => {
     setSelectedModel(prev => prev === 'openai' ? 'deepseek' : 'openai');
   };
 
+  // Ensure we always return a valid model option
+  const getModelOption = (): ModelOption => {
+    if (!selectedModel || !MODEL_OPTIONS[selectedModel]) {
+      // If selectedModel is invalid, default to 'openai'
+      return MODEL_OPTIONS['openai'];
+    }
+    return MODEL_OPTIONS[selectedModel];
+  };
+
   return {
     selectedModel,
     setSelectedModel,
     toggleModel,
-    modelOption: MODEL_OPTIONS[selectedModel]
+    modelOption: getModelOption()
   };
 };
