@@ -1,10 +1,11 @@
+
 import { StreamingCallbacks } from './streamTypes';
 
 // OpenAI API configuration
 const OPENAI_API_URL = 'https://api.openai.com/v1';
 const DEFAULT_MODEL = 'gpt-4o-mini';
-// Updated API key as provided by the user
-const OPENAI_API_KEY = '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';
+// Using the provided OpenAI key 
+const OPENAI_API_KEY = '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';
 
 export interface StreamOptions {
   model?: string;
@@ -43,16 +44,15 @@ export async function createOpenAIStream(
       throw new Error(`OpenAI API error: ${response.status} ${error}`);
     }
     
-    if (!response.body) {
-      throw new Error('Response body is null');
+    // Streaming setup
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error('Failed to get reader from response');
     }
     
-    // Get response body as ReadableStream
-    const reader = response.body.getReader();
     const decoder = new TextDecoder('utf-8');
     let fullText = '';
     let isComplete = false;
-    let buffer = '';
     
     const processStream = async () => {
       try {
@@ -60,56 +60,29 @@ export async function createOpenAIStream(
           const { done, value } = await reader.read();
           
           if (done) {
-            // Process any remaining data in the buffer
-            if (buffer.trim()) {
-              try {
-                const lines = buffer.trim().split('\n');
-                for (const line of lines) {
-                  const trimmedLine = line.replace(/^data: /, '').trim();
-                  if (trimmedLine === '[DONE]') continue;
-                  if (!trimmedLine) continue;
-                  
-                  try {
-                    const json = JSON.parse(trimmedLine);
-                    const content = json.choices[0]?.delta?.content || '';
-                    if (content) {
-                      fullText += content;
-                      callbacks.onChunk(content);
-                    }
-                  } catch (e) {
-                    console.error('Error parsing last buffer line:', trimmedLine, e);
-                  }
-                }
-              } catch (e) {
-                console.error('Error processing final buffer:', e);
-              }
-            }
-            
             console.log('Stream complete');
             isComplete = true;
             callbacks.onComplete(fullText);
             break;
           }
           
-          // Decode the chunk and add to buffer
+          // Decode the chunk
           const chunk = decoder.decode(value, { stream: true });
-          buffer += chunk;
           
-          // Process complete lines
-          const lines = buffer.split('\n');
-          // Keep the last potentially incomplete line in the buffer
-          buffer = lines.pop() || '';
+          // Process the SSE format
+          const lines = chunk
+            .split('\n')
+            .filter(line => line.trim() !== '')
+            .map(line => line.replace(/^data: /, '').trim());
           
           for (const line of lines) {
-            const trimmedLine = line.replace(/^data: /, '').trim();
-            if (!trimmedLine) continue;
-            if (trimmedLine === '[DONE]') {
+            if (line === '[DONE]') {
               isComplete = true;
               continue;
             }
             
             try {
-              const json = JSON.parse(trimmedLine);
+              const json = JSON.parse(line);
               const content = json.choices[0]?.delta?.content || '';
               
               if (content) {
