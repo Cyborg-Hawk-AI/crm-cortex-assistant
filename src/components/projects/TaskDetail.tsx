@@ -79,13 +79,8 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   const [tags, setTags] = useState<string[]>(task.tags || []);
   const [comments, setComments] = useState<any[]>([]);
   
-  const [statusMenuOpen, setStatusMenuOpen] = useState(false);
-  const [priorityMenuOpen, setPriorityMenuOpen] = useState(false);
-  
   const [descriptionHeight, setDescriptionHeight] = useState<string>('auto');
   const [descriptionOverflow, setDescriptionOverflow] = useState<boolean>(false);
-  
-  console.log("[TaskDetail] Rendering with status:", status, "priority:", priority);
   
   const statusOptions = [
     { value: 'open', label: 'Open', icon: Circle, color: 'bg-[#3A4D62] text-[#F1F5F9] border-[#3A4D62]/50' },
@@ -101,14 +96,6 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
     { value: 'high', label: 'High', icon: Flag, color: 'bg-neon-red/20 text-neon-red border-neon-red/30' },
     { value: 'urgent', label: 'Urgent', icon: AlertTriangle, color: 'bg-neon-red/20 text-neon-red border-neon-red/30' },
   ];
-
-  useEffect(() => {
-    console.log("[TaskDetail] statusMenuOpen changed to:", statusMenuOpen);
-  }, [statusMenuOpen]);
-
-  useEffect(() => {
-    console.log("[TaskDetail] priorityMenuOpen changed to:", priorityMenuOpen);
-  }, [priorityMenuOpen]);
 
   const { data: profiles = {}, isLoading: loadingProfiles } = useQuery({
     queryKey: ['user-profiles'],
@@ -190,7 +177,6 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   });
 
   useEffect(() => {
-    console.log('Setting comments from taskComments:', taskComments);
     setComments(taskComments);
   }, [taskComments, task.id]);
 
@@ -219,16 +205,12 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   };
 
   const getStatusColor = (statusValue: string) => {
-    console.log("[TaskDetail] Getting color for status:", statusValue);
     const option = statusOptions.find(opt => opt.value === statusValue);
-    console.log("[TaskDetail] Status option found:", option);
     return option?.color || 'bg-gray-200/20 text-gray-500 border-gray-300/30';
   };
 
   const getPriorityColor = (priorityValue: string) => {
-    console.log("[TaskDetail] Getting color for priority:", priorityValue);
     const option = priorityOptions.find(opt => opt.value === priorityValue);
-    console.log("[TaskDetail] Priority option found:", option);
     return option?.color || 'bg-gray-200/20 text-gray-500 border-gray-300/30';
   };
   
@@ -248,16 +230,14 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   };
 
   const formatDate = (dateString: string | Date | null) => {
-    console.log("[TaskDetail] formatDate input:", dateString, "type:", typeof dateString);
     if (!dateString) return null;
     
     try {
       const date = typeof dateString === 'string' ? parseISO(dateString) : dateString;
       const formattedDate = format(date, 'MMM d, yyyy');
-      console.log("[TaskDetail] formatDate result:", formattedDate);
       return formattedDate;
     } catch (error) {
-      console.error("[TaskDetail] Error formatting date:", error);
+      console.error("Error formatting date:", error);
       return String(dateString);
     }
   };
@@ -448,9 +428,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   };
 
   const handleStatusChange = (newStatus: string) => {
-    console.log("[TaskDetail] handleStatusChange called with:", newStatus);
     setStatus(newStatus as any);
-    setStatusMenuOpen(false);
     
     if (!isEditing) {
       try {
@@ -479,9 +457,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   };
 
   const handlePriorityChange = (newPriority: string) => {
-    console.log("[TaskDetail] handlePriorityChange called with:", newPriority);
     setPriority(newPriority as any);
-    setPriorityMenuOpen(false);
     
     if (!isEditing) {
       try {
@@ -546,29 +522,9 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
     }
   };
 
-  const StatusIcon = status ? statusOptions.find(opt => opt.value === status)?.icon || Circle : Circle;
-  const PriorityIcon = priority ? priorityOptions.find(opt => opt.value === priority)?.icon || Flag : Flag;
-  
-  const handleStatusDropdownToggle = (open: boolean) => {
-    console.log("[TaskDetail] Status dropdown toggled to:", open);
-    console.log("[TaskDetail] Dropdown DOM element present:", !!document.querySelector('[data-status-dropdown]'));
-    setStatusMenuOpen(open);
-  };
-  
-  const handlePriorityDropdownToggle = (open: boolean) => {
-    console.log("[TaskDetail] Priority dropdown toggled to:", open);
-    console.log("[TaskDetail] Dropdown DOM element present:", !!document.querySelector('[data-priority-dropdown]'));
-    setPriorityMenuOpen(open);
-  };
-  
-  console.log("[TaskDetail] Before render - statusMenuOpen:", statusMenuOpen);
-  console.log("[TaskDetail] Before render - priorityMenuOpen:", priorityMenuOpen);
-
   const deleteSubtask = async (subtaskId: string): Promise<void> => {
     try {
       await deleteTask(subtaskId);
-      
-      const updatedSubtasks = subtasks.filter(subtask => subtask.id !== subtaskId);
       
       if (onRefresh) {
         onRefresh();
@@ -682,18 +638,25 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
                 </h1>
               )}
               <div className="flex space-x-2">
-                {isEditing ? (
-                  <div className="flex space-x-2">
-                    <TaskStatusDropdown 
-                      currentStatus={status} 
-                      onChange={(newStatus) => handleStatusChange(newStatus)}
-                    />
-                    <TaskPriorityDropdown 
-                      currentPriority={priority} 
-                      onChange={(newPriority) => handlePriorityChange(newPriority)}
-                    />
-                  </div>
-                ) : (
+                {isEditing && (
+                  <>
+                    <div className="z-50">
+                      <TaskStatusDropdown 
+                        currentStatus={status} 
+                        onChange={(value) => handleStatusChange(value)}
+                      />
+                    </div>
+                    
+                    <div className="z-40">
+                      <TaskPriorityDropdown
+                        currentPriority={priority}
+                        onChange={(value) => handlePriorityChange(value)}
+                      />
+                    </div>
+                  </>
+                )}
+                
+                {!isEditing && (
                   <>
                     <Badge 
                       className={`${getStatusColor(status)} cursor-default flex items-center gap-1.5`}

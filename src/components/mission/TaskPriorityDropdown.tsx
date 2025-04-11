@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Flag, CheckCheck } from 'lucide-react';
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
-import { Badge } from '@/components/ui/badge';
 
 interface PriorityOption {
   value: string;
@@ -27,7 +26,7 @@ interface TaskPriorityDropdownProps {
 export function TaskPriorityDropdown({ currentPriority, onChange }: TaskPriorityDropdownProps) {
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
+  const [open, setOpen] = useState(false);
 
   // Priority configuration
   const priorityOptions: PriorityOption[] = [
@@ -47,15 +46,10 @@ export function TaskPriorityDropdown({ currentPriority, onChange }: TaskPriority
     return option?.label || 'Medium';
   };
 
-  const getFlagColor = (priority: string) => {
-    if (priority === 'high' || priority === 'urgent') return 'text-neon-red';
-    if (priority === 'medium') return 'text-amber-500';
-    return 'text-neon-blue';
-  };
-
   const handlePriorityChange = async (newPriority: string) => {
     setIsUpdating(true);
-    setIsOpen(false);
+    setOpen(false);
+    
     try {
       await onChange(newPriority);
       toast({
@@ -74,7 +68,7 @@ export function TaskPriorityDropdown({ currentPriority, onChange }: TaskPriority
   };
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild disabled={isUpdating}>
         <Badge 
           className={`px-2 py-0.5 cursor-pointer hover:opacity-90 ${getPriorityColor(currentPriority)}`}
@@ -83,8 +77,8 @@ export function TaskPriorityDropdown({ currentPriority, onChange }: TaskPriority
         </Badge>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
-        align="start" 
-        className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-[999]"
+        align="end" 
+        className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-50"
       >
         <DropdownMenuLabel>Set Priority</DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-[#3A4D62]" />

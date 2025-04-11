@@ -26,7 +26,7 @@ interface TaskStatusDropdownProps {
 export function TaskStatusDropdown({ currentStatus, onChange }: TaskStatusDropdownProps) {
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
+  const [open, setOpen] = useState(false);
 
   // Status options
   const statusOptions: StatusOption[] = [
@@ -49,7 +49,8 @@ export function TaskStatusDropdown({ currentStatus, onChange }: TaskStatusDropdo
 
   const handleStatusChange = async (newStatus: string) => {
     setIsUpdating(true);
-    setIsOpen(false);
+    setOpen(false);
+    
     try {
       await onChange(newStatus);
       toast({
@@ -68,7 +69,7 @@ export function TaskStatusDropdown({ currentStatus, onChange }: TaskStatusDropdo
   };
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild disabled={isUpdating}>
         <Badge 
           className={`px-2 py-0.5 cursor-pointer hover:opacity-90 ${getStatusColor(currentStatus)}`}
@@ -77,8 +78,8 @@ export function TaskStatusDropdown({ currentStatus, onChange }: TaskStatusDropdo
         </Badge>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
-        align="start" 
-        className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-[999]"
+        align="end" 
+        className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-50"
       >
         <DropdownMenuLabel>Set Status</DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-[#3A4D62]" />
