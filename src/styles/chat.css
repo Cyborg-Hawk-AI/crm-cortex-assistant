@@ -47,12 +47,3 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
-
-/* Styling for the model selector */
-.model-selector-item {
-  @apply flex items-center gap-1.5 flex-1 data-[state=on]:bg-[#3A4D62] data-[state=on]:text-white rounded-sm;
-}
-
-.model-selector-container {
-  @apply justify-center bg-[#25384D]/30 rounded-md p-1 border border-[#3A4D62]/50 w-full;
-}

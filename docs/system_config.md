@@ -14,14 +14,6 @@ This document provides a centralized reference for all environment-specific conf
 | Assistant IDs | Default: `asst_koI8HIazZW995Gtva0Vrxsdj` <br> Code Review: `asst_DNvRDxjXyLfOUrS19Y47UXWd` <br> Documentation: `asst_DNvRDxjXyLfOUrS19Y47UXWd` <br> Risk Assessment: `asst_nvOnVn672V8Y5jt6oL5uOnMZ` <br> Summarizer: `asst_paFlSxWI8GJjq0POrDEus3w5` <br> Search: `asst_CQeVBcwjhcMnSeCMsVPGAUW6` <br> Help: `asst_xdPa8uCiILzGm4iakfEgRBAS` <br> Menu: `asst_xdPa8uCiILzGm4iakfEgRBAS` <br> History: `asst_xdPa8uCiILzGm4iakfEgRBAS` | - `src/utils/assistantConfig.ts` <br> - `src/services/openaiClient.ts` |
 | API URL | `https://api.openai.com/v1` | - `src/utils/openAIStream.ts` <br> - `src/services/openaiClient.ts` |
 
-### DeepSeek
-
-| Configuration | Value/Variable | Files |
-|---------------|----------------|-------|
-| API Key | Environment variable (to be provided by user) | - `src/utils/deepSeekStream.ts` |
-| Default Model | `deepseek-reasoner` | - `src/utils/deepSeekStream.ts` |
-| API URL | `https://api.deepseek.com/v1` | - `src/utils/deepSeekStream.ts` |
-
 ## 🛠️ AI Modes & Assistant Logic
 
 ### Assistant Configuration
@@ -46,24 +38,12 @@ Each assistant mode is configured in `src/utils/assistantConfig.ts` with the fol
 | MENU | `asst_xdPa8uCiILzGm4iakfEgRBAS` | Menu assistance |
 | HISTORY | `asst_xdPa8uCiILzGm4iakfEgRBAS` | Chat history reference |
 
-### Model Selection and Integration
-
-The application now supports two AI model providers:
-- **ActionAlpha**: OpenAI models (default)
-- **ActionOmega**: DeepSeek models (specifically `deepseek-reasoner`)
-
-The model selection is managed through:
-- `src/components/ModelSelector.tsx` - UI component for model selection
-- `src/hooks/useModelSelection.ts` - Hook to manage model choice state
-- `src/utils/deepSeekStream.ts` - DeepSeek API integration
-
 ### Selection and Switching Logic
 
 The following files handle assistant selection and switching:
 - `src/hooks/useChatMessages.tsx` - Core hook that manages assistant selection and messaging
 - `src/hooks/useAssistantConfig.ts` - Hook for retrieving assistant configurations
 - `src/services/assistantService.ts` - Service for assistant operations
-- `src/hooks/useModelSelection.ts` - Hook for model provider selection
 
 ## 🔐 Supabase & Auth
 
@@ -85,9 +65,8 @@ Authentication is handled through Supabase Auth with the following files involve
 ## 🌐 External Services
 
 Currently, the application primarily relies on:
-1. **OpenAI** - For AI assistant functionality (ActionAlpha)
-2. **DeepSeek** - For alternative AI model functionality (ActionOmega)
-3. **Supabase** - For database, authentication, and backend functions
+1. **OpenAI** - For AI assistant functionality
+2. **Supabase** - For database, authentication, and backend functions
 
 There are no additional external services (email providers, analytics platforms, vector databases) configured at this time.
 
@@ -97,10 +76,6 @@ There are no additional external services (email providers, analytics platforms,
 - Update in `src/utils/openAIStream.ts` - Variable: `OPENAI_API_KEY`
 - Update in `src/services/openaiClient.ts` - Variable: `HARDCODED_API_KEY`
 
-### If you want to update DeepSeek API Key
-- Update in Supabase Environment Variables section for the edge function
-- Update in `src/utils/deepSeekStream.ts` - Variable: `DEEPSEEK_API_KEY` 
-
 ### If you want to update OpenAI Assistant IDs
 - Update in `src/utils/assistantConfig.ts` - Object: `ASSISTANTS`
 - Update in `src/services/openaiClient.ts` - Variable: `DEFAULT_ASSISTANT_ID`
@@ -108,9 +83,6 @@ There are no additional external services (email providers, analytics platforms,
 ### If you want to update OpenAI Model
 - Update in `src/utils/openAIStream.ts` - Variable: `DEFAULT_MODEL`
 - Update in `src/services/openaiClient.ts` - When calling the API (various functions)
-
-### If you want to update DeepSeek Model
-- Update in `src/utils/deepSeekStream.ts` - Variable: `DEFAULT_MODEL`
 
 ### If you want to update Supabase Configuration
 - Update in `src/integrations/supabase/client.ts` - Variables: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`
