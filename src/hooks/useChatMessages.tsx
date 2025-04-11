@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Message, Task, Assistant } from '@/utils/types';
@@ -5,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import * as assistantService from '@/services/assistantService';
 import { v4 as uuidv4 } from 'uuid';
 import * as messagesApi from '@/api/messages';
+import { createOpenAIStream } from '@/utils/openAIStream';
 
 export function useChatMessages() {
   const { toast } = useToast();
@@ -303,22 +305,28 @@ export function useChatMessages() {
           
           console.log(`Sending ${messagesForContext.length} messages for context to maintain conversation history`);
           
-          let assistantForConversation = activeAssistant;
-          if (conversation?.assistant_id) {
-            assistantForConversation = {
-              id: conversation.assistant_id,
-              name: "AI Assistant",
-              description: "Default AI Assistant",
-              capabilities: []
-            };
+          // Format messages for OpenAI API
+          const messageHistory = messagesForContext.map(msg => ({
+            role: msg.sender === 'user' ? 'user' : 'assistant',
+            content: msg.content
+          }));
+          
+          // Add system message if we have an active assistant
+          if (activeAssistant) {
+            messageHistory.unshift({
+              role: 'system',
+              content: `You are ${activeAssistant.name || 'an AI assistant'}. ${activeAssistant.description || ''}`
+            });
+          } else {
+            messageHistory.unshift({
+              role: 'system',
+              content: 'You are ActionBot, an engineering assistant designed to help with coding tasks and technical problems.'
+            });
           }
           
-          await assistantService.sendMessage(
-            content,
-            assistantForConversation,
-            threadId,
-            linkedTask,
-            messagesForContext,
+          // Create the stream directly from the frontend
+          await createOpenAIStream(
+            { messages: messageHistory },
             {
               onStart: () => {
                 console.log('Starting to stream assistant response');
@@ -351,6 +359,7 @@ export function useChatMessages() {
                 setIsStreaming(false);
                 currentStreamingMessageId.current = null;
                 
+                // Save the complete response to the database
                 await saveMessage(fullResponse, 'assistant', assistantMessageId, conversationId);
                 
                 queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
@@ -383,8 +392,7 @@ export function useChatMessages() {
                   variant: 'destructive'
                 });
               }
-            },
-            assistantMessageId
+            }
           );
         } catch (error: any) {
           console.error('Error in sendMessage:', error);
