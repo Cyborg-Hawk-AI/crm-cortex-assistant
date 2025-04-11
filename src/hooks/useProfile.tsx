@@ -15,7 +15,8 @@ export type UserProfile = {
 };
 
 export const useProfile = () => {
-  const { user } = useAuth();
+  const auth = useAuth();
+  const user = auth?.user;
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
@@ -71,8 +72,13 @@ export const useProfile = () => {
       }
     };
 
-    fetchProfile();
-  }, [user]);
+    // Only run if we have a user
+    if (user) {
+      fetchProfile();
+    } else {
+      setLoading(false);
+    }
+  }, [user, toast]);
 
   const updateProfile = async (updates: Partial<UserProfile>) => {
     if (!user) return { error: new Error('Not authenticated') };

@@ -2,7 +2,7 @@
 import React from 'react';
 import { ModelType } from '@/hooks/useModelSelection';
 import { Toggle } from '@/components/ui/toggle';
-import { useTooltip, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ToggleLeft, ToggleRight } from 'lucide-react';
 
 interface ModelToggleProps {

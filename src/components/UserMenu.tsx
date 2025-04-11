@@ -14,9 +14,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, LogOut, Settings } from 'lucide-react';
 
 export function UserMenu() {
+  // Get auth context first
   const { signOut } = useAuth();
+  
+  // Only use profile hook if we have auth context
   const { profile, loading } = useProfile();
   
+  // Handle loading state
   if (loading) {
     return (
       <Avatar className="h-8 w-8">
@@ -49,8 +53,8 @@ export function UserMenu() {
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{profile?.full_name}</p>
-            <p className="text-xs leading-none text-muted-foreground">{profile?.email}</p>
+            <p className="text-sm font-medium leading-none">{profile?.full_name || 'User'}</p>
+            <p className="text-xs leading-none text-muted-foreground">{profile?.email || ''}</p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
