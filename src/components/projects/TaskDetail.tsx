@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   CalendarIcon, 
@@ -21,7 +22,9 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Task } from '@/utils/types';
+import { Task, TaskStatus, TaskPriority } from '@/utils/types';
+import { TaskStatusDropdown } from '@/components/mission/TaskStatusDropdown';
+import { TaskPriorityDropdown } from '@/components/mission/TaskPriorityDropdown';
 
 interface TaskDetailProps {
   task: Task;
@@ -34,8 +37,8 @@ export function TaskDetail({ task, subtasks, onClose, onRefresh }: TaskDetailPro
   const { toast } = useToast();
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || '');
-  const [status, setStatus] = useState(task.status || 'open');
-  const [priority, setPriority] = useState(task.priority || 'medium');
+  const [status, setStatus] = useState<TaskStatus>(task.status || 'open');
+  const [priority, setPriority] = useState<TaskPriority>(task.priority || 'medium');
   const [dueDate, setDueDate] = useState<Date | null>(task.due_date ? new Date(task.due_date) : null);
   const [isCompleted, setIsCompleted] = useState(task.status === 'completed');
   const [assignee, setAssignee] = useState(task.assignee_id || '');
@@ -66,6 +69,16 @@ export function TaskDetail({ task, subtasks, onClose, onRefresh }: TaskDetailPro
       description: "Task has been deleted."
     });
     onClose();
+  };
+
+  // Wrapper function to handle status change
+  const handleStatusChange = (newStatus: string) => {
+    setStatus(newStatus as TaskStatus);
+  };
+
+  // Wrapper function to handle priority change
+  const handlePriorityChange = (newPriority: string) => {
+    setPriority(newPriority as TaskPriority);
   };
 
   return (
@@ -105,33 +118,18 @@ export function TaskDetail({ task, subtasks, onClose, onRefresh }: TaskDetailPro
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="status" className="text-sm text-[#CBD5E1]">Status</Label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9] data-[placeholder=true]:text-[#CBD5E1]">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9]">
-                  <SelectItem value="open">Open</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="on-hold">On Hold</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
+              <TaskStatusDropdown
+                currentStatus={status}
+                onChange={handleStatusChange}
+              />
             </div>
             
             <div>
               <Label htmlFor="priority" className="text-sm text-[#CBD5E1]">Priority</Label>
-              <Select value={priority} onValueChange={setPriority}>
-                <SelectTrigger className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9] data-[placeholder=true]:text-[#CBD5E1]">
-                  <SelectValue placeholder="Select priority" />
-                </SelectTrigger>
-                <SelectContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9]">
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="urgent">Urgent</SelectItem>
-                </SelectContent>
-              </Select>
+              <TaskPriorityDropdown
+                currentPriority={priority}
+                onChange={handlePriorityChange}
+              />
             </div>
           </div>
           
