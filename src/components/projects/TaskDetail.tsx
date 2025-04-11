@@ -49,6 +49,8 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { TaskStatusDropdown } from '@/components/mission/TaskStatusDropdown';
+import { TaskPriorityDropdown } from '@/components/mission/TaskPriorityDropdown';
 
 interface TaskDetailProps {
   task: Task;
@@ -84,7 +86,6 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   const [descriptionOverflow, setDescriptionOverflow] = useState<boolean>(false);
   
   console.log("[TaskDetail] Rendering with status:", status, "priority:", priority);
-  console.log("[TaskDetail] Current menu states - statusMenuOpen:", statusMenuOpen, "priorityMenuOpen:", priorityMenuOpen);
   
   const statusOptions = [
     { value: 'open', label: 'Open', icon: Circle, color: 'bg-[#3A4D62] text-[#F1F5F9] border-[#3A4D62]/50' },
@@ -681,133 +682,31 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
                 </h1>
               )}
               <div className="flex space-x-2">
-                <DropdownMenu 
-                  open={statusMenuOpen} 
-                  onOpenChange={handleStatusDropdownToggle}
-                >
-                  <DropdownMenuTrigger asChild>
+                {isEditing ? (
+                  <div className="flex space-x-2">
+                    <TaskStatusDropdown 
+                      currentStatus={status} 
+                      onChange={(newStatus) => handleStatusChange(newStatus)}
+                    />
+                    <TaskPriorityDropdown 
+                      currentPriority={priority} 
+                      onChange={(newPriority) => handlePriorityChange(newPriority)}
+                    />
+                  </div>
+                ) : (
+                  <>
                     <Badge 
-                      className={`${getStatusColor(status)} cursor-pointer hover:opacity-80 flex items-center gap-1.5`}
-                      onClick={() => {
-                        console.log("[TaskDetail] Status badge clicked, current state:", statusMenuOpen);
-                        setStatusMenuOpen(!statusMenuOpen);
-                      }}
-                      data-status-dropdown
+                      className={`${getStatusColor(status)} cursor-default flex items-center gap-1.5`}
                     >
-                      <StatusIcon className="h-3.5 w-3.5" />
                       {status}
                     </Badge>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent 
-                    className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-50"
-                    sideOffset={5}
-                    align="start"
-                    onCloseAutoFocus={(e) => {
-                      console.log("[TaskDetail] Status dropdown closing, preventing focus");
-                      e.preventDefault();
-                    }}
-                    onEscapeKeyDown={() => {
-                      console.log("[TaskDetail] Status dropdown escape key pressed");
-                    }}
-                    onPointerDownOutside={() => {
-                      console.log("[TaskDetail] Status dropdown pointer down outside");
-                    }}
-                  >
-                    <DropdownMenuLabel>Set Status</DropdownMenuLabel>
-                    <DropdownMenuSeparator className="bg-[#3A4D62]" />
-                    {statusOptions.map((option) => {
-                      const Icon = option.icon;
-                      const isActive = status === option.value;
-                      return (
-                        <DropdownMenuItem 
-                          key={option.value}
-                          onClick={() => {
-                            console.log("[TaskDetail] Status option clicked:", option.value);
-                            handleStatusChange(option.value);
-                          }} 
-                          className="hover:bg-[#3A4D62]/50 cursor-pointer flex items-center gap-2"
-                        >
-                          <Icon 
-                            className={`h-4 w-4 ${isActive ? 'text-neon-aqua' : ''}`} 
-                            aria-hidden="true" 
-                          />
-                          <span className={isActive ? 'text-neon-aqua' : ''}>{option.label}</span>
-                          {isActive && <CheckCheck className="h-4 w-4 ml-auto text-neon-aqua" />}
-                        </DropdownMenuItem>
-                      );
-                    })}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                
-                <DropdownMenu 
-                  open={priorityMenuOpen} 
-                  onOpenChange={handlePriorityDropdownToggle}
-                >
-                  <DropdownMenuTrigger asChild>
                     <Badge 
-                      className={`${getPriorityColor(priority)} cursor-pointer hover:opacity-80 flex items-center gap-1.5`}
-                      onClick={() => {
-                        console.log("[TaskDetail] Priority badge clicked, current state:", priorityMenuOpen);
-                        setPriorityMenuOpen(!priorityMenuOpen);
-                      }}
-                      data-priority-dropdown
+                      className={`${getPriorityColor(priority)} cursor-default flex items-center gap-1.5`}
                     >
-                      <PriorityIcon 
-                        className={`h-3.5 w-3.5 ${
-                          priority === 'high' || priority === 'urgent' ? 'text-neon-red' :
-                          priority === 'medium' ? 'text-amber-500' : 'text-neon-aqua'
-                        }`} 
-                      />
                       {priority}
                     </Badge>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent 
-                    className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-50"
-                    sideOffset={5}
-                    align="start"
-                    onCloseAutoFocus={(e) => {
-                      console.log("[TaskDetail] Priority dropdown closing, preventing focus");
-                      e.preventDefault();
-                    }}
-                    onEscapeKeyDown={() => {
-                      console.log("[TaskDetail] Priority dropdown escape key pressed");
-                    }}
-                    onPointerDownOutside={() => {
-                      console.log("[TaskDetail] Priority dropdown pointer down outside");
-                    }}
-                  >
-                    <DropdownMenuLabel>Set Priority</DropdownMenuLabel>
-                    <DropdownMenuSeparator className="bg-[#3A4D62]" />
-                    {priorityOptions.map((option) => {
-                      const Icon = option.icon;
-                      const isActive = priority === option.value;
-                      let iconColor = 'text-[#64748B]';
-                      
-                      if (option.value === 'high' || option.value === 'urgent') {
-                        iconColor = isActive ? 'text-neon-aqua' : 'text-neon-red';
-                      } else if (option.value === 'medium') {
-                        iconColor = isActive ? 'text-neon-aqua' : 'text-amber-500';
-                      } else {
-                        iconColor = isActive ? 'text-neon-aqua' : 'text-neon-blue';
-                      }
-                      
-                      return (
-                        <DropdownMenuItem 
-                          key={option.value}
-                          onClick={() => {
-                            console.log("[TaskDetail] Priority option clicked:", option.value);
-                            handlePriorityChange(option.value);
-                          }} 
-                          className="hover:bg-[#3A4D62]/50 cursor-pointer flex items-center gap-2"
-                        >
-                          <Icon className={`h-4 w-4 ${iconColor}`} aria-hidden="true" />
-                          <span className={isActive ? 'text-neon-aqua' : ''}>{option.label}</span>
-                          {isActive && <CheckCheck className="h-4 w-4 ml-auto text-neon-aqua" />}
-                        </DropdownMenuItem>
-                      );
-                    })}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  </>
+                )}
               </div>
             </div>
             
@@ -816,29 +715,36 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
                 <Clock className="h-3.5 w-3.5 mr-1" />
                 <span>Created: {formatDate(task.created_at)}</span>
               </div>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={cn(
-                      "justify-start text-left font-normal border-[#3A4D62] hover:border-[#64748B] hover:bg-[#3A4D62]/30",
-                      !date && "text-[#64748B]"
-                    )}
-                  >
-                    <Calendar className="mr-2 h-3.5 w-3.5" />
-                    {date ? format(date, 'MMM d, yyyy') : <span>Set due date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-[#25384D] border-[#3A4D62] z-50">
-                  <CalendarComponent
-                    mode="single"
-                    selected={date}
-                    onSelect={handleDueDateChange}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              {isEditing ? (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "justify-start text-left font-normal border-[#3A4D62] hover:border-[#64748B] hover:bg-[#3A4D62]/30",
+                        !date && "text-[#64748B]"
+                      )}
+                    >
+                      <Calendar className="mr-2 h-3.5 w-3.5" />
+                      {date ? format(date, 'MMM d, yyyy') : <span>Set due date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-[#25384D] border-[#3A4D62] z-50">
+                    <CalendarComponent
+                      mode="single"
+                      selected={date}
+                      onSelect={handleDueDateChange}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              ) : date ? (
+                <div className="flex items-center">
+                  <Calendar className="h-3.5 w-3.5 mr-1" />
+                  <span>Due: {formatDate(date)}</span>
+                </div>
+              ) : null}
             </div>
           </div>
           
