@@ -41,7 +41,8 @@ export const createConversation = async (title?: string) => {
       user_id: userId,
       title: title || 'New conversation',
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      // project_id is null by default, placing it in "Open Chats" group
     })
     .select()
     .single();
@@ -384,5 +385,62 @@ export const deleteConversationMessages = async (conversationId: string): Promis
   }
 
   console.log(`Successfully deleted all messages from conversation ${conversationId}`);
+  return true;
+};
+
+// Update the assignConversationToProject function to handle "Open Chats" case (null project_id)
+export const assignConversationToProject = async (conversationId: string, projectId: string): Promise<boolean> => {
+  const userId = await getCurrentUserId();
+  
+  if (!userId) {
+    throw new Error('User not authenticated');
+  }
+
+  // Verify the user has access to this conversation
+  const { data: conversation, error: convError } = await supabase
+    .from('conversations')
+    .select()
+    .eq('id', conversationId)
+    .eq('user_id', userId)
+    .single();
+
+  if (convError) {
+    console.error('Error fetching conversation:', convError);
+    return false;
+  }
+
+  // If projectId is empty string, treat as moving to "Open Chats"
+  const finalProjectId = projectId === '' ? null : projectId;
+
+  // Verify the user has access to this project if it's not null
+  if (finalProjectId !== null) {
+    const { data: project, error: projectError } = await supabase
+      .from('action_projects')
+      .select()
+      .eq('id', finalProjectId)
+      .eq('user_id', userId)
+      .single();
+
+    if (projectError) {
+      console.error('Error fetching project:', projectError);
+      return false;
+    }
+  }
+
+  // Update the conversation
+  const { error } = await supabase
+    .from('conversations')
+    .update({ 
+      project_id: finalProjectId,
+      updated_at: new Date().toISOString() 
+    })
+    .eq('id', conversationId)
+    .eq('user_id', userId);
+
+  if (error) {
+    console.error('Error assigning conversation to project:', error);
+    return false;
+  }
+
   return true;
 };

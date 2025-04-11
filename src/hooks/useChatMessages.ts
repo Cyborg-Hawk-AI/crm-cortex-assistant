@@ -48,6 +48,8 @@ export function useChatMessages() {
         } catch (error) {
           console.error('Failed to associate conversation with project:', error);
         }
+      } else {
+        console.log(`Conversation ${newConversation.id} assigned to Open Chats group`);
       }
       
       return newConversation.id;

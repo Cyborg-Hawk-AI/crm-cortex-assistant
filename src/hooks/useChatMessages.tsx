@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Message, Task, Assistant } from '@/utils/types';
@@ -90,6 +91,10 @@ export function useChatMessages() {
       const conversation = await messagesApi.createConversation(title);
       setActiveConversationId(conversation.id);
       setLocalMessages([]);
+      
+      // By default, new conversations are in "Open Chats" group (null project_id)
+      console.log(`Created conversation ${conversation.id} in Open Chats group`);
+      
       return conversation.id;
     } catch (error) {
       console.error('Error starting conversation:', error);

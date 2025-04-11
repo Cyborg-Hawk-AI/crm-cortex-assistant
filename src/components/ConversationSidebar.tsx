@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { MessageSquarePlus, Plus, Trash, ChevronRight, ChevronLeft, FolderPlus, Folder, Edit, MoreVertical, MoveRight } from 'lucide-react';
@@ -335,7 +334,7 @@ export const ConversationSidebar = forwardRef<{
               </div>
             ) : (
               <div className="space-y-6 px-2">
-                {/* Unassigned conversations section */}
+                {/* Open Chats section (formerly Unassigned) */}
                 <div className="space-y-2">
                   <button 
                     onClick={() => setActiveProjectId(null)}
@@ -343,7 +342,7 @@ export const ConversationSidebar = forwardRef<{
                   >
                     <span className="flex items-center">
                       <MessageSquarePlus className="mr-2 h-4 w-4" />
-                      Unassigned
+                      Open Chats
                     </span>
                     <ChevronRight className={`h-4 w-4 transition-transform ${!activeProjectId ? 'rotate-90' : ''}`} />
                   </button>
@@ -365,7 +364,7 @@ export const ConversationSidebar = forwardRef<{
                       ) : (
                         <>
                           {filteredConversations.length === 0 ? (
-                            <div className="p-3 text-center text-gray-400 italic text-sm">No unassigned conversations</div>
+                            <div className="p-3 text-center text-gray-400 italic text-sm">No open chats</div>
                           ) : (
                             filteredConversations.map(conversation => (
                               <div 
@@ -587,4 +586,5 @@ export const ConversationSidebar = forwardRef<{
       </div>
     </>;
 });
+
 ConversationSidebar.displayName = 'ConversationSidebar';

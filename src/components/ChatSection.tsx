@@ -12,11 +12,15 @@ import { ModelToggle } from '@/components/ModelToggle';
 import { useModelSelection } from '@/hooks/useModelSelection';
 import { Alert } from '@/components/ui/alert';
 import { useNavigate } from 'react-router-dom';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@radix-ui/react-dialog';
+import { Folder } from 'lucide-react';
+
 interface ChatSectionProps {
   activeConversationId: string | null;
   messages: Message[];
   isLoading: boolean;
 }
+
 export function ChatSection({
   activeConversationId,
   messages,
@@ -44,14 +48,17 @@ export function ChatSection({
   const {
     toast
   } = useToast();
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({
       behavior: 'smooth'
     });
   };
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
     setApiError(null);
@@ -79,12 +86,14 @@ export function ChatSection({
       }
     }
   };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && !isComposing) {
       e.preventDefault();
       handleSendMessage();
     }
   };
+
   const handleClearChat = async () => {
     if (window.confirm('Are you sure you want to clear this conversation?')) {
       await clearMessages(activeConversationId);
@@ -94,6 +103,7 @@ export function ChatSection({
       });
     }
   };
+
   const navigateToDashboard = () => {
     navigate('/', {
       state: {
@@ -101,6 +111,45 @@ export function ChatSection({
       }
     });
   };
+
+  const MoveToProjectDialog = ({ isOpen, onClose, onMove, selectedConversation, projects }) => {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Move to Project</DialogTitle>
+            <DialogDescription>
+              Select a project to move this conversation to.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-80 overflow-y-auto space-y-2">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start"
+              onClick={() => onMove('')}
+            >
+              <span className="flex-1 text-left">Open Chats</span>
+            </Button>
+            {projects.map(project => (
+              <Button 
+                key={project.id} 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => onMove(project.id)}
+              >
+                <Folder className="mr-2 h-4 w-4" />
+                <span className="flex-1 text-left">{project.name}</span>
+              </Button>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={onClose}>Cancel</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  };
+
   if (isLoading) {
     return <div className="flex flex-col h-full justify-center items-center text-muted-foreground">
         <div className="loading-dots flex items-center">
@@ -115,6 +164,7 @@ export function ChatSection({
         <p className="mt-4 font-medium">Initializing ActionBot...</p>
       </div>;
   }
+
   if (messages.length === 0) {
     return <div className="flex flex-col h-full justify-center items-center p-4 text-center">
         <div className="max-w-md actionbot-card p-8 rounded-xl border border-gray-100 shadow-lg bg-cyan-950">
@@ -156,6 +206,7 @@ export function ChatSection({
         </div>
       </div>;
   }
+
   return <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-1 overflow-y-auto p-4 space-y-5 bg-gradient-to-br from-white to-gray-50 bg-slate-900">
         {messages.map((message: Message) => <MessageComponent key={message.id} message={message} />)}
