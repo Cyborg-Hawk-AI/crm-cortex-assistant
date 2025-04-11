@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,6 +11,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { ModelToggle } from '@/components/ModelToggle';
 import { useModelSelection } from '@/hooks/useModelSelection';
 import { Alert } from '@/components/ui/alert';
+import { useNavigate } from 'react-router-dom';
 
 interface ChatSectionProps {
   activeConversationId: string | null;
@@ -26,6 +26,7 @@ export function ChatSection({
 }: ChatSectionProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const { selectedModel, toggleModel } = useModelSelection();
   const {
     inputValue,
@@ -100,6 +101,10 @@ export function ChatSection({
     }
   };
 
+  const navigateToDashboard = () => {
+    navigate('/', { state: { activeTab: 'main' } });
+  };
+
   if (isLoading) {
     return <div className="flex flex-col h-full justify-center items-center text-muted-foreground">
         <div className="loading-dots flex items-center">
@@ -149,6 +154,16 @@ export function ChatSection({
           <div className="flex justify-end mt-4">
             <ModelToggle currentModel={selectedModel} onToggle={toggleModel} />
           </div>
+
+          <div className="mt-6 text-center">
+            <Button
+              variant="outline"
+              className="text-neon-aqua border-neon-aqua/30 hover:border-neon-aqua/50"
+              onClick={navigateToDashboard}
+            >
+              Return to Dashboard
+            </Button>
+          </div>
         </div>
       </div>;
   }
@@ -177,8 +192,18 @@ export function ChatSection({
           </Button>
           
           {/* Model Selection */}
-          <div className="model-toggle">
-            <ModelToggle currentModel={selectedModel} onToggle={toggleModel} />
+          <div className="flex space-x-2">
+            <Button
+              variant="outline" 
+              size="sm"
+              className="text-neon-aqua border-neon-aqua/30 hover:border-neon-aqua/50"
+              onClick={navigateToDashboard}
+            >
+              Dashboard
+            </Button>
+            <div className="model-toggle">
+              <ModelToggle currentModel={selectedModel} onToggle={toggleModel} />
+            </div>
           </div>
         </div>
         

@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
 
@@ -31,7 +31,8 @@ function App() {
     },
   }));
 
-  const [activeTab, setActiveTab] = useState("projects");
+  // Default to "main" tab for Command View
+  const [activeTab, setActiveTab] = useState("main");
 
   return (
     <Router>

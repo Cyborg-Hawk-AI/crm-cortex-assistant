@@ -6,7 +6,8 @@ import {
   ClipboardCheck, 
   BookOpen, 
   Settings,
-  Menu
+  Menu,
+  LayoutDashboard
 } from 'lucide-react';
 import { UserMenu } from '@/components/UserMenu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -47,8 +48,11 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
       navigate('/projects');
     } else if (tab === 'mindboard') {
       navigate('/mindboard');
-    } else if (tab === 'main' && location.pathname !== '/') {
-      navigate('/');
+    } else if (tab === 'main' || tab === 'dashboard') {
+      navigate('/');  // Navigate to home for dashboard/main
+      setTimeout(() => {
+        setActiveTab('main');
+      }, 100);
     } else if (tab === 'settings') {
       navigate('/');  // Navigate to home with settings tab active
       setTimeout(() => {
@@ -63,6 +67,12 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
   };
   
   const navItems = [
+    {
+      id: 'dashboard',
+      label: 'Dashboard',
+      icon: <LayoutDashboard className="h-5 w-5" />,
+      activeColor: 'text-neon-aqua'
+    },
     {
       id: 'chat',
       label: 'ActionBot',
@@ -93,7 +103,7 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
     <header className="bg-[#141F2A] fixed top-0 left-0 right-0 z-50">
       <div className="container flex justify-between items-center h-[60px]">
         <div className="flex items-center">
-          <div className="text-xl font-bold mr-8">
+          <div className="text-xl font-bold mr-8 cursor-pointer" onClick={() => handleTabChange('dashboard')}>
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-neon-aqua to-teal-400">
               action.it
             </span>
