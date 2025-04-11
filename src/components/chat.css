@@ -37,3 +37,52 @@
 .pulse-border {
   animation: pulse-border 2s infinite;
 }
+
+/* Add typing animation for chat responses */
+@keyframes blink-cursor {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.animate-blink {
+  animation: blink-cursor 1s infinite;
+}
+
+/* Markdown content styling */
+.markdown-content {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.markdown-content code {
+  font-family: monospace;
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-size: 85%;
+}
+
+.markdown-content pre {
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 1em;
+  border-radius: 5px;
+  overflow-x: auto;
+  margin: 0.5em 0;
+}
+
+.markdown-content pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+.markdown-content p {
+  margin: 0.5em 0;
+}
+
+.markdown-content blockquote {
+  border-left: 4px solid rgba(168, 85, 247, 0.5);
+  padding-left: 1em;
+  margin: 0.5em 0;
+  color: rgba(0, 0, 0, 0.6);
+}

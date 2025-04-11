@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useChatMessages } from '@/hooks/useChatMessages';
 import { useToast } from '@/hooks/use-toast';
 import { Message } from '@/utils/types';
+import { Message as MessageComponent } from '@/components/Message';
 
 interface ChatSectionProps {
   activeConversationId: string | null;
@@ -128,27 +129,9 @@ export function ChatSection({
 
   return <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-1 overflow-y-auto p-4 space-y-5 bg-gradient-to-br from-white to-gray-50">
-        {messages.map((message: Message) => <div key={message.id} className={`flex items-start ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`
-                max-w-3xl px-4 py-2 rounded-lg shadow-md
-                ${message.sender === 'user' ? 'bg-gradient-to-r from-[#00F7EF] to-[#2BE7C2] text-black ml-12 shadow-[0_0_10px_rgba(0,247,239,0.2)]' : 'bg-gradient-to-r from-[#C084FC] to-[#D946EF] text-white mr-12 shadow-[0_0_10px_rgba(168,85,247,0.2)]'}
-                ${message.isStreaming ? 'border-2 border-neon-purple/50 pulse-border' : ''}
-                hover:scale-[1.01] transition-all duration-200
-              `}>
-              {message.isStreaming ? <>
-                  <div dangerouslySetInnerHTML={{
-                    __html: message.content.replace(/\n/g, '<br>')
-                  }} />
-                  <div className="typing-indicator">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                  </div>
-                </> : <div dangerouslySetInnerHTML={{
-                    __html: message.content.replace(/\n/g, '<br>')
-                  }} />}
-            </div>
-          </div>)}
+        {messages.map((message: Message) => (
+          <MessageComponent key={message.id} message={message} />
+        ))}
         <div ref={messagesEndRef} />
       </div>
       
