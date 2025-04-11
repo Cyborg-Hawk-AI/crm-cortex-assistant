@@ -333,5 +333,16 @@ export interface Comment {
   author_avatar?: string;
 }
 
+// ActionProject interface for organizing conversations
+export interface ActionProject {
+  id: string;
+  name: string;
+  description?: string | null;
+  user_id: string;
+  created_at?: Date | string;
+  updated_at?: Date | string;
+  conversations?: Message[][];
+}
+
 // TaskView type for different views
 export type TaskView = 'table' | 'board' | 'timeline';

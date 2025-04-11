@@ -9,6 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      action_projects: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       activities: {
         Row: {
           additional_info: Json | null
@@ -282,6 +309,7 @@ export type Database = {
           created_at: string | null
           id: string
           is_archived: boolean | null
+          project_id: string | null
           task_id: string | null
           title: string | null
           updated_at: string | null
@@ -291,6 +319,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_archived?: boolean | null
+          project_id?: string | null
           task_id?: string | null
           title?: string | null
           updated_at?: string | null
@@ -300,12 +329,20 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_archived?: boolean | null
+          project_id?: string | null
           task_id?: string | null
           title?: string | null
           updated_at?: string | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "conversations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "action_projects"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "conversations_task_id_fkey"
             columns: ["task_id"]
