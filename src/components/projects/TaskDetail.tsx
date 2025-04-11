@@ -298,9 +298,12 @@ export function TaskDetail({
     try {
       console.log(`[DEBUG-TaskDetail] Formatting date: ${dateString}, type: ${typeof dateString}`);
       
-      // Convert to string if it's a Date object
-      const dateToFormat = dateString instanceof Date ? dateString.toISOString() : dateString;
-      return format(parseISO(dateToFormat), 'PPP');
+      // Check if dateString is a Date object first, then handle accordingly
+      if (typeof dateString === 'object' && dateString instanceof Date) {
+        return format(dateString, 'PPP');
+      }
+      // Otherwise treat as a string
+      return format(parseISO(dateString as string), 'PPP');
     } catch (e) {
       console.error(`[DEBUG-TaskDetail] Error formatting date:`, e);
       return 'Invalid date';
