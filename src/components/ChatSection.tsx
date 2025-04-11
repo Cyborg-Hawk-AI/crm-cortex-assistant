@@ -1,5 +1,6 @@
+
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Trash2, AlertTriangle } from 'lucide-react';
+import { Send, Trash2, AlertTriangle, Folder } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useChatMessages } from '@/hooks/useChatMessages';
@@ -12,8 +13,7 @@ import { ModelToggle } from '@/components/ModelToggle';
 import { useModelSelection } from '@/hooks/useModelSelection';
 import { Alert } from '@/components/ui/alert';
 import { useNavigate } from 'react-router-dom';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@radix-ui/react-dialog';
-import { Folder } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
 interface ChatSectionProps {
   activeConversationId: string | null;
