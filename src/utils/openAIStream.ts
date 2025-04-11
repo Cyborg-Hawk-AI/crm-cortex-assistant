@@ -74,37 +74,43 @@ export async function createOpenAIStream(
     // Create a streaming response
     const stream = new ReadableStream({
       async start(controller) {
-        // Create parser with the correct interface
-        const parser = createParser(event => {
-          if (event.type === 'event') {
-            const data = event.data;
-            
-            // Handle event completion
-            if (data === '[DONE]') {
-              controller.close();
-              return;
-            }
-            
-            try {
-              const json = JSON.parse(data);
+        // Create parser with the correct interface for eventsource-parser
+        const parser = createParser({
+          onEvent: (event) => {
+            if (event.type === 'event') {
+              const data = event.data;
               
-              // Extract content based on provider
-              let content = '';
-              if (provider === 'openai') {
-                content = json.choices[0]?.delta?.content || '';
-              } else { // deepseek
-                content = json.choices[0]?.delta?.content || '';
+              // Handle event completion
+              if (data === '[DONE]') {
+                controller.close();
+                return;
               }
               
-              if (content) {
-                callbacks.onChunk(content);
-                const queue = encoder.encode(content);
-                controller.enqueue(queue);
+              try {
+                const json = JSON.parse(data);
+                
+                // Extract content based on provider
+                let content = '';
+                if (provider === 'openai') {
+                  content = json.choices[0]?.delta?.content || '';
+                } else { // deepseek
+                  content = json.choices[0]?.delta?.content || '';
+                }
+                
+                if (content) {
+                  callbacks.onChunk(content);
+                  const queue = encoder.encode(content);
+                  controller.enqueue(queue);
+                }
+              } catch (e) {
+                console.error('Error parsing stream:', e);
+                controller.error(e);
               }
-            } catch (e) {
-              console.error('Error parsing stream:', e);
-              controller.error(e);
             }
+          },
+          onError: (err) => {
+            console.error('Parser error:', err);
+            controller.error(err);
           }
         });
         
