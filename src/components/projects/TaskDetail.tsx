@@ -31,7 +31,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Task, SubTask } from '@/utils/types';
 import { useToast } from '@/hooks/use-toast';
-import { createSubtask, updateTask } from '@/api/tasks';
+import { createSubtask, updateTask, deleteTask } from '@/api/tasks';
 import { CommentSection } from '@/components/comments/CommentSection';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -563,6 +563,21 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   console.log("[TaskDetail] Before render - statusMenuOpen:", statusMenuOpen);
   console.log("[TaskDetail] Before render - priorityMenuOpen:", priorityMenuOpen);
 
+  const deleteSubtask = async (subtaskId: string): Promise<void> => {
+    try {
+      await deleteTask(subtaskId);
+      
+      // Filter out the deleted subtask from the local state
+      const updatedSubtasks = subtasks.filter(subtask => subtask.id !== subtaskId);
+      // Since this is just a local operation and doesn't affect the stored subtasks array,
+      // we'll rely on the onRefresh call to update the UI through parent rerender
+      
+    } catch (error) {
+      console.error("Error deleting subtask:", error);
+      throw error;
+    }
+  };
+
   return (
     <div className="bg-[#25384D] flex flex-col h-full max-h-screen overflow-hidden">
       <div className="flex items-center justify-between p-4 border-b border-[#3A4D62] flex-shrink-0">
@@ -880,149 +895,9 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
                       >
                         {subtask.title}
                       </label>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 hover:opacity-100">
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-sm text-[#718096] p-2 text-center mb-2">
-                  No subtasks yet. Add one below.
-                </div>
-              )}
-
-              <div className="flex items-center gap-2">
-                <Input
-                  value={newSubtaskTitle}
-                  onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                  placeholder="Add a subtask..."
-                  className="flex-1 bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleAddSubtask();
-                    }
-                  }}
-                />
-                <Button 
-                  onClick={handleAddSubtask}
-                  className="bg-neon-aqua hover:bg-neon-aqua/90 text-black"
-                  disabled={!newSubtaskTitle.trim()}
-                >
-                  Add
-                </Button>
-              </div>
-            </div>
-          </div>
-          
-          <Separator className="bg-[#3A4D62]" />
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <div className="text-sm text-[#CBD5E1]">Assignee</div>
-              {task.assignee_id ? (
-                <div className="flex items-center space-x-2">
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${task.assignee_id}`} />
-                    <AvatarFallback>
-                      {getUserName(task.assignee_id).substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm text-[#F1F5F9]">
-                    {getUserName(task.assignee_id)}
-                  </span>
-                </div>
-              ) : (
-                <Button variant="outline" size="sm" className="border-dashed border-[#3A4D62]">
-                  <User className="h-3.5 w-3.5 mr-1" />
-                  Assign
-                </Button>
-              )}
-            </div>
-            
-            <div className="space-y-1">
-              <div className="text-sm text-[#CBD5E1]">Reporter</div>
-              {task.reporter_id && (
-                <div className="flex items-center space-x-2">
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${task.reporter_id}`} />
-                    <AvatarFallback>
-                      {getUserName(task.reporter_id).substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm text-[#F1F5F9]">
-                    {getUserName(task.reporter_id)}
-                  </span>
-                </div>
-              )}
-            </div>
-            
-            <div className="col-span-2 space-y-3">
-              <div className="text-sm text-[#CBD5E1]">Tags</div>
-              <div className="space-y-3">
-                {tags && tags.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {tags.map((tag, idx) => (
-                      <Badge key={idx} variant="outline" className="bg-[#1C2A3A] flex items-center gap-1 group">
-                        {tag}
-                        <X 
-                          className="h-3 w-3 opacity-50 group-hover:opacity-100 cursor-pointer" 
-                          onClick={() => handleRemoveTag(tag)}
-                        />
-                      </Badge>
-                    ))}
-                  </div>
-                ) : null}
-                
-                <div className="flex items-center gap-2">
-                  <Input
-                    value={newTag}
-                    onChange={(e) => setNewTag(e.target.value)}
-                    placeholder="Add a tag..."
-                    className="flex-1 bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleAddTag();
-                      }
-                    }}
-                  />
-                  <Button 
-                    onClick={handleAddTag}
-                    variant="outline"
-                    className="border-[#3A4D62]"
-                    disabled={!newTag.trim() || tags.includes(newTag.trim())}
-                  >
-                    <Plus className="h-3.5 w-3.5 mr-1" />
-                    Add
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <Separator className="bg-[#3A4D62]" />
-          
-          <div className="space-y-4 mb-20 pt-2">
-            <div className="flex items-center justify-between">
-              <h3 className="font-medium text-[#F1F5F9] flex items-center">
-                <MessageSquare className="h-4 w-4 mr-1" />
-                Comments ({comments.length})
-              </h3>
-            </div>
-            
-            <div className="bg-[#1C2A3A]/50 p-4 rounded-md">
-              <CommentSection
-                taskId={task.id}
-                comments={comments}
-                userId={task.user_id || ''}
-                userName={getUserName(task.user_id)}
-                onAddComment={handleAddComment}
-                onRefreshComments={refetchComments}
-              />
-            </div>
-          </div>
-        </div>
-      </ScrollArea>
-    </div>
-  );
-}
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6 opacity-0 hover:opacity-100"
+                        onClick={() => {
+                          console.
