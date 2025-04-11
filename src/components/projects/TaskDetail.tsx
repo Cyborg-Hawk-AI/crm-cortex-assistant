@@ -1,3 +1,4 @@
+
 // Import necessary components and utilities
 import React, { useState, useEffect, useRef } from 'react';
 import { 
@@ -22,7 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { TaskStatusDropdown } from '@/components/mission/TaskStatusDropdown';
 import { TaskPriorityDropdown } from '@/components/mission/TaskPriorityDropdown';
 import { useToast } from '@/hooks/use-toast';
@@ -297,8 +298,9 @@ export function TaskDetail({
     if (!dateString) return 'No date set';
     try {
       console.log(`[DEBUG-TaskDetail] Formatting date: ${dateString}, type: ${typeof dateString}`);
-      // Fix: Convert string or Date to Date object and then format
-      const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+      
+      // Convert string to Date object if needed
+      const date = typeof dateString === 'string' ? parseISO(dateString) : dateString;
       return format(date, 'PPP');
     } catch (e) {
       console.error(`[DEBUG-TaskDetail] Error formatting date:`, e);
