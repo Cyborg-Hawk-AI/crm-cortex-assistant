@@ -31,7 +31,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Task, SubTask } from '@/utils/types';
 import { useToast } from '@/hooks/use-toast';
-import { createSubtask, updateTask, deleteTask } from '@/api/tasks';
+import { createSubtask, updateTask, deleteTask, updateSubtask } from '@/api/tasks';
 import { CommentSection } from '@/components/comments/CommentSection';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -588,6 +588,36 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
     }
   };
 
+  const handleToggleSubtaskCompletion = async (subtask: SubTask) => {
+    try {
+      const updatedSubtask = {
+        ...subtask,
+        is_completed: !subtask.is_completed,
+        updated_at: new Date().toISOString()
+      };
+      
+      await updateSubtask(updatedSubtask);
+      
+      toast({
+        title: updatedSubtask.is_completed ? "Subtask completed" : "Subtask reopened",
+        description: updatedSubtask.is_completed ? 
+          "Subtask marked as completed" : 
+          "Subtask marked as not completed"
+      });
+      
+      if (onRefresh) {
+        onRefresh();
+      }
+    } catch (error) {
+      console.error("Error updating subtask completion status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update subtask status. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="bg-[#25384D] flex flex-col h-full max-h-screen overflow-hidden">
       <div className="flex items-center justify-between p-4 border-b border-[#3A4D62] flex-shrink-0">
@@ -895,6 +925,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
                       <Checkbox 
                         id={subtask.id}
                         checked={subtask.is_completed}
+                        onCheckedChange={() => handleToggleSubtaskCompletion(subtask)}
                         className="mr-2"
                       />
                       <label 
@@ -902,6 +933,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
                         className={`text-sm flex-grow cursor-pointer ${
                           subtask.is_completed ? 'text-[#718096] line-through' : 'text-[#F1F5F9]'
                         }`}
+                        onClick={() => handleToggleSubtaskCompletion(subtask)}
                       >
                         {subtask.title}
                       </label>
