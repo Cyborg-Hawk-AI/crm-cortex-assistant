@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -48,17 +47,11 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
     } else if (tab === 'mindboard') {
       navigate('/mindboard');
     } else if (tab === 'main' && location.pathname !== '/') {
-      navigate('/');
+      navigate('/', { state: { activeTab: 'main' } });
     } else if (tab === 'settings') {
-      navigate('/');  // Navigate to home with settings tab active
-      setTimeout(() => {
-        setActiveTab('settings');
-      }, 100);
+      navigate('/', { state: { activeTab: 'settings' } });
     } else if (tab === 'chat') {
-      navigate('/');  // Navigate to home with chat tab active
-      setTimeout(() => {
-        setActiveTab('chat');
-      }, 100);
+      navigate('/', { state: { activeTab: 'chat' } });
     }
   };
   
@@ -93,7 +86,10 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
     <header className="bg-[#141F2A] fixed top-0 left-0 right-0 z-50">
       <div className="container flex justify-between items-center h-[60px]">
         <div className="flex items-center">
-          <div className="text-xl font-bold mr-8">
+          <div 
+            className="text-xl font-bold mr-8 cursor-pointer"
+            onClick={() => handleTabChange('main')}
+          >
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-neon-aqua to-teal-400">
               action.it
             </span>
