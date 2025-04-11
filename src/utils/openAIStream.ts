@@ -1,5 +1,5 @@
 
-import { createParser } from 'eventsource-parser';
+import { createParser, EventSourceParser } from 'eventsource-parser';
 import { ModelProvider } from '@/hooks/useModelSelection';
 
 export type ChatCompletionRequestMessage = {
@@ -75,40 +75,35 @@ export async function createOpenAIStream(
     const stream = new ReadableStream({
       async start(controller) {
         // Create parser with the correct interface for eventsource-parser
-        const parser = createParser({
-          onEvent: (event) => {
-            if (event.type === 'event') {
-              const data = event.data;
+        const parser: EventSourceParser = createParser({
+          onEvent(event) {
+            if (event.data === '[DONE]') {
+              controller.close();
+              return;
+            }
+            
+            try {
+              const json = JSON.parse(event.data);
               
-              // Handle event completion
-              if (data === '[DONE]') {
-                controller.close();
-                return;
+              // Extract content based on provider
+              let content = '';
+              if (provider === 'openai') {
+                content = json.choices[0]?.delta?.content || '';
+              } else { // deepseek
+                content = json.choices[0]?.delta?.content || '';
               }
               
-              try {
-                const json = JSON.parse(data);
-                
-                // Extract content based on provider
-                let content = '';
-                if (provider === 'openai') {
-                  content = json.choices[0]?.delta?.content || '';
-                } else { // deepseek
-                  content = json.choices[0]?.delta?.content || '';
-                }
-                
-                if (content) {
-                  callbacks.onChunk(content);
-                  const queue = encoder.encode(content);
-                  controller.enqueue(queue);
-                }
-              } catch (e) {
-                console.error('Error parsing stream:', e);
-                controller.error(e);
+              if (content) {
+                callbacks.onChunk(content);
+                const queue = encoder.encode(content);
+                controller.enqueue(queue);
               }
+            } catch (e) {
+              console.error('Error parsing stream:', e);
+              controller.error(e);
             }
           },
-          onError: (err) => {
+          onError(err) {
             console.error('Parser error:', err);
             controller.error(err);
           }
