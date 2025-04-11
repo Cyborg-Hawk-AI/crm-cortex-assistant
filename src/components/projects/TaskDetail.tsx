@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, 
@@ -35,7 +36,7 @@ import { createSubtask, updateTask } from '@/api/tasks';
 import { CommentSection } from '@/components/comments/CommentSection';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -83,6 +84,9 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   const [descriptionHeight, setDescriptionHeight] = useState<string>('auto');
   const [descriptionOverflow, setDescriptionOverflow] = useState<boolean>(false);
   
+  console.log("[TaskDetail] Initial render with status:", status, "priority:", priority);
+  console.log("[TaskDetail] Initial state - isStatusMenuOpen:", isStatusMenuOpen, "isPriorityMenuOpen:", isPriorityMenuOpen);
+  
   const statusOptions = [
     { value: 'open', label: 'Open', icon: Circle, color: 'bg-[#3A4D62] text-[#F1F5F9] border-[#3A4D62]/50' },
     { value: 'in-progress', label: 'In Progress', icon: Clock3, color: 'bg-neon-blue/20 text-neon-blue border-neon-blue/30' },
@@ -97,6 +101,15 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
     { value: 'high', label: 'High', icon: Flag, color: 'bg-neon-red/20 text-neon-red border-neon-red/30' },
     { value: 'urgent', label: 'Urgent', icon: AlertTriangle, color: 'bg-neon-red/20 text-neon-red border-neon-red/30' },
   ];
+
+  // Log state changes
+  useEffect(() => {
+    console.log("[TaskDetail] isStatusMenuOpen changed to:", isStatusMenuOpen);
+  }, [isStatusMenuOpen]);
+
+  useEffect(() => {
+    console.log("[TaskDetail] isPriorityMenuOpen changed to:", isPriorityMenuOpen);
+  }, [isPriorityMenuOpen]);
 
   const { data: profiles = {}, isLoading: loadingProfiles } = useQuery({
     queryKey: ['user-profiles'],
@@ -207,12 +220,16 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   };
 
   const getStatusColor = (statusValue: string) => {
+    console.log("[TaskDetail] Getting color for status:", statusValue);
     const option = statusOptions.find(opt => opt.value === statusValue);
+    console.log("[TaskDetail] Status option found:", option);
     return option?.color || 'bg-gray-200/20 text-gray-500 border-gray-300/30';
   };
 
   const getPriorityColor = (priorityValue: string) => {
+    console.log("[TaskDetail] Getting color for priority:", priorityValue);
     const option = priorityOptions.find(opt => opt.value === priorityValue);
+    console.log("[TaskDetail] Priority option found:", option);
     return option?.color || 'bg-gray-200/20 text-gray-500 border-gray-300/30';
   };
   
@@ -231,14 +248,19 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
     saveChanges();
   };
 
-  const formatDate = (dateString: string | null | Date) => {
+  const formatDate = (dateString: string | Date | null) => {
+    console.log("[TaskDetail] formatDate input:", dateString, "type:", typeof dateString);
     if (!dateString) return null;
-    const date = new Date(dateString);
-    return date.toLocaleDateString('default', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    });
+    
+    try {
+      const date = typeof dateString === 'string' ? parseISO(dateString) : dateString;
+      const formattedDate = format(date, 'MMM d, yyyy');
+      console.log("[TaskDetail] formatDate result:", formattedDate);
+      return formattedDate;
+    } catch (error) {
+      console.error("[TaskDetail] Error formatting date:", error);
+      return String(dateString);
+    }
   };
 
   const toggleGlobalEdit = () => {
@@ -427,6 +449,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   };
 
   const handleStatusChange = (newStatus: string) => {
+    console.log("[TaskDetail] handleStatusChange called with:", newStatus);
     setStatus(newStatus as any);
     setIsStatusMenuOpen(false);
     
@@ -457,6 +480,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
   };
 
   const handlePriorityChange = (newPriority: string) => {
+    console.log("[TaskDetail] handlePriorityChange called with:", newPriority);
     setPriority(newPriority as any);
     setIsPriorityMenuOpen(false);
     
@@ -525,6 +549,21 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
 
   const StatusIcon = getStatusIcon(status);
   const PriorityIcon = getPriorityIcon(priority);
+  
+  const handleStatusDropdownToggle = (open: boolean) => {
+    console.log("[TaskDetail] Status dropdown toggled to:", open);
+    console.log("[TaskDetail] Dropdown DOM element present:", !!document.querySelector('[data-status-dropdown]'));
+    setIsStatusMenuOpen(open);
+  };
+  
+  const handlePriorityDropdownToggle = (open: boolean) => {
+    console.log("[TaskDetail] Priority dropdown toggled to:", open);
+    console.log("[TaskDetail] Dropdown DOM element present:", !!document.querySelector('[data-priority-dropdown]'));
+    setIsPriorityMenuOpen(open);
+  };
+  
+  console.log("[TaskDetail] Before render - isStatusMenuOpen:", isStatusMenuOpen);
+  console.log("[TaskDetail] Before render - isPriorityMenuOpen:", isPriorityMenuOpen);
 
   return (
     <div className="bg-[#25384D] flex flex-col h-full max-h-screen overflow-hidden">
@@ -589,16 +628,37 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
                 </h1>
               )}
               <div className="flex space-x-2">
-                <DropdownMenu open={isStatusMenuOpen} onOpenChange={setIsStatusMenuOpen}>
+                <DropdownMenu 
+                  open={isStatusMenuOpen} 
+                  onOpenChange={handleStatusDropdownToggle}
+                >
                   <DropdownMenuTrigger asChild>
                     <Badge 
                       className={`${getStatusColor(status)} cursor-pointer hover:opacity-80 flex items-center gap-1.5`}
+                      onClick={() => {
+                        console.log("[TaskDetail] Status badge clicked - current state:", isStatusMenuOpen);
+                      }}
+                      data-status-dropdown
                     >
                       <StatusIcon className="h-3.5 w-3.5" />
                       {status}
                     </Badge>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-50">
+                  <DropdownMenuContent 
+                    className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-50"
+                    sideOffset={5}
+                    align="start"
+                    onCloseAutoFocus={(e) => {
+                      console.log("[TaskDetail] Status dropdown closing, preventing focus");
+                      e.preventDefault();
+                    }}
+                    onEscapeKeyDown={() => {
+                      console.log("[TaskDetail] Status dropdown escape key pressed");
+                    }}
+                    onPointerDownOutside={() => {
+                      console.log("[TaskDetail] Status dropdown pointer down outside");
+                    }}
+                  >
                     <DropdownMenuLabel>Set Status</DropdownMenuLabel>
                     <DropdownMenuSeparator className="bg-[#3A4D62]" />
                     {statusOptions.map((option) => {
@@ -607,7 +667,10 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
                       return (
                         <DropdownMenuItem 
                           key={option.value}
-                          onClick={() => handleStatusChange(option.value)} 
+                          onClick={() => {
+                            console.log("[TaskDetail] Status option clicked:", option.value);
+                            handleStatusChange(option.value);
+                          }} 
                           className="hover:bg-[#3A4D62]/50 cursor-pointer flex items-center gap-2"
                         >
                           <Icon 
@@ -622,10 +685,17 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
                   </DropdownMenuContent>
                 </DropdownMenu>
                 
-                <DropdownMenu open={isPriorityMenuOpen} onOpenChange={setIsPriorityMenuOpen}>
+                <DropdownMenu 
+                  open={isPriorityMenuOpen} 
+                  onOpenChange={handlePriorityDropdownToggle}
+                >
                   <DropdownMenuTrigger asChild>
                     <Badge 
                       className={`${getPriorityColor(priority)} cursor-pointer hover:opacity-80 flex items-center gap-1.5`}
+                      onClick={() => {
+                        console.log("[TaskDetail] Priority badge clicked - current state:", isPriorityMenuOpen);
+                      }}
+                      data-priority-dropdown
                     >
                       <PriorityIcon 
                         className={`h-3.5 w-3.5 ${
@@ -636,7 +706,21 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
                       {priority}
                     </Badge>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-50">
+                  <DropdownMenuContent 
+                    className="bg-[#25384D] border-[#3A4D62] text-[#F1F5F9] z-50"
+                    sideOffset={5}
+                    align="start"
+                    onCloseAutoFocus={(e) => {
+                      console.log("[TaskDetail] Priority dropdown closing, preventing focus");
+                      e.preventDefault();
+                    }}
+                    onEscapeKeyDown={() => {
+                      console.log("[TaskDetail] Priority dropdown escape key pressed");
+                    }}
+                    onPointerDownOutside={() => {
+                      console.log("[TaskDetail] Priority dropdown pointer down outside");
+                    }}
+                  >
                     <DropdownMenuLabel>Set Priority</DropdownMenuLabel>
                     <DropdownMenuSeparator className="bg-[#3A4D62]" />
                     {priorityOptions.map((option) => {
@@ -655,7 +739,10 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
                       return (
                         <DropdownMenuItem 
                           key={option.value}
-                          onClick={() => handlePriorityChange(option.value)} 
+                          onClick={() => {
+                            console.log("[TaskDetail] Priority option clicked:", option.value);
+                            handlePriorityChange(option.value);
+                          }} 
                           className="hover:bg-[#3A4D62]/50 cursor-pointer flex items-center gap-2"
                         >
                           <Icon className={`h-4 w-4 ${iconColor}`} aria-hidden="true" />

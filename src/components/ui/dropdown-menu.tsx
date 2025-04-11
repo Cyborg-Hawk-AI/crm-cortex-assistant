@@ -58,19 +58,41 @@ DropdownMenuSubContent.displayName =
 const DropdownMenuContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
-  <DropdownMenuPrimitive.Portal>
-    <DropdownMenuPrimitive.Content
-      ref={ref}
-      sideOffset={sideOffset}
-      className={cn(
-        "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-[#25384D] border-[#3A4D62] p-1 text-[#F1F5F9] shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-        className
-      )}
-      {...props}
-    />
-  </DropdownMenuPrimitive.Portal>
-))
+>(({ className, sideOffset = 4, ...props }, ref) => {
+  console.log("[DropdownMenuContent] Rendering with props:", { className, sideOffset, ...props });
+  
+  return (
+    <DropdownMenuPrimitive.Portal>
+      <DropdownMenuPrimitive.Content
+        ref={ref}
+        sideOffset={sideOffset}
+        className={cn(
+          "z-[999] min-w-[8rem] overflow-hidden rounded-md border bg-[#25384D] border-[#3A4D62] p-1 text-[#F1F5F9] shadow-md shadow-[#000]/20 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+          className
+        )}
+        onCloseAutoFocus={(e) => {
+          console.log("[DropdownMenuContent] onCloseAutoFocus event triggered");
+          if (props.onCloseAutoFocus) {
+            props.onCloseAutoFocus(e);
+          }
+        }}
+        onEscapeKeyDown={(e) => {
+          console.log("[DropdownMenuContent] onEscapeKeyDown event triggered");
+          if (props.onEscapeKeyDown) {
+            props.onEscapeKeyDown(e);
+          }
+        }}
+        onPointerDownOutside={(e) => {
+          console.log("[DropdownMenuContent] onPointerDownOutside event triggered");
+          if (props.onPointerDownOutside) {
+            props.onPointerDownOutside(e);
+          }
+        }}
+        {...props}
+      />
+    </DropdownMenuPrimitive.Portal>
+  );
+})
 DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName
 
 const DropdownMenuItem = React.forwardRef<
@@ -78,17 +100,27 @@ const DropdownMenuItem = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
     inset?: boolean
   }
->(({ className, inset, ...props }, ref) => (
-  <DropdownMenuPrimitive.Item
-    ref={ref}
-    className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-[#3A4D62] focus:text-[#F1F5F9] data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-      inset && "pl-8",
-      className
-    )}
-    {...props}
-  />
-))
+>(({ className, inset, onClick, ...props }, ref) => {
+  const handleClick = (e: React.MouseEvent) => {
+    console.log("[DropdownMenuItem] Item clicked");
+    if (onClick) {
+      onClick(e);
+    }
+  };
+
+  return (
+    <DropdownMenuPrimitive.Item
+      ref={ref}
+      className={cn(
+        "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-[#3A4D62] focus:text-[#F1F5F9] data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        inset && "pl-8",
+        className
+      )}
+      onClick={handleClick}
+      {...props}
+    />
+  );
+})
 DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName
 
 const DropdownMenuCheckboxItem = React.forwardRef<
