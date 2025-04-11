@@ -26,7 +26,7 @@ export function MissionTableView({ missionId, onTaskClick }: MissionTableViewPro
   
   const {
     tasks = [],
-    subtasks,
+    subtasks = {},
     isLoading,
     error,
     currentUserId,
@@ -43,6 +43,9 @@ export function MissionTableView({ missionId, onTaskClick }: MissionTableViewPro
     queryFn: async () => {
       try {
         const userIds = new Set<string>();
+        
+        if (!tasks || tasks.length === 0) return {};
+        
         tasks.forEach(task => {
           if (task.assignee_id) userIds.add(task.assignee_id);
           if (task.reporter_id) userIds.add(task.reporter_id);
@@ -72,7 +75,7 @@ export function MissionTableView({ missionId, onTaskClick }: MissionTableViewPro
         return {};
       }
     },
-    enabled: tasks.length > 0
+    enabled: Array.isArray(tasks) && tasks.length > 0
   });
 
   const getUserDisplayName = (userId: string | null | undefined) => {
@@ -85,7 +88,9 @@ export function MissionTableView({ missionId, onTaskClick }: MissionTableViewPro
   };
 
   useEffect(() => {
-    setHookTaskTitle(newTaskTitle);
+    if (setHookTaskTitle) {
+      setHookTaskTitle(newTaskTitle);
+    }
   }, [newTaskTitle, setHookTaskTitle]);
   
   const handleCreateTask = () => {
@@ -98,8 +103,10 @@ export function MissionTableView({ missionId, onTaskClick }: MissionTableViewPro
       return;
     }
     
-    createTask(newTaskTitle, null);
-    setNewTaskTitle('');
+    if (createTask) {
+      createTask(newTaskTitle, null);
+      setNewTaskTitle('');
+    }
   };
   
   const toggleTaskExpanded = (taskId: string) => {
@@ -107,7 +114,7 @@ export function MissionTableView({ missionId, onTaskClick }: MissionTableViewPro
       const newState = { ...prev };
       newState[taskId] = !prev[taskId];
       
-      if (!prev[taskId]) {
+      if (!prev[taskId] && getSubtasks) {
         getSubtasks(taskId);
       }
       
@@ -116,16 +123,20 @@ export function MissionTableView({ missionId, onTaskClick }: MissionTableViewPro
   };
   
   const handleStatusChange = (taskId: string, status: string) => {
-    updateTaskStatus(taskId, status);
+    if (updateTaskStatus) {
+      updateTaskStatus(taskId, status);
+    }
   };
   
   const handleDeleteSubtask = (subtaskId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    deleteTask(subtaskId);
-    toast({
-      title: "Subtask deleted",
-      description: "The subtask has been removed"
-    });
+    if (deleteTask) {
+      deleteTask(subtaskId);
+      toast({
+        title: "Subtask deleted",
+        description: "The subtask has been removed"
+      });
+    }
   };
   
   const getStatusIcon = (status: string) => {
@@ -147,6 +158,10 @@ export function MissionTableView({ missionId, onTaskClick }: MissionTableViewPro
   
   if (error) {
     return <div className="p-4 text-center text-red-500">Error loading tasks</div>;
+  }
+
+  if (!tasks || !Array.isArray(tasks)) {
+    return <div className="p-4 text-center text-yellow-500">No tasks available. Try refreshing the page.</div>;
   }
 
   return (
@@ -216,11 +231,11 @@ export function MissionTableView({ missionId, onTaskClick }: MissionTableViewPro
                         )}
                       </Button>
                     </TableCell>
-                    <TableCell className="font-medium">{task.title}</TableCell>
+                    <TableCell className="font-medium">{task.title || 'Untitled Task'}</TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
-                        {getStatusIcon(task.status)}
-                        <span className="capitalize">{task.status.replace('-', ' ')}</span>
+                        {getStatusIcon(task.status || 'open')}
+                        <span className="capitalize">{(task.status || 'open').replace('-', ' ')}</span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -232,7 +247,7 @@ export function MissionTableView({ missionId, onTaskClick }: MissionTableViewPro
                             'border-blue-400/50 bg-blue-500/20 text-blue-200'}
                         `}
                       >
-                        {task.priority}
+                        {task.priority || 'low'}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -270,7 +285,7 @@ export function MissionTableView({ missionId, onTaskClick }: MissionTableViewPro
                                   placeholder="Add subtask..."
                                   className="text-sm h-8 bg-[#1C2A3A] border-[#3A4D62]"
                                   onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && e.currentTarget.value) {
+                                    if (e.key === 'Enter' && e.currentTarget.value && createTask) {
                                       createTask(e.currentTarget.value, task.id);
                                       e.currentTarget.value = '';
                                     }
@@ -278,7 +293,7 @@ export function MissionTableView({ missionId, onTaskClick }: MissionTableViewPro
                                 />
                               </div>
                               
-                              {subtasks[task.id]?.length > 0 ? (
+                              {subtasks && subtasks[task.id] && subtasks[task.id]?.length > 0 ? (
                                 <div className="space-y-1">
                                   {subtasks[task.id].map((subtask) => (
                                     <div 
@@ -299,7 +314,7 @@ export function MissionTableView({ missionId, onTaskClick }: MissionTableViewPro
                                           onClick={(e) => e.stopPropagation()}
                                         />
                                         <span className={`text-sm ${subtask.status === 'completed' ? 'line-through text-[#64748B]' : ''}`}>
-                                          {subtask.title}
+                                          {subtask.title || 'Untitled Subtask'}
                                         </span>
                                       </div>
                                       <div className="flex items-center">

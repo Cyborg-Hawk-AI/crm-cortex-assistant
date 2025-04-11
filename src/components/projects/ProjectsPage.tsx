@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
@@ -50,10 +51,10 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
           return [];
         }
         
-        return data.map(task => ({
+        return (data || []).map(task => ({
           id: task.id,
-          title: task.title,
-          description: task.description,
+          title: task.title || 'Untitled Project',
+          description: task.description || '',
           status: task.status || 'open',
           owner_id: task.reporter_id || task.user_id,
           created_at: task.created_at,
@@ -86,7 +87,7 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
           return [];
         }
         
-        return data as Task[];
+        return data || [];
       } catch (err) {
         console.error('Failed to fetch project tasks:', err);
         return [];
@@ -112,7 +113,7 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
           return null;
         }
         
-        return data as Task;
+        return data;
       } catch (err) {
         console.error('Failed to fetch task details:', err);
         return null;
@@ -151,7 +152,7 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
         if (tasksData && tasksData.length > 0) {
           return tasksData.map(task => ({
             id: task.id,
-            title: task.title,
+            title: task.title || 'Untitled Task',
             parent_task_id: task.parent_task_id,
             user_id: task.user_id,
             is_completed: task.status === 'completed' || task.status === 'resolved',
@@ -219,7 +220,7 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
     );
   }
   
-  if (!projects.length) {
+  if (!projects || projects.length === 0) {
     return (
       <div className="h-full flex items-center justify-center p-4">
         <Card className="w-full max-w-lg bg-[#25384D] border-[#3A4D62]">
@@ -237,6 +238,26 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
             </div>
           </CardContent>
         </Card>
+      </div>
+    );
+  }
+
+  // Fix for when selectedProjectId is provided but project doesn't exist in projects array
+  const selectedProjectExists = internalSelectedProjectId 
+    ? projects.some(p => p.id === internalSelectedProjectId)
+    : false;
+
+  if (internalSelectedProjectId && !selectedProjectExists && !loadingProjects) {
+    // Redirect to projects if the selected project doesn't exist
+    setTimeout(() => navigate('/projects'), 0);
+    return (
+      <div className="h-full flex items-center justify-center p-4">
+        <div className="w-full max-w-lg p-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-gray-700/50 rounded-md w-1/3"></div>
+            <div className="h-40 bg-gray-700/50 rounded-md"></div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -265,7 +286,18 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
         />
       ) : (
         <ProjectDetail
-          project={projects.find(p => p.id === internalSelectedProjectId)!}
+          project={projects.find(p => p.id === internalSelectedProjectId) || {
+            id: internalSelectedProjectId,
+            title: 'Loading...',
+            description: '',
+            status: 'open',
+            owner_id: '',
+            created_at: '',
+            updated_at: '',
+            tags: [],
+            task_count: 0,
+            completed_count: 0
+          }}
           tasks={projectTasks}
           onBack={handleBackToProjects}
           onTaskSelect={handleTaskClick}

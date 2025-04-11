@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -49,8 +50,10 @@ export function TaskList({ projectId, onTaskClick }: TaskListProps) {
     enabled: !!projectId
   });
 
-  const getPriorityColor = (priority: string) => {
-    switch(priority?.toLowerCase()) {
+  const getPriorityColor = (priority: string | null | undefined) => {
+    if (!priority) return 'text-gray-400';
+    
+    switch(priority.toLowerCase()) {
       case 'high':
       case 'urgent':
         return 'text-neon-red';
@@ -63,8 +66,10 @@ export function TaskList({ projectId, onTaskClick }: TaskListProps) {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
+  const getStatusColor = (status: string | null | undefined) => {
+    if (!status) return 'bg-gray-200/20 text-gray-500 border-gray-300/30';
+    
+    switch (status.toLowerCase()) {
       case 'completed':
       case 'done':
       case 'closed':
@@ -108,7 +113,7 @@ export function TaskList({ projectId, onTaskClick }: TaskListProps) {
     );
   }
 
-  if (!tasks.length) {
+  if (!tasks || tasks.length === 0) {
     return (
       <div className="py-6 text-center bg-[#1C2A3A]/30 rounded-md border border-[#3A4D62]/50 border-dashed">
         <div className="flex flex-col items-center justify-center space-y-3 px-4 py-6">
@@ -144,11 +149,11 @@ export function TaskList({ projectId, onTaskClick }: TaskListProps) {
             />
             <div className="flex flex-col">
               <span className={
-                task.status === 'completed' || task.status === 'closed'
+                (task.status === 'completed' || task.status === 'closed')
                   ? 'line-through text-[#CBD5E1]/50'
                   : 'text-[#F1F5F9]'
               }>
-                {task.title}
+                {task.title || 'Untitled Task'}
               </span>
               {task.description && (
                 <span className="text-xs text-[#CBD5E1]/70 mt-1 line-clamp-1">
@@ -159,9 +164,11 @@ export function TaskList({ projectId, onTaskClick }: TaskListProps) {
           </div>
           
           <div className="flex items-center space-x-2">
-            <Badge className={`${getStatusColor(task.status)} text-xs`}>
-              {task.status}
-            </Badge>
+            {task.status && (
+              <Badge className={`${getStatusColor(task.status)} text-xs`}>
+                {task.status}
+              </Badge>
+            )}
             
             {task.due_date && (
               <div className="flex items-center text-xs text-[#CBD5E1]">
@@ -179,7 +186,11 @@ export function TaskList({ projectId, onTaskClick }: TaskListProps) {
             {task.assignee_id && (
               <Avatar className="h-6 w-6">
                 <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${task.assignee_id}`} />
-                <AvatarFallback>{task.assignee?.full_name ? task.assignee.full_name.substring(0, 2).toUpperCase() : task.assignee_id.substring(0, 2).toUpperCase()}</AvatarFallback>
+                <AvatarFallback>
+                  {task.assignee?.full_name 
+                    ? task.assignee.full_name.substring(0, 2).toUpperCase() 
+                    : (task.assignee_id ? task.assignee_id.substring(0, 2).toUpperCase() : 'UN')}
+                </AvatarFallback>
               </Avatar>
             )}
             

@@ -62,9 +62,9 @@ export function TasksPage({
           return [];
         }
         
-        return data.map(mission => ({
+        return (data || []).map(mission => ({
           id: mission.id,
-          name: mission.title
+          name: mission.title || 'Untitled Mission'
         }));
       } catch (err) {
         console.error('Error in mission fetch:', err);
@@ -75,7 +75,7 @@ export function TasksPage({
 
   // Select first mission by default for the missions tab
   useEffect(() => {
-    if (missions.length > 0 && !effectiveSelectedTaskId && activeView === 'missions') {
+    if (missions && missions.length > 0 && !effectiveSelectedTaskId && activeView === 'missions') {
       handleMissionSelect(missions[0].id);
     }
   }, [missions, effectiveSelectedTaskId, activeView]);
@@ -179,7 +179,7 @@ export function TasksPage({
         <div className="p-4">
           <div className="mb-4">
             <div className="flex gap-2 overflow-x-auto pb-2">
-              {missions.map((mission) => (
+              {missions && missions.map((mission) => (
                 <Button
                   key={mission.id}
                   variant="outline"
@@ -194,6 +194,12 @@ export function TasksPage({
                   {mission.name}
                 </Button>
               ))}
+              
+              {(!missions || missions.length === 0) && (
+                <div className="text-sm text-[#64748B] p-2">
+                  No missions found. Create one using the button above.
+                </div>
+              )}
             </div>
           </div>
 
@@ -216,6 +222,12 @@ export function TasksPage({
                     </div>
                   )}
                 </motion.div>
+              )}
+              
+              {!effectiveSelectedTaskId && (
+                <div className="p-4 text-center text-[#CBD5E1]">
+                  <p>Select a mission to view tasks</p>
+                </div>
               )}
             </CardContent>
           </Card>
