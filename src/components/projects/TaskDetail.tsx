@@ -572,9 +572,22 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
       // Since this is just a local operation and doesn't affect the stored subtasks array,
       // we'll rely on the onRefresh call to update the UI through parent rerender
       
+      if (onRefresh) {
+        onRefresh();
+      }
+      
+      toast({
+        title: "Subtask deleted",
+        description: "The subtask has been removed successfully"
+      });
+      
     } catch (error) {
       console.error("Error deleting subtask:", error);
-      throw error;
+      toast({
+        title: "Error",
+        description: "Failed to delete subtask. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -881,7 +894,7 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
               {subtasks.length > 0 ? (
                 <div className="space-y-1 mb-2 max-h-[200px] overflow-y-auto pr-2">
                   {subtasks.map(subtask => (
-                    <div key={subtask.id} className="flex items-center p-2 hover:bg-[#1C2A3A] rounded-md">
+                    <div key={subtask.id} className="flex items-center p-2 hover:bg-[#1C2A3A] rounded-md group">
                       <Checkbox 
                         id={subtask.id}
                         checked={subtask.is_completed}
@@ -895,9 +908,108 @@ export function TaskDetail({ task, subtasks = [], onClose, onUpdate, onRefresh }
                       >
                         {subtask.title}
                       </label>
-                      <Button 
+                      <Button
                         variant="ghost" 
                         size="icon" 
-                        className="h-6 w-6 opacity-0 hover:opacity-100"
-                        onClick={() => {
-                          console.
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                        onClick={() => deleteSubtask(subtask.id)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-[#64748B] p-2">No subtasks yet</div>
+              )}
+              
+              <div className="flex items-center mt-2">
+                <Input
+                  value={newSubtaskTitle}
+                  onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                  placeholder="Add a subtask..."
+                  className="flex-1 bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9] mr-2"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleAddSubtask();
+                    }
+                  }}
+                />
+                <Button 
+                  onClick={handleAddSubtask}
+                  disabled={!newSubtaskTitle.trim()}
+                  size="sm"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add
+                </Button>
+              </div>
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-[#F1F5F9]">
+                Comments {comments.length > 0 && `(${comments.length})`}
+              </h3>
+            </div>
+            
+            <CommentSection 
+              entityId={task.id} 
+              entityType="task" 
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-[#F1F5F9]">Tags</h3>
+            </div>
+            
+            <div className="bg-[#1C2A3A]/50 p-3 rounded-md">
+              <div className="flex flex-wrap gap-2 mb-3">
+                {tags.length > 0 ? (
+                  tags.map((tag, index) => (
+                    <Badge 
+                      key={index} 
+                      className="bg-[#3A4D62]/50 hover:bg-[#3A4D62] text-[#F1F5F9] gap-1 pl-2"
+                    >
+                      {tag}
+                      <X 
+                        className="h-3 w-3 cursor-pointer hover:text-[#E11D48]" 
+                        onClick={() => handleRemoveTag(tag)}
+                      />
+                    </Badge>
+                  ))
+                ) : (
+                  <span className="text-sm text-[#64748B]">No tags yet</span>
+                )}
+              </div>
+              
+              <div className="flex items-center">
+                <Input
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  placeholder="Add a tag..."
+                  className="flex-1 bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9] mr-2"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleAddTag();
+                    }
+                  }}
+                />
+                <Button 
+                  onClick={handleAddTag}
+                  disabled={!newTag.trim()}
+                  size="sm"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ScrollArea>
+    </div>
+  );
+}
