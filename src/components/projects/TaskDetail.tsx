@@ -1,4 +1,3 @@
-
 // Import necessary components and utilities
 import React, { useState, useEffect, useRef } from 'react';
 import { 
@@ -299,9 +298,12 @@ export function TaskDetail({
     try {
       console.log(`[DEBUG-TaskDetail] Formatting date: ${dateString}, type: ${typeof dateString}`);
       
-      // Convert string to Date object if needed
-      const date = typeof dateString === 'string' ? parseISO(dateString) : dateString;
-      return format(date, 'PPP');
+      // Handle both string and Date objects properly
+      if (typeof dateString === 'string') {
+        return format(parseISO(dateString), 'PPP');
+      } else {
+        return format(dateString, 'PPP');
+      }
     } catch (e) {
       console.error(`[DEBUG-TaskDetail] Error formatting date:`, e);
       return 'Invalid date';
