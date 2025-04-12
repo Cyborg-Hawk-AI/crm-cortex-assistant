@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -7,7 +8,7 @@ import LoginPage from '@/pages/auth/Login';
 import SignupPage from '@/pages/auth/Signup';
 import ForgotPasswordPage from '@/pages/auth/ForgotPassword';
 import UpdatePasswordPage from '@/pages/auth/UpdatePassword';
-import DashboardPage from '@/pages/Dashboard';
+import Index from '@/pages/Index'; // Changed from DashboardPage to Index
 import AuthCallbackPage from './pages/auth/Callback';
 
 function App() {
@@ -24,7 +25,7 @@ function App() {
             path="/"
             element={
               <ProtectedRoute>
-                <DashboardPage />
+                <Index /> {/* Changed from DashboardPage to Index */}
               </ProtectedRoute>
             }
           />
