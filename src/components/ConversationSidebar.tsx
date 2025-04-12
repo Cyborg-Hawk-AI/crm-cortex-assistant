@@ -13,13 +13,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { updateConversationTitle } from '@/api/messages';
-
 interface ConversationSidebarProps {
   activeConversationId: string | null;
   setActiveConversationId: (id: string) => void;
   startNewConversation: (title?: string) => Promise<string>;
 }
-
 export const ConversationSidebar = forwardRef<{
   setIsOpen: (open: boolean) => void;
 }, ConversationSidebarProps>(({
@@ -43,7 +41,6 @@ export const ConversationSidebar = forwardRef<{
   const [newConversationTitle, setNewConversationTitle] = useState('');
   const [isDeleteProjectDialogOpen, setIsDeleteProjectDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
-
   const {
     projects,
     isLoadingProjects,
@@ -56,11 +53,9 @@ export const ConversationSidebar = forwardRef<{
     isCreatingProject,
     isUpdatingProject
   } = useProjects();
-
   useImperativeHandle(ref, () => ({
     setIsOpen
   }));
-
   const {
     data: conversations = [],
     isLoading,
@@ -69,7 +64,6 @@ export const ConversationSidebar = forwardRef<{
     queryKey: ['conversations'],
     queryFn: getConversations
   });
-
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
@@ -79,12 +73,10 @@ export const ConversationSidebar = forwardRef<{
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [isOpen]);
-
   const handleNewConversation = async () => {
     setActiveConversationId(null);
     if (isMobile) setIsOpen(false);
   };
-
   const handleConversationClick = (conversationId: string) => {
     if (conversationId !== activeConversationId) {
       console.log(`Switching to conversation: ${conversationId}`);
@@ -92,7 +84,6 @@ export const ConversationSidebar = forwardRef<{
     }
     if (isMobile) setIsOpen(false);
   };
-
   const handleDeleteConversation = async (conversationId: string, event: React.MouseEvent) => {
     event.stopPropagation();
     await deleteConversation(conversationId);
@@ -106,7 +97,6 @@ export const ConversationSidebar = forwardRef<{
       }
     }
   };
-
   const handleCreateProject = () => {
     if (newProjectName.trim()) {
       createProject(newProjectName.trim(), newProjectDescription.trim() || undefined);
@@ -115,7 +105,6 @@ export const ConversationSidebar = forwardRef<{
       setIsCreateDialogOpen(false);
     }
   };
-
   const handleUpdateProject = () => {
     if (editProjectId && editProjectName.trim()) {
       updateProject(editProjectId, {
@@ -128,19 +117,16 @@ export const ConversationSidebar = forwardRef<{
       setIsEditDialogOpen(false);
     }
   };
-
   const handleEditProject = (projectId: string, name: string, description: string = '') => {
     setEditProjectId(projectId);
     setEditProjectName(name);
     setEditProjectDescription(description || '');
     setIsEditDialogOpen(true);
   };
-
   const handleDeleteProjectPrompt = (projectId: string) => {
     setProjectToDelete(projectId);
     setIsDeleteProjectDialogOpen(true);
   };
-
   const handleConfirmDeleteProject = async () => {
     if (projectToDelete) {
       await deleteProject(projectToDelete);
@@ -148,12 +134,10 @@ export const ConversationSidebar = forwardRef<{
       setProjectToDelete(null);
     }
   };
-
   const handleMoveConversation = (conversationId: string) => {
     setSelectedConversationForMove(conversationId);
     setIsMoveDialogOpen(true);
   };
-
   const handleMoveToProject = (projectId: string) => {
     if (selectedConversationForMove) {
       moveConversationToProject(selectedConversationForMove, projectId);
@@ -161,13 +145,11 @@ export const ConversationSidebar = forwardRef<{
       setIsMoveDialogOpen(false);
     }
   };
-
   const handleRenameConversation = (conversationId: string, currentTitle: string) => {
     setSelectedConversationForRename(conversationId);
     setNewConversationTitle(currentTitle);
     setIsRenameDialogOpen(true);
   };
-
   const handleConfirmRename = async () => {
     if (selectedConversationForRename && newConversationTitle.trim()) {
       await updateConversationTitle(selectedConversationForRename, newConversationTitle.trim());
@@ -177,7 +159,6 @@ export const ConversationSidebar = forwardRef<{
       setNewConversationTitle('');
     }
   };
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -187,17 +168,10 @@ export const ConversationSidebar = forwardRef<{
       minute: '2-digit'
     });
   };
-
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
   };
-
-  const filteredConversations = conversations.filter(conversation => 
-    activeProjectId 
-      ? conversation.project_id === activeProjectId 
-      : !conversation.project_id
-  );
-
+  const filteredConversations = conversations.filter(conversation => activeProjectId ? conversation.project_id === activeProjectId : !conversation.project_id);
   return <>
       {!isOpen && <div className="h-full flex items-center cursor-pointer bg-gradient-to-r from-neon-purple/20 to-transparent hover:from-neon-purple/40 transition-all duration-300 border-r border-neon-purple/20" onClick={toggleSidebar}>
           <div className="p-2 bg-white rounded-full shadow-lg mr-[-12px] neon-glow-purple">
@@ -215,7 +189,7 @@ export const ConversationSidebar = forwardRef<{
               <ChevronLeft size={16} className="text-neon-purple" />
             </Button>}
           
-          <div className="p-4 space-y-2">
+          <div className="p-4 space-y-2 bg-slate-950">
             <Button className="w-full justify-start gap-2 bg-gradient-to-r from-neon-purple to-neon-blue text-white rounded-full shadow-md hover:shadow-lg hover:brightness-110 transition-all" onClick={handleNewConversation}>
               <Plus size={16} />
               New Chat
@@ -238,21 +212,11 @@ export const ConversationSidebar = forwardRef<{
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Project Name</Label>
-                    <Input 
-                      id="name" 
-                      value={newProjectName} 
-                      onChange={(e) => setNewProjectName(e.target.value)} 
-                      placeholder="Enter project name"
-                    />
+                    <Input id="name" value={newProjectName} onChange={e => setNewProjectName(e.target.value)} placeholder="Enter project name" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="description">Description (optional)</Label>
-                    <Textarea 
-                      id="description" 
-                      value={newProjectDescription} 
-                      onChange={(e) => setNewProjectDescription(e.target.value)}
-                      placeholder="Enter project description"
-                    />
+                    <Textarea id="description" value={newProjectDescription} onChange={e => setNewProjectDescription(e.target.value)} placeholder="Enter project description" />
                   </div>
                 </div>
                 <DialogFooter>
@@ -275,21 +239,11 @@ export const ConversationSidebar = forwardRef<{
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
                     <Label htmlFor="edit-name">Project Name</Label>
-                    <Input 
-                      id="edit-name" 
-                      value={editProjectName} 
-                      onChange={(e) => setEditProjectName(e.target.value)} 
-                      placeholder="Enter project name"
-                    />
+                    <Input id="edit-name" value={editProjectName} onChange={e => setEditProjectName(e.target.value)} placeholder="Enter project name" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="edit-description">Description (optional)</Label>
-                    <Textarea 
-                      id="edit-description" 
-                      value={editProjectDescription} 
-                      onChange={(e) => setEditProjectDescription(e.target.value)}
-                      placeholder="Enter project description"
-                    />
+                    <Textarea id="edit-description" value={editProjectDescription} onChange={e => setEditProjectDescription(e.target.value)} placeholder="Enter project description" />
                   </div>
                 </div>
                 <DialogFooter>
@@ -310,24 +264,13 @@ export const ConversationSidebar = forwardRef<{
                   </DialogDescription>
                 </DialogHeader>
                 <div className="max-h-80 overflow-y-auto space-y-2">
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start"
-                    onClick={() => handleMoveToProject('')}
-                  >
+                  <Button variant="outline" className="w-full justify-start" onClick={() => handleMoveToProject('')}>
                     <span className="flex-1 text-left">Open Chats</span>
                   </Button>
-                  {projects.map(project => (
-                    <Button 
-                      key={project.id} 
-                      variant="outline" 
-                      className="w-full justify-start"
-                      onClick={() => handleMoveToProject(project.id)}
-                    >
+                  {projects.map(project => <Button key={project.id} variant="outline" className="w-full justify-start" onClick={() => handleMoveToProject(project.id)}>
                       <Folder className="mr-2 h-4 w-4" />
                       <span className="flex-1 text-left">{project.name}</span>
-                    </Button>
-                  ))}
+                    </Button>)}
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsMoveDialogOpen(false)}>Cancel</Button>
@@ -346,12 +289,7 @@ export const ConversationSidebar = forwardRef<{
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
                     <Label htmlFor="conversation-name">Conversation Name</Label>
-                    <Input 
-                      id="conversation-name" 
-                      value={newConversationTitle}
-                      onChange={(e) => setNewConversationTitle(e.target.value)}
-                      placeholder="Enter conversation name"
-                    />
+                    <Input id="conversation-name" value={newConversationTitle} onChange={e => setNewConversationTitle(e.target.value)} placeholder="Enter conversation name" />
                   </div>
                 </div>
                 <DialogFooter>
@@ -384,25 +322,19 @@ export const ConversationSidebar = forwardRef<{
           <Separator className="bg-neon-purple/20" />
           
           <div className="flex-1 overflow-y-auto py-3 px-2 bg-slate-800">
-            {isLoadingProjects ? (
-              <div className="flex justify-center p-4">
+            {isLoadingProjects ? <div className="flex justify-center p-4">
                 <div className="loading-dots flex items-center">
                   <div className="h-2 w-2 bg-neon-purple rounded-full mx-1 animate-pulse"></div>
                   <div className="h-2 w-2 bg-neon-purple rounded-full mx-1 animate-pulse" style={{
-                    animationDelay: '0.2s'
-                  }}></div>
+                animationDelay: '0.2s'
+              }}></div>
                   <div className="h-2 w-2 bg-neon-purple rounded-full mx-1 animate-pulse" style={{
-                    animationDelay: '0.4s'
-                  }}></div>
+                animationDelay: '0.4s'
+              }}></div>
                 </div>
-              </div>
-            ) : (
-              <div className="space-y-6 px-2">
+              </div> : <div className="space-y-6 px-2">
                 <div className="space-y-2">
-                  <button 
-                    onClick={() => setActiveProjectId(null)}
-                    className={`w-full text-left font-medium px-2 py-1 rounded hover:bg-white/10 transition-colors flex items-center justify-between ${!activeProjectId ? 'bg-white/20 text-white' : 'text-gray-300'}`}
-                  >
+                  <button onClick={() => setActiveProjectId(null)} className={`w-full text-left font-medium px-2 py-1 rounded hover:bg-white/10 transition-colors flex items-center justify-between ${!activeProjectId ? 'bg-white/20 text-white' : 'text-gray-300'}`}>
                     <span className="flex items-center">
                       <MessageSquarePlus className="mr-2 h-4 w-4" />
                       Open Chats
@@ -410,35 +342,23 @@ export const ConversationSidebar = forwardRef<{
                     <ChevronRight className={`h-4 w-4 transition-transform ${!activeProjectId ? 'rotate-90' : ''}`} />
                   </button>
                   
-                  {!activeProjectId && (
-                    <div className="ml-3 space-y-1 animate-slideDown">
-                      {isLoading ? (
-                        <div className="flex justify-center p-4">
+                  {!activeProjectId && <div className="ml-3 space-y-1 animate-slideDown">
+                      {isLoading ? <div className="flex justify-center p-4">
                           <div className="loading-dots flex items-center">
                             <div className="h-2 w-2 bg-neon-purple rounded-full mx-1 animate-pulse"></div>
                             <div className="h-2 w-2 bg-neon-purple rounded-full mx-1 animate-pulse" style={{
-                              animationDelay: '0.2s'
-                            }}></div>
+                      animationDelay: '0.2s'
+                    }}></div>
                             <div className="h-2 w-2 bg-neon-purple rounded-full mx-1 animate-pulse" style={{
-                              animationDelay: '0.4s'
-                            }}></div>
+                      animationDelay: '0.4s'
+                    }}></div>
                           </div>
-                        </div>
-                      ) : (
-                        <>
-                          {filteredConversations.length === 0 ? (
-                            <div className="p-3 text-center text-gray-400 italic text-sm">No open chats</div>
-                          ) : (
-                            filteredConversations.map(conversation => (
-                              <div 
-                                key={conversation.id} 
-                                className={`
+                        </div> : <>
+                          {filteredConversations.length === 0 ? <div className="p-3 text-center text-gray-400 italic text-sm">No open chats</div> : filteredConversations.map(conversation => <div key={conversation.id} className={`
                                   group flex justify-between items-center rounded-xl px-3 py-2 cursor-pointer hover-scale
                                   transition-all duration-200 border
                                   ${activeConversationId === conversation.id ? 'bg-white shadow-md border-neon-purple/30 neon-glow-purple' : 'bg-white/5 border-transparent hover:bg-white/10'}
-                                `} 
-                                onClick={() => handleConversationClick(conversation.id)}
-                              >
+                                `} onClick={() => handleConversationClick(conversation.id)}>
                                 <div className="flex-1 min-w-0">
                                   <div className={`font-medium truncate ${activeConversationId === conversation.id ? 'text-neon-purple' : 'text-gray-300'}`}>
                                     {conversation.title}
@@ -450,69 +370,41 @@ export const ConversationSidebar = forwardRef<{
                                 
                                 <Popover>
                                   <PopoverTrigger asChild>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="icon" 
-                                      className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:opacity-100 focus:opacity-100 hover:bg-white/10 rounded-full transition-all"
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
+                                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:opacity-100 focus:opacity-100 hover:bg-white/10 rounded-full transition-all" onClick={e => e.stopPropagation()}>
                                       <MoreVertical size={14} />
                                     </Button>
                                   </PopoverTrigger>
                                   <PopoverContent className="w-48" side="right">
                                     <div className="space-y-1">
-                                      <Button 
-                                        variant="ghost" 
-                                        size="sm" 
-                                        className="w-full justify-start text-sm"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleRenameConversation(conversation.id, conversation.title);
-                                        }}
-                                      >
+                                      <Button variant="ghost" size="sm" className="w-full justify-start text-sm" onClick={e => {
+                            e.stopPropagation();
+                            handleRenameConversation(conversation.id, conversation.title);
+                          }}>
                                         <Edit className="mr-2 h-4 w-4" />
                                         Rename
                                       </Button>
-                                      <Button 
-                                        variant="ghost" 
-                                        size="sm" 
-                                        className="w-full justify-start text-sm"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleMoveConversation(conversation.id);
-                                        }}
-                                      >
+                                      <Button variant="ghost" size="sm" className="w-full justify-start text-sm" onClick={e => {
+                            e.stopPropagation();
+                            handleMoveConversation(conversation.id);
+                          }}>
                                         <MoveRight className="mr-2 h-4 w-4" />
                                         Move to Project
                                       </Button>
-                                      <Button 
-                                        variant="ghost" 
-                                        size="sm" 
-                                        className="w-full justify-start text-sm text-red-500 hover:text-red-600 hover:bg-red-100/10"
-                                        onClick={(e) => handleDeleteConversation(conversation.id, e)}
-                                      >
+                                      <Button variant="ghost" size="sm" className="w-full justify-start text-sm text-red-500 hover:text-red-600 hover:bg-red-100/10" onClick={e => handleDeleteConversation(conversation.id, e)}>
                                         <Trash className="mr-2 h-4 w-4" />
                                         Delete
                                       </Button>
                                     </div>
                                   </PopoverContent>
                                 </Popover>
-                              </div>
-                            ))
-                          )}
-                        </>
-                      )}
-                    </div>
-                  )}
+                              </div>)}
+                        </>}
+                    </div>}
                 </div>
                 
-                {projects.map(project => (
-                  <div key={project.id} className="space-y-2">
+                {projects.map(project => <div key={project.id} className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <button 
-                        onClick={() => setActiveProjectId(project.id === activeProjectId ? null : project.id)}
-                        className={`flex-grow text-left font-medium px-2 py-1 rounded hover:bg-white/10 transition-colors flex items-center justify-between ${activeProjectId === project.id ? 'bg-white/20 text-white' : 'text-gray-300'}`}
-                      >
+                      <button onClick={() => setActiveProjectId(project.id === activeProjectId ? null : project.id)} className={`flex-grow text-left font-medium px-2 py-1 rounded hover:bg-white/10 transition-colors flex items-center justify-between ${activeProjectId === project.id ? 'bg-white/20 text-white' : 'text-gray-300'}`}>
                         <span className="flex items-center truncate pr-2">
                           <Folder className="mr-2 h-4 w-4 flex-shrink-0" />
                           <span className="truncate">{project.name}</span>
@@ -522,32 +414,17 @@ export const ConversationSidebar = forwardRef<{
                       
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:opacity-100 focus:opacity-100 hover:bg-white/10 rounded-full transition-all ml-1"
-                            onClick={(e) => e.stopPropagation()}
-                          >
+                          <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:opacity-100 focus:opacity-100 hover:bg-white/10 rounded-full transition-all ml-1" onClick={e => e.stopPropagation()}>
                             <MoreVertical size={14} />
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-48" side="right">
                           <div className="space-y-1">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="w-full justify-start text-sm"
-                              onClick={() => handleEditProject(project.id, project.name, project.description || '')}
-                            >
+                            <Button variant="ghost" size="sm" className="w-full justify-start text-sm" onClick={() => handleEditProject(project.id, project.name, project.description || '')}>
                               <Edit className="mr-2 h-4 w-4" />
                               Edit Project
                             </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="w-full justify-start text-sm text-red-500 hover:text-red-600 hover:bg-red-100/10"
-                              onClick={() => handleDeleteProjectPrompt(project.id)}
-                            >
+                            <Button variant="ghost" size="sm" className="w-full justify-start text-sm text-red-500 hover:text-red-600 hover:bg-red-100/10" onClick={() => handleDeleteProjectPrompt(project.id)}>
                               <Trash className="mr-2 h-4 w-4" />
                               Delete Project
                             </Button>
@@ -556,35 +433,23 @@ export const ConversationSidebar = forwardRef<{
                       </Popover>
                     </div>
                     
-                    {activeProjectId === project.id && (
-                      <div className="ml-3 space-y-1 animate-slideDown">
-                        {isLoading ? (
-                          <div className="flex justify-center p-4">
+                    {activeProjectId === project.id && <div className="ml-3 space-y-1 animate-slideDown">
+                        {isLoading ? <div className="flex justify-center p-4">
                             <div className="loading-dots flex items-center">
                               <div className="h-2 w-2 bg-neon-purple rounded-full mx-1 animate-pulse"></div>
                               <div className="h-2 w-2 bg-neon-purple rounded-full mx-1 animate-pulse" style={{
-                                animationDelay: '0.2s'
-                              }}></div>
+                      animationDelay: '0.2s'
+                    }}></div>
                               <div className="h-2 w-2 bg-neon-purple rounded-full mx-1 animate-pulse" style={{
-                                animationDelay: '0.4s'
-                              }}></div>
+                      animationDelay: '0.4s'
+                    }}></div>
                             </div>
-                          </div>
-                        ) : (
-                          <>
-                            {filteredConversations.length === 0 ? (
-                              <div className="p-3 text-center text-gray-400 italic text-sm">No conversations in this project</div>
-                            ) : (
-                              filteredConversations.map(conversation => (
-                                <div 
-                                  key={conversation.id} 
-                                  className={`
+                          </div> : <>
+                            {filteredConversations.length === 0 ? <div className="p-3 text-center text-gray-400 italic text-sm">No conversations in this project</div> : filteredConversations.map(conversation => <div key={conversation.id} className={`
                                     group flex justify-between items-center rounded-xl px-3 py-2 cursor-pointer hover-scale
                                     transition-all duration-200 border
                                     ${activeConversationId === conversation.id ? 'bg-white shadow-md border-neon-purple/30 neon-glow-purple' : 'bg-white/5 border-transparent hover:bg-white/10'}
-                                  `} 
-                                  onClick={() => handleConversationClick(conversation.id)}
-                                >
+                                  `} onClick={() => handleConversationClick(conversation.id)}>
                                   <div className="flex-1 min-w-0">
                                     <div className={`font-medium truncate ${activeConversationId === conversation.id ? 'text-neon-purple' : 'text-gray-300'}`}>
                                       {conversation.title}
@@ -596,64 +461,40 @@ export const ConversationSidebar = forwardRef<{
                                   
                                   <Popover>
                                     <PopoverTrigger asChild>
-                                      <Button 
-                                        variant="ghost" 
-                                        size="icon" 
-                                        className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:opacity-100 focus:opacity-100 hover:bg-white/10 rounded-full transition-all"
-                                        onClick={(e) => e.stopPropagation()}
-                                      >
+                                      <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:opacity-100 focus:opacity-100 hover:bg-white/10 rounded-full transition-all" onClick={e => e.stopPropagation()}>
                                         <MoreVertical size={14} />
                                       </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-48" side="right">
                                       <div className="space-y-1">
-                                        <Button 
-                                          variant="ghost" 
-                                          size="sm" 
-                                          className="w-full justify-start text-sm"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleMoveConversation(conversation.id);
-                                          }}
-                                        >
+                                        <Button variant="ghost" size="sm" className="w-full justify-start text-sm" onClick={e => {
+                            e.stopPropagation();
+                            handleMoveConversation(conversation.id);
+                          }}>
                                           <MoveRight className="mr-2 h-4 w-4" />
                                           Move to Project
                                         </Button>
-                                        <Button 
-                                          variant="ghost" 
-                                          size="sm" 
-                                          className="w-full justify-start text-sm text-red-500 hover:text-red-600 hover:bg-red-100/10"
-                                          onClick={(e) => handleDeleteConversation(conversation.id, e)}
-                                        >
+                                        <Button variant="ghost" size="sm" className="w-full justify-start text-sm text-red-500 hover:text-red-600 hover:bg-red-100/10" onClick={e => handleDeleteConversation(conversation.id, e)}>
                                           <Trash className="mr-2 h-4 w-4" />
                                           Delete
                                         </Button>
                                       </div>
                                     </PopoverContent>
                                   </Popover>
-                                </div>
-                              ))
-                            )}
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                                </div>)}
+                          </>}
+                      </div>}
+                  </div>)}
                 
-                {projects.length === 0 && !isLoadingProjects && (
-                  <div className="p-4 text-center text-gray-400">
+                {projects.length === 0 && !isLoadingProjects && <div className="p-4 text-center text-gray-400">
                     <Folder className="h-12 w-12 mx-auto mb-2 opacity-50" />
                     <p>No projects created yet</p>
                     <p className="text-sm">Use the "New Project" button to create your first project</p>
-                  </div>
-                )}
-              </div>
-            )}
+                  </div>}
+              </div>}
           </div>
         </div>
       </div>
     </>;
 });
-
 ConversationSidebar.displayName = 'ConversationSidebar';
