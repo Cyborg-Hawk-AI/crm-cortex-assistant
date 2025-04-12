@@ -1,10 +1,11 @@
+
 import { motion } from 'framer-motion';
 import { Message as MessageType } from '@/utils/types';
 import { User, Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
-import { useMemo } from 'react';
+import { useMemo, useEffect, useRef } from 'react';
 
 interface MessageProps {
   message: MessageType;
@@ -13,6 +14,19 @@ interface MessageProps {
 export function Message({ message }: MessageProps) {
   const isUser = message.sender === 'user';
   const isSystem = message.isSystem;
+  const renderRef = useRef(0);
+  
+  // Debug logging
+  useEffect(() => {
+    renderRef.current += 1;
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] Message component rendering #${renderRef.current}:`, {
+      id: message.id,
+      isStreaming: message.isStreaming,
+      contentLength: message.content?.length || 0,
+      isUser
+    });
+  });
   
   // Function to render markdown to safe HTML
   const renderMarkdownToSafeHtml = (content: string) => {
@@ -84,6 +98,12 @@ export function Message({ message }: MessageProps) {
 
   // Process message content with memoization for performance
   const processedContent = useMemo(() => {
+    // Log when content is processed
+    console.log(`[${new Date().toISOString()}] Processing content for message ${message.id}:`, {
+      isStreaming: message.isStreaming,
+      contentLength: message.content?.length || 0
+    });
+    
     // Completely skip rendering empty messages
     if (!message.content && !message.isStreaming) {
       return null;
@@ -126,7 +146,7 @@ export function Message({ message }: MessageProps) {
         }}
       />
     );
-  }, [message.content, message.isStreaming, isUser]);
+  }, [message.content, message.isStreaming, isUser, message.id]);
 
   // If processedContent is null, don't render the message at all
   if (processedContent === null) {

@@ -1,56 +1,80 @@
 
 import { useState, useCallback } from 'react';
-import { ASSISTANTS, getAssistantConfigById } from '@/utils/assistantConfig';
-import { Assistant } from '@/utils/types';
+import { useToast } from '@/hooks/use-toast';
+import { Message } from '@/utils/types';
+import { flushSync } from 'react-dom';
 
 export function useAssistantConfig() {
-  // Track current assistant configuration
-  const [currentAssistantId, setCurrentAssistantId] = useState<string | null>(null);
+  const { toast } = useToast();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [tempMessages, setTempMessages] = useState<Map<string, string>>(new Map());
   
-  // Callbacks for streaming events
-  const [onStartStreaming, setOnStartStreaming] = useState<((messageId: string) => void) | null>(null);
-  const [onToken, setOnToken] = useState<((messageId: string, token: string, fullContent: string) => void) | null>(null);
-  const [onComplete, setOnComplete] = useState<((messageId: string, fullContent: string) => void) | null>(null);
-  const [onError, setOnError] = useState<((error: Error) => void) | null>(null);
-  
-  // Get assistant configuration based on current assistant ID
-  const getAssistantConfig = useCallback(() => {
-    const config = getAssistantConfigById(currentAssistantId);
+  // Callback for streaming updates
+  const handleToken = useCallback((messageId: string, token: string, fullContent: string) => {
+    console.log(`[${new Date().toISOString()}][AssistantConfig] Token received for ${messageId}: "${token.substring(0, 10)}${token.length > 10 ? '...' : ''}" (${token.length} chars)`);
     
-    return {
-      assistantId: currentAssistantId || ASSISTANTS.DEFAULT.id,
-      prompt: config.prompt,
-      contextPrompt: config.contextPrompt,
-      name: config.name,
-      onStartStreaming: onStartStreaming || undefined,
-      onToken: onToken || undefined,
-      onComplete: onComplete || undefined,
-      onError: onError || undefined
-    };
-  }, [currentAssistantId, onStartStreaming, onToken, onComplete, onError]);
-  
-  // Update the streaming callbacks
-  const setStreamingCallbacks = useCallback(({
-    onStart,
-    onTokenReceived,
-    onCompleted,
-    onErrorOccurred
-  }: {
-    onStart?: (messageId: string) => void;
-    onTokenReceived?: (messageId: string, token: string, fullContent: string) => void;
-    onCompleted?: (messageId: string, fullContent: string) => void;
-    onErrorOccurred?: (error: Error) => void;
-  }) => {
-    if (onStart) setOnStartStreaming(() => onStart);
-    if (onTokenReceived) setOnToken(() => onTokenReceived);
-    if (onCompleted) setOnComplete(() => onCompleted);
-    if (onErrorOccurred) setOnError(() => onErrorOccurred);
+    try {
+      // Force synchronous update to ensure each token is visible immediately
+      flushSync(() => {
+        setTempMessages(prev => {
+          const newMap = new Map(prev);
+          newMap.set(messageId, fullContent);
+          return newMap;
+        });
+      });
+      
+      // The setTempMessages update should happen synchronously due to flushSync
+      console.log(`[${new Date().toISOString()}][AssistantConfig] Updated temp message ${messageId}, content length: ${fullContent.length}`);
+    } catch (error) {
+      console.error(`[${new Date().toISOString()}][AssistantConfig] Error in token handler:`, error);
+    }
   }, []);
   
+  const handleStartStreaming = useCallback((messageId: string) => {
+    console.log(`[${new Date().toISOString()}][AssistantConfig] Started streaming for message ${messageId}`);
+    
+    // Initialize with empty content
+    setTempMessages(prev => {
+      const newMap = new Map(prev);
+      newMap.set(messageId, '');
+      return newMap;
+    });
+  }, []);
+  
+  const handleComplete = useCallback((messageId: string, content: string) => {
+    console.log(`[${new Date().toISOString()}][AssistantConfig] Completed streaming for message ${messageId}, final length: ${content.length}`);
+    
+    // Remove from temp messages when complete
+    setTempMessages(prev => {
+      const newMap = new Map(prev);
+      newMap.delete(messageId);
+      return newMap;
+    });
+  }, []);
+  
+  const handleError = useCallback((error: Error) => {
+    console.error(`[${new Date().toISOString()}][AssistantConfig] Error in streaming:`, error);
+    
+    toast({
+      title: 'Error',
+      description: 'An error occurred while generating the response.',
+      variant: 'destructive'
+    });
+  }, [toast]);
+
+  const getAssistantConfig = useCallback(() => {
+    return {
+      assistantId: 'openai-gpt4',
+      onStartStreaming: handleStartStreaming,
+      onToken: handleToken,
+      onComplete: handleComplete,
+      onError: handleError,
+    };
+  }, [handleStartStreaming, handleToken, handleComplete, handleError]);
+
   return {
-    currentAssistantId,
-    setCurrentAssistantId,
     getAssistantConfig,
-    setStreamingCallbacks
+    messages,
+    setMessages,
   };
 }
