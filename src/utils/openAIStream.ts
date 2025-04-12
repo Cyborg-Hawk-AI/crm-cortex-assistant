@@ -54,7 +54,8 @@ export async function createOpenAIStream(
     let fullText = '';
     let isComplete = false;
     
-    const processStream = async () => {
+    // Process the stream immediately without waiting for the entire response
+    (async () => {
       try {
         while (true) {
           const { done, value } = await reader.read();
@@ -87,6 +88,7 @@ export async function createOpenAIStream(
               
               if (content) {
                 fullText += content;
+                // Immediately call onChunk to ensure real-time streaming
                 callbacks.onChunk(content);
               }
             } catch (e) {
@@ -99,10 +101,7 @@ export async function createOpenAIStream(
         callbacks.onError(error instanceof Error ? error : new Error(String(error)));
         isComplete = true;
       }
-    };
-    
-    // Start processing the stream
-    processStream();
+    })();
     
     // Return function to check if streaming is complete
     return () => isComplete;

@@ -1,4 +1,3 @@
-
 import { motion } from 'framer-motion';
 import { Message as MessageType } from '@/utils/types';
 import { User, Bot } from 'lucide-react';
@@ -110,7 +109,7 @@ export function Message({ message }: MessageProps) {
       // Otherwise show the partial content with a blinking cursor
       return (
         <div 
-          className="text-sm markdown-content after:content-['▋'] after:ml-0.5 after:animate-blink"
+          className="text-sm markdown-content cursor-after"
           dangerouslySetInnerHTML={{
             __html: renderMarkdownToSafeHtml(message.content)
           }}
