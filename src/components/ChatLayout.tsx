@@ -5,6 +5,7 @@ import { ChatSection } from './ChatSection';
 import { useChatMessages } from '@/hooks/useChatMessages';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useNavigate } from 'react-router-dom';
 
 export function ChatLayout() {
   const { 
@@ -19,11 +20,19 @@ export function ChatLayout() {
   const isMobile = useIsMobile();
   const chatSectionRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<{ setIsOpen: (open: boolean) => void }>({ setIsOpen: () => {} });
+  const navigate = useNavigate();
   
-  // When activeConversationId changes, refetch messages and focus the chat section
+  // When activeConversationId changes, refetch messages, focus chat section, and navigate if needed
   useEffect(() => {
     if (activeConversationId) {
       console.log(`Active conversation changed to: ${activeConversationId}. Loading messages.`);
+      
+      // If we're on the main page, navigate to chat view
+      if (window.location.pathname === '/') {
+        console.log(`Navigating to conversation: ${activeConversationId}`);
+        navigate(`/chat/${activeConversationId}`);
+      }
+      
       refetchMessages();
       
       // Ensure chat section is visible and focused
@@ -37,7 +46,7 @@ export function ChatLayout() {
         sidebarRef.current.setIsOpen(false);
       }
     }
-  }, [activeConversationId, refetchMessages, isMobile]);
+  }, [activeConversationId, refetchMessages, isMobile, navigate]);
 
   // Handle clicks in the chat area to collapse sidebar on mobile
   const handleChatAreaClick = () => {
