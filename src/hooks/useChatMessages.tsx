@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Message, Task, Assistant } from '@/utils/types';
@@ -89,6 +90,9 @@ export function useChatMessages() {
     try {
       const conversationTitle = title?.trim() || 'New conversation';
       const conversation = await messagesApi.createConversation(conversationTitle);
+      
+      // Automatically set the new conversation as active
+      console.log(`Auto-activating new conversation: ${conversation.id}`);
       setActiveConversationId(conversation.id);
       setLocalMessages([]);
       
@@ -103,6 +107,99 @@ export function useChatMessages() {
         variant: 'destructive'
       });
       throw error;
+    }
+  };
+
+  // Function to generate a title for a new conversation
+  const generateConversationTitle = async (
+    conversationId: string, 
+    userMessage: string, 
+    assistantResponse: string
+  ) => {
+    try {
+      console.log(`Generating title for conversation ${conversationId}`);
+      
+      // Create prompt for generating a title
+      const prompt = `Generate a short, 3-5 word title summarizing the following conversation: 
+      User: ${userMessage.substring(0, 200)}
+      Assistant: ${assistantResponse.substring(0, 200)}`;
+      
+      // Log the title generation attempt
+      console.log("Sending title generation prompt:", prompt.substring(0, 100) + "...");
+      
+      // Create a temporary message stream for the title generation
+      const titleStream = await createOpenAIStream(
+        { 
+          messages: [
+            { role: 'system', content: 'You are a helpful assistant that generates short, concise titles.' },
+            { role: 'user', content: prompt }
+          ] 
+        },
+        {
+          onStart: () => {
+            console.log('Starting title generation');
+          },
+          onChunk: () => {},
+          onComplete: async (titleResponse) => {
+            // Clean up the title (remove quotes, trim, etc.)
+            const cleanTitle = titleResponse
+              .replace(/^["']|["']$/g, '') // Remove quotes at start/end
+              .trim()
+              .replace(/^Title:?\s*/i, ''); // Remove "Title:" prefix if present
+            
+            console.log(`Generated title: "${cleanTitle}"`);
+            
+            // Update the conversation title in Supabase
+            try {
+              console.log(`Updating conversation ${conversationId} with new title: "${cleanTitle}"`);
+              
+              // Add retries for title updates
+              let updateSuccess = false;
+              let attempts = 0;
+              const maxAttempts = 3;
+              
+              while (!updateSuccess && attempts < maxAttempts) {
+                attempts++;
+                console.log(`Attempting to update title (attempt ${attempts}/${maxAttempts})...`);
+                
+                try {
+                  updateSuccess = await messagesApi.updateConversationTitle(conversationId, cleanTitle);
+                  
+                  if (updateSuccess) {
+                    console.log(`Successfully updated conversation ${conversationId} title to "${cleanTitle}"`);
+                    // Invalidate the conversations query to refresh the sidebar
+                    queryClient.invalidateQueries({ queryKey: ['conversations'] });
+                  } else {
+                    console.warn(`Failed to update title on attempt ${attempts}`);
+                    // Wait briefly before retrying
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                  }
+                } catch (updateError) {
+                  console.error(`Error updating title (attempt ${attempts}):`, updateError);
+                  // Wait briefly before retrying
+                  await new Promise(resolve => setTimeout(resolve, 500));
+                }
+              }
+              
+              if (!updateSuccess) {
+                console.error(`Failed to update conversation title after ${maxAttempts} attempts`);
+              }
+            } catch (err) {
+              console.error('Error in title update process:', err);
+            }
+          },
+          onError: (error) => {
+            console.error('Error generating title:', error);
+          }
+        }
+      );
+      
+      // We don't need to do anything with the returned stream since processing happens in onComplete callback
+      return titleStream;
+      
+    } catch (error) {
+      console.error('Error in generateConversationTitle:', error);
+      return null;
     }
   };
 
@@ -257,12 +354,16 @@ export function useChatMessages() {
         let conversationId = specificConversationId || activeConversationId;
         console.log(`Preparing to send message to conversation: ${conversationId}`);
         
+        // Track if this is a new conversation
+        const isNewConversation = !conversationId;
+        
         if (!conversationId) {
           const newConversationId = await startConversation(
             activeAssistant?.name ? `Conversation with ${activeAssistant.name}` : 'New conversation'
           );
           conversationId = newConversationId;
           setActiveConversationId(newConversationId);
+          console.log(`Created and activated new conversation: ${newConversationId}`);
         }
         
         const conversation = conversations.find(c => c.id === conversationId);
@@ -364,6 +465,12 @@ export function useChatMessages() {
                 
                 // Save the complete response to the database
                 await saveMessage(fullResponse, 'assistant', assistantMessageId, conversationId);
+                
+                // If this is a new conversation's first message exchange, generate a title
+                if (isNewConversation) {
+                  console.log("This is a new conversation - generating title after first exchange");
+                  await generateConversationTitle(conversationId, content, finalResponse);
+                }
                 
                 queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
                 queryClient.invalidateQueries({ queryKey: ['conversations'] });
@@ -502,6 +609,7 @@ export function useChatMessages() {
     startConversation,
     setActiveConversationId,
     refetchMessages,
-    saveMessage
+    saveMessage,
+    generateConversationTitle
   };
 }

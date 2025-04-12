@@ -25,8 +25,13 @@ export function ChatLayout() {
     if (activeConversationId) {
       console.log(`Loading messages for conversation in layout: ${activeConversationId}`);
       refetchMessages();
+      
+      // When on mobile, collapse the sidebar when a conversation is selected
+      if (isMobile && sidebarRef.current) {
+        sidebarRef.current.setIsOpen(false);
+      }
     }
-  }, [activeConversationId, refetchMessages]);
+  }, [activeConversationId, refetchMessages, isMobile]);
 
   // Handle clicks in the chat area to collapse sidebar on mobile
   const handleChatAreaClick = () => {
