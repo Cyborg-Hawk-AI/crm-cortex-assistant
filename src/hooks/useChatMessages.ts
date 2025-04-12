@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as messagesApi from '@/api/messages';
@@ -72,7 +71,6 @@ export function useChatMessages() {
     }
   }, [toast, activeProjectId]);
 
-  // Function to generate a title based on conversation content
   const generateTitle = useCallback(async (conversationId: string) => {
     try {
       setIsTitleGenerating(true);
@@ -232,7 +230,6 @@ export function useChatMessages() {
     }
   }, [getAssistantConfig]);
 
-  // Function to update the conversation title
   const updateConversationTitle = useCallback(async (conversationId: string, title: string): Promise<boolean> => {
     try {
       console.log(`Updating conversation ${conversationId} with title: ${title}`);
@@ -253,7 +250,6 @@ export function useChatMessages() {
     }
   }, [queryClient]);
 
-  // Watch for completed conversations that need title generation
   useEffect(() => {
     if (needsTitleGeneration && !isTitleGenerating && messages.length >= 2) {
       // We have user and assistant messages, generate a title

@@ -450,7 +450,8 @@ export const updateConversationTitle = async (conversationId: string, title: str
   const userId = await getCurrentUserId();
   
   if (!userId) {
-    throw new Error('User not authenticated');
+    console.error('Cannot update title: User not authenticated');
+    return false;
   }
 
   console.log(`API call: Updating conversation ${conversationId} title to "${title}"`);
@@ -464,7 +465,7 @@ export const updateConversationTitle = async (conversationId: string, title: str
     .single();
 
   if (convError) {
-    console.error('Error fetching conversation:', convError);
+    console.error('Error fetching conversation for title update:', convError);
     return false;
   }
 
@@ -479,7 +480,7 @@ export const updateConversationTitle = async (conversationId: string, title: str
     .eq('user_id', userId);
 
   if (error) {
-    console.error('Error updating conversation title:', error);
+    console.error('Error updating conversation title in Supabase:', error);
     return false;
   }
 
