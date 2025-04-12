@@ -19,20 +19,11 @@ export function ChatLayout() {
   const isMobile = useIsMobile();
   const chatSectionRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<{ setIsOpen: (open: boolean) => void }>({ setIsOpen: () => {} });
-  
-  // Debug information
-  const debugInfoRef = useRef({
-    lastLayoutRefresh: Date.now(),
-    activeConversationChanged: false
-  });
 
   // When activeConversationId changes, refetch messages
   useEffect(() => {
     if (activeConversationId) {
-      console.log(`[CHAT LAYOUT] Loading messages for conversation: ${activeConversationId}`);
-      debugInfoRef.current.activeConversationChanged = true;
-      debugInfoRef.current.lastLayoutRefresh = Date.now();
-      
+      console.log(`Loading messages for conversation in layout: ${activeConversationId}`);
       refetchMessages();
       
       // When on mobile, collapse the sidebar when a conversation is selected
