@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2, AlertTriangle, Folder, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -50,6 +49,11 @@ export function ChatSection({
     toast
   } = useToast();
   const [retryCount, setRetryCount] = useState(0);
+  
+  const debugInfoRef = useRef({
+    lastGeneratedConversationId: null as string | null,
+    redirectionAttempted: false
+  });
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({
@@ -61,16 +65,11 @@ export function ChatSection({
     scrollToBottom();
   }, [messages]);
   
-  // Add retry mechanism for missing data
   useEffect(() => {
-    // If messages array is empty but we should have messages (activeConversationId exists),
-    // and we're not currently loading, try to reload the data
     if (activeConversationId && messages.length === 0 && !isLoading && retryCount < 3) {
       const timer = setTimeout(() => {
         console.warn('Chat messages appear to be missing, retrying fetch...');
-        // This will trigger a re-fetch in the parent component
         setRetryCount(prev => prev + 1);
-        // We're not directly refetching here because that logic is in the parent component
       }, 1000);
       
       return () => clearTimeout(timer);
@@ -80,19 +79,35 @@ export function ChatSection({
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
     setApiError(null);
+
     try {
       if (!activeConversationId) {
-        console.log("Creating a new conversation as part of sending the first message");
+        console.log("[CHAT REDIRECT] Creating new conversation for first message");
         const newConversationId = await startConversation('New conversation');
+        console.log(`[CHAT REDIRECT] New chat created with ID: ${newConversationId}`);
+        
+        debugInfoRef.current.lastGeneratedConversationId = newConversationId;
+        
         setActiveConversationId(newConversationId);
+        console.log(`[CHAT REDIRECT] Set active conversation ID to: ${newConversationId}`);
+        
+        if (!window.location.pathname.includes('/chat')) {
+          console.log(`[CHAT REDIRECT] Navigating to /chat with new conversation: ${newConversationId}`);
+          navigate('/chat');
+        }
+        
+        debugInfoRef.current.redirectionAttempted = true;
+        
         await sendMessage(inputValue, 'user', newConversationId, selectedModel);
+        console.log(`[CHAT REDIRECT] Message sent to conversation: ${newConversationId}`);
       } else {
-        console.log(`Sending message to active conversation: ${activeConversationId}`);
+        console.log(`[CHAT REDIRECT] Sending message to existing conversation: ${activeConversationId}`);
         await sendMessage(inputValue, 'user', activeConversationId, selectedModel);
       }
       setInputValue('');
     } catch (error: any) {
-      console.error('Error sending message:', error);
+      console.error('[CHAT REDIRECT] Error in handleSendMessage:', error);
+      
       if (error.message?.includes('API key') && selectedModel === 'deepseek') {
         setApiError('DeepSeek API key is missing or invalid. The service requires configuration.');
       } else {
@@ -185,8 +200,6 @@ export function ChatSection({
     );
   }
 
-  // If we have an activeConversationId but no messages and we've tried multiple times to fetch,
-  // show a temporary loading state instead of empty chat screen
   if (activeConversationId && messages.length === 0 && retryCount > 0 && retryCount < 3) {
     return (
       <div className="flex flex-col h-full justify-center items-center text-muted-foreground">
@@ -266,7 +279,6 @@ export function ChatSection({
       </div>
       
       <div className="border-t border-gray-200 p-4 bg-slate-700">
-        {/* Quick Actions Section */}
         <QuickActions />
         
         {apiError && (
@@ -288,7 +300,6 @@ export function ChatSection({
             Clear conversation
           </Button>
           
-          {/* Model Selection */}
           <div className="flex space-x-2">
             <div className="model-toggle">
               <ModelToggle currentModel={selectedModel} onToggle={toggleModel} />
@@ -312,7 +323,7 @@ export function ChatSection({
             size="icon" 
             className="absolute right-2 bottom-2 bg-gradient-to-r from-[#C084FC] to-[#D946EF] text-white hover:brightness-110 hover:shadow-[0_0_8px_rgba(168,85,247,0.4)]" 
             onClick={handleSendMessage} 
-            disabled={!inputValue.trim() || isSending || isStreaming || !activeConversationId}
+            disabled={!inputValue.trim() || isSending || isStreaming || (activeConversationId === null && isSending)}
           >
             <Send className="h-4 w-4" />
           </Button>

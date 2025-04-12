@@ -25,6 +25,13 @@ export function useChatMessages() {
   const pendingMessages = useRef<Set<string>>(new Set());
   const currentStreamingMessageId = useRef<string | null>(null);
   const processingMessageQueue = useRef<Set<string>>(new Set());
+  
+  // Debug tracking
+  const debugState = useRef({
+    lastConversationCreated: null as string | null,
+    conversationActivateTime: null as number | null,
+    redirectAttempted: false
+  });
 
   const { 
     data: conversations = [], 
@@ -48,7 +55,7 @@ export function useChatMessages() {
 
   useEffect(() => {
     if (activeConversationId) {
-      console.log(`Loading messages for conversation: ${activeConversationId}`);
+      console.log(`[CHAT HOOK] Loading messages for conversation: ${activeConversationId}`);
       refetchMessages();
       
       setLocalMessages([]);
@@ -67,7 +74,7 @@ export function useChatMessages() {
           setActiveAssistant(assistantConfig);
         }
         
-        console.log(`Switched to conversation: ${activeConversationId} with thread: ${activeConversation.open_ai_thread_id || 'none'}`);
+        console.log(`[CHAT HOOK] Switched to conversation: ${activeConversationId} with thread: ${activeConversation.open_ai_thread_id || 'none'}`);
       }
     }
   }, [activeConversationId, conversations, refetchMessages]);
@@ -88,19 +95,28 @@ export function useChatMessages() {
 
   const startConversation = async (title?: string): Promise<string> => {
     try {
+      console.log(`[CHAT CREATION] Starting new conversation with title: ${title || 'New conversation'}`);
       const conversationTitle = title?.trim() || 'New conversation';
       const conversation = await messagesApi.createConversation(conversationTitle);
       
       // Automatically set the new conversation as active
-      console.log(`Auto-activating new conversation: ${conversation.id}`);
+      console.log(`[CHAT REDIRECT] Auto-activating new conversation: ${conversation.id}`);
       setActiveConversationId(conversation.id);
+      
+      // Store debug info
+      debugState.current.lastConversationCreated = conversation.id;
+      debugState.current.conversationActivateTime = Date.now();
+      
       setLocalMessages([]);
       
-      console.log(`Created conversation ${conversation.id} with title "${conversationTitle}" in Open Chats group`);
+      console.log(`[CHAT CREATION] Created conversation ${conversation.id} with title "${conversationTitle}" in Open Chats group`);
+      
+      // Immediately invalidate conversations to refresh sidebar
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
       
       return conversation.id;
     } catch (error) {
-      console.error('Error starting conversation:', error);
+      console.error('[CHAT CREATION] Error starting conversation:', error);
       toast({
         title: 'Error',
         description: 'Failed to start a new conversation',
@@ -117,7 +133,7 @@ export function useChatMessages() {
     assistantResponse: string
   ) => {
     try {
-      console.log(`Generating title for conversation ${conversationId}`);
+      console.log(`[TITLE GENERATION] Generating title for conversation ${conversationId}`);
       
       // Create prompt for generating a title
       const prompt = `Generate a short, 3-5 word title summarizing the following conversation: 
@@ -125,7 +141,7 @@ export function useChatMessages() {
       Assistant: ${assistantResponse.substring(0, 200)}`;
       
       // Log the title generation attempt
-      console.log("Sending title generation prompt:", prompt.substring(0, 100) + "...");
+      console.log("[TITLE GENERATION] Sending title generation prompt:", prompt.substring(0, 100) + "...");
       
       // Create a temporary message stream for the title generation
       const titleStream = await createOpenAIStream(
@@ -137,7 +153,7 @@ export function useChatMessages() {
         },
         {
           onStart: () => {
-            console.log('Starting title generation');
+            console.log('[TITLE GENERATION] Starting title generation');
           },
           onChunk: () => {},
           onComplete: async (titleResponse) => {
@@ -147,11 +163,11 @@ export function useChatMessages() {
               .trim()
               .replace(/^Title:?\s*/i, ''); // Remove "Title:" prefix if present
             
-            console.log(`Generated title: "${cleanTitle}"`);
+            console.log(`[TITLE GENERATION] Generated title: "${cleanTitle}"`);
             
             // Update the conversation title in Supabase
             try {
-              console.log(`Updating conversation ${conversationId} with new title: "${cleanTitle}"`);
+              console.log(`[TITLE UPDATE] Updating conversation ${conversationId} with new title: "${cleanTitle}"`);
               
               // Add retries for title updates
               let updateSuccess = false;
@@ -160,36 +176,36 @@ export function useChatMessages() {
               
               while (!updateSuccess && attempts < maxAttempts) {
                 attempts++;
-                console.log(`Attempting to update title (attempt ${attempts}/${maxAttempts})...`);
+                console.log(`[TITLE UPDATE] Attempting to update title (attempt ${attempts}/${maxAttempts})...`);
                 
                 try {
                   updateSuccess = await messagesApi.updateConversationTitle(conversationId, cleanTitle);
                   
                   if (updateSuccess) {
-                    console.log(`Successfully updated conversation ${conversationId} title to "${cleanTitle}"`);
+                    console.log(`[TITLE UPDATE] Successfully updated conversation ${conversationId} title to "${cleanTitle}"`);
                     // Invalidate the conversations query to refresh the sidebar
                     queryClient.invalidateQueries({ queryKey: ['conversations'] });
                   } else {
-                    console.warn(`Failed to update title on attempt ${attempts}`);
+                    console.warn(`[TITLE UPDATE] Failed to update title on attempt ${attempts}`);
                     // Wait briefly before retrying
                     await new Promise(resolve => setTimeout(resolve, 500));
                   }
                 } catch (updateError) {
-                  console.error(`Error updating title (attempt ${attempts}):`, updateError);
+                  console.error(`[TITLE UPDATE] Error updating title (attempt ${attempts}):`, updateError);
                   // Wait briefly before retrying
                   await new Promise(resolve => setTimeout(resolve, 500));
                 }
               }
               
               if (!updateSuccess) {
-                console.error(`Failed to update conversation title after ${maxAttempts} attempts`);
+                console.error(`[TITLE UPDATE] Failed to update conversation title after ${maxAttempts} attempts`);
               }
             } catch (err) {
-              console.error('Error in title update process:', err);
+              console.error('[TITLE UPDATE] Error in title update process:', err);
             }
           },
           onError: (error) => {
-            console.error('Error generating title:', error);
+            console.error('[TITLE GENERATION] Error generating title:', error);
           }
         }
       );
@@ -198,7 +214,7 @@ export function useChatMessages() {
       return titleStream;
       
     } catch (error) {
-      console.error('Error in generateConversationTitle:', error);
+      console.error('[TITLE GENERATION] Error in generateConversationTitle:', error);
       return null;
     }
   };
@@ -278,12 +294,12 @@ export function useChatMessages() {
     
     try {
       if (messageId && processingMessageQueue.current.has(messageId)) {
-        console.log(`Message ${messageId} is already being processed, skipping duplicate save`);
+        console.log(`[MESSAGE SAVE] Message ${messageId} is already being processed, skipping duplicate save`);
         return null;
       }
       
       if (messageId && pendingMessages.current.has(messageId)) {
-        console.log(`Message ${messageId} is already pending, skipping duplicate save`);
+        console.log(`[MESSAGE SAVE] Message ${messageId} is already pending, skipping duplicate save`);
         return null;
       }
       
@@ -292,7 +308,7 @@ export function useChatMessages() {
         pendingMessages.current.add(messageId);
       }
       
-      console.log(`Saving ${sender} message to conversation ${conversationId}`);
+      console.log(`[MESSAGE SAVE] Saving ${sender} message to conversation ${conversationId}`);
       
       try {
         const savedMessage = await messagesApi.sendMessage(
@@ -311,7 +327,7 @@ export function useChatMessages() {
         
         return savedMessage;
       } catch (error) {
-        console.error('Error saving message:', error);
+        console.error('[MESSAGE SAVE] Error saving message:', error);
         
         if (messageId) {
           pendingMessages.current.delete(messageId);
@@ -321,7 +337,7 @@ export function useChatMessages() {
         return null;
       }
     } catch (error) {
-      console.error('Error in saveMessage:', error);
+      console.error('[MESSAGE SAVE] Error in saveMessage:', error);
       
       if (messageId) {
         pendingMessages.current.delete(messageId);
@@ -352,18 +368,29 @@ export function useChatMessages() {
         setIsSending(true);
         
         let conversationId = specificConversationId || activeConversationId;
-        console.log(`Preparing to send message to conversation: ${conversationId}`);
+        console.log(`[SEND MESSAGE] Preparing to send message to conversation: ${conversationId || 'new'}`);
         
         // Track if this is a new conversation
         const isNewConversation = !conversationId;
         
         if (!conversationId) {
+          console.log('[SEND MESSAGE] No active conversation, creating new one');
           const newConversationId = await startConversation(
             activeAssistant?.name ? `Conversation with ${activeAssistant.name}` : 'New conversation'
           );
           conversationId = newConversationId;
-          setActiveConversationId(newConversationId);
-          console.log(`Created and activated new conversation: ${newConversationId}`);
+          
+          console.log(`[CHAT REDIRECT] Created and activated new conversation: ${newConversationId}`);
+          debugState.current.redirectAttempted = true;
+          
+          // We need to wait a small moment to ensure state updates propagate
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // Double-check that the active conversation has been properly set
+          if (activeConversationId !== newConversationId) {
+            console.log(`[CHAT REDIRECT] Active conversation not updated yet, forcing to: ${newConversationId}`);
+            setActiveConversationId(newConversationId);
+          }
         }
         
         const conversation = conversations.find(c => c.id === conversationId);
@@ -407,7 +434,7 @@ export function useChatMessages() {
         try {
           const messagesForContext = await messagesApi.getMessages(conversationId);
           
-          console.log(`Sending ${messagesForContext.length} messages for context to maintain conversation history`);
+          console.log(`[SEND MESSAGE] Sending ${messagesForContext.length} messages for context to maintain conversation history`);
           
           // Format messages for OpenAI API
           const messageHistory = messagesForContext.map(msg => ({
@@ -433,7 +460,7 @@ export function useChatMessages() {
             { messages: messageHistory },
             {
               onStart: () => {
-                console.log('Starting to stream assistant response');
+                console.log('[STREAMING] Starting to stream assistant response');
               },
               onChunk: (chunk: string) => {
                 if (!chunk || typeof chunk !== 'string') return;
@@ -449,7 +476,7 @@ export function useChatMessages() {
                 );
               },
               onComplete: async (finalResponse: string) => {
-                console.log('Stream completed, saving final response');
+                console.log('[STREAMING] Stream completed, saving final response');
                 fullResponse = finalResponse;
                 
                 setLocalMessages(prev => 
@@ -468,7 +495,7 @@ export function useChatMessages() {
                 
                 // If this is a new conversation's first message exchange, generate a title
                 if (isNewConversation) {
-                  console.log("This is a new conversation - generating title after first exchange");
+                  console.log("[TITLE GENERATION] This is a new conversation - generating title after first exchange");
                   await generateConversationTitle(conversationId, content, finalResponse);
                 }
                 
@@ -478,7 +505,7 @@ export function useChatMessages() {
                 setIsSending(false);
               },
               onError: (error) => {
-                console.error('Error in assistant response:', error);
+                console.error('[STREAMING] Error in assistant response:', error);
                 const errorMessage = `Error: ${error.message}`;
                 
                 setLocalMessages(prev => 
@@ -505,7 +532,7 @@ export function useChatMessages() {
             }
           );
         } catch (error: any) {
-          console.error('Error in sendMessage:', error);
+          console.error('[STREAMING] Error in sendMessage:', error);
           
           setLocalMessages(prev => 
             prev.map(msg => 
@@ -554,7 +581,7 @@ export function useChatMessages() {
         return message;
       }
     } catch (error: any) {
-      console.error('Error in sendMessage:', error);
+      console.error('[SEND MESSAGE] Error in sendMessage:', error);
       setIsSending(false);
       setIsStreaming(false);
       
