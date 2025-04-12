@@ -49,17 +49,17 @@ function App() {
                 
                 <Route path="/" element={
                   <ProtectedRoute>
-                    <Index activeTab={activeTab} setActiveTab={setActiveTab} />
+                    <Index activeTab={activeTab} setActiveTab={setActiveTab} key="index" />
                   </ProtectedRoute>
                 } />
                 
                 {/* Project Routes (formerly Missions) */}
-                <Route path="/projects" element={<ProtectedRoute><ProjectsPageWrapper /></ProtectedRoute>} />
-                <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectsPageWrapper /></ProtectedRoute>} />
-                <Route path="/projects/:projectId/tasks/:taskId" element={<ProtectedRoute><ProjectsPageWrapper /></ProtectedRoute>} />
+                <Route path="/projects" element={<ProtectedRoute><ProjectsPageWrapper key="projects" /></ProtectedRoute>} />
+                <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectsPageWrapper key="project-detail" /></ProtectedRoute>} />
+                <Route path="/projects/:projectId/tasks/:taskId" element={<ProtectedRoute><ProjectsPageWrapper key="project-task" /></ProtectedRoute>} />
                 
                 {/* Mindboard Route */}
-                <Route path="/mindboard" element={<ProtectedRoute><Mindboard /></ProtectedRoute>} />
+                <Route path="/mindboard" element={<ProtectedRoute><Mindboard key="mindboard" /></ProtectedRoute>} />
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>

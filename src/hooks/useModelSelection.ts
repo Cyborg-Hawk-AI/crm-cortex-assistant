@@ -7,7 +7,7 @@ export interface ModelOption {
   id: ModelType;
   name: string;
   description: string;
-  apiModel: string; // Added this to track which actual API model to use
+  apiModel: string;
 }
 
 export const MODEL_OPTIONS: Record<ModelType, ModelOption> = {
@@ -35,8 +35,9 @@ export const useModelSelection = () => {
 
   // Ensure we always return a valid model option
   const getModelOption = (): ModelOption => {
+    // Return default if selected model is invalid or undefined
     if (!selectedModel || !MODEL_OPTIONS[selectedModel]) {
-      // If selectedModel is invalid, default to 'openai'
+      console.warn("Invalid model selection, defaulting to openai");
       return MODEL_OPTIONS['openai'];
     }
     return MODEL_OPTIONS[selectedModel];

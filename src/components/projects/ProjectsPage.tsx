@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
@@ -52,13 +51,13 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
         }
         
         return (data || []).map(task => ({
-          id: task.id,
+          id: task.id || '',
           title: task.title || 'Untitled Project',
           description: task.description || '',
           status: task.status || 'open',
-          owner_id: task.reporter_id || task.user_id,
-          created_at: task.created_at,
-          updated_at: task.updated_at,
+          owner_id: task.reporter_id || task.user_id || '',
+          created_at: task.created_at || new Date().toISOString(),
+          updated_at: task.updated_at || new Date().toISOString(),
           tags: task.tags || [],
           task_count: Math.floor(Math.random() * 10) + 1,
           completed_count: Math.floor(Math.random() * 5)
@@ -242,13 +241,11 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
     );
   }
 
-  // Fix for when selectedProjectId is provided but project doesn't exist in projects array
   const selectedProjectExists = internalSelectedProjectId 
     ? projects.some(p => p.id === internalSelectedProjectId)
     : false;
 
   if (internalSelectedProjectId && !selectedProjectExists && !loadingProjects) {
-    // Redirect to projects if the selected project doesn't exist
     setTimeout(() => navigate('/projects'), 0);
     return (
       <div className="h-full flex items-center justify-center p-4">

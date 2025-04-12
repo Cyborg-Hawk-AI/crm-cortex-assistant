@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -43,7 +44,9 @@ export function ProjectsTable({ projects, onProjectClick, onCreateProject }: Pro
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string | undefined) => {
+    if (!status) return 'bg-gray-200/20 text-gray-500 border-gray-300/30';
+    
     switch (status.toLowerCase()) {
       case 'completed':
       case 'done':
@@ -220,7 +223,7 @@ export function ProjectsTable({ projects, onProjectClick, onCreateProject }: Pro
                   </TableCell>
                   <TableCell className="p-4">
                     <Badge className={`${getStatusColor(project.status)} px-2 py-1`}>
-                      {project.status}
+                      {project.status || 'Unknown'}
                     </Badge>
                   </TableCell>
                   <TableCell className="p-4">
@@ -228,14 +231,14 @@ export function ProjectsTable({ projects, onProjectClick, onCreateProject }: Pro
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Avatar className="h-6 w-6">
-                            <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${project.owner_id}`} />
+                            <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${project.owner_id || 'unknown'}`} />
                             <AvatarFallback>
-                              {project.owner_id.substring(0, 2).toUpperCase()}
+                              {(project.owner_id || 'UN').substring(0, 2).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>{project.owner_id}</p>
+                          <p>{project.owner_id || 'Unknown'}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -250,7 +253,7 @@ export function ProjectsTable({ projects, onProjectClick, onCreateProject }: Pro
                     <div className="flex items-center space-x-2">
                       <CalendarIcon className="w-3.5 h-3.5" />
                       <span>
-                        {new Date(project.updated_at).toLocaleDateString()}
+                        {project.updated_at ? new Date(project.updated_at).toLocaleDateString() : 'Unknown'}
                       </span>
                     </div>
                   </TableCell>

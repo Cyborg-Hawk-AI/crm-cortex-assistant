@@ -28,7 +28,7 @@ export function ProjectsPageWrapper() {
           .select('id, title, status')
           .eq('id', projectId)
           .is('parent_task_id', null)
-          .single();
+          .maybeSingle(); // Use maybeSingle instead of single to avoid errors
           
         if (error) {
           console.error("Error checking project existence:", error);
@@ -77,6 +77,7 @@ export function ProjectsPageWrapper() {
         <ProjectsPage 
           selectedProjectId={projectId || null}
           selectedTaskId={taskId || null}
+          key={`${projectId || 'all'}-${taskId || 'none'}`} // Add key prop to force re-render on route change
         />
       )}
     </div>
