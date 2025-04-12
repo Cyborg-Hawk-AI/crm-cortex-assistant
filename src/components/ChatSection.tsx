@@ -300,7 +300,7 @@ export function ChatSection({
             onCompositionStart={() => setIsComposing(true)} 
             onCompositionEnd={() => setIsComposing(false)} 
             placeholder="Type your engineering question here..." 
-            className="min-h-[80px] resize-none pr-12 rounded-md border border-neon-purple/30 bg-[#25384D] text-[#F1F5F9] focus:border-neon-purple focus:shadow-[0_0_8px_rgba(168,85,247,0.2)] transition-all" 
+            className="min-h-[80px] resize-none pr-12 rounded-md border border-neon-purple/30 bg-[#1A1F2C] text-[#F1F5F9] focus:border-neon-purple focus:shadow-[0_0_8px_rgba(168,85,247,0.2)] transition-all" 
             disabled={isSending || isStreaming || !activeConversationId} 
           />
           
