@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as messagesApi from '@/api/messages';
@@ -24,7 +23,13 @@ export function useChatMessages() {
   const { activeProjectId } = useProjects();
   
   const { getAssistantConfig } = useAssistantConfig();
-  
+
+  const setActiveConversationWithLogging = useCallback((conversationId: string | null) => {
+    console.log(`Explicitly setting active conversation to: ${conversationId || 'null'}`);
+    setActiveConversationId(conversationId);
+    return conversationId;
+  }, []);
+
   const { 
     data: messages = [],
     isLoading,
@@ -42,6 +47,10 @@ export function useChatMessages() {
       const newConversation = await messagesApi.createConversation(title);
       console.log('Created conversation:', newConversation);
       
+      console.log(`New conversation created with ID: ${newConversation.id}. Setting as active immediately.`);
+      setActiveConversationId(newConversation.id);
+      console.log(`Active conversation updated to: ${newConversation.id}`);
+      
       if (activeProjectId) {
         try {
           await chatHistoryService.updateConversation(newConversation.id, { 
@@ -55,7 +64,6 @@ export function useChatMessages() {
         console.log(`Conversation ${newConversation.id} assigned to Open Chats group`);
       }
       
-      // Set this flag to track that we need to generate a title for this new conversation
       if (!title || title === 'New conversation') {
         console.log(`Setting needsTitleGeneration for conversation: ${newConversation.id}`);
         setNeedsTitleGeneration(newConversation.id);
@@ -71,14 +79,13 @@ export function useChatMessages() {
       });
       throw error;
     }
-  }, [toast, activeProjectId]);
+  }, [toast, activeProjectId, setActiveConversationId]);
 
   const generateTitle = useCallback(async (conversationId: string) => {
     try {
       setIsTitleGenerating(true);
       console.log(`Starting title generation for conversation ${conversationId}`);
       
-      // Get the messages for this conversation
       const conversationMessages = await messagesApi.getMessages(conversationId);
       
       if (conversationMessages.length < 2) {
@@ -100,17 +107,14 @@ export function useChatMessages() {
       console.log(`User message: ${userMessage.substring(0, 50)}${userMessage.length > 50 ? '...' : ''}`);
       console.log(`Assistant message: ${assistantMessage.substring(0, 50)}${assistantMessage.length > 50 ? '...' : ''}`);
       
-      // Truncate messages if they're too long
       const truncatedUserMsg = userMessage.length > 100 ? userMessage.substring(0, 100) + '...' : userMessage;
       const truncatedAssistantMsg = assistantMessage.length > 100 ? assistantMessage.substring(0, 100) + '...' : assistantMessage;
       
-      // Determine which model to use - same as the one used for chat
       const { assistantId } = getAssistantConfig();
       const modelType = assistantId.includes('deepseek') ? 'deepseek' : 'openai'; 
       
       console.log(`Using ${modelType} model for title generation`);
       
-      // Create the prompt for title generation
       const titlePrompt = `Based on this conversation, generate a short, concise title (3-5 words):
       
       User: ${truncatedUserMsg}
@@ -122,7 +126,6 @@ export function useChatMessages() {
       let generatedTitle = 'Untitled Chat';
       
       if (modelType === 'openai') {
-        // Use OpenAI
         try {
           let titleResponse = '';
           
@@ -143,7 +146,6 @@ export function useChatMessages() {
                 titleResponse += chunk;
               },
               onComplete: async (finalResponse: string) => {
-                // Clean up the response (remove quotes, periods, etc.)
                 generatedTitle = finalResponse.replace(/["']/g, '').trim();
                 if (generatedTitle.endsWith('.')) {
                   generatedTitle = generatedTitle.slice(0, -1);
@@ -151,16 +153,12 @@ export function useChatMessages() {
                 
                 console.log(`Generated title with OpenAI: "${generatedTitle}"`);
                 
-                // Update the conversation title
-                console.log(`Attempting to update conversation ${conversationId} title to "${generatedTitle}"`);
                 const success = await updateConversationTitle(conversationId, generatedTitle);
                 
                 if (success) {
                   console.log(`Successfully updated conversation ${conversationId} title to "${generatedTitle}"`);
                 } else {
                   console.error(`Failed to update conversation ${conversationId} title`);
-                  // Retry once on failure
-                  console.log('Retrying title update...');
                   setTimeout(async () => {
                     const retrySuccess = await updateConversationTitle(conversationId, generatedTitle);
                     console.log(`Retry update ${retrySuccess ? 'succeeded' : 'failed'}`);
@@ -169,7 +167,6 @@ export function useChatMessages() {
               },
               onError: (error) => {
                 console.error('Error generating title with OpenAI:', error);
-                // Use default title
                 console.log('Falling back to default title due to error');
                 updateConversationTitle(conversationId, 'Untitled Chat')
                   .then(success => {
@@ -186,7 +183,6 @@ export function useChatMessages() {
           await updateConversationTitle(conversationId, 'Untitled Chat');
         }
       } else {
-        // Use DeepSeek
         try {
           let titleResponse = '';
           
@@ -208,7 +204,6 @@ export function useChatMessages() {
                 titleResponse += chunk;
               },
               onComplete: async (finalResponse: string) => {
-                // Clean up the response
                 generatedTitle = finalResponse.replace(/["']/g, '').trim();
                 if (generatedTitle.endsWith('.')) {
                   generatedTitle = generatedTitle.slice(0, -1);
@@ -216,16 +211,12 @@ export function useChatMessages() {
                 
                 console.log(`Generated title with DeepSeek: "${generatedTitle}"`);
                 
-                // Update the conversation title
-                console.log(`Attempting to update conversation ${conversationId} title to "${generatedTitle}"`);
                 const success = await updateConversationTitle(conversationId, generatedTitle);
                 
                 if (success) {
                   console.log(`Successfully updated conversation ${conversationId} title to "${generatedTitle}"`);
                 } else {
                   console.error(`Failed to update conversation ${conversationId} title`);
-                  // Retry once on failure
-                  console.log('Retrying title update...');
                   setTimeout(async () => {
                     const retrySuccess = await updateConversationTitle(conversationId, generatedTitle);
                     console.log(`Retry update ${retrySuccess ? 'succeeded' : 'failed'}`);
@@ -234,7 +225,6 @@ export function useChatMessages() {
               },
               onError: (error) => {
                 console.error('Error generating title with DeepSeek:', error);
-                // Use default title
                 console.log('Falling back to default title due to error');
                 updateConversationTitle(conversationId, 'Untitled Chat')
                   .then(success => {
@@ -266,7 +256,6 @@ export function useChatMessages() {
     try {
       console.log(`Updating conversation ${conversationId} with title: "${title}"`);
       
-      // Add network request logging using a custom event to track when the API call is actually made
       console.log(`Making API call to update title for conversation: ${conversationId}`);
       console.time(`updateTitle-${conversationId}`);
       
@@ -275,7 +264,6 @@ export function useChatMessages() {
       console.timeEnd(`updateTitle-${conversationId}`);
       
       if (success) {
-        // Invalidate queries to refresh the UI
         queryClient.invalidateQueries({ queryKey: ['conversations'] });
         console.log(`Successfully updated conversation title in database: "${title}"`);
         return true;
@@ -291,7 +279,6 @@ export function useChatMessages() {
 
   useEffect(() => {
     if (needsTitleGeneration && !isTitleGenerating && messages.length >= 2) {
-      // Check if we have both a user message and an assistant message
       const hasUserMessage = messages.some(msg => msg.sender === 'user');
       const hasAssistantMessage = messages.some(msg => msg.sender === 'assistant');
       
@@ -441,10 +428,9 @@ export function useChatMessages() {
                   queryClient.invalidateQueries({ queryKey: ['messages', convId] });
                   queryClient.invalidateQueries({ queryKey: ['conversations'] });
 
-                  // After the first assistant response, check if we need to generate a title
                   if (needsTitleGeneration === convId && !isTitleGenerating) {
                     console.log('Conversation needs title generation, triggering now after assistant response completion');
-                    setTimeout(() => generateTitle(convId), 500); // Small delay to ensure all messages are properly saved
+                    setTimeout(() => generateTitle(convId), 500);
                   }
                 },
                 onError
@@ -487,7 +473,6 @@ export function useChatMessages() {
                     queryClient.invalidateQueries({ queryKey: ['messages', convId] });
                     queryClient.invalidateQueries({ queryKey: ['conversations'] });
                     
-                    // Check if we need to generate a title after assistant response
                     if (needsTitleGeneration === convId && !isTitleGenerating) {
                       console.log('Conversation needs title generation, triggering now after completion');
                       generateTitle(convId);
@@ -577,7 +562,7 @@ export function useChatMessages() {
     error,
     refetchMessages,
     activeConversationId,
-    setActiveConversationId,
+    setActiveConversationId: setActiveConversationWithLogging,
     inputValue,
     setInputValue,
     sendMessage,

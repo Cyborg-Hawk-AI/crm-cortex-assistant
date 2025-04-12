@@ -19,12 +19,18 @@ export function ChatLayout() {
   const isMobile = useIsMobile();
   const chatSectionRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<{ setIsOpen: (open: boolean) => void }>({ setIsOpen: () => {} });
-
-  // When activeConversationId changes, refetch messages
+  
+  // When activeConversationId changes, refetch messages and focus the chat section
   useEffect(() => {
     if (activeConversationId) {
-      console.log(`Loading messages for conversation in layout: ${activeConversationId}`);
+      console.log(`Active conversation changed to: ${activeConversationId}. Loading messages.`);
       refetchMessages();
+      
+      // Ensure chat section is visible and focused
+      if (chatSectionRef.current) {
+        chatSectionRef.current.focus();
+        console.log(`Chat section for conversation ${activeConversationId} is now focused`);
+      }
       
       // When on mobile, collapse the sidebar when a conversation is selected
       if (isMobile && sidebarRef.current) {
@@ -56,6 +62,7 @@ export function ChatLayout() {
           className="flex-1 overflow-hidden flex flex-col"
           onClick={handleChatAreaClick}
           ref={chatSectionRef}
+          tabIndex={0} // Make focusable
         >
           <ChatSection
             activeConversationId={activeConversationId}
