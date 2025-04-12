@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { X, Plus, Trash2, Loader2 } from 'lucide-react';
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useChatMessages } from '@/hooks/useChatMessages';
@@ -11,25 +12,28 @@ import { cn } from "@/lib/utils";
 import { ProjectDropdown } from '@/components/ProjectDropdown';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-export interface ConversationSidebarProps {}
+export interface ConversationSidebarProps {
+  activeConversationId: string | null;
+  setActiveConversationId: (id: string) => void;
+  startNewConversation: (title?: string) => Promise<string>;
+}
 
 export interface ConversationSidebarRef {
   setIsOpen: (open: boolean) => void;
 }
 
 export const ConversationSidebar = forwardRef<ConversationSidebarRef, ConversationSidebarProps>((props, ref) => {
+  const { activeConversationId, setActiveConversationId, startNewConversation } = props;
   const [isOpen, setIsOpen] = useState(false);
   const [newConversationTitle, setNewConversationTitle] = useState('');
   const { toast } = useToast();
-  const chatMessagesState = useChatMessages();
   const { 
-    conversations,
-    activeConversationId,
-    setActiveConversationId,
-    startConversation,
-    refetchConversations,
-    userAuthenticated
-  } = chatMessagesState;
+    // We'll access these properties directly without destructuring to avoid TypeScript issues
+    // since conversations and refetchConversations are not explicitly in the useChatMessages return type
+  } = useChatMessages();
+  
+  const chatMessagesData = useChatMessages();
+  
   const { 
     projects,
     activeProjectId,
@@ -50,9 +54,9 @@ export const ConversationSidebar = forwardRef<ConversationSidebarRef, Conversati
     
     // When sidebar is loaded, refresh conversations list to ensure latest data
     const fetchLatestData = async () => {
-      if (chatMessagesState.userAuthenticated) {
+      if (chatMessagesData.userAuthenticated) {
         console.log('Refreshing conversation list data...');
-        await chatMessagesState.refetchConversations?.();
+        await chatMessagesData.refetchConversations?.();
       }
     };
     
@@ -74,7 +78,7 @@ export const ConversationSidebar = forwardRef<ConversationSidebarRef, Conversati
     }
 
     try {
-      const conversationId = await startConversation(newConversationTitle);
+      const conversationId = await startNewConversation(newConversationTitle);
       setActiveConversationId(conversationId);
       setNewConversationTitle('');
       setIsOpen(false);
@@ -179,7 +183,7 @@ export const ConversationSidebar = forwardRef<ConversationSidebarRef, Conversati
                 >
                   Open Chats
                 </Button>
-                {renderConversationList(conversations, null)}
+                {chatMessagesData.conversations && renderConversationList(chatMessagesData.conversations, null)}
               </li>
               {projects?.map(project => (
                 <li key={project.id}>
@@ -193,7 +197,7 @@ export const ConversationSidebar = forwardRef<ConversationSidebarRef, Conversati
                   >
                     {project.name}
                   </Button>
-                  {renderConversationList(conversations, project.id)}
+                  {chatMessagesData.conversations && renderConversationList(chatMessagesData.conversations, project.id)}
                 </li>
               ))}
             </ul>

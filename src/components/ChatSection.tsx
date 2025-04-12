@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2, AlertTriangle, Folder, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -33,6 +34,8 @@ export function ChatSection({
     selectedModel,
     toggleModel
   } = useModelSelection();
+  
+  const chatMessagesData = useChatMessages();
   const {
     inputValue,
     setInputValue,
@@ -41,9 +44,11 @@ export function ChatSection({
     isSending,
     isStreaming,
     startConversation,
-    setActiveConversationId,
-    userAuthenticated
-  } = useChatMessages();
+    setActiveConversationId
+  } = chatMessagesData;
+  
+  const userAuthenticated = chatMessagesData.userAuthenticated;
+  
   const [isComposing, setIsComposing] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const {

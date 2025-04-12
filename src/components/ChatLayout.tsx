@@ -8,20 +8,21 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Loader2 } from 'lucide-react';
 
 export function ChatLayout() {
+  const chatMessagesState = useChatMessages();
   const { 
     activeConversationId,
     setActiveConversationId,
     startConversation,
     messages,
     isLoading,
-    refetchMessages,
-    userAuthenticated
-  } = useChatMessages();
+    refetchMessages
+  } = chatMessagesState;
   
   const isMobile = useIsMobile();
   const chatSectionRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<{ setIsOpen: (open: boolean) => void }>({ setIsOpen: () => {} });
   const [isMounted, setIsMounted] = useState(false);
+  const userAuthenticated = chatMessagesState.userAuthenticated;
 
   // Track mounted state to force refetch when component mounts
   useEffect(() => {
