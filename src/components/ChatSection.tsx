@@ -206,15 +206,15 @@ export function ChatSection({
             Your engineering assistant is ready to help. What would you like to accomplish today?
           </p>
           
-          <div className="grid gap-2 mb-8">
+          <div className="grid gap-2 mb-8 max-w-full">
             {["Debug this error: TypeError: Cannot read property 'map' of undefined", "Review my API endpoint for security issues", "Optimize this database query for better performance", "Help me set up Kubernetes monitoring for our cluster"].map((question, i) => (
               <Button 
                 key={i} 
                 variant="outline" 
                 onClick={() => setInputValue(question)} 
-                className="justify-start h-auto border border-neon-purple/20 hover:border-neon-purple/40 hover:shadow-[0_0_8px_rgba(168,85,247,0.3)] transition-all py-[8px] text-left mx-0 my-0 font-thin"
+                className="justify-start h-auto border border-neon-purple/20 hover:border-neon-purple/40 hover:shadow-[0_0_8px_rgba(168,85,247,0.3)] transition-all py-[8px] text-left mx-0 my-0 font-thin whitespace-normal break-words overflow-hidden text-ellipsis max-w-full"
               >
-                {question}
+                <span className="truncate">{question}</span>
               </Button>
             ))}
           </div>
