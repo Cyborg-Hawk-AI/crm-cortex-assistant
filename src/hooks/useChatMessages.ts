@@ -204,6 +204,36 @@ export function useChatMessages() {
           
           console.log('Sending OpenAI title generation request...');
           
+          const updateTitle = async (finalResponse: string) => {
+            generatedTitle = finalResponse.replace(/["']/g, '').trim();
+            if (generatedTitle.endsWith('.')) {
+              generatedTitle = generatedTitle.slice(0, -1);
+            }
+            
+            console.log(`Generated title with OpenAI: "${generatedTitle}"`);
+            
+            const success = await updateConversationTitle(conversationId, generatedTitle);
+            
+            if (success) {
+              console.log(`Successfully updated conversation ${conversationId} title to "${generatedTitle}"`);
+            } else {
+              console.error(`Failed to update conversation ${conversationId} title`);
+              setTimeout(async () => {
+                const retrySuccess = await updateConversationTitle(conversationId, generatedTitle);
+                console.log(`Retry update ${retrySuccess ? 'succeeded' : 'failed'}`);
+              }, 1000);
+            }
+          };
+          
+          const handleError = async (error: Error) => {
+            console.error('Error generating title with OpenAI:', error);
+            console.log('Falling back to default title due to error');
+            const success = await updateConversationTitle(conversationId, 'Untitled Chat');
+            if (!success) {
+              console.error('Failed to set default title after error');
+            }
+          };
+          
           await createOpenAIStream(
             {
               messages: [
@@ -219,35 +249,9 @@ export function useChatMessages() {
                 titleResponse += chunk;
               },
               onComplete: async (finalResponse: string) => {
-                generatedTitle = finalResponse.replace(/["']/g, '').trim();
-                if (generatedTitle.endsWith('.')) {
-                  generatedTitle = generatedTitle.slice(0, -1);
-                }
-                
-                console.log(`Generated title with OpenAI: "${generatedTitle}"`);
-                
-                const success = await updateConversationTitle(conversationId, generatedTitle);
-                
-                if (success) {
-                  console.log(`Successfully updated conversation ${conversationId} title to "${generatedTitle}"`);
-                } else {
-                  console.error(`Failed to update conversation ${conversationId} title`);
-                  setTimeout(async () => {
-                    const retrySuccess = await updateConversationTitle(conversationId, generatedTitle);
-                    console.log(`Retry update ${retrySuccess ? 'succeeded' : 'failed'}`);
-                  }, 1000);
-                }
+                await updateTitle(finalResponse);
               },
-              onError: (error) => {
-                console.error('Error generating title with OpenAI:', error);
-                console.log('Falling back to default title due to error');
-                await updateConversationTitle(conversationId, 'Untitled Chat')
-                  .then(success => {
-                    if (!success) {
-                      console.error('Failed to set default title after error');
-                    }
-                  });
-              }
+              onError: handleError
             }
           );
         } catch (error) {
@@ -260,6 +264,36 @@ export function useChatMessages() {
           let titleResponse = '';
           
           console.log('Sending DeepSeek title generation request...');
+          
+          const updateTitle = async (finalResponse: string) => {
+            generatedTitle = finalResponse.replace(/["']/g, '').trim();
+            if (generatedTitle.endsWith('.')) {
+              generatedTitle = generatedTitle.slice(0, -1);
+            }
+            
+            console.log(`Generated title with DeepSeek: "${generatedTitle}"`);
+            
+            const success = await updateConversationTitle(conversationId, generatedTitle);
+            
+            if (success) {
+              console.log(`Successfully updated conversation ${conversationId} title to "${generatedTitle}"`);
+            } else {
+              console.error(`Failed to update conversation ${conversationId} title`);
+              setTimeout(async () => {
+                const retrySuccess = await updateConversationTitle(conversationId, generatedTitle);
+                console.log(`Retry update ${retrySuccess ? 'succeeded' : 'failed'}`);
+              }, 1000);
+            }
+          };
+          
+          const handleError = async (error: Error) => {
+            console.error('Error generating title with DeepSeek:', error);
+            console.log('Falling back to default title due to error');
+            const success = await updateConversationTitle(conversationId, 'Untitled Chat');
+            if (!success) {
+              console.error('Failed to set default title after error');
+            }
+          };
           
           await createDeepSeekStream(
             {
@@ -277,35 +311,9 @@ export function useChatMessages() {
                 titleResponse += chunk;
               },
               onComplete: async (finalResponse: string) => {
-                generatedTitle = finalResponse.replace(/["']/g, '').trim();
-                if (generatedTitle.endsWith('.')) {
-                  generatedTitle = generatedTitle.slice(0, -1);
-                }
-                
-                console.log(`Generated title with DeepSeek: "${generatedTitle}"`);
-                
-                const success = await updateConversationTitle(conversationId, generatedTitle);
-                
-                if (success) {
-                  console.log(`Successfully updated conversation ${conversationId} title to "${generatedTitle}"`);
-                } else {
-                  console.error(`Failed to update conversation ${conversationId} title`);
-                  setTimeout(async () => {
-                    const retrySuccess = await updateConversationTitle(conversationId, generatedTitle);
-                    console.log(`Retry update ${retrySuccess ? 'succeeded' : 'failed'}`);
-                  }, 1000);
-                }
+                await updateTitle(finalResponse);
               },
-              onError: (error) => {
-                console.error('Error generating title with DeepSeek:', error);
-                console.log('Falling back to default title due to error');
-                await updateConversationTitle(conversationId, 'Untitled Chat')
-                  .then(success => {
-                    if (!success) {
-                      console.error('Failed to set default title after error');
-                    }
-                  });
-              }
+              onError: handleError
             }
           );
         } catch (error) {
@@ -449,9 +457,11 @@ export function useChatMessages() {
                 id: tempMessageId, 
                 sender: 'assistant', 
                 content: '', 
+                conversation_id: convId,
+                user_id: 'system',
                 timestamp: new Date().toISOString(),
                 isStreaming: true
-              }
+              } as Message
             ]);
           });
           
