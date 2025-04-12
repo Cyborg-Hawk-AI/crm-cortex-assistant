@@ -453,6 +453,8 @@ export const updateConversationTitle = async (conversationId: string, title: str
     throw new Error('User not authenticated');
   }
 
+  console.log(`API call: Updating conversation ${conversationId} title to "${title}"`);
+
   // Verify the user has access to this conversation
   const { data: conversation, error: convError } = await supabase
     .from('conversations')

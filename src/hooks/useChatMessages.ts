@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as messagesApi from '@/api/messages';
 import * as chatHistoryService from '@/services/chatHistoryService';
@@ -33,12 +33,7 @@ export function useChatMessages() {
   } = useQuery({
     queryKey: ['messages', activeConversationId],
     queryFn: () => activeConversationId ? messagesApi.getMessages(activeConversationId) : [],
-    enabled: !!activeConversationId,
-    meta: {
-      onError: (error: any) => {
-        console.error('Error fetching messages:', error);
-      }
-    }
+    enabled: !!activeConversationId
   });
 
   const startConversation = useCallback(async (title?: string) => {
@@ -81,12 +76,14 @@ export function useChatMessages() {
   const generateTitle = useCallback(async (conversationId: string) => {
     try {
       setIsTitleGenerating(true);
+      console.log(`Starting title generation for conversation ${conversationId}`);
       
       // Get the messages for this conversation
       const conversationMessages = await messagesApi.getMessages(conversationId);
       
       if (conversationMessages.length < 2) {
         console.log('Not enough messages to generate a title yet');
+        setIsTitleGenerating(false);
         return;
       }
       
@@ -95,6 +92,7 @@ export function useChatMessages() {
       
       if (!userMessage || !assistantMessage) {
         console.log('Missing user or assistant message for title generation');
+        setIsTitleGenerating(false);
         return;
       }
       
@@ -146,12 +144,22 @@ export function useChatMessages() {
                 console.log(`Generated title with OpenAI: ${generatedTitle}`);
                 
                 // Update the conversation title
-                await updateConversationTitle(conversationId, generatedTitle);
+                const success = await updateConversationTitle(conversationId, generatedTitle);
+                if (success) {
+                  console.log(`Successfully updated conversation ${conversationId} title to "${generatedTitle}"`);
+                } else {
+                  console.error(`Failed to update conversation ${conversationId} title`);
+                }
               },
               onError: (error) => {
                 console.error('Error generating title with OpenAI:', error);
                 // Use default title
-                updateConversationTitle(conversationId, 'Untitled Chat');
+                updateConversationTitle(conversationId, 'Untitled Chat')
+                  .then(success => {
+                    if (!success) {
+                      console.error('Failed to set default title after error');
+                    }
+                  });
               }
             }
           );
@@ -189,12 +197,22 @@ export function useChatMessages() {
                 console.log(`Generated title with DeepSeek: ${generatedTitle}`);
                 
                 // Update the conversation title
-                await updateConversationTitle(conversationId, generatedTitle);
+                const success = await updateConversationTitle(conversationId, generatedTitle);
+                if (success) {
+                  console.log(`Successfully updated conversation ${conversationId} title to "${generatedTitle}"`);
+                } else {
+                  console.error(`Failed to update conversation ${conversationId} title`);
+                }
               },
               onError: (error) => {
                 console.error('Error generating title with DeepSeek:', error);
                 // Use default title
-                updateConversationTitle(conversationId, 'Untitled Chat');
+                updateConversationTitle(conversationId, 'Untitled Chat')
+                  .then(success => {
+                    if (!success) {
+                      console.error('Failed to set default title after error');
+                    }
+                  });
               }
             }
           );
@@ -215,27 +233,35 @@ export function useChatMessages() {
   }, [getAssistantConfig]);
 
   // Function to update the conversation title
-  const updateConversationTitle = useCallback(async (conversationId: string, title: string) => {
+  const updateConversationTitle = useCallback(async (conversationId: string, title: string): Promise<boolean> => {
     try {
-      await messagesApi.updateConversationTitle(conversationId, title);
+      console.log(`Updating conversation ${conversationId} with title: ${title}`);
+      const success = await messagesApi.updateConversationTitle(conversationId, title);
       
-      // Invalidate queries to refresh the UI
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      
-      console.log(`Updated conversation ${conversationId} with title: ${title}`);
+      if (success) {
+        // Invalidate queries to refresh the UI
+        queryClient.invalidateQueries({ queryKey: ['conversations'] });
+        console.log(`Successfully updated conversation title in database: ${title}`);
+        return true;
+      } else {
+        console.error('Failed to update conversation title in database');
+        return false;
+      }
     } catch (error) {
       console.error('Error updating conversation title:', error);
+      return false;
     }
   }, [queryClient]);
 
   // Watch for completed conversations that need title generation
-  useCallback(() => {
+  useEffect(() => {
     if (needsTitleGeneration && !isTitleGenerating && messages.length >= 2) {
       // We have user and assistant messages, generate a title
       const hasUserMessage = messages.some(msg => msg.sender === 'user');
       const hasAssistantMessage = messages.some(msg => msg.sender === 'assistant');
       
       if (hasUserMessage && hasAssistantMessage) {
+        console.log(`Triggering title generation for conversation: ${needsTitleGeneration}`);
         generateTitle(needsTitleGeneration);
       }
     }
@@ -380,6 +406,7 @@ export function useChatMessages() {
 
                   // Check if we need to generate a title after assistant response
                   if (needsTitleGeneration === convId && !isTitleGenerating) {
+                    console.log('Conversation needs title generation, triggering now after completion');
                     generateTitle(convId);
                   }
                 },
@@ -425,6 +452,7 @@ export function useChatMessages() {
                     
                     // Check if we need to generate a title after assistant response
                     if (needsTitleGeneration === convId && !isTitleGenerating) {
+                      console.log('Conversation needs title generation, triggering now after completion');
                       generateTitle(convId);
                     }
                   },
