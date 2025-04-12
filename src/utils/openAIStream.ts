@@ -1,6 +1,5 @@
 
 import { StreamingCallbacks } from './streamTypes';
-import { flushSync } from 'react-dom';
 
 // OpenAI API configuration
 const OPENAI_API_URL = 'https://api.openai.com/v1';
@@ -24,7 +23,6 @@ export async function createOpenAIStream(
 ): Promise<() => boolean> {
   try {
     callbacks.onStart();
-    console.log(`[${new Date().toISOString()}] Stream started`);
     
     const response = await fetch(`${OPENAI_API_URL}/chat/completions`, {
       method: 'POST',
@@ -55,17 +53,14 @@ export async function createOpenAIStream(
     const decoder = new TextDecoder('utf-8');
     let fullText = '';
     let isComplete = false;
-    let chunkCount = 0;
     
-    // Process the stream immediately without waiting for the entire response
-    (async () => {
+    const processStream = async () => {
       try {
         while (true) {
           const { done, value } = await reader.read();
           
           if (done) {
-            const timestamp = new Date().toISOString();
-            console.log(`[${timestamp}] Stream complete - Received ${chunkCount} chunks total`);
+            console.log('Stream complete');
             isComplete = true;
             callbacks.onComplete(fullText);
             break;
@@ -73,8 +68,6 @@ export async function createOpenAIStream(
           
           // Decode the chunk
           const chunk = decoder.decode(value, { stream: true });
-          const timestamp = new Date().toISOString();
-          console.log(`[${timestamp}] Received chunk of size: ${chunk.length}`);
           
           // Process the SSE format
           const lines = chunk
@@ -93,36 +86,28 @@ export async function createOpenAIStream(
               const content = json.choices[0]?.delta?.content || '';
               
               if (content) {
-                chunkCount++;
-                const tokenTimestamp = new Date().toISOString();
                 fullText += content;
-                console.log(`[${tokenTimestamp}] Processing token #${chunkCount}: "${content}" (${content.length} chars)`);
-                
-                // Measure time to process token
-                console.time(`token_process_${chunkCount}`);
-                
-                // Immediately call onChunk to ensure real-time streaming
                 callbacks.onChunk(content);
-                
-                console.timeEnd(`token_process_${chunkCount}`);
-                console.log(`[${new Date().toISOString()}] Token #${chunkCount} callback completed`);
               }
             } catch (e) {
-              console.error(`[${new Date().toISOString()}] Error parsing SSE line:`, line, e);
+              console.error('Error parsing SSE line:', line, e);
             }
           }
         }
       } catch (error) {
-        console.error(`[${new Date().toISOString()}] Error in stream processing:`, error);
+        console.error('Error in stream processing:', error);
         callbacks.onError(error instanceof Error ? error : new Error(String(error)));
         isComplete = true;
       }
-    })();
+    };
+    
+    // Start processing the stream
+    processStream();
     
     // Return function to check if streaming is complete
     return () => isComplete;
   } catch (error) {
-    console.error(`[${new Date().toISOString()}] Failed to create stream:`, error);
+    console.error('Failed to create stream:', error);
     callbacks.onError(error instanceof Error ? error : new Error(String(error)));
     return () => true; // Return a function that indicates streaming is complete due to error
   }

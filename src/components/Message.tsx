@@ -5,7 +5,7 @@ import { User, Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
-import { useMemo, useEffect, useRef, useState } from 'react';
+import { useMemo } from 'react';
 
 interface MessageProps {
   message: MessageType;
@@ -14,26 +14,6 @@ interface MessageProps {
 export function Message({ message }: MessageProps) {
   const isUser = message.sender === 'user';
   const isSystem = message.isSystem;
-  const renderRef = useRef(0);
-  const [renderTime, setRenderTime] = useState(Date.now());
-  
-  // Debug logging - track renders and timing
-  useEffect(() => {
-    const now = Date.now();
-    renderRef.current += 1;
-    const timestamp = new Date().toISOString();
-    const timeSinceLastRender = renderRef.current > 1 ? now - renderTime : 0;
-    
-    console.log(`[${timestamp}] Message component rendering #${renderRef.current}:`, {
-      id: message.id,
-      isStreaming: message.isStreaming,
-      contentLength: message.content?.length || 0,
-      timeSinceLastRender: `${timeSinceLastRender}ms`,
-      isUser
-    });
-    
-    setRenderTime(now);
-  });
   
   // Function to render markdown to safe HTML
   const renderMarkdownToSafeHtml = (content: string) => {
@@ -103,17 +83,9 @@ export function Message({ message }: MessageProps) {
     }
   };
 
-  // Process message content with careful dependency tracking for streaming
+  // Process message content with memoization for performance
   const processedContent = useMemo(() => {
-    // Log when content is processed
-    const processingTimestamp = new Date().toISOString();
-    console.log(`[${processingTimestamp}] Processing content for message ${message.id}:`, {
-      isStreaming: message.isStreaming,
-      contentLength: message.content?.length || 0,
-      renderCount: renderRef.current
-    });
-    
-    // Completely skip rendering empty messages (unless streaming)
+    // Completely skip rendering empty messages
     if (!message.content && !message.isStreaming) {
       return null;
     }
@@ -138,7 +110,7 @@ export function Message({ message }: MessageProps) {
       // Otherwise show the partial content with a blinking cursor
       return (
         <div 
-          className="text-sm markdown-content cursor-after"
+          className="text-sm markdown-content after:content-['▋'] after:ml-0.5 after:animate-blink"
           dangerouslySetInnerHTML={{
             __html: renderMarkdownToSafeHtml(message.content)
           }}
@@ -155,14 +127,7 @@ export function Message({ message }: MessageProps) {
         }}
       />
     );
-  }, [
-    message.content, 
-    message.isStreaming, 
-    message.id, 
-    isUser,
-    // Add renderTime as dependency to ensure re-render on each state update
-    renderTime 
-  ]);
+  }, [message.content, message.isStreaming, isUser]);
 
   // If processedContent is null, don't render the message at all
   if (processedContent === null) {

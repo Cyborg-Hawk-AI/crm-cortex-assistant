@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as messagesApi from '@/api/messages';
@@ -9,52 +10,6 @@ import { Message, Assistant, Task } from '@/utils/types';
 import { createOpenAIStream } from '@/utils/openAIStream';
 import { createDeepSeekStream } from '@/utils/deepSeekStream';
 import { ModelType } from '@/hooks/useModelSelection';
-import { flushSync } from 'react-dom';
-
-class StreamingStateManager {
-  private messageMap = new Map<string, string>();
-  private listeners = new Set<(id: string, chunk: string, fullContent: string) => void>();
-
-  constructor() {
-    console.log('[StreamManager] Initialized');
-  }
-
-  addChunk(id: string, chunk: string): string {
-    const current = this.messageMap.get(id) || '';
-    const updated = current + chunk;
-    this.messageMap.set(id, updated);
-    
-    console.log(`[${new Date().toISOString()}][StreamManager] Added chunk to message ${id}: "${chunk}" (${chunk.length} chars)`);
-    
-    this.listeners.forEach(listener => {
-      console.log(`[${new Date().toISOString()}][StreamManager] Notifying listener about update to message ${id}`);
-      listener(id, chunk, updated);
-    });
-    
-    return updated;
-  }
-  
-  getContent(id: string): string {
-    return this.messageMap.get(id) || '';
-  }
-  
-  subscribe(callback: (id: string, chunk: string, fullContent: string) => void) {
-    this.listeners.add(callback);
-    console.log(`[${new Date().toISOString()}][StreamManager] Added subscriber, total: ${this.listeners.size}`);
-    
-    return () => {
-      this.listeners.delete(callback);
-      console.log(`[${new Date().toISOString()}][StreamManager] Removed subscriber, total: ${this.listeners.size}`);
-    };
-  }
-  
-  clear(id: string) {
-    this.messageMap.delete(id);
-    console.log(`[${new Date().toISOString()}][StreamManager] Cleared message ${id}`);
-  }
-}
-
-const streamingManager = new StreamingStateManager();
 
 export function useChatMessages() {
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
@@ -70,8 +25,6 @@ export function useChatMessages() {
   
   const { getAssistantConfig } = useAssistantConfig();
   
-  const [localMessages, setLocalMessages] = useState<Message[]>([]);
-  
   const { 
     data: messages = [],
     isLoading,
@@ -82,41 +35,6 @@ export function useChatMessages() {
     queryFn: () => activeConversationId ? messagesApi.getMessages(activeConversationId) : [],
     enabled: !!activeConversationId
   });
-
-  useEffect(() => {
-    if (messages && messages.length > 0) {
-      setLocalMessages(messages);
-    }
-  }, [messages]);
-
-  useEffect(() => {
-    console.log(`[${new Date().toISOString()}] Setting up streaming subscription`);
-    
-    const unsubscribe = streamingManager.subscribe((id, chunk, fullContent) => {
-      console.log(`[${new Date().toISOString()}] Stream update received for message ${id}, chunk length: ${chunk.length}`);
-      
-      try {
-        flushSync(() => {
-          setLocalMessages(currentMessages => {
-            const updatedMessages = currentMessages.map(msg => {
-              if (msg.id === id) {
-                console.log(`[${new Date().toISOString()}] Updating message ${id} with content length: ${fullContent.length}`);
-                return { ...msg, content: fullContent, isStreaming: true };
-              }
-              return msg;
-            });
-            
-            return updatedMessages;
-          });
-        });
-        console.log(`[${new Date().toISOString()}] flushSync completed for message ${id}`);
-      } catch (err) {
-        console.error(`[${new Date().toISOString()}] Error in flushSync:`, err);
-      }
-    });
-    
-    return unsubscribe;
-  }, []);
 
   const startConversation = useCallback(async (title?: string) => {
     try {
@@ -137,6 +55,7 @@ export function useChatMessages() {
         console.log(`Conversation ${newConversation.id} assigned to Open Chats group`);
       }
       
+      // Set this flag to track that we need to generate a title for this new conversation
       if (!title || title === 'New conversation') {
         console.log(`Setting needsTitleGeneration for conversation: ${newConversation.id}`);
         setNeedsTitleGeneration(newConversation.id);
@@ -159,6 +78,7 @@ export function useChatMessages() {
       setIsTitleGenerating(true);
       console.log(`Starting title generation for conversation ${conversationId}`);
       
+      // Get the messages for this conversation
       const conversationMessages = await messagesApi.getMessages(conversationId);
       
       if (conversationMessages.length < 2) {
@@ -180,14 +100,17 @@ export function useChatMessages() {
       console.log(`User message: ${userMessage.substring(0, 50)}${userMessage.length > 50 ? '...' : ''}`);
       console.log(`Assistant message: ${assistantMessage.substring(0, 50)}${assistantMessage.length > 50 ? '...' : ''}`);
       
+      // Truncate messages if they're too long
       const truncatedUserMsg = userMessage.length > 100 ? userMessage.substring(0, 100) + '...' : userMessage;
       const truncatedAssistantMsg = assistantMessage.length > 100 ? assistantMessage.substring(0, 100) + '...' : assistantMessage;
       
+      // Determine which model to use - same as the one used for chat
       const { assistantId } = getAssistantConfig();
       const modelType = assistantId.includes('deepseek') ? 'deepseek' : 'openai'; 
       
       console.log(`Using ${modelType} model for title generation`);
       
+      // Create the prompt for title generation
       const titlePrompt = `Based on this conversation, generate a short, concise title (3-5 words):
       
       User: ${truncatedUserMsg}
@@ -199,40 +122,11 @@ export function useChatMessages() {
       let generatedTitle = 'Untitled Chat';
       
       if (modelType === 'openai') {
+        // Use OpenAI
         try {
           let titleResponse = '';
           
           console.log('Sending OpenAI title generation request...');
-          
-          const updateTitle = async (finalResponse: string) => {
-            generatedTitle = finalResponse.replace(/["']/g, '').trim();
-            if (generatedTitle.endsWith('.')) {
-              generatedTitle = generatedTitle.slice(0, -1);
-            }
-            
-            console.log(`Generated title with OpenAI: "${generatedTitle}"`);
-            
-            const success = await updateConversationTitle(conversationId, generatedTitle);
-            
-            if (success) {
-              console.log(`Successfully updated conversation ${conversationId} title to "${generatedTitle}"`);
-            } else {
-              console.error(`Failed to update conversation ${conversationId} title`);
-              setTimeout(async () => {
-                const retrySuccess = await updateConversationTitle(conversationId, generatedTitle);
-                console.log(`Retry update ${retrySuccess ? 'succeeded' : 'failed'}`);
-              }, 1000);
-            }
-          };
-          
-          const handleError = async (error: Error) => {
-            console.error('Error generating title with OpenAI:', error);
-            console.log('Falling back to default title due to error');
-            const success = await updateConversationTitle(conversationId, 'Untitled Chat');
-            if (!success) {
-              console.error('Failed to set default title after error');
-            }
-          };
           
           await createOpenAIStream(
             {
@@ -249,9 +143,41 @@ export function useChatMessages() {
                 titleResponse += chunk;
               },
               onComplete: async (finalResponse: string) => {
-                await updateTitle(finalResponse);
+                // Clean up the response (remove quotes, periods, etc.)
+                generatedTitle = finalResponse.replace(/["']/g, '').trim();
+                if (generatedTitle.endsWith('.')) {
+                  generatedTitle = generatedTitle.slice(0, -1);
+                }
+                
+                console.log(`Generated title with OpenAI: "${generatedTitle}"`);
+                
+                // Update the conversation title
+                console.log(`Attempting to update conversation ${conversationId} title to "${generatedTitle}"`);
+                const success = await updateConversationTitle(conversationId, generatedTitle);
+                
+                if (success) {
+                  console.log(`Successfully updated conversation ${conversationId} title to "${generatedTitle}"`);
+                } else {
+                  console.error(`Failed to update conversation ${conversationId} title`);
+                  // Retry once on failure
+                  console.log('Retrying title update...');
+                  setTimeout(async () => {
+                    const retrySuccess = await updateConversationTitle(conversationId, generatedTitle);
+                    console.log(`Retry update ${retrySuccess ? 'succeeded' : 'failed'}`);
+                  }, 1000);
+                }
               },
-              onError: handleError
+              onError: (error) => {
+                console.error('Error generating title with OpenAI:', error);
+                // Use default title
+                console.log('Falling back to default title due to error');
+                updateConversationTitle(conversationId, 'Untitled Chat')
+                  .then(success => {
+                    if (!success) {
+                      console.error('Failed to set default title after error');
+                    }
+                  });
+              }
             }
           );
         } catch (error) {
@@ -260,40 +186,11 @@ export function useChatMessages() {
           await updateConversationTitle(conversationId, 'Untitled Chat');
         }
       } else {
+        // Use DeepSeek
         try {
           let titleResponse = '';
           
           console.log('Sending DeepSeek title generation request...');
-          
-          const updateTitle = async (finalResponse: string) => {
-            generatedTitle = finalResponse.replace(/["']/g, '').trim();
-            if (generatedTitle.endsWith('.')) {
-              generatedTitle = generatedTitle.slice(0, -1);
-            }
-            
-            console.log(`Generated title with DeepSeek: "${generatedTitle}"`);
-            
-            const success = await updateConversationTitle(conversationId, generatedTitle);
-            
-            if (success) {
-              console.log(`Successfully updated conversation ${conversationId} title to "${generatedTitle}"`);
-            } else {
-              console.error(`Failed to update conversation ${conversationId} title`);
-              setTimeout(async () => {
-                const retrySuccess = await updateConversationTitle(conversationId, generatedTitle);
-                console.log(`Retry update ${retrySuccess ? 'succeeded' : 'failed'}`);
-              }, 1000);
-            }
-          };
-          
-          const handleError = async (error: Error) => {
-            console.error('Error generating title with DeepSeek:', error);
-            console.log('Falling back to default title due to error');
-            const success = await updateConversationTitle(conversationId, 'Untitled Chat');
-            if (!success) {
-              console.error('Failed to set default title after error');
-            }
-          };
           
           await createDeepSeekStream(
             {
@@ -311,9 +208,41 @@ export function useChatMessages() {
                 titleResponse += chunk;
               },
               onComplete: async (finalResponse: string) => {
-                await updateTitle(finalResponse);
+                // Clean up the response
+                generatedTitle = finalResponse.replace(/["']/g, '').trim();
+                if (generatedTitle.endsWith('.')) {
+                  generatedTitle = generatedTitle.slice(0, -1);
+                }
+                
+                console.log(`Generated title with DeepSeek: "${generatedTitle}"`);
+                
+                // Update the conversation title
+                console.log(`Attempting to update conversation ${conversationId} title to "${generatedTitle}"`);
+                const success = await updateConversationTitle(conversationId, generatedTitle);
+                
+                if (success) {
+                  console.log(`Successfully updated conversation ${conversationId} title to "${generatedTitle}"`);
+                } else {
+                  console.error(`Failed to update conversation ${conversationId} title`);
+                  // Retry once on failure
+                  console.log('Retrying title update...');
+                  setTimeout(async () => {
+                    const retrySuccess = await updateConversationTitle(conversationId, generatedTitle);
+                    console.log(`Retry update ${retrySuccess ? 'succeeded' : 'failed'}`);
+                  }, 1000);
+                }
               },
-              onError: handleError
+              onError: (error) => {
+                console.error('Error generating title with DeepSeek:', error);
+                // Use default title
+                console.log('Falling back to default title due to error');
+                updateConversationTitle(conversationId, 'Untitled Chat')
+                  .then(success => {
+                    if (!success) {
+                      console.error('Failed to set default title after error');
+                    }
+                  });
+              }
             }
           );
         } catch (error) {
@@ -337,6 +266,7 @@ export function useChatMessages() {
     try {
       console.log(`Updating conversation ${conversationId} with title: "${title}"`);
       
+      // Add network request logging using a custom event to track when the API call is actually made
       console.log(`Making API call to update title for conversation: ${conversationId}`);
       console.time(`updateTitle-${conversationId}`);
       
@@ -345,6 +275,7 @@ export function useChatMessages() {
       console.timeEnd(`updateTitle-${conversationId}`);
       
       if (success) {
+        // Invalidate queries to refresh the UI
         queryClient.invalidateQueries({ queryKey: ['conversations'] });
         console.log(`Successfully updated conversation title in database: "${title}"`);
         return true;
@@ -360,6 +291,7 @@ export function useChatMessages() {
 
   useEffect(() => {
     if (needsTitleGeneration && !isTitleGenerating && messages.length >= 2) {
+      // Check if we have both a user message and an assistant message
       const hasUserMessage = messages.some(msg => msg.sender === 'user');
       const hasAssistantMessage = messages.some(msg => msg.sender === 'assistant');
       
@@ -437,7 +369,7 @@ export function useChatMessages() {
     if (!content.trim() || !convId) return;
 
     try {
-      console.log(`[${new Date().toISOString()}] Sending ${sender} message to conversation ${convId} using model: ${modelType}`);
+      console.log(`Sending ${sender} message to conversation ${convId} using model: ${modelType}`);
       
       await sendMessageMutation.mutateAsync({ content, sender, conversationId: convId });
       
@@ -448,24 +380,6 @@ export function useChatMessages() {
         
         try {
           const tempMessageId = crypto.randomUUID();
-          console.log(`[${new Date().toISOString()}] Created temporary message ID: ${tempMessageId} for streaming`);
-          
-          flushSync(() => {
-            setLocalMessages(current => [
-              ...current, 
-              { 
-                id: tempMessageId, 
-                sender: 'assistant', 
-                content: '', 
-                conversation_id: convId,
-                user_id: 'system',
-                timestamp: new Date().toISOString(),
-                isStreaming: true
-              } as Message
-            ]);
-          });
-          
-          console.log(`[${new Date().toISOString()}] Added empty assistant message with ID: ${tempMessageId}`);
           
           if (onStartStreaming) {
             onStartStreaming(tempMessageId);
@@ -495,42 +409,27 @@ export function useChatMessages() {
           }
           
           if (modelType === 'openai') {
-            console.log(`[${new Date().toISOString()}] Starting OpenAI stream with ${messageHistory.length} messages in history`);
-            
             await createOpenAIStream(
               { messages: messageHistory },
               {
                 onStart: () => {
-                  console.log(`[${new Date().toISOString()}] OpenAI stream started`);
+                  console.log('Starting to stream OpenAI response');
                 },
                 onChunk: (chunk: string) => {
                   if (!chunk || typeof chunk !== 'string') return;
                   
-                  console.log(`[${new Date().toISOString()}] Received chunk: "${chunk}" (${chunk.length} chars)`);
-                  
-                  streamedContent = streamingManager.addChunk(tempMessageId, chunk);
+                  streamedContent += chunk;
                   
                   if (onToken) {
                     onToken(tempMessageId, chunk, streamedContent);
                   }
                 },
                 onComplete: async (finalResponse: string) => {
-                  console.log(`[${new Date().toISOString()}] Stream complete, total response length: ${finalResponse.length}`);
                   streamedContent = finalResponse;
-                  
-                  streamingManager.clear(tempMessageId);
                   
                   if (onComplete) {
                     onComplete(tempMessageId, streamedContent);
                   }
-                  
-                  flushSync(() => {
-                    setLocalMessages(current => current.map(msg => 
-                      msg.id === tempMessageId 
-                        ? { ...msg, content: streamedContent, isStreaming: false }
-                        : msg
-                    ));
-                  });
                   
                   await sendMessageMutation.mutateAsync({ 
                     content: streamedContent, 
@@ -542,36 +441,17 @@ export function useChatMessages() {
                   queryClient.invalidateQueries({ queryKey: ['messages', convId] });
                   queryClient.invalidateQueries({ queryKey: ['conversations'] });
 
+                  // After the first assistant response, check if we need to generate a title
                   if (needsTitleGeneration === convId && !isTitleGenerating) {
-                    console.log(`[${new Date().toISOString()}] Conversation needs title generation, triggering now after assistant response completion`);
-                    setTimeout(() => generateTitle(convId), 500);
+                    console.log('Conversation needs title generation, triggering now after assistant response completion');
+                    setTimeout(() => generateTitle(convId), 500); // Small delay to ensure all messages are properly saved
                   }
                 },
-                onError: (error) => {
-                  console.error(`[${new Date().toISOString()}] Stream error:`, error);
-                  
-                  streamingManager.clear(tempMessageId);
-                  
-                  flushSync(() => {
-                    setLocalMessages(current => current.map(msg => 
-                      msg.id === tempMessageId 
-                        ? { ...msg, content: "Error: Failed to generate response. Please try again.", isStreaming: false }
-                        : msg
-                    ));
-                  });
-                  
-                  setIsStreaming(false);
-                  
-                  if (onError) {
-                    onError(error);
-                  }
-                }
+                onError
               }
             );
           } else {
             try {
-              console.log(`[${new Date().toISOString()}] Starting DeepSeek stream with ${messageHistory.length} messages in history`);
-              
               await createDeepSeekStream(
                 { 
                   messages: messageHistory,
@@ -579,36 +459,23 @@ export function useChatMessages() {
                 },
                 {
                   onStart: () => {
-                    console.log(`[${new Date().toISOString()}] DeepSeek stream started`);
+                    console.log('Starting to stream DeepSeek response');
                   },
                   onChunk: (chunk: string) => {
                     if (!chunk || typeof chunk !== 'string') return;
                     
-                    console.log(`[${new Date().toISOString()}] Received DeepSeek chunk: "${chunk}" (${chunk.length} chars)`);
-                    
-                    streamedContent = streamingManager.addChunk(tempMessageId, chunk);
+                    streamedContent += chunk;
                     
                     if (onToken) {
                       onToken(tempMessageId, chunk, streamedContent);
                     }
                   },
                   onComplete: async (finalResponse: string) => {
-                    console.log(`[${new Date().toISOString()}] DeepSeek stream complete, total response length: ${finalResponse.length}`);
                     streamedContent = finalResponse;
-                    
-                    streamingManager.clear(tempMessageId);
                     
                     if (onComplete) {
                       onComplete(tempMessageId, streamedContent);
                     }
-                    
-                    flushSync(() => {
-                      setLocalMessages(current => current.map(msg => 
-                        msg.id === tempMessageId 
-                          ? { ...msg, content: streamedContent, isStreaming: false }
-                          : msg
-                      ));
-                    });
                     
                     await sendMessageMutation.mutateAsync({ 
                       content: streamedContent, 
@@ -620,23 +487,14 @@ export function useChatMessages() {
                     queryClient.invalidateQueries({ queryKey: ['messages', convId] });
                     queryClient.invalidateQueries({ queryKey: ['conversations'] });
                     
+                    // Check if we need to generate a title after assistant response
                     if (needsTitleGeneration === convId && !isTitleGenerating) {
-                      console.log(`[${new Date().toISOString()}] Conversation needs title generation, triggering now after completion`);
+                      console.log('Conversation needs title generation, triggering now after completion');
                       generateTitle(convId);
                     }
                   },
                   onError: (error) => {
-                    console.error(`[${new Date().toISOString()}] DeepSeek API error:`, error);
-                    
-                    streamingManager.clear(tempMessageId);
-                    
-                    flushSync(() => {
-                      setLocalMessages(current => current.map(msg => 
-                        msg.id === tempMessageId 
-                          ? { ...msg, content: "Error: Failed to generate response from DeepSeek. Please try again or check API configuration.", isStreaming: false }
-                          : msg
-                      ));
-                    });
+                    console.error('DeepSeek API error:', error);
                     
                     if (error.message.includes('API key') || error.message.includes('401')) {
                       toast({
@@ -644,18 +502,16 @@ export function useChatMessages() {
                         description: 'The DeepSeek API key is invalid or missing. Please add a valid API key in the settings.',
                         variant: 'destructive'
                       });
-                    }
-                    
-                    setIsStreaming(false);
-                    
-                    if (onError) {
+                      
+                      setIsStreaming(false);
+                    } else if (onError) {
                       onError(error);
                     }
                   }
                 }
               );
             } catch (deepseekError) {
-              console.error(`[${new Date().toISOString()}] Failed to use DeepSeek:`, deepseekError);
+              console.error('Failed to use DeepSeek:', deepseekError);
               
               toast({
                 title: 'DeepSeek Error',
@@ -667,9 +523,7 @@ export function useChatMessages() {
             }
           }
         } catch (error) {
-          console.error(`[${new Date().toISOString()}] Error in stream processing:`, error);
-          
-          setIsStreaming(false);
+          console.error('Error in stream processing:', error);
           
           if (onError) {
             onError(error as Error);
@@ -680,10 +534,12 @@ export function useChatMessages() {
               variant: 'destructive'
             });
           }
+        } finally {
+          setIsStreaming(false);
         }
       }
     } catch (error) {
-      console.error(`[${new Date().toISOString()}] Error sending message:`, error);
+      console.error('Error sending message:', error);
       setIsStreaming(false);
       toast({
         title: 'Error',
@@ -716,7 +572,7 @@ export function useChatMessages() {
   }, [activeConversationId, queryClient, toast]);
 
   return {
-    messages: localMessages.length > 0 ? localMessages : messages,
+    messages,
     isLoading,
     error,
     refetchMessages,
