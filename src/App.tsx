@@ -8,13 +8,14 @@ import LoginPage from '@/pages/auth/Login';
 import SignupPage from '@/pages/auth/Signup';
 import ForgotPasswordPage from '@/pages/auth/ForgotPassword';
 import UpdatePasswordPage from '@/pages/auth/UpdatePassword';
-import Index from '@/pages/Index'; // Changed from DashboardPage to Index
+import Index from '@/pages/Index'; // Use Index page instead of Dashboard
 import AuthCallbackPage from './pages/auth/Callback';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
+    // Router must wrap AuthProvider since useNavigate is used in AuthContext
+    <Router>
+      <AuthProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
@@ -25,7 +26,7 @@ function App() {
             path="/"
             element={
               <ProtectedRoute>
-                <Index /> {/* Changed from DashboardPage to Index */}
+                <Index />
               </ProtectedRoute>
             }
           />
@@ -38,8 +39,8 @@ function App() {
             }
           />
         </Routes>
-      </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </Router>
   );
 }
 
