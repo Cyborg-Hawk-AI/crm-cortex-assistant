@@ -1,4 +1,3 @@
-
 import { motion } from 'framer-motion';
 import { Message as MessageType } from '@/utils/types';
 import { User, Bot } from 'lucide-react';
@@ -161,7 +160,7 @@ export function Message({ message }: MessageProps) {
         <div className={cn(
           'rounded-lg px-4 py-3 text-[#F1F5F9]',
           isUser 
-            ? 'bg-gradient-to-r from-neon-aqua to-neon-aqua/80' 
+            ? 'bg-gradient-to-r from-[#25384D] to-[#1C2A3A] border border-[#3A4D62]' 
             : isSystem
               ? 'bg-[#25384D] border border-[#3A4D62]'
               : 'bg-[#25384D] border border-[#3A4D62]'
