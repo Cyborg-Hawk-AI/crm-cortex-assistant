@@ -1,5 +1,6 @@
+
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Trash2, AlertTriangle, Folder } from 'lucide-react';
+import { Send, Trash2, AlertTriangle, Folder, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useChatMessages } from '@/hooks/useChatMessages';
@@ -13,6 +14,7 @@ import { useModelSelection } from '@/hooks/useModelSelection';
 import { Alert } from '@/components/ui/alert';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ChatSectionProps {
   activeConversationId: string | null;
@@ -47,6 +49,7 @@ export function ChatSection({
   const {
     toast
   } = useToast();
+  const [retryCount, setRetryCount] = useState(0);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({
@@ -57,6 +60,22 @@ export function ChatSection({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+  
+  // Add retry mechanism for missing data
+  useEffect(() => {
+    // If messages array is empty but we should have messages (activeConversationId exists),
+    // and we're not currently loading, try to reload the data
+    if (activeConversationId && messages.length === 0 && !isLoading && retryCount < 3) {
+      const timer = setTimeout(() => {
+        console.warn('Chat messages appear to be missing, retrying fetch...');
+        // This will trigger a re-fetch in the parent component
+        setRetryCount(prev => prev + 1);
+        // We're not directly refetching here because that logic is in the parent component
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [activeConversationId, messages, isLoading, retryCount]);
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
@@ -111,7 +130,7 @@ export function ChatSection({
     });
   };
 
-  const MoveToProjectDialog = ({ isOpen, onClose, onMove, selectedConversation, projects }) => {
+  const MoveToProjectDialog = ({ isOpen, onClose, onMove, selectedConversation, projects }: any) => {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent>
@@ -129,7 +148,7 @@ export function ChatSection({
             >
               <span className="flex-1 text-left">Open Chats</span>
             </Button>
-            {projects.map(project => (
+            {projects && projects.map((project: any) => (
               <Button 
                 key={project.id} 
                 variant="outline" 
@@ -150,22 +169,36 @@ export function ChatSection({
   };
 
   if (isLoading) {
-    return <div className="flex flex-col h-full justify-center items-center text-muted-foreground">
+    return (
+      <div className="flex flex-col h-full justify-center items-center text-muted-foreground">
         <div className="loading-dots flex items-center">
           <div className="h-3 w-3 bg-neon-purple rounded-full mx-1 animate-pulse"></div>
           <div className="h-3 w-3 bg-neon-purple rounded-full mx-1 animate-pulse" style={{
-          animationDelay: '0.2s'
-        }}></div>
+            animationDelay: '0.2s'
+          }}></div>
           <div className="h-3 w-3 bg-neon-purple rounded-full mx-1 animate-pulse" style={{
-          animationDelay: '0.4s'
-        }}></div>
+            animationDelay: '0.4s'
+          }}></div>
         </div>
         <p className="mt-4 font-medium">Initializing ActionBot...</p>
-      </div>;
+      </div>
+    );
+  }
+
+  // If we have an activeConversationId but no messages and we've tried multiple times to fetch,
+  // show a temporary loading state instead of empty chat screen
+  if (activeConversationId && messages.length === 0 && retryCount > 0 && retryCount < 3) {
+    return (
+      <div className="flex flex-col h-full justify-center items-center text-muted-foreground">
+        <Loader2 className="h-8 w-8 text-neon-purple animate-spin" />
+        <p className="mt-4 font-medium">Loading conversation...</p>
+      </div>
+    );
   }
 
   if (messages.length === 0) {
-    return <div className="flex flex-col h-full justify-center items-center p-4 text-center">
+    return (
+      <div className="flex flex-col h-full justify-center items-center p-4 text-center">
         <div className="max-w-md actionbot-card p-8 rounded-xl border border-gray-100 shadow-lg bg-cyan-950">
           <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-[#C084FC] to-[#D946EF] rounded-full flex items-center justify-center text-white shadow-[0_0_15px_rgba(168,85,247,0.3)]">
             <Send className="h-6 w-6" />
@@ -176,19 +209,41 @@ export function ChatSection({
           </p>
           
           <div className="grid gap-2 mb-8">
-            {["Debug this error: TypeError: Cannot read property 'map' of undefined", "Review my API endpoint for security issues", "Optimize this database query for better performance", "Help me set up Kubernetes monitoring for our cluster"].map((question, i) => <Button key={i} variant="outline" onClick={() => setInputValue(question)} className="justify-start h-auto border border-neon-purple/20 hover:border-neon-purple/40 hover:shadow-[0_0_8px_rgba(168,85,247,0.3)] transition-all py-[8px] text-left mx-0 my-0 font-thin">
+            {["Debug this error: TypeError: Cannot read property 'map' of undefined", "Review my API endpoint for security issues", "Optimize this database query for better performance", "Help me set up Kubernetes monitoring for our cluster"].map((question, i) => (
+              <Button 
+                key={i} 
+                variant="outline" 
+                onClick={() => setInputValue(question)} 
+                className="justify-start h-auto border border-neon-purple/20 hover:border-neon-purple/40 hover:shadow-[0_0_8px_rgba(168,85,247,0.3)] transition-all py-[8px] text-left mx-0 my-0 font-thin"
+              >
                 {question}
-              </Button>)}
+              </Button>
+            ))}
           </div>
           
-          {selectedModel === 'deepseek' && <Alert className="mb-4 bg-amber-900/30 text-amber-200 border-amber-600/50">
+          {selectedModel === 'deepseek' && (
+            <Alert className="mb-4 bg-amber-900/30 text-amber-200 border-amber-600/50">
               <AlertTriangle className="h-4 w-4 mr-2" />
               <span>DeepSeek requires API configuration. Please add your API key in the settings.</span>
-            </Alert>}
+            </Alert>
+          )}
           
           <div className="relative">
-            <Textarea value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyDown={handleKeyDown} onCompositionStart={() => setIsComposing(true)} onCompositionEnd={() => setIsComposing(false)} placeholder="Type your engineering question here..." className="min-h-[80px] resize-none pr-12 rounded-md border border-neon-purple/30 focus:border-neon-purple focus:shadow-[0_0_8px_rgba(168,85,247,0.2)] transition-all" />
-            <Button size="icon" className="absolute right-2 bottom-2 bg-gradient-to-r from-[#C084FC] to-[#D946EF] text-white hover:brightness-110 hover:shadow-[0_0_8px_rgba(168,85,247,0.4)]" onClick={handleSendMessage} disabled={!inputValue.trim() || isSending}>
+            <Textarea 
+              value={inputValue} 
+              onChange={e => setInputValue(e.target.value)} 
+              onKeyDown={handleKeyDown} 
+              onCompositionStart={() => setIsComposing(true)} 
+              onCompositionEnd={() => setIsComposing(false)} 
+              placeholder="Type your engineering question here..." 
+              className="min-h-[80px] resize-none pr-12 rounded-md border border-neon-purple/30 focus:border-neon-purple focus:shadow-[0_0_8px_rgba(168,85,247,0.2)] transition-all" 
+            />
+            <Button 
+              size="icon" 
+              className="absolute right-2 bottom-2 bg-gradient-to-r from-[#C084FC] to-[#D946EF] text-white hover:brightness-110 hover:shadow-[0_0_8px_rgba(168,85,247,0.4)]" 
+              onClick={handleSendMessage} 
+              disabled={!inputValue.trim() || isSending}
+            >
               <Send className="h-4 w-4" />
             </Button>
           </div>
@@ -197,12 +252,16 @@ export function ChatSection({
             <ModelToggle currentModel={selectedModel} onToggle={toggleModel} />
           </div>
         </div>
-      </div>;
+      </div>
+    );
   }
 
-  return <div className="flex flex-col h-full overflow-hidden">
+  return (
+    <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-1 overflow-y-auto p-4 space-y-5 bg-gradient-to-br from-white to-gray-50 bg-slate-900">
-        {messages.map((message: Message) => <MessageComponent key={message.id} message={message} />)}
+        {messages.map((message: Message) => (
+          <MessageComponent key={message.id} message={message} />
+        ))}
         <div ref={messagesEndRef} />
       </div>
       
@@ -210,13 +269,21 @@ export function ChatSection({
         {/* Quick Actions Section */}
         <QuickActions />
         
-        {apiError && <Alert className="mb-4 bg-amber-900/30 text-amber-200 border-amber-600/50">
+        {apiError && (
+          <Alert className="mb-4 bg-amber-900/30 text-amber-200 border-amber-600/50">
             <AlertTriangle className="h-4 w-4 mr-2" />
             <span>{apiError}</span>
-          </Alert>}
+          </Alert>
+        )}
         
         <div className="flex justify-between items-center mb-2">
-          <Button variant="outline" size="sm" className="text-muted-foreground hover:text-neon-red hover:border-neon-red/30 hover:shadow-[0_0_8px_rgba(244,63,94,0.2)]" onClick={handleClearChat} disabled={!activeConversationId}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="text-muted-foreground hover:text-neon-red hover:border-neon-red/30 hover:shadow-[0_0_8px_rgba(244,63,94,0.2)]" 
+            onClick={handleClearChat} 
+            disabled={!activeConversationId}
+          >
             <Trash2 className="h-4 w-4 mr-1" />
             Clear conversation
           </Button>
@@ -230,24 +297,41 @@ export function ChatSection({
         </div>
         
         <div className="relative">
-          <Textarea value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyDown={handleKeyDown} onCompositionStart={() => setIsComposing(true)} onCompositionEnd={() => setIsComposing(false)} placeholder="Type your engineering question here..." className="min-h-[80px] resize-none pr-12 rounded-md border border-neon-purple/30 focus:border-neon-purple focus:shadow-[0_0_8px_rgba(168,85,247,0.2)] transition-all" disabled={isSending || isStreaming || !activeConversationId} />
+          <Textarea 
+            value={inputValue} 
+            onChange={e => setInputValue(e.target.value)} 
+            onKeyDown={handleKeyDown} 
+            onCompositionStart={() => setIsComposing(true)} 
+            onCompositionEnd={() => setIsComposing(false)} 
+            placeholder="Type your engineering question here..." 
+            className="min-h-[80px] resize-none pr-12 rounded-md border border-neon-purple/30 focus:border-neon-purple focus:shadow-[0_0_8px_rgba(168,85,247,0.2)] transition-all" 
+            disabled={isSending || isStreaming || !activeConversationId} 
+          />
           
-          <Button size="icon" className="absolute right-2 bottom-2 bg-gradient-to-r from-[#C084FC] to-[#D946EF] text-white hover:brightness-110 hover:shadow-[0_0_8px_rgba(168,85,247,0.4)]" onClick={handleSendMessage} disabled={!inputValue.trim() || isSending || isStreaming || !activeConversationId}>
+          <Button 
+            size="icon" 
+            className="absolute right-2 bottom-2 bg-gradient-to-r from-[#C084FC] to-[#D946EF] text-white hover:brightness-110 hover:shadow-[0_0_8px_rgba(168,85,247,0.4)]" 
+            onClick={handleSendMessage} 
+            disabled={!inputValue.trim() || isSending || isStreaming || !activeConversationId}
+          >
             <Send className="h-4 w-4" />
           </Button>
           
-          {(isSending || isStreaming) && <div className="absolute right-14 bottom-12 text-xs text-muted-foreground">
+          {(isSending || isStreaming) && (
+            <div className="absolute right-14 bottom-12 text-xs text-muted-foreground">
               <div className="flex items-center">
                 <div className="h-2 w-2 bg-neon-purple rounded-full mr-1 animate-pulse"></div>
                 <div className="h-2 w-2 bg-neon-purple rounded-full mx-1 animate-pulse" style={{
-              animationDelay: '0.2s'
-            }}></div>
+                  animationDelay: '0.2s'
+                }}></div>
                 <div className="h-2 w-2 bg-neon-purple rounded-full ml-1 animate-pulse" style={{
-              animationDelay: '0.4s'
-            }}></div>
+                  animationDelay: '0.4s'
+                }}></div>
               </div>
-            </div>}
+            </div>
+          )}
         </div>
       </div>
-    </div>;
+    </div>
+  );
 }

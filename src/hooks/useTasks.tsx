@@ -3,31 +3,59 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Task, SubTask } from '@/utils/types';
 import { taskApi } from '@/api';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getCurrentUserId } from '@/lib/supabase';
 
 export function useTasks(filters?: Record<string, any>) {
   const { toast } = useToast();
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+  const [userAuthenticated, setUserAuthenticated] = useState<boolean | null>(null);
+  
+  // Check if user is authenticated before fetching data
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const userId = await getCurrentUserId();
+        setUserAuthenticated(!!userId);
+      } catch (err) {
+        console.error('Auth check failed:', err);
+        setUserAuthenticated(false);
+      }
+    };
+    
+    checkAuth();
+  }, []);
   
   // Query for main tasks
   const { 
     data: tasks = [], 
     isLoading, 
-    error 
+    error,
+    refetch: refetchTasks
   } = useQuery({
     queryKey: ['tasks', filters],
     queryFn: () => taskApi.getTasks(),
+    enabled: userAuthenticated === true,
+    retry: 2,
+    onError: (error) => {
+      console.warn('Tasks fetch error:', error);
+    }
   });
   
   // Query for subtasks of the active task
   const {
     data: subtasks = [],
     isLoading: isLoadingSubtasks,
-    refetch: refetchSubtasks
+    refetch: refetchSubtasks,
+    error: subtasksError
   } = useQuery({
     queryKey: ['subtasks', activeTaskId],
     queryFn: () => activeTaskId ? taskApi.getSubtasks(activeTaskId) : Promise.resolve([]),
-    enabled: !!activeTaskId, // Only run this query if there's an active task
+    enabled: !!activeTaskId && userAuthenticated === true, // Only run this query if there's an active task and user is authenticated
+    retry: 2,
+    onError: (error) => {
+      console.warn('Subtasks fetch error:', error);
+    }
   });
   
   const queryClient = useQueryClient();
@@ -42,7 +70,7 @@ export function useTasks(filters?: Record<string, any>) {
         description: 'Task has been created successfully'
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: 'Error',
         description: `Failed to create task: ${error.message}`,
@@ -60,7 +88,7 @@ export function useTasks(filters?: Record<string, any>) {
         description: 'Task has been updated successfully'
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: 'Error',
         description: `Failed to update task: ${error.message}`,
@@ -78,7 +106,7 @@ export function useTasks(filters?: Record<string, any>) {
         description: 'Task has been deleted successfully'
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: 'Error',
         description: `Failed to delete task: ${error.message}`,
@@ -97,7 +125,7 @@ export function useTasks(filters?: Record<string, any>) {
         description: 'Subtask has been added successfully'
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: 'Error',
         description: `Failed to add subtask: ${error.message}`,
@@ -115,7 +143,7 @@ export function useTasks(filters?: Record<string, any>) {
         description: 'Subtask has been updated successfully'
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: 'Error',
         description: `Failed to update subtask: ${error.message}`,
@@ -133,7 +161,7 @@ export function useTasks(filters?: Record<string, any>) {
         description: 'Subtask has been deleted successfully'
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: 'Error',
         description: `Failed to delete subtask: ${error.message}`,
@@ -142,11 +170,20 @@ export function useTasks(filters?: Record<string, any>) {
     },
   });
   
+  // Function to force refresh both tasks and subtasks
+  const refreshAllTaskData = () => {
+    refetchTasks();
+    if (activeTaskId) {
+      refetchSubtasks();
+    }
+  };
+  
   return {
     // Tasks data and state
     tasks,
     isLoading,
     error,
+    refreshAllTaskData,
     createTask: createTaskMutation.mutate,
     updateTask: updateTaskMutation.mutate,
     deleteTask: deleteTaskMutation.mutate,
@@ -157,6 +194,7 @@ export function useTasks(filters?: Record<string, any>) {
     // Subtasks data and state
     subtasks,
     isLoadingSubtasks,
+    subtasksError,
     activeTaskId,
     setActiveTaskId,
     createSubtask: createSubtaskMutation.mutate,
@@ -165,5 +203,6 @@ export function useTasks(filters?: Record<string, any>) {
     isCreatingSubtask: createSubtaskMutation.isPending,
     isUpdatingSubtask: updateSubtaskMutation.isPending,
     isDeletingSubtask: deleteSubtaskMutation.isPending,
+    userAuthenticated
   };
 }

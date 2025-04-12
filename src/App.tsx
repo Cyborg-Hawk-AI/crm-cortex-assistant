@@ -27,6 +27,10 @@ function App() {
         retry: 1,
         staleTime: 1000 * 60 * 5, // 5 minutes
         refetchOnWindowFocus: false,
+        // Ensure errors are properly logged
+        onError: (error) => {
+          console.error('Query error:', error);
+        }
       },
     },
   }));
@@ -42,14 +46,14 @@ function App() {
             <Header activeTab={activeTab} setActiveTab={setActiveTab} />
             <div className="pt-[60px] pb-[70px]"> {/* Added bottom padding for floating action bar */}
               <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/update-password" element={<UpdatePassword />} />
+                <Route path="/login" element={<Login key="login" />} />
+                <Route path="/signup" element={<Signup key="signup" />} />
+                <Route path="/forgot-password" element={<ForgotPassword key="forgot-password" />} />
+                <Route path="/update-password" element={<UpdatePassword key="update-password" />} />
                 
                 <Route path="/" element={
                   <ProtectedRoute>
-                    <Index activeTab={activeTab} setActiveTab={setActiveTab} key="index" />
+                    <Index activeTab={activeTab} setActiveTab={setActiveTab} key={`index-${activeTab}`} />
                   </ProtectedRoute>
                 } />
                 
@@ -61,7 +65,7 @@ function App() {
                 {/* Mindboard Route */}
                 <Route path="/mindboard" element={<ProtectedRoute><Mindboard key="mindboard" /></ProtectedRoute>} />
                 
-                <Route path="*" element={<NotFound />} />
+                <Route path="*" element={<NotFound key="not-found" />} />
               </Routes>
             </div>
             {/* Floating Action Bar - visible on all pages */}

@@ -5,6 +5,7 @@ import { ProjectsPage } from '@/components/projects/ProjectsPage';
 import { HomeButton } from '@/components/HomeButton';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function ProjectsPageWrapper() {
   const { projectId, taskId } = useParams();
@@ -67,9 +68,9 @@ export function ProjectsPageWrapper() {
       {loading ? (
         <div className="h-full flex items-center justify-center p-4">
           <div className="w-full max-w-lg p-6">
-            <div className="animate-pulse space-y-4">
-              <div className="h-8 bg-gray-700/50 rounded-md w-1/3"></div>
-              <div className="h-40 bg-gray-700/50 rounded-md"></div>
+            <div className="space-y-4">
+              <Skeleton className="h-8 bg-gray-700/50 rounded-md w-1/3" />
+              <Skeleton className="h-40 bg-gray-700/50 rounded-md" />
             </div>
           </div>
         </div>

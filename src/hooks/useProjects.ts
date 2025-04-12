@@ -1,14 +1,31 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as projectsApi from '@/api/projects';
 import { ActionProject } from '@/utils/types';
 import { useToast } from './use-toast';
+import { getCurrentUserId } from '@/lib/supabase';
 
 export function useProjects() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  const [userAuthenticated, setUserAuthenticated] = useState<boolean | null>(null);
+  
+  // Check if user is authenticated before fetching data
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const userId = await getCurrentUserId();
+        setUserAuthenticated(!!userId);
+      } catch (err) {
+        console.error('Auth check failed:', err);
+        setUserAuthenticated(false);
+      }
+    };
+    
+    checkAuth();
+  }, []);
   
   // Fetch projects
   const { 
@@ -18,7 +35,13 @@ export function useProjects() {
     refetch: refetchProjects
   } = useQuery({
     queryKey: ['projects'],
-    queryFn: projectsApi.getProjects
+    queryFn: projectsApi.getProjects,
+    // Only run query if user is authenticated
+    enabled: userAuthenticated === true,
+    retry: 2,
+    onError: (error) => {
+      console.warn('Projects fetch error:', error);
+    }
   });
 
   // Create project mutation
@@ -81,27 +104,6 @@ export function useProjects() {
     }
   });
 
-  // Assign conversation to project mutation
-  const assignConversationMutation = useMutation({
-    mutationFn: ({ conversationId, projectId }: { conversationId: string; projectId: string }) => 
-      projectsApi.assignConversationToProject(conversationId, projectId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      queryClient.invalidateQueries({ queryKey: ['activeProject'] });
-      toast({
-        title: "Conversation moved",
-        description: "The conversation has been moved to another project",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error moving conversation",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  });
-
   // Fetch conversations for active project
   const { 
     data: activeProjectConversations = [],
@@ -110,7 +112,11 @@ export function useProjects() {
   } = useQuery({
     queryKey: ['activeProject', activeProjectId],
     queryFn: () => activeProjectId ? projectsApi.getConversationsByProject(activeProjectId) : [],
-    enabled: !!activeProjectId
+    enabled: !!activeProjectId && userAuthenticated === true,
+    retry: 2,
+    onError: (error) => {
+      console.warn('Project conversations fetch error:', error);
+    }
   });
 
   // Create a new project
@@ -133,6 +139,27 @@ export function useProjects() {
     return assignConversationMutation.mutate({ conversationId, projectId });
   };
 
+  // Assign conversation to project mutation
+  const assignConversationMutation = useMutation({
+    mutationFn: ({ conversationId, projectId }: { conversationId: string; projectId: string }) => 
+      projectsApi.assignConversationToProject(conversationId, projectId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['activeProject'] });
+      toast({
+        title: "Conversation moved",
+        description: "The conversation has been moved to another project",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error moving conversation",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
   return {
     projects,
     isLoadingProjects,
@@ -150,6 +177,7 @@ export function useProjects() {
     isCreatingProject: createProjectMutation.isPending,
     isUpdatingProject: updateProjectMutation.isPending,
     isDeletingProject: deleteProjectMutation.isPending,
-    isMovingConversation: assignConversationMutation.isPending
+    isMovingConversation: assignConversationMutation.isPending,
+    userAuthenticated
   };
 }
