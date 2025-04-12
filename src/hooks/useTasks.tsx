@@ -37,8 +37,10 @@ export function useTasks(filters?: Record<string, any>) {
     queryFn: () => taskApi.getTasks(),
     enabled: userAuthenticated === true,
     retry: 2,
-    onError: (error) => {
-      console.warn('Tasks fetch error:', error);
+    meta: {
+      onError: (error: any) => {
+        console.warn('Tasks fetch error:', error);
+      }
     }
   });
   
@@ -53,8 +55,10 @@ export function useTasks(filters?: Record<string, any>) {
     queryFn: () => activeTaskId ? taskApi.getSubtasks(activeTaskId) : Promise.resolve([]),
     enabled: !!activeTaskId && userAuthenticated === true, // Only run this query if there's an active task and user is authenticated
     retry: 2,
-    onError: (error) => {
-      console.warn('Subtasks fetch error:', error);
+    meta: {
+      onError: (error: any) => {
+        console.warn('Subtasks fetch error:', error);
+      }
     }
   });
   

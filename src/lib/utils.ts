@@ -1,39 +1,45 @@
 
-import { clsx, type ClassValue } from "clsx"
+import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { format, formatDistanceToNow, isThisYear } from "date-fns";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
 /**
- * Format a date in a relative format (e.g. "2 days ago")
+ * Formats a date into a relative time string (e.g. '2 days ago')
+ * or a standard date format if older than a week
  */
-export function formatDateRelative(date: Date | string | null | undefined): string {
-  if (!date) return 'Unknown';
+export function formatDateRelative(date: string | Date | null): string {
+  if (!date) return '';
   
   try {
-    const inputDate = typeof date === 'string' ? new Date(date) : date;
-    const now = new Date();
-    const diffInMilliseconds = now.getTime() - inputDate.getTime();
-    const diffInSeconds = Math.floor(diffInMilliseconds / 1000);
-    const diffInMinutes = Math.floor(diffInSeconds / 60);
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    const diffInDays = Math.floor(diffInHours / 24);
-
-    if (diffInDays > 30) {
-      return inputDate.toLocaleDateString();
-    } else if (diffInDays > 0) {
-      return `${diffInDays} ${diffInDays === 1 ? 'day' : 'days'} ago`;
-    } else if (diffInHours > 0) {
-      return `${diffInHours} ${diffInHours === 1 ? 'hour' : 'hours'} ago`;
-    } else if (diffInMinutes > 0) {
-      return `${diffInMinutes} ${diffInMinutes === 1 ? 'minute' : 'minutes'} ago`;
-    } else {
-      return 'Just now';
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    
+    // Check if date is valid
+    if (isNaN(dateObj.getTime())) {
+      return '';
     }
-  } catch (error) {
-    console.error('Error formatting date:', error);
-    return 'Invalid date';
+    
+    const now = new Date();
+    const diffMs = now.getTime() - dateObj.getTime();
+    const diffDays = diffMs / (1000 * 60 * 60 * 24);
+    
+    // For recent dates, use relative format
+    if (diffDays < 7) {
+      return formatDistanceToNow(dateObj, { addSuffix: true });
+    }
+    
+    // For older dates in the current year, show month and day
+    if (isThisYear(dateObj)) {
+      return format(dateObj, 'MMM d');
+    }
+    
+    // For dates in previous years, include the year
+    return format(dateObj, 'MMM d, yyyy');
+  } catch (err) {
+    console.error('Error formatting date:', err);
+    return '';
   }
 }

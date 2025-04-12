@@ -27,10 +27,7 @@ function App() {
         retry: 1,
         staleTime: 1000 * 60 * 5, // 5 minutes
         refetchOnWindowFocus: false,
-        // Ensure errors are properly logged
-        onError: (error) => {
-          console.error('Query error:', error);
-        }
+        // Remove onError property and use better error handling in individual queries
       },
     },
   }));

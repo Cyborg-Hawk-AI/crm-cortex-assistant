@@ -39,8 +39,10 @@ export function useProjects() {
     // Only run query if user is authenticated
     enabled: userAuthenticated === true,
     retry: 2,
-    onError: (error) => {
-      console.warn('Projects fetch error:', error);
+    meta: {
+      onError: (error: any) => {
+        console.warn('Projects fetch error:', error);
+      }
     }
   });
 
@@ -114,8 +116,10 @@ export function useProjects() {
     queryFn: () => activeProjectId ? projectsApi.getConversationsByProject(activeProjectId) : [],
     enabled: !!activeProjectId && userAuthenticated === true,
     retry: 2,
-    onError: (error) => {
-      console.warn('Project conversations fetch error:', error);
+    meta: {
+      onError: (error: any) => {
+        console.warn('Project conversations fetch error:', error);
+      }
     }
   });
 
