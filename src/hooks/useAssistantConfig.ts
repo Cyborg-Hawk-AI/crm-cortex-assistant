@@ -11,9 +11,12 @@ export function useAssistantConfig() {
   
   // Callback for streaming updates
   const handleToken = useCallback((messageId: string, token: string, fullContent: string) => {
-    console.log(`[${new Date().toISOString()}][AssistantConfig] Token received for ${messageId}: "${token.substring(0, 10)}${token.length > 10 ? '...' : ''}" (${token.length} chars)`);
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}][AssistantConfig] Token received for ${messageId}: "${token.substring(0, 10)}${token.length > 10 ? '...' : ''}" (${token.length} chars)`);
     
     try {
+      console.log(`[${timestamp}][AssistantConfig] Before flushSync update for message ${messageId}`);
+      
       // Force synchronous update to ensure each token is visible immediately
       flushSync(() => {
         setTempMessages(prev => {
@@ -24,32 +27,48 @@ export function useAssistantConfig() {
       });
       
       // The setTempMessages update should happen synchronously due to flushSync
-      console.log(`[${new Date().toISOString()}][AssistantConfig] Updated temp message ${messageId}, content length: ${fullContent.length}`);
+      console.log(`[${timestamp}][AssistantConfig] After flushSync - updated temp message ${messageId}, content length: ${fullContent.length}`);
     } catch (error) {
-      console.error(`[${new Date().toISOString()}][AssistantConfig] Error in token handler:`, error);
+      console.error(`[${timestamp}][AssistantConfig] Error in token handler:`, error);
     }
   }, []);
   
   const handleStartStreaming = useCallback((messageId: string) => {
-    console.log(`[${new Date().toISOString()}][AssistantConfig] Started streaming for message ${messageId}`);
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}][AssistantConfig] Started streaming for message ${messageId}`);
     
-    // Initialize with empty content
-    setTempMessages(prev => {
-      const newMap = new Map(prev);
-      newMap.set(messageId, '');
-      return newMap;
-    });
+    try {
+      // Initialize with empty content and force immediate update
+      flushSync(() => {
+        setTempMessages(prev => {
+          const newMap = new Map(prev);
+          newMap.set(messageId, '');
+          return newMap;
+        });
+      });
+      console.log(`[${timestamp}][AssistantConfig] Initialized streaming message ${messageId} with empty content`);
+    } catch (error) {
+      console.error(`[${timestamp}][AssistantConfig] Error initializing streaming:`, error);
+    }
   }, []);
   
   const handleComplete = useCallback((messageId: string, content: string) => {
-    console.log(`[${new Date().toISOString()}][AssistantConfig] Completed streaming for message ${messageId}, final length: ${content.length}`);
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}][AssistantConfig] Completed streaming for message ${messageId}, final length: ${content.length}`);
     
-    // Remove from temp messages when complete
-    setTempMessages(prev => {
-      const newMap = new Map(prev);
-      newMap.delete(messageId);
-      return newMap;
-    });
+    try {
+      // Remove from temp messages when complete with immediate update
+      flushSync(() => {
+        setTempMessages(prev => {
+          const newMap = new Map(prev);
+          newMap.delete(messageId);
+          return newMap;
+        });
+      });
+      console.log(`[${timestamp}][AssistantConfig] Removed message ${messageId} from temporary messages`);
+    } catch (error) {
+      console.error(`[${timestamp}][AssistantConfig] Error completing streaming:`, error);
+    }
   }, []);
   
   const handleError = useCallback((error: Error) => {
@@ -76,5 +95,6 @@ export function useAssistantConfig() {
     getAssistantConfig,
     messages,
     setMessages,
+    tempMessages, // Expose temp messages for direct access
   };
 }

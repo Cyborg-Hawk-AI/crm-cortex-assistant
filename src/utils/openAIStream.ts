@@ -64,7 +64,8 @@ export async function createOpenAIStream(
           const { done, value } = await reader.read();
           
           if (done) {
-            console.log(`[${new Date().toISOString()}] Stream complete - Received ${chunkCount} chunks total`);
+            const timestamp = new Date().toISOString();
+            console.log(`[${timestamp}] Stream complete - Received ${chunkCount} chunks total`);
             isComplete = true;
             callbacks.onComplete(fullText);
             break;
@@ -72,7 +73,8 @@ export async function createOpenAIStream(
           
           // Decode the chunk
           const chunk = decoder.decode(value, { stream: true });
-          console.log(`[${new Date().toISOString()}] Received chunk of size: ${chunk.length}`);
+          const timestamp = new Date().toISOString();
+          console.log(`[${timestamp}] Received chunk of size: ${chunk.length}`);
           
           // Process the SSE format
           const lines = chunk
@@ -92,12 +94,18 @@ export async function createOpenAIStream(
               
               if (content) {
                 chunkCount++;
+                const tokenTimestamp = new Date().toISOString();
                 fullText += content;
-                console.log(`[${new Date().toISOString()}] Processing chunk #${chunkCount}: "${content}" (${content.length} chars)`);
+                console.log(`[${tokenTimestamp}] Processing token #${chunkCount}: "${content}" (${content.length} chars)`);
+                
+                // Measure time to process token
+                console.time(`token_process_${chunkCount}`);
                 
                 // Immediately call onChunk to ensure real-time streaming
                 callbacks.onChunk(content);
-                console.log(`[${new Date().toISOString()}] onChunk callback completed for chunk #${chunkCount}`);
+                
+                console.timeEnd(`token_process_${chunkCount}`);
+                console.log(`[${new Date().toISOString()}] Token #${chunkCount} callback completed`);
               }
             } catch (e) {
               console.error(`[${new Date().toISOString()}] Error parsing SSE line:`, line, e);
