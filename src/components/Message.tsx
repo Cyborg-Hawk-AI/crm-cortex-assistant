@@ -1,3 +1,4 @@
+
 import { motion } from 'framer-motion';
 import { Message as MessageType } from '@/utils/types';
 import { User, Bot } from 'lucide-react';
@@ -151,7 +152,7 @@ export function Message({ message }: MessageProps) {
         <div className={cn(
           'w-8 h-8 rounded-full flex items-center justify-center',
           isUser 
-            ? 'bg-neon-aqua text-black' 
+            ? 'bg-neon-purple text-white' 
             : 'bg-neon-purple text-white'
         )}>
           {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
@@ -160,7 +161,7 @@ export function Message({ message }: MessageProps) {
         <div className={cn(
           'rounded-lg px-4 py-3 text-[#F1F5F9]',
           isUser 
-            ? 'bg-gradient-to-r from-[#25384D] to-[#1C2A3A] border border-[#3A4D62]' 
+            ? 'bg-gradient-to-r from-[#1C2A3A] to-[#25384D] border border-neon-purple/30' 
             : isSystem
               ? 'bg-[#25384D] border border-[#3A4D62]'
               : 'bg-[#25384D] border border-[#3A4D62]'
