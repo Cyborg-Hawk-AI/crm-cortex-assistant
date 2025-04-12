@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as messagesApi from '@/api/messages';
@@ -55,7 +56,8 @@ export function useChatMessages() {
       }
       
       // Set this flag to track that we need to generate a title for this new conversation
-      if (!title) {
+      if (!title || title === 'New conversation') {
+        console.log(`Setting needsTitleGeneration for conversation: ${newConversation.id}`);
         setNeedsTitleGeneration(newConversation.id);
       }
       
@@ -80,7 +82,7 @@ export function useChatMessages() {
       const conversationMessages = await messagesApi.getMessages(conversationId);
       
       if (conversationMessages.length < 2) {
-        console.log('Not enough messages to generate a title yet');
+        console.log('Not enough messages to generate a title yet, need at least a user message and assistant response');
         setIsTitleGenerating(false);
         return;
       }
@@ -89,10 +91,14 @@ export function useChatMessages() {
       const assistantMessage = conversationMessages.find(msg => msg.sender === 'assistant')?.content || '';
       
       if (!userMessage || !assistantMessage) {
-        console.log('Missing user or assistant message for title generation');
+        console.log('Missing user or assistant message for title generation, aborting');
         setIsTitleGenerating(false);
         return;
       }
+      
+      console.log('Found user and assistant messages for title generation:');
+      console.log(`User message: ${userMessage.substring(0, 50)}${userMessage.length > 50 ? '...' : ''}`);
+      console.log(`Assistant message: ${assistantMessage.substring(0, 50)}${assistantMessage.length > 50 ? '...' : ''}`);
       
       // Truncate messages if they're too long
       const truncatedUserMsg = userMessage.length > 100 ? userMessage.substring(0, 100) + '...' : userMessage;
@@ -101,6 +107,8 @@ export function useChatMessages() {
       // Determine which model to use - same as the one used for chat
       const { assistantId } = getAssistantConfig();
       const modelType = assistantId.includes('deepseek') ? 'deepseek' : 'openai'; 
+      
+      console.log(`Using ${modelType} model for title generation`);
       
       // Create the prompt for title generation
       const titlePrompt = `Based on this conversation, generate a short, concise title (3-5 words):
@@ -117,6 +125,8 @@ export function useChatMessages() {
         // Use OpenAI
         try {
           let titleResponse = '';
+          
+          console.log('Sending OpenAI title generation request...');
           
           await createOpenAIStream(
             {
@@ -139,19 +149,28 @@ export function useChatMessages() {
                   generatedTitle = generatedTitle.slice(0, -1);
                 }
                 
-                console.log(`Generated title with OpenAI: ${generatedTitle}`);
+                console.log(`Generated title with OpenAI: "${generatedTitle}"`);
                 
                 // Update the conversation title
+                console.log(`Attempting to update conversation ${conversationId} title to "${generatedTitle}"`);
                 const success = await updateConversationTitle(conversationId, generatedTitle);
+                
                 if (success) {
                   console.log(`Successfully updated conversation ${conversationId} title to "${generatedTitle}"`);
                 } else {
                   console.error(`Failed to update conversation ${conversationId} title`);
+                  // Retry once on failure
+                  console.log('Retrying title update...');
+                  setTimeout(async () => {
+                    const retrySuccess = await updateConversationTitle(conversationId, generatedTitle);
+                    console.log(`Retry update ${retrySuccess ? 'succeeded' : 'failed'}`);
+                  }, 1000);
                 }
               },
               onError: (error) => {
                 console.error('Error generating title with OpenAI:', error);
                 // Use default title
+                console.log('Falling back to default title due to error');
                 updateConversationTitle(conversationId, 'Untitled Chat')
                   .then(success => {
                     if (!success) {
@@ -163,12 +182,15 @@ export function useChatMessages() {
           );
         } catch (error) {
           console.error('Failed to generate title with OpenAI:', error);
+          console.log('Falling back to default title due to exception');
           await updateConversationTitle(conversationId, 'Untitled Chat');
         }
       } else {
         // Use DeepSeek
         try {
           let titleResponse = '';
+          
+          console.log('Sending DeepSeek title generation request...');
           
           await createDeepSeekStream(
             {
@@ -192,19 +214,28 @@ export function useChatMessages() {
                   generatedTitle = generatedTitle.slice(0, -1);
                 }
                 
-                console.log(`Generated title with DeepSeek: ${generatedTitle}`);
+                console.log(`Generated title with DeepSeek: "${generatedTitle}"`);
                 
                 // Update the conversation title
+                console.log(`Attempting to update conversation ${conversationId} title to "${generatedTitle}"`);
                 const success = await updateConversationTitle(conversationId, generatedTitle);
+                
                 if (success) {
                   console.log(`Successfully updated conversation ${conversationId} title to "${generatedTitle}"`);
                 } else {
                   console.error(`Failed to update conversation ${conversationId} title`);
+                  // Retry once on failure
+                  console.log('Retrying title update...');
+                  setTimeout(async () => {
+                    const retrySuccess = await updateConversationTitle(conversationId, generatedTitle);
+                    console.log(`Retry update ${retrySuccess ? 'succeeded' : 'failed'}`);
+                  }, 1000);
                 }
               },
               onError: (error) => {
                 console.error('Error generating title with DeepSeek:', error);
                 // Use default title
+                console.log('Falling back to default title due to error');
                 updateConversationTitle(conversationId, 'Untitled Chat')
                   .then(success => {
                     if (!success) {
@@ -216,6 +247,7 @@ export function useChatMessages() {
           );
         } catch (error) {
           console.error('Failed to generate title with DeepSeek:', error);
+          console.log('Falling back to default title due to exception');
           await updateConversationTitle(conversationId, 'Untitled Chat');
         }
       }
@@ -232,16 +264,23 @@ export function useChatMessages() {
 
   const updateConversationTitle = useCallback(async (conversationId: string, title: string): Promise<boolean> => {
     try {
-      console.log(`Updating conversation ${conversationId} with title: ${title}`);
+      console.log(`Updating conversation ${conversationId} with title: "${title}"`);
+      
+      // Add network request logging using a custom event to track when the API call is actually made
+      console.log(`Making API call to update title for conversation: ${conversationId}`);
+      console.time(`updateTitle-${conversationId}`);
+      
       const success = await messagesApi.updateConversationTitle(conversationId, title);
+      
+      console.timeEnd(`updateTitle-${conversationId}`);
       
       if (success) {
         // Invalidate queries to refresh the UI
         queryClient.invalidateQueries({ queryKey: ['conversations'] });
-        console.log(`Successfully updated conversation title in database: ${title}`);
+        console.log(`Successfully updated conversation title in database: "${title}"`);
         return true;
       } else {
-        console.error('Failed to update conversation title in database');
+        console.error('Failed to update conversation title in database - API returned false');
         return false;
       }
     } catch (error) {
@@ -252,13 +291,15 @@ export function useChatMessages() {
 
   useEffect(() => {
     if (needsTitleGeneration && !isTitleGenerating && messages.length >= 2) {
-      // We have user and assistant messages, generate a title
+      // Check if we have both a user message and an assistant message
       const hasUserMessage = messages.some(msg => msg.sender === 'user');
       const hasAssistantMessage = messages.some(msg => msg.sender === 'assistant');
       
       if (hasUserMessage && hasAssistantMessage) {
         console.log(`Triggering title generation for conversation: ${needsTitleGeneration}`);
         generateTitle(needsTitleGeneration);
+      } else {
+        console.log('Not enough message types to generate title yet, waiting for both user and assistant messages');
       }
     }
   }, [needsTitleGeneration, isTitleGenerating, messages, generateTitle]);
@@ -400,10 +441,10 @@ export function useChatMessages() {
                   queryClient.invalidateQueries({ queryKey: ['messages', convId] });
                   queryClient.invalidateQueries({ queryKey: ['conversations'] });
 
-                  // Check if we need to generate a title after assistant response
+                  // After the first assistant response, check if we need to generate a title
                   if (needsTitleGeneration === convId && !isTitleGenerating) {
-                    console.log('Conversation needs title generation, triggering now after completion');
-                    generateTitle(convId);
+                    console.log('Conversation needs title generation, triggering now after assistant response completion');
+                    setTimeout(() => generateTitle(convId), 500); // Small delay to ensure all messages are properly saved
                   }
                 },
                 onError

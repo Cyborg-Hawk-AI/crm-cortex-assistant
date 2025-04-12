@@ -1,3 +1,4 @@
+
 import { supabase, getCurrentUserId } from '@/lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
 import { Message } from '@/utils/types';
@@ -470,20 +471,21 @@ export const updateConversationTitle = async (conversationId: string, title: str
   }
 
   // Update the conversation title
-  const { error } = await supabase
+  const { error, data } = await supabase
     .from('conversations')
     .update({ 
       title,
       updated_at: new Date().toISOString() 
     })
     .eq('id', conversationId)
-    .eq('user_id', userId);
+    .eq('user_id', userId)
+    .select();
 
   if (error) {
     console.error('Error updating conversation title in Supabase:', error);
     return false;
   }
 
-  console.log(`Successfully updated conversation ${conversationId} title to "${title}"`);
+  console.log(`Successfully updated conversation ${conversationId} title to "${title}"`, data);
   return true;
 };
