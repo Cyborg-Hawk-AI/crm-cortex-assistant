@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Message, Task, Assistant } from '@/utils/types';
@@ -6,6 +7,7 @@ import * as assistantService from '@/services/assistantService';
 import { v4 as uuidv4 } from 'uuid';
 import * as messagesApi from '@/api/messages';
 import { createOpenAIStream } from '@/utils/openAIStream';
+import { getCurrentUserId } from '@/lib/supabase';
 
 export function useChatMessages() {
   const { toast } = useToast();
@@ -18,35 +20,68 @@ export function useChatMessages() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const isInitialLoadDone = useRef(false);
+  const [userAuthenticated, setUserAuthenticated] = useState<boolean | null>(null);
   
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
   
   const pendingMessages = useRef<Set<string>>(new Set());
   const currentStreamingMessageId = useRef<string | null>(null);
   const processingMessageQueue = useRef<Set<string>>(new Set());
+  
+  // Check if user is authenticated before fetching data
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const userId = await getCurrentUserId();
+        setUserAuthenticated(!!userId);
+      } catch (err) {
+        console.error('Auth check failed:', err);
+        setUserAuthenticated(false);
+      }
+    };
+    
+    checkAuth();
+  }, []);
 
   const { 
     data: conversations = [], 
-    isLoading: isLoadingConversations
+    isLoading: isLoadingConversations,
+    refetch: refetchConversations
   } = useQuery({
     queryKey: ['conversations'],
     queryFn: () => messagesApi.getConversations(),
+    enabled: userAuthenticated === true,
+    staleTime: 1000 * 60 * 2, // 2 minutes for better data freshness
+    retry: 2,
+    meta: {
+      onError: (error: any) => {
+        console.warn('Conversations fetch error:', error);
+      }
+    }
   });
 
   const {
     data: dbMessages = [],
     isLoading: isLoadingMessages,
-    refetch: refetchMessages
+    refetch: refetchMessages,
+    error: messagesError
   } = useQuery({
     queryKey: ['messages', activeConversationId],
     queryFn: () => activeConversationId 
       ? messagesApi.getMessages(activeConversationId) 
       : Promise.resolve([]),
-    enabled: !!activeConversationId,
+    enabled: !!activeConversationId && userAuthenticated === true,
+    staleTime: 1000 * 60 * 1, // 1 minute for better data freshness
+    retry: 2,
+    meta: {
+      onError: (error: any) => {
+        console.warn('Messages fetch error:', error);
+      }
+    }
   });
 
   useEffect(() => {
-    if (activeConversationId) {
+    if (activeConversationId && userAuthenticated) {
       console.log(`Loading messages for conversation: ${activeConversationId}`);
       refetchMessages();
       
@@ -69,7 +104,19 @@ export function useChatMessages() {
         console.log(`Switched to conversation: ${activeConversationId} with thread: ${activeConversation.open_ai_thread_id || 'none'}`);
       }
     }
-  }, [activeConversationId, conversations, refetchMessages]);
+  }, [activeConversationId, conversations, refetchMessages, userAuthenticated]);
+
+  // When component mounts or unmounts, refresh conversation list
+  useEffect(() => {
+    if (userAuthenticated) {
+      refetchConversations();
+    }
+    
+    return () => {
+      // Clean up any local state when unmounting
+      setLocalMessages([]);
+    };
+  }, [refetchConversations, userAuthenticated]);
 
   const messages = useCallback(() => {
     const result = [...dbMessages];
@@ -86,6 +133,16 @@ export function useChatMessages() {
   }, [dbMessages, localMessages]);
 
   const startConversation = async (title?: string): Promise<string> => {
+    if (!userAuthenticated) {
+      console.warn('Attempted to start conversation while not authenticated');
+      toast({
+        title: 'Authentication required',
+        description: 'Please log in to start a conversation',
+        variant: 'destructive'
+      });
+      return Promise.reject(new Error('Authentication required'));
+    }
+    
     try {
       const conversationTitle = title?.trim() || 'New conversation';
       const conversation = await messagesApi.createConversation(conversationTitle);
@@ -93,6 +150,9 @@ export function useChatMessages() {
       setLocalMessages([]);
       
       console.log(`Created conversation ${conversation.id} with title "${conversationTitle}" in Open Chats group`);
+      
+      // Make sure our conversation list gets updated
+      refetchConversations();
       
       return conversation.id;
     } catch (error) {
@@ -502,6 +562,9 @@ export function useChatMessages() {
     startConversation,
     setActiveConversationId,
     refetchMessages,
-    saveMessage
+    saveMessage,
+    conversations,
+    refetchConversations,
+    userAuthenticated
   };
 }

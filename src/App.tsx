@@ -26,7 +26,8 @@ function App() {
       queries: {
         retry: 1,
         staleTime: 1000 * 60 * 5, // 5 minutes
-        refetchOnWindowFocus: false,
+        refetchOnWindowFocus: true, // Enable refetch on window focus to keep data fresh
+        refetchOnMount: 'always', // Always refetch when component mounts
         // Remove onError property and use better error handling in individual queries
       },
     },
