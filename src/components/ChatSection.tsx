@@ -34,8 +34,6 @@ export function ChatSection({
     selectedModel,
     toggleModel
   } = useModelSelection();
-  
-  const chatMessagesData = useChatMessages();
   const {
     inputValue,
     setInputValue,
@@ -45,22 +43,13 @@ export function ChatSection({
     isStreaming,
     startConversation,
     setActiveConversationId
-  } = chatMessagesData;
-  
-  const userAuthenticated = chatMessagesData.userAuthenticated;
-  
+  } = useChatMessages();
   const [isComposing, setIsComposing] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const {
     toast
   } = useToast();
   const [retryCount, setRetryCount] = useState(0);
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-    return () => setIsMounted(false);
-  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({
@@ -72,16 +61,21 @@ export function ChatSection({
     scrollToBottom();
   }, [messages]);
   
+  // Add retry mechanism for missing data
   useEffect(() => {
-    if (activeConversationId && messages.length === 0 && !isLoading && retryCount < 3 && isMounted && userAuthenticated) {
+    // If messages array is empty but we should have messages (activeConversationId exists),
+    // and we're not currently loading, try to reload the data
+    if (activeConversationId && messages.length === 0 && !isLoading && retryCount < 3) {
       const timer = setTimeout(() => {
         console.warn('Chat messages appear to be missing, retrying fetch...');
+        // This will trigger a re-fetch in the parent component
         setRetryCount(prev => prev + 1);
-      }, 800);
+        // We're not directly refetching here because that logic is in the parent component
+      }, 1000);
       
       return () => clearTimeout(timer);
     }
-  }, [activeConversationId, messages, isLoading, retryCount, isMounted, userAuthenticated]);
+  }, [activeConversationId, messages, isLoading, retryCount]);
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
@@ -174,7 +168,7 @@ export function ChatSection({
     );
   };
 
-  if (userAuthenticated === null) {
+  if (isLoading) {
     return (
       <div className="flex flex-col h-full justify-center items-center text-muted-foreground">
         <div className="loading-dots flex items-center">
@@ -191,23 +185,8 @@ export function ChatSection({
     );
   }
 
-  if (isLoading && (!messages || messages.length === 0)) {
-    return (
-      <div className="flex flex-col h-full justify-center items-center text-muted-foreground">
-        <div className="loading-dots flex items-center">
-          <div className="h-3 w-3 bg-neon-purple rounded-full mx-1 animate-pulse"></div>
-          <div className="h-3 w-3 bg-neon-purple rounded-full mx-1 animate-pulse" style={{
-            animationDelay: '0.2s'
-          }}></div>
-          <div className="h-3 w-3 bg-neon-purple rounded-full mx-1 animate-pulse" style={{
-            animationDelay: '0.4s'
-          }}></div>
-        </div>
-        <p className="mt-4 font-medium">Loading conversations...</p>
-      </div>
-    );
-  }
-
+  // If we have an activeConversationId but no messages and we've tried multiple times to fetch,
+  // show a temporary loading state instead of empty chat screen
   if (activeConversationId && messages.length === 0 && retryCount > 0 && retryCount < 3) {
     return (
       <div className="flex flex-col h-full justify-center items-center text-muted-foreground">
@@ -287,6 +266,7 @@ export function ChatSection({
       </div>
       
       <div className="border-t border-gray-200 p-4 bg-slate-700">
+        {/* Quick Actions Section */}
         <QuickActions />
         
         {apiError && (
@@ -308,6 +288,7 @@ export function ChatSection({
             Clear conversation
           </Button>
           
+          {/* Model Selection */}
           <div className="flex space-x-2">
             <div className="model-toggle">
               <ModelToggle currentModel={selectedModel} onToggle={toggleModel} />

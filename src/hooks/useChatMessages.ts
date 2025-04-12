@@ -9,7 +9,6 @@ import { Message, Assistant, Task } from '@/utils/types';
 import { createOpenAIStream } from '@/utils/openAIStream';
 import { createDeepSeekStream } from '@/utils/deepSeekStream';
 import { ModelType } from '@/hooks/useModelSelection';
-import { getCurrentUserId } from '@/lib/supabase';
 
 export function useChatMessages() {
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
@@ -17,43 +16,11 @@ export function useChatMessages() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [linkedTask, setLinkedTask] = useState<Task | null>(null);
   const [activeAssistant, setActiveAssistantState] = useState<Assistant | null>(null);
-  const [userAuthenticated, setUserAuthenticated] = useState<boolean | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { activeProjectId } = useProjects();
   
   const { getAssistantConfig } = useAssistantConfig();
-  
-  useState(() => {
-    const checkAuth = async () => {
-      try {
-        const userId = await getCurrentUserId();
-        setUserAuthenticated(!!userId);
-      } catch (err) {
-        console.error('Auth check failed:', err);
-        setUserAuthenticated(false);
-      }
-    };
-    
-    checkAuth();
-  });
-  
-  const { 
-    data: conversations = [],
-    isLoading: isLoadingConversations,
-    refetch: refetchConversations,
-  } = useQuery({
-    queryKey: ['conversations'],
-    queryFn: messagesApi.getConversations,
-    enabled: userAuthenticated === true,
-    meta: {
-      onSettled: (data: any, error: Error | null) => {
-        if (error) {
-          console.warn('Conversations fetch error:', error);
-        }
-      }
-    }
-  });
   
   const { 
     data: messages = [],
@@ -63,14 +30,7 @@ export function useChatMessages() {
   } = useQuery({
     queryKey: ['messages', activeConversationId],
     queryFn: () => activeConversationId ? messagesApi.getMessages(activeConversationId) : [],
-    enabled: !!activeConversationId && userAuthenticated === true,
-    meta: {
-      onSettled: (data: any, error: Error | null) => {
-        if (error) {
-          console.warn('Messages fetch error:', error);
-        }
-      }
-    }
+    enabled: !!activeConversationId
   });
 
   const startConversation = useCallback(async (title?: string) => {
@@ -360,9 +320,6 @@ export function useChatMessages() {
     activeAssistant,
     setActiveAssistant,
     linkedTask,
-    linkTaskToConversation,
-    userAuthenticated,
-    conversations,
-    refetchConversations,
+    linkTaskToConversation
   };
 }

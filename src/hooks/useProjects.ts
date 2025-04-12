@@ -39,7 +39,6 @@ export function useProjects() {
     // Only run query if user is authenticated
     enabled: userAuthenticated === true,
     retry: 2,
-    staleTime: 1000 * 60 * 2, // 2 minutes - reduced from 5 to ensure fresher data
     meta: {
       onError: (error: any) => {
         console.warn('Projects fetch error:', error);
@@ -111,14 +110,12 @@ export function useProjects() {
   const { 
     data: activeProjectConversations = [],
     isLoading: isLoadingActiveProjectConversations,
-    error: activeProjectError,
-    refetch: refetchActiveProjectConversations
+    error: activeProjectError
   } = useQuery({
     queryKey: ['activeProject', activeProjectId],
     queryFn: () => activeProjectId ? projectsApi.getConversationsByProject(activeProjectId) : [],
     enabled: !!activeProjectId && userAuthenticated === true,
     retry: 2,
-    staleTime: 1000 * 60 * 1, // 1 minute - reduced to ensure fresher data
     meta: {
       onError: (error: any) => {
         console.warn('Project conversations fetch error:', error);
@@ -177,7 +174,6 @@ export function useProjects() {
     activeProjectConversations,
     isLoadingActiveProjectConversations,
     activeProjectError,
-    refetchActiveProjectConversations,
     createProject,
     updateProject,
     deleteProject,

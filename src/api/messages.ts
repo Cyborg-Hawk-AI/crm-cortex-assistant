@@ -10,25 +10,18 @@ export const getConversations = async () => {
     throw new Error('User not authenticated');
   }
 
-  try {
-    console.log('Fetching all conversations for user');
-    const { data, error } = await supabase
-      .from('conversations')
-      .select('*')
-      .eq('user_id', userId)
-      .order('updated_at', { ascending: false });
-    
-    if (error) {
-      console.error('Error fetching conversations:', error);
-      throw new Error(error.message);
-    }
-    
-    console.log(`Retrieved ${data?.length || 0} conversations`);
-    return data || [];
-  } catch (err) {
-    console.error('Unexpected error in getConversations:', err);
-    throw err;
+  const { data, error } = await supabase
+    .from('conversations')
+    .select('*')
+    .eq('user_id', userId)
+    .order('updated_at', { ascending: false });
+  
+  if (error) {
+    console.error('Error fetching conversations:', error);
+    throw new Error(error.message);
   }
+  
+  return data;
 };
 
 // Create a new conversation
@@ -215,49 +208,39 @@ export const getMessages = async (conversationId: string): Promise<Message[]> =>
 
   console.log(`Fetching messages for conversation: ${conversationId}`);
 
-  try {
-    // First verify the user has access to this conversation
-    const { data: conversation, error: convError } = await supabase
-      .from('conversations')
-      .select()
-      .eq('id', conversationId)
-      .eq('user_id', userId)
-      .maybeSingle();
-    
-    if (convError) {
-      console.error('Error fetching conversation:', convError);
-      throw new Error(convError.message);
-    }
-    
-    if (!conversation) {
-      console.warn(`Conversation ${conversationId} not found or doesn't belong to the current user`);
-      return [];
-    }
-
-    const { data, error } = await supabase
-      .from('chat_messages')
-      .select('*')
-      .eq('conversation_id', conversationId)
-      .order('timestamp', { ascending: true });
-    
-    if (error) {
-      console.error('Error fetching messages:', error);
-      throw new Error(error.message);
-    }
-    
-    console.log(`Retrieved ${data?.length || 0} messages from database`);
-    
-    return (data || []).map(msg => ({
-      id: msg.id,
-      content: msg.content,
-      sender: msg.sender,
-      timestamp: new Date(msg.timestamp),
-      isSystem: msg.is_system || false
-    })) as Message[];
-  } catch (err) {
-    console.error('Unexpected error in getMessages:', err);
-    throw err;
+  // First verify the user has access to this conversation
+  const { data: conversation, error: convError } = await supabase
+    .from('conversations')
+    .select()
+    .eq('id', conversationId)
+    .eq('user_id', userId)
+    .single();
+  
+  if (convError) {
+    console.error('Error fetching conversation:', convError);
+    throw new Error(convError.message);
   }
+
+  const { data, error } = await supabase
+    .from('chat_messages')
+    .select('*')
+    .eq('conversation_id', conversationId)
+    .order('timestamp', { ascending: true });
+  
+  if (error) {
+    console.error('Error fetching messages:', error);
+    throw new Error(error.message);
+  }
+  
+  console.log(`Retrieved ${data.length} messages from database`);
+  
+  return data.map(msg => ({
+    id: msg.id,
+    content: msg.content,
+    sender: msg.sender,
+    timestamp: new Date(msg.timestamp),
+    isSystem: msg.is_system || false
+  })) as Message[];
 };
 
 // Send a new message - with deduplication
