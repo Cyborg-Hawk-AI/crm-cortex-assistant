@@ -1,32 +1,19 @@
 
 import { motion } from 'framer-motion';
 import { Message as MessageType } from '@/utils/types';
-import { User, Bot, Loader2 } from 'lucide-react';
+import { User, Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
-import { useEffect, useMemo, useRef } from 'react';
-import { MessageStatus } from '@/utils/streamTypes';
+import { useMemo } from 'react';
 
 interface MessageProps {
-  message: MessageType & {
-    status?: MessageStatus;
-    isOptimistic?: boolean;
-  };
+  message: MessageType;
 }
 
 export function Message({ message }: MessageProps) {
   const isUser = message.sender === 'user';
   const isSystem = message.isSystem;
-  const messageRef = useRef<HTMLDivElement>(null);
-  const isSending = message.status === 'sending';
-  
-  // Effect to ensure user messages are immediately visible with auto-focus
-  useEffect(() => {
-    if (isUser && messageRef.current) {
-      messageRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [isUser, message.id]);
   
   // Function to render markdown to safe HTML
   const renderMarkdownToSafeHtml = (content: string) => {
@@ -98,33 +85,19 @@ export function Message({ message }: MessageProps) {
 
   // Process message content with memoization for performance
   const processedContent = useMemo(() => {
-    // Add debugging logs to see what message data we're receiving
-    console.log(`Processing message: ${message.id}`, {
-      content: message.content,
-      sender: message.sender,
-      status: message.status,
-      isStreaming: message.isStreaming
-    });
-
-    // User messages should always render immediately even if empty
-    if (isUser) {
-      return <p className={cn(
-        "text-sm whitespace-pre-wrap",
-        isSending && "opacity-80 italic"
-      )}>{message.content}</p>;
-    }
-    
-    // For non-user messages, apply special handling
-    
-    // Completely skip rendering empty messages that aren't streaming
+    // Completely skip rendering empty messages
     if (!message.content && !message.isStreaming) {
-      console.log(`Skipping empty message: ${message.id}, not streaming`);
       return null;
     }
     
     // Handle ticket content special case
     if (message.content && message.content.startsWith('TICKETCONTENTS-')) {
       return formatTicketContent(message.content);
+    }
+    
+    // Only apply markdown parsing to assistant and system messages
+    if (isUser) {
+      return <p className="text-sm whitespace-pre-wrap">{message.content}</p>;
     }
     
     // Special handling for streaming messages
@@ -154,17 +127,15 @@ export function Message({ message }: MessageProps) {
         }}
       />
     );
-  }, [message.content, message.isStreaming, message.status, isUser, isSending]);
+  }, [message.content, message.isStreaming, isUser]);
 
-  // For user messages, always render even if content is empty
-  // For assistant messages, only render if we have content or are streaming
-  if (processedContent === null && !isUser) {
+  // If processedContent is null, don't render the message at all
+  if (processedContent === null) {
     return null;
   }
 
   return (
     <motion.div
-      ref={messageRef}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -190,43 +161,12 @@ export function Message({ message }: MessageProps) {
         <div className={cn(
           'rounded-lg px-4 py-3 text-[#F1F5F9]',
           isUser 
-            ? cn(
-                'bg-gradient-to-r from-[#1C2A3A] to-[#25384D] border',
-                message.status === 'sending' 
-                  ? 'border-neon-purple/10 opacity-80'
-                  : message.status === 'error'
-                  ? 'border-red-400/30'
-                  : 'border-neon-purple/30'
-              )
+            ? 'bg-gradient-to-r from-[#1C2A3A] to-[#25384D] border border-neon-purple/30' 
             : isSystem
               ? 'bg-[#25384D] border border-[#3A4D62]'
               : 'bg-[#25384D] border border-[#3A4D62]'
         )}>
           {processedContent}
-          
-          {/* Show sending indicator */}
-          {message.status === 'sending' && (
-            <div className="flex items-center mt-1 opacity-70 text-xs">
-              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-              <span>Sending...</span>
-            </div>
-          )}
-          
-          {/* Add error indicator */}
-          {message.status === 'error' && (
-            <div className="flex items-center mt-1 text-red-400 text-xs">
-              <span>Failed to send. Retrying...</span>
-            </div>
-          )}
-          
-          {/* Add typing indicator when isStreaming is true but no content yet */}
-          {message.isStreaming && !message.content && (
-            <div className="typing-indicator">
-              <span></span>
-              <span></span>
-              <span></span>
-            </div>
-          )}
         </div>
       </div>
     </motion.div>

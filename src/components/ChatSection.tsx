@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2, AlertTriangle, Folder, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -42,8 +41,7 @@ export function ChatSection({
     isSending,
     isStreaming,
     startConversation,
-    setActiveConversationId,
-    addMessage
+    setActiveConversationId
   } = useChatMessages();
   const [isComposing, setIsComposing] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -51,43 +49,15 @@ export function ChatSection({
     toast
   } = useToast();
   const [retryCount, setRetryCount] = useState(0);
-  const lastMessageTimestamp = useRef<number>(Date.now());
-  const messageSentRef = useRef<boolean>(false);
 
-  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({
-        behavior,
-        block: 'end',
-      });
-    }
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: 'smooth'
+    });
   };
 
-  console.log("ChatSection rendered with messages:", messages.length);
-  if (messages.length > 0) {
-    console.log("Sample message:", messages[0]);
-  }
-
   useEffect(() => {
-    // Check if a new message was added based on length change
-    const needsScroll = messages.length > 0 && 
-                      (Date.now() - lastMessageTimestamp.current < 1000 || 
-                       messageSentRef.current);
-    
-    // Reset the message sent flag
-    messageSentRef.current = false;
-    
-    // Use a short delay to ensure DOM has updated
-    const scrollTimer = setTimeout(() => {
-      // If we just sent a message, use instant scroll
-      const behavior = needsScroll ? 'auto' : 'smooth';
-      scrollToBottom(behavior);
-    }, needsScroll ? 10 : 100);
-    
-    // Update timestamp for next comparison
-    lastMessageTimestamp.current = Date.now();
-    
-    return () => clearTimeout(scrollTimer);
+    scrollToBottom();
   }, [messages]);
   
   useEffect(() => {
@@ -104,23 +74,19 @@ export function ChatSection({
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
     setApiError(null);
-    
     try {
-      const messageContent = inputValue;
-      setInputValue(''); // Clear input immediately
-      
-      console.log('ChatSection: User submitted message, adding to UI immediately');
-      messageSentRef.current = true;
-      
-      // Immediately add the message to the UI before any backend operations
-      // This is now handled by the optimistic updates in useChatMessages
-      await sendMessage(messageContent, 'user');
-      
-      // Force an immediate scroll right after sending
-      setTimeout(() => scrollToBottom('auto'), 10);
-      
+      if (!activeConversationId) {
+        console.log("Creating a new conversation as part of sending the first message");
+        const newConversationId = await startConversation('New conversation');
+        setActiveConversationId(newConversationId);
+        await sendMessage(inputValue, 'user', newConversationId, selectedModel);
+      } else {
+        console.log(`Sending message to active conversation: ${activeConversationId}`);
+        await sendMessage(inputValue, 'user', activeConversationId, selectedModel);
+      }
+      setInputValue('');
     } catch (error: any) {
-      console.error('ChatSection: Error sending message:', error);
+      console.error('Error sending message:', error);
       if (error.message?.includes('API key') && selectedModel === 'deepseek') {
         setApiError('DeepSeek API key is missing or invalid. The service requires configuration.');
       } else {
@@ -290,10 +256,7 @@ export function ChatSection({
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div 
-        className={`flex-1 overflow-y-auto p-4 space-y-5 ${chatBackgrounds.messagesContainer}`}
-        id="chat-messages-container"
-      >
+      <div className={`flex-1 overflow-y-auto p-4 space-y-5 ${chatBackgrounds.messagesContainer}`}>
         {messages.map((message: Message) => (
           <MessageComponent key={message.id} message={message} />
         ))}

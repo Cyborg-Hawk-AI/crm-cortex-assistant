@@ -1,4 +1,3 @@
-
 # Action.it Feature Index
 
 This file serves as a comprehensive index of features implemented in the Action.it application. Each feature entry includes a brief description and the primary files associated with it.
@@ -15,7 +14,7 @@ Description: User authentication using Supabase, including signup, login, and pa
 - src/components/ProtectedRoute.tsx
 - src/lib/supabase.ts
 
-Last Updated: 2025-04-14
+Last Updated: 2023-06-15
 
 ## Feature: Dashboard
 Description: Main dashboard showing status overview, alerts, recent tickets, and upcoming meetings.
@@ -29,10 +28,10 @@ Description: Main dashboard showing status overview, alerts, recent tickets, and
 - src/components/ActivityFeed.tsx
 - src/components/FloatingActionBar.tsx
 
-Last Updated: 2025-04-14
+Last Updated: 2023-06-15
 
-## Feature: Chat Assistant (ActionBot)
-Description: AI-powered chat system with conversation history, streaming responses, and multiple specialized assistants.
+## Feature: Chat Assistant
+Description: AI-powered chat system with conversation history and multiple specialized assistants.
 
 ### Primary Files:
 - src/components/ChatLayout.tsx
@@ -45,117 +44,35 @@ Description: AI-powered chat system with conversation history, streaming respons
 - src/services/chatHistoryService.ts
 - src/services/openaiClient.ts
 - src/utils/assistantConfig.ts
-- src/utils/openAIStream.ts
-- src/utils/streamTypes.ts
-- src/hooks/useAssistantConfig.ts
 
-### Key Features:
-- Optimistic UI updates for instant user message display
-- Real-time streaming of assistant responses
-- Visual feedback for message status (sending, sent, error)
-- Automatic retry mechanism for failed messages
-- Multiple specialized AI assistants for different tasks
-- Message history persistence
-- Rich markdown rendering
-- Visual feedback for message status (sending, thinking, etc.)
+Last Updated: 2023-06-15
 
-Last Updated: 2025-04-14
-
-## Feature: Mindboards Knowledge Management System
-Description: Notion-inspired block-based editor for notes and documentation with rich interactive features.
-
-### Core Components:
-- src/components/mindboard/Mindboard.tsx
-- src/components/mindboard/BlockEditor.tsx
-- src/components/mindboard/BlockRenderer.tsx
-- src/components/mindboard/PageList.tsx
-- src/components/mindboard/SectionTabs.tsx
-- src/components/mindboard/MindboardSidebar.tsx
-- src/components/mindboard/NoteCanvas.tsx
-- src/components/mindboard/NotebookSidebar.tsx
-- src/hooks/useMindboard.tsx
-- src/api/mindboard.ts
-
-### Block Types:
-- Text blocks with rich formatting
-- To-do lists with checkboxes
-- Headings (H1, H2, H3)
-- Bullet and numbered lists
-- Code blocks with syntax highlighting
-- Media blocks (images, files)
-
-### Editing Features:
-- Block-based editing
-- Slash commands for block creation
-- Markdown shortcuts
-- Keyboard navigation
-- Drag and drop reordering
-
-### Recent Enhancements:
-- Shift+Enter support for lists
-- Improved block creation
-- Enhanced keyboard navigation
-- Rich text paste support
-- Focus management improvements
-
-Last Updated: 2025-04-14
-
-## Feature: Mission Management (Tasks)
-Description: Full task and subtask management system with kanban board views and Supabase database integration.
+## Feature: Scratchpad Notes
+Description: Notebook-based note-taking interface with all data persisted to Supabase.
 
 ### Primary Files:
-- src/components/mission/MissionsPage.tsx
-- src/components/mission/MissionTableView.tsx
-- src/components/mission/MissionTaskEditor.tsx
-- src/components/mission/MissionCreateButton.tsx
-- src/components/mission/TaskList.tsx
-- src/components/mission/TaskStatusDropdown.tsx
-- src/components/mission/TaskPriorityDropdown.tsx
-- src/components/mission/TaskDueDatePicker.tsx
-- src/components/mission/RichTextEditor.tsx
-- src/hooks/useMissionTasks.tsx
+- src/components/ScratchpadNotes.tsx
+- src/components/ScratchpadSection.tsx
+- src/hooks/useNotes.tsx
+- src/api/notebooks.ts
+- src/components/modals/NotebookCreateModal.tsx
+
+Last Updated: 2023-06-15
+
+## Feature: Task Management
+Description: Full task and subtask management system with Supabase database integration. Foreign key constraints have been configured to support the data model.
+
+### Primary Files:
+- src/components/TasksPage.tsx
+- src/components/TaskList.tsx
 - src/api/tasks.ts
+- src/hooks/useTasks.tsx
 - src/components/modals/TaskCreateDialog.tsx
 - src/components/modals/TaskEditDialog.tsx
 - src/components/modals/SubtaskCreateDialog.tsx
 - src/components/modals/SubtaskEditDialog.tsx
 
-### Key Features:
-- Task creation and editing
-- Subtask management
-- Status tracking
-- Priority assignment
-- Due date management
-- Task filtering and sorting
-- Kanban board view
-
-Last Updated: 2025-04-14
-
-## Feature: Project Management
-Description: Project organization with task grouping and timeline visualization.
-
-### Primary Files:
-- src/components/projects/ProjectsPage.tsx
-- src/components/projects/ProjectsPageWrapper.tsx
-- src/components/projects/ProjectsTable.tsx
-- src/components/projects/ProjectCreateButton.tsx
-- src/components/projects/ProjectDetail.tsx
-- src/components/projects/ProjectTasksSection.tsx
-- src/components/projects/TaskBoard.tsx
-- src/components/projects/TaskDetail.tsx
-- src/components/projects/TaskTable.tsx
-- src/components/projects/TaskTimeline.tsx
-- src/hooks/useProjects.ts
-- src/api/projects.ts
-
-### Key Features:
-- Project creation and management
-- Task grouping by project
-- Multiple task views (board, table, timeline)
-- Project status tracking
-- Project filtering and sorting
-
-Last Updated: 2025-04-14
+Last Updated: 2023-06-15
 
 ## Feature: Meeting Management
 Description: Meeting scheduling with date, time, and attendee management stored in Supabase.
@@ -166,9 +83,9 @@ Description: Meeting scheduling with date, time, and attendee management stored 
 - src/components/modals/MeetingCreateModal.tsx
 - src/components/UpcomingMeetings.tsx
 - src/components/MeetingQuickActions.tsx
-- src/components/TodaySyncUps.tsx
+- src/components/FloatingActionBar.tsx
 
-Last Updated: 2025-04-14
+Last Updated: 2023-06-15
 
 ## Feature: Contact Management
 Description: Management of contacts/customers with database integration.
@@ -176,20 +93,9 @@ Description: Management of contacts/customers with database integration.
 ### Primary Files:
 - src/api/contacts.ts
 - src/components/modals/ContactCreateModal.tsx
-- src/hooks/useContacts.tsx
+- src/hooks/useContacts.tsx (implied)
 
-Last Updated: 2025-04-14
-
-## Feature: Ticket Management
-Description: IT ticket tracking and management with priority and status.
-
-### Primary Files:
-- src/api/tickets.ts
-- src/components/TicketInfo.tsx
-- src/components/TicketQuickActions.tsx
-- src/components/RecentTickets.tsx
-
-Last Updated: 2025-04-14
+Last Updated: 2023-06-15
 
 ## Feature: User Management
 Description: User profiles and team management for task assignment.
@@ -199,19 +105,8 @@ Description: User profiles and team management for task assignment.
 - src/hooks/useUsers.tsx
 - src/hooks/useProfile.tsx
 - src/components/SettingsPage.tsx
-- src/components/UserMenu.tsx
 
-Last Updated: 2025-04-14
-
-## Feature: Comments System
-Description: Comment threads on tasks, tickets, and projects.
-
-### Primary Files:
-- src/api/comments.ts
-- src/components/comments/CommentList.tsx
-- src/components/comments/CommentSection.tsx
-
-Last Updated: 2025-04-14
+Last Updated: 2023-06-15
 
 ## Feature: Navigation
 Description: Application-wide navigation with responsive tabs and home button.
@@ -221,21 +116,17 @@ Description: Application-wide navigation with responsive tabs and home button.
 - src/components/HomeButton.tsx
 - src/components/ui/tabs.tsx
 
-Last Updated: 2025-04-14
+Last Updated: 2023-06-15
 
 ## Feature: Supabase Integration
 Description: Database integration using Supabase for all application data.
 
 ### Primary Files:
 - src/lib/supabase.ts
-- src/integrations/supabase/client.ts
-- src/integrations/supabase/types.ts
 - src/types/supabase.ts
-- supabase/schema.sql
-- supabase/config.toml
-- supabase/notebooks-rls-fix.sql
+- schema.sql
 
-Last Updated: 2025-04-14
+Last Updated: 2023-06-15
 
 ## Feature: Notion Integration
 Description: Integration with Notion for syncing tasks and notes.
@@ -247,16 +138,16 @@ Description: Integration with Notion for syncing tasks and notes.
 - src/integrations/index.ts
 - src/hooks/useIntegrations.tsx
 
-Last Updated: 2025-04-14
+Last Updated: 2023-06-15
 
 ## Feature: Settings System
 Description: Comprehensive settings interface for workspace, user, contact management, and developer options.
 
 ### Primary Files:
 - src/components/SettingsPage.tsx
-- src/types/index.d.ts
+- schema.sql (user_settings table)
 
-Last Updated: 2025-04-14
+Last Updated: 2023-06-15
 
 ## Feature: UI Components
 Description: Custom UI components built on Shadcn/UI with Tailwind CSS.
@@ -265,27 +156,221 @@ Description: Custom UI components built on Shadcn/UI with Tailwind CSS.
 - src/components/ui/* (numerous component files)
 - tailwind.config.ts
 
-### Key Components:
-- Accordion
-- Alert & Alert Dialog
-- Avatar
-- Badge
-- Button
-- Calendar & Date Picker
-- Card
-- Checkbox & Radio
-- Command (Search)
-- Dialog & Sheet
-- Dropdown Menu
-- Form Controls
-- Navigation Menu
-- Progress
-- Select
-- Tabs
-- Toast
-- Tooltip
+Last Updated: 2023-06-15
 
-Last Updated: 2025-04-14
+## Feature: Mindboards Knowledge Management System
+
+### Core Components
+- **Mindboard.tsx**: Main container component for the mindboard feature
+- **BlockEditor.tsx**: Rich text editor with block-based editing
+- **BlockRenderer.tsx**: Component for rendering different block types
+- **PageList.tsx**: Navigation and management of pages
+- **SectionTabs.tsx**: Section organization and navigation
+- **MindboardSidebar.tsx**: Sidebar navigation and tools
+- **NoteCanvas.tsx**: Canvas for note-taking and organization
+- **NotebookSidebar.tsx**: Notebook-specific navigation
+
+### Block Types
+1. **Text Blocks**
+   - Rich text formatting
+   - Markdown support
+   - Paste handling with formatting preservation
+   - Keyboard shortcuts
+
+2. **To-do Lists**
+   - Checkbox functionality
+   - Shift+Enter for new items
+   - Property inheritance
+   - Indentation support
+
+3. **Headings**
+   - Three levels (H1, H2, H3)
+   - Markdown shortcuts (#, ##, ###)
+   - Consistent styling
+
+4. **Lists**
+   - Bullet points
+   - Numbered lists
+   - Nested items
+   - Indentation controls
+
+5. **Code Blocks**
+   - Syntax highlighting
+   - Language selection
+   - Monaco editor integration
+   - Copy functionality
+
+6. **Media Blocks**
+   - Image support
+   - File attachments
+   - Embed support
+   - Preview functionality
+
+### Editing Features
+1. **Keyboard Navigation**
+   - Arrow keys for block navigation
+   - Enter/Shift+Enter for new blocks
+   - Tab/Shift+Tab for indentation
+   - Backspace for block deletion
+
+2. **Block Creation**
+   - Automatic block creation
+   - Slash commands (/text, /todo, etc.)
+   - Markdown shortcuts
+   - "+" button insertion
+
+3. **Block Management**
+   - Drag and drop reordering
+   - Block type conversion
+   - Property inheritance
+   - Focus management
+
+4. **Rich Text Support**
+   - HTML to Markdown conversion
+   - Markdown to HTML rendering
+   - Format preservation
+   - Sanitized content
+
+### UI/UX Features
+1. **Navigation**
+   - Hierarchical organization
+   - Quick navigation
+   - Search functionality
+   - Recent pages
+
+2. **Visual Feedback**
+   - Block selection
+   - Focus indicators
+   - Hover effects
+   - Loading states
+
+3. **Responsive Design**
+   - Mobile support
+   - Resizable panels
+   - Adaptive layouts
+   - Touch interactions
+
+### Technical Implementation
+1. **State Management**
+   - React Query for data
+   - Context for UI state
+   - Local state for editing
+   - Optimistic updates
+
+2. **Performance**
+   - Virtual scrolling
+   - Lazy loading
+   - Caching strategies
+   - Debounced updates
+
+3. **Security**
+   - Content sanitization
+   - Access control
+   - Data validation
+   - Error handling
+
+### Recent Enhancements
+- Shift+Enter support for lists
+- Improved block creation
+- Enhanced keyboard navigation
+- Rich text paste support
+- UI/UX polish
+
+### Planned Features
+- [ ] Real-time collaboration
+- [ ] Block templates
+- [ ] Advanced formatting
+- [ ] Version history
+- [ ] Custom block types
+- [ ] Block comments
+- [ ] Block linking
+- [ ] Search and filtering
+
+## Block Editor Enhancements
+
+### Shift+Enter for To-do Lists and Lists
+- **Feature**: Pressing Shift+Enter in a to-do, bullet, or numbered list creates a new item below
+- **Behavior**:
+  - Creates a new block of the same type immediately below the current one
+  - Preserves indentation level and parent-child relationships
+  - Maintains focus at the beginning of the new block
+  - Inherits properties like assignee, due date, priority, and status
+- **UI/UX**:
+  - Smooth scrolling to the new block
+  - No UI jumps or flickers during transition
+  - Natural cursor positioning
+  - Preserves all relevant block properties
+
+### Block Creation and Focus Management
+- **Automatic Block Creation**:
+  - Creates a text block when clicking on empty editor
+  - Maintains proper focus and selection
+  - Preserves scroll position
+- **Focus Handling**:
+  - Automatic focus on newly created blocks
+  - Proper cursor positioning
+  - Smooth transitions between blocks
+
+### Keyboard Navigation
+- **Arrow Keys**: Navigate between blocks
+- **Enter**: Create new block below
+- **Shift+Enter**: Create new list item or insert line break
+- **Backspace**: Remove empty blocks
+- **Tab/Shift+Tab**: Indent/unindent blocks
+- **Ctrl+Shift+Arrow**: Reorder blocks
+
+### Block Type Conversion
+- **Markdown Shortcuts**:
+  - `#` → Heading 1
+  - `##` → Heading 2
+  - `###` → Heading 3
+  - `-` → Bullet List
+  - `1.` → Numbered List
+  - `[]` → To-do
+- **Slash Commands**:
+  - `/text` → Text Block
+  - `/h1` → Heading 1
+  - `/h2` → Heading 2
+  - `/h3` → Heading 3
+  - `/todo` → To-do
+  - `/bullet` → Bullet List
+  - `/numbered` → Numbered List
+  - And more...
+
+### Rich Text Support
+- **Paste Handling**:
+  - Preserves formatting when pasting content
+  - Converts HTML to Markdown and back
+  - Sanitizes content for security
+- **Content Types**:
+  - Text blocks with rich formatting
+  - Headings with proper styling
+  - To-do lists with checkboxes
+  - Bullet and numbered lists
+  - Code blocks with syntax highlighting
+  - And more...
+
+### UI/UX Polish
+- **Block Controls**:
+  - Hover to reveal block actions
+  - Drag handle for reordering
+  - Delete and duplicate options
+- **Insert Block UI**:
+  - "+" button appears between blocks
+  - Smooth hover transitions
+  - Proper positioning
+- **Visual Feedback**:
+  - Selected block highlighting
+  - Focus indicators
+  - Smooth animations
+
+### Code Editor Integration
+- **Monaco Editor**:
+  - Syntax highlighting
+  - Line numbers
+  - Proper indentation
+  - Code-specific keyboard shortcuts
+  - Custom styling
 
 ## Architecture Notes
 
@@ -293,12 +378,9 @@ Last Updated: 2025-04-14
 The application uses a Supabase PostgreSQL database with tables for:
 - conversations & chat_messages
 - tasks & subtasks
-- projects
 - contacts
 - meetings & meeting_attendees
-- tickets
-- comments
-- notes & mindboards
+- notes
 - activities (audit log)
 - assistants (OpenAI assistant configurations)
 - user_settings
@@ -308,34 +390,24 @@ The application uses a Supabase PostgreSQL database with tables for:
 - React Query for server state management
 - React Context for auth and application state
 - Custom hooks for feature-specific functionality
-- Optimistic UI updates for instant feedback
 
-### API Integration
-- OpenAI API for AI assistant functionality
-- Supabase realtime for collaborative features
-- Support for third-party integrations via adapter pattern
-
-Last Updated: 2025-04-14
+Last Updated: 2023-06-15
 
 ## Recent Updates
-- Implemented optimistic UI updates for instant message display
-- Added message status indicators (sending, sent, error)
-- Implemented automatic retry mechanism for failed messages
-- Enhanced message streaming capabilities for ActionBot
-- Improved user message display for immediate feedback
-- Optimized OpenAI API integration with better error handling
-- Added visual feedback for message status
-- Implemented scrolling behavior improvements
-- Enhanced debugging with better console logging
+- Added Shift+Enter support for to-do lists and bulleted lists
+- Enhanced block creation with proper focus management
+- Improved keyboard navigation and shortcuts
+- Added rich text paste support
+- Enhanced block selector menu positioning
+- Added smooth scrolling and transitions
+- Improved type safety and error handling
 
 ## Planned Features
-- [ ] Real-time collaboration on mindboards
-- [ ] Block templates for mindboard
+- [ ] Real-time collaboration
+- [ ] Block templates
 - [ ] Advanced formatting options
 - [ ] Block version history
 - [ ] Custom block types
 - [ ] Block comments
 - [ ] Block linking
 - [ ] Block search and filtering
-- [ ] Enhanced AI assistance for task management
-- [ ] Mobile responsive improvements

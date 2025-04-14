@@ -22,18 +22,8 @@ export async function createOpenAIStream(
   callbacks: StreamingCallbacks
 ): Promise<() => boolean> {
   try {
-    // Signal the start of streaming immediately to update UI
     callbacks.onStart();
-    console.log("OpenAI Stream: Starting connection to OpenAI API");
-    console.log("OpenAI Stream: Request options:", JSON.stringify({
-      model: options.model || DEFAULT_MODEL,
-      messages: options.messages.length,
-      temperature: options.temperature ?? 0.7,
-      max_tokens: options.max_tokens,
-      stream: true,
-    }));
     
-    // Ensure we're starting with the correct API URL
     const response = await fetch(`${OPENAI_API_URL}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -50,12 +40,9 @@ export async function createOpenAIStream(
     });
     
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`OpenAI API error: ${response.status} - ${errorText}`);
-      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+      const error = await response.text();
+      throw new Error(`OpenAI API error: ${response.status} ${error}`);
     }
-    
-    console.log("OpenAI Stream: Connection established, starting to read stream");
     
     // Streaming setup
     const reader = response.body?.getReader();
@@ -67,17 +54,14 @@ export async function createOpenAIStream(
     let fullText = '';
     let isComplete = false;
     
-    // Process the stream asynchronously without awaiting
     const processStream = async () => {
       try {
-        console.log("OpenAI Stream: Processing stream started");
         while (true) {
           const { done, value } = await reader.read();
           
           if (done) {
-            console.log('OpenAI Stream: Complete - sending final text');
+            console.log('Stream complete');
             isComplete = true;
-            // Ensure we call onComplete with the final text
             callbacks.onComplete(fullText);
             break;
           }
@@ -103,29 +87,27 @@ export async function createOpenAIStream(
               
               if (content) {
                 fullText += content;
-                // Send each chunk for immediate UI update
-                console.log(`OpenAI Stream: Received chunk "${content.substring(0, 20)}${content.length > 20 ? '...' : ''}"`);
                 callbacks.onChunk(content);
               }
             } catch (e) {
-              console.error('OpenAI Stream: Error parsing SSE line:', line, e);
+              console.error('Error parsing SSE line:', line, e);
             }
           }
         }
       } catch (error) {
-        console.error('OpenAI Stream: Error in stream processing:', error);
+        console.error('Error in stream processing:', error);
         callbacks.onError(error instanceof Error ? error : new Error(String(error)));
         isComplete = true;
       }
     };
     
-    // Start processing the stream without waiting
+    // Start processing the stream
     processStream();
     
     // Return function to check if streaming is complete
     return () => isComplete;
   } catch (error) {
-    console.error('OpenAI Stream: Failed to create stream:', error);
+    console.error('Failed to create stream:', error);
     callbacks.onError(error instanceof Error ? error : new Error(String(error)));
     return () => true; // Return a function that indicates streaming is complete due to error
   }
