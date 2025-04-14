@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { 
   Code, FileText, ShieldAlert, MessageCircleReply, 
   Search, HelpCircle, Menu, LinkIcon, X,
-  ArrowRight, MoreHorizontal
+  ArrowRight, MoreHorizontal, Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useChatMessages } from '@/hooks/useChatMessages';
@@ -33,6 +33,7 @@ export function QuickActions() {
     linkedTask, 
     sendMessage,
     isStreaming,
+    isSending,
     activeConversationId,
     startConversation
   } = useChatMessages();
@@ -117,7 +118,7 @@ export function QuickActions() {
   ];
 
   const handleAction = async (assistantId: string, assistantName: string, icon: React.ReactNode, label: string, systemPrompt?: string) => {
-    if (isStreaming) {
+    if (isStreaming || isSending) {
       toast({
         title: "Please wait",
         description: "Please wait for the current response to finish before sending a new message"
@@ -151,27 +152,24 @@ export function QuickActions() {
       const messageToSend = inputValue.trim() || `Help me with ${label.toLowerCase()}`;
       console.log('📍 QuickActions: Message to send', { messageToSend });
       
-      // Check for active conversation and use it directly
+      // Check if we have an active conversation
       if (activeConversationId) {
         console.log(`📍 QuickActions: Using existing conversation: ${activeConversationId}`);
         
-        // Clear the input
+        // Clear the input before sending to avoid double sends
         setInputValue('');
         
-        // Send message to existing conversation
-        await sendMessage(messageToSend, 'user', activeConversationId);
-        console.log(`📍 QuickActions: Message sent to existing conversation: ${activeConversationId}`);
+        // Send message within the existing conversation
+        await sendMessage(messageToSend, 'user');
       } else {
+        // Only create a new conversation if there isn't an active one
         console.log('📍 QuickActions: No active conversation, creating a new one');
-        const newConversationId = await startConversation(`Conversation with ${assistantName}`);
-        console.log(`📍 QuickActions: Created new conversation: ${newConversationId}`);
         
-        // Clear the input
+        // Clear the input before sending to avoid double sends
         setInputValue('');
         
-        // Send message to new conversation
-        await sendMessage(messageToSend, 'user', newConversationId);
-        console.log(`📍 QuickActions: Message sent to new conversation: ${newConversationId}`);
+        // Let sendMessage create the conversation as needed
+        await sendMessage(messageToSend, 'user');
       }
       
       // Collapse the quick actions after use
@@ -328,9 +326,9 @@ export function QuickActions() {
                     }
                   }}
                   className={`w-10 h-10 p-0 rounded-full flex items-center justify-center ${action.color}`}
-                  disabled={isStreaming}
+                  disabled={isStreaming || isSending}
                 >
-                  {action.icon}
+                  {(isStreaming || isSending) ? <Loader2 className="h-4 w-4 animate-spin" /> : action.icon}
                 </Button>
               </HoverCardTrigger>
               <HoverCardContent className="p-2 text-center">
