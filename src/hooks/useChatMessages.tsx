@@ -252,14 +252,14 @@ export const useChatMessages = () => {
         
         let fullResponse = '';
         
-        if (modelOption === 'deepseek') {
+        if (modelOption.id === 'deepseek') {
           await deepSeekChat(
             {
               messages: existingMessages.map(msg => ({
                 role: msg.sender === 'user' ? 'user' : 'assistant',
                 content: msg.content
               })),
-              systemPrompt: assistantConfig.prompt,
+              prompt: assistantConfig.prompt,
             },
             {
               onStart: () => {
@@ -480,14 +480,25 @@ export const useChatMessages = () => {
         
         Title (3-5 words):`;
 
-      const response = await openAIChat({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: titleGenerationPrompt }],
-      });
+      const response = await openAIChat(
+        {
+          messages: [{ role: 'user', content: titleGenerationPrompt }],
+          model: 'gpt-4o-mini',
+        },
+        {
+          onStart: () => console.log('Title generation started'),
+          onChunk: (chunk) => console.log('Title chunk received:', chunk),
+          onComplete: (text) => console.log('Title generation complete:', text),
+          onError: (error) => console.error('Title generation error:', error)
+        }
+      );
 
-      const generatedTitle = response.trim();
-      
-      await messageApi.updateConversationTitle(conversationId, generatedTitle);
+      // The response will be a string
+      if (typeof response === 'string' && response.trim()) {
+        await messageApi.updateConversationTitle(conversationId, response.trim());
+      } else {
+        console.error('Failed to generate title, got:', response);
+      }
     } catch (error) {
       console.error('Error generating conversation title:', error);
     }
@@ -517,3 +528,4 @@ export const useChatMessages = () => {
     generateConversationTitle,
   };
 };
+
