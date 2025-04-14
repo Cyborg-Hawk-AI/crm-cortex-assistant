@@ -125,8 +125,7 @@ export function QuickActions() {
       return;
     }
     
-    // Use input value if provided, otherwise use a default message for the assistant type
-    const messageToSend = inputValue.trim() || `Help me with ${label.toLowerCase()}`;
+    console.log(`Activating assistant: ${assistantName} (${assistantId}) for conversation ${activeConversationId}`);
     
     // Set the assistant with all required properties
     await setActiveAssistant({
@@ -136,6 +135,9 @@ export function QuickActions() {
       icon: icon as string,
       capabilities: [], // Adding capabilities to match type
     });
+    
+    // Use input value if provided, otherwise use a default message for the assistant type
+    const messageToSend = inputValue.trim() || `Help me with ${label.toLowerCase()}`;
     
     // Clear the input and send the message
     setInputValue('');
