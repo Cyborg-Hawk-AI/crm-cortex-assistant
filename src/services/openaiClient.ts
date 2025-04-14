@@ -1,5 +1,5 @@
 import { getCurrentUserEmail, supabase } from '@/lib/supabase';
-import { StreamingCallbacks } from '@/utils/streamTypes';
+import { StreamCallbacks, StreamingCallbacks } from '@/utils/streamTypes';
 
 const decoder = new TextDecoder('utf-8');
 // OpenAI API configuration
@@ -277,7 +277,7 @@ export const getRunStatus = async (
 export const streamRunResponse = async (
   threadId: string,
   runId: string,
-  callbacks: StreamingCallbacks,
+  callbacks: StreamCallbacks,
   apiKeyOverride?: string
 ) => {
   try {

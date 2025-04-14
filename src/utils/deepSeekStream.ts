@@ -1,4 +1,5 @@
-import { StreamingCallbacks, StreamOptions } from './streamTypes';
+
+import { StreamCallbacks, StreamOptions } from './streamTypes';
 
 // DeepSeek API configuration
 const DEEPSEEK_API_URL = 'https://api.deepseek.com';
@@ -12,7 +13,7 @@ const DEEPSEEK_API_KEY = 'sk-451d1ad580704a6b86c8edd7e9c4a48d'; // Empty by defa
  */
 export async function createDeepSeekStream(
   options: StreamOptions,
-  callbacks: StreamingCallbacks
+  callbacks: StreamCallbacks
 ): Promise<() => boolean> {
   try {
     callbacks.onStart();

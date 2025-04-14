@@ -4,7 +4,7 @@ import * as chatHistoryService from './chatHistoryService';
 import { Assistant, Task, Message } from '@/utils/types';
 import { supabase } from '@/lib/supabase';
 import { getAssistantConfigById, ASSISTANTS } from '@/utils/assistantConfig';
-import { StreamingCallbacks, StreamingResponse } from '@/utils/streamTypes';
+import { StreamCallbacks, StreamingResponse } from '@/utils/streamTypes';
 
 // Get the OpenAI API key from openaiClient
 const getOpenAIApiKey = async (): Promise<string> => {
@@ -32,7 +32,7 @@ export const sendMessage = async (
   openAiThreadId?: string | null,
   task?: Task | null,
   existingMessages: Message[] = [],
-  callbacks?: StreamingCallbacks,
+  callbacks?: StreamCallbacks,
   tempMessageId?: string
 ): Promise<StreamingResponse> => {
   try {
@@ -192,7 +192,7 @@ Current Query: ${content}
       let finalResponse = "";
       
       // Set up callbacks for streaming
-      const streamingCallbacks: StreamingCallbacks = {
+      const streamingCallbacks: StreamCallbacks = {
         onStart: () => {
           console.log("Streaming started");
           callbacks.onStart();

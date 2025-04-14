@@ -1,4 +1,5 @@
-import { StreamingCallbacks, StreamOptions } from './streamTypes';
+
+import { StreamCallbacks, StreamOptions } from './streamTypes';
 
 // OpenAI API configuration
 const OPENAI_API_URL = 'https://api.openai.com/v1';
@@ -11,7 +12,7 @@ const OPENAI_API_KEY = 'sk-proj-EpBzcFYUJhe5CXJDPNhzXaLEpFzK6zjGGWo7JFzXxZaZiITZ
  */
 export async function createOpenAIStream(
   options: StreamOptions,
-  callbacks: StreamingCallbacks
+  callbacks: StreamCallbacks
 ): Promise<() => boolean> {
   try {
     callbacks.onStart();
