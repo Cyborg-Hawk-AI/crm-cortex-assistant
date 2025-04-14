@@ -44,10 +44,11 @@ export function ChatSection({
     isSending,
     isStreaming,
     startConversation,
-    setActiveConversationId: setActiveConversationIdHook,
+    setActiveConversationId,
     refetchConversations,
     activeAssistant
   } = useChatMessages();
+
   const [isComposing, setIsComposing] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const {
@@ -59,9 +60,9 @@ export function ChatSection({
     console.log('⚡ ChatSection: activeConversationId prop updated:', activeConversationId);
     
     if (activeConversationId) {
-      setActiveConversationIdHook(activeConversationId);
+      setActiveConversationId(activeConversationId);
     }
-  }, [activeConversationId, setActiveConversationIdHook]);
+  }, [activeConversationId, setActiveConversationId]);
 
   useEffect(() => {
     console.log('🎭 ChatSection: Active Assistant:', activeAssistant ? 
