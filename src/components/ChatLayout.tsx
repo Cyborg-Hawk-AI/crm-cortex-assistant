@@ -1,6 +1,5 @@
 
 import React, { useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
 import { ConversationSidebar } from './ConversationSidebar';
 import { ChatSection } from './ChatSection';
 import { useChatMessages } from '@/hooks/useChatMessages';
@@ -8,7 +7,6 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 export function ChatLayout() {
-  const { conversationId: urlConversationId } = useParams();
   const { 
     activeConversationId,
     setActiveConversationId,
@@ -21,14 +19,6 @@ export function ChatLayout() {
   const isMobile = useIsMobile();
   const chatSectionRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<{ setIsOpen: (open: boolean) => void }>({ setIsOpen: () => {} });
-
-  // Set active conversation from URL param if available
-  useEffect(() => {
-    if (urlConversationId && urlConversationId !== activeConversationId) {
-      console.log(`Setting active conversation from URL param: ${urlConversationId}`);
-      setActiveConversationId(urlConversationId);
-    }
-  }, [urlConversationId, activeConversationId, setActiveConversationId]);
 
   // When activeConversationId changes, refetch messages
   useEffect(() => {

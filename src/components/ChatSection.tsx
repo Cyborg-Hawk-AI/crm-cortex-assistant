@@ -45,8 +45,7 @@ export function ChatSection({
     isStreaming,
     startConversation,
     setActiveConversationId,
-    refetchConversations,
-    activeConversationId: currentConversationId 
+    refetchConversations 
   } = useChatMessages();
   const [isComposing, setIsComposing] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -83,13 +82,7 @@ export function ChatSection({
       if (!activeConversationId) {
         console.log("Creating a new conversation as part of sending the first message");
         const newConversationId = await startConversation('New conversation', selectedProjectId);
-        
-        // Navigate immediately to the new conversation
-        console.log(`Immediately navigating to new conversation: ${newConversationId}`);
         setActiveConversationId(newConversationId);
-        navigate(`/chat/${newConversationId}`);
-        
-        // Then send the message to that conversation
         refetchConversations();
         await sendMessage(inputValue, 'user', newConversationId);
       } else {
@@ -114,12 +107,7 @@ export function ChatSection({
   const handleNewChat = async () => {
     try {
       const newConversationId = await startConversation('New conversation', selectedProjectId);
-      
-      // Navigate immediately to the new conversation
-      console.log(`Immediately navigating to new chat: ${newConversationId}`);
       setActiveConversationId(newConversationId);
-      navigate(`/chat/${newConversationId}`);
-      
       refetchConversations();
       setInputValue('');
       setApiError(null);
