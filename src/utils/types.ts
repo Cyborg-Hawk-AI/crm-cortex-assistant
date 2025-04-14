@@ -1,165 +1,128 @@
-export interface Message {
-  id: string;
-  content: string;
-  sender: 'user' | 'assistant' | 'system';
-  timestamp: Date;
-  isSystem?: boolean;
-  isStreaming?: boolean;
-  conversation_id?: string;
-  user_id?: string;
-  assistant_id?: string | null;
-}
+// Define task priority and status types based on what's in the database
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+export type TaskStatus = 'open' | 'in-progress' | 'resolved' | 'closed' | 'completed';
 
+// Task interface
 export interface Task {
   id: string;
   title: string;
-  description?: string;
-  status: 'open' | 'in-progress' | 'completed' | 'closed' | 'resolved';
-  priority: 'high' | 'medium' | 'low' | 'urgent';
-  due_date?: Date | string;
-  assignee?: string;
-  
-  // Additional properties used in the codebase
-  assignee_id?: string;
-  reporter_id?: string;
-  user_id?: string;
-  parent_task_id?: string | null;
-  tags?: string[];
-  created_at?: string;
-  updated_at?: string;
+  description: string | null;
+  status: TaskStatus;
+  priority: TaskPriority;
+  due_date: string | null;
+  assignee_id: string | null;
+  reporter_id: string;
+  user_id: string;
+  parent_task_id: string | null;
+  created_at: string | Date;
+  updated_at: string | Date;
+  tags: string[];
 }
 
-export interface Assistant {
-  id: string;
-  name: string;
-  description?: string;
-  icon?: string;
-  capabilities: string[];
-}
-
-// Additional types needed across the codebase
+// SubTask interface
 export interface SubTask {
   id: string;
   title: string;
   parent_task_id: string;
-  is_completed?: boolean;
-  status?: string;
-  user_id?: string;
-  created_by?: string;
-  created_at?: string;
-  updated_at?: string;
+  user_id: string;
+  is_completed: boolean;
+  created_by: string | null;
+  created_at: string | Date;
+  updated_at: string | Date;
 }
 
+// Contact interface
 export interface Contact {
   id: string;
   name: string;
   email?: string;
   phone?: string;
-  company_id?: string;
   position?: string;
+  company_id?: string;
   notes?: string;
   tags?: string[];
   avatar?: string;
-  last_contact?: Date;
-  created_at?: string;
-  updated_at?: string;
-  company?: string;
-  title?: string;
-  user_id?: string;
+  last_contact?: Date | string;
+  created_at?: Date | string;
+  updated_at?: Date | string;
 }
 
+// Meeting interface
 export interface Meeting {
   id: string;
   title: string;
   date: Date | string;
   duration: number;
-  client_name: string;
   client_id?: string;
-  notes?: string;
-  agenda?: string;
-  meeting_link?: string;
+  client_name: string;
   created_by: string;
-  created_at?: string;
-  updated_at?: string;
-  attendees?: any[];
+  agenda?: string;
+  notes?: string;
+  meeting_link?: string;
+  created_at?: Date | string;
+  updated_at?: Date | string;
+  attendees?: Array<{
+    id: string;
+    name: string;
+    email: string;
+    status?: 'pending' | 'accepted' | 'declined';
+    role?: string;
+  }>;
 }
 
-export interface Mindboard {
+// Project interface for the new Notion-like Project management
+export interface Project {
   id: string;
   title: string;
-  description?: string;
-  position?: number;
-  color?: string;
+  description: string | null;
+  owner_id: string;
+  status: string;
+  created_at: string | Date;
+  updated_at: string | Date;
+  tags: string[];
+  cover_image?: string;
   icon?: string;
-  user_id: string;
-  created_at?: string;
-  updated_at?: string;
+  task_count?: number;
+  completed_count?: number;
 }
 
-export interface MindSection {
+// Message interface - updated to match how it's used in the codebase
+export interface Message {
   id: string;
-  mindboard_id: string;
-  title: string;
-  description?: string;
-  position?: number;
-  color?: string;
-  icon?: string;
+  content: string;
+  sender: 'user' | 'assistant' | 'system';
+  conversation_id: string;
   user_id: string;
-  created_at?: string;
-  updated_at?: string;
+  timestamp: Date | string;
+  isSystem?: boolean;
+  isStreaming?: boolean;
+  metadata?: Record<string, any>;
 }
 
-export interface MindPage {
-  id: string;
-  section_id: string;
-  title: string;
-  description?: string;
-  position?: number;
-  is_pinned?: boolean;
-  parent_page_id?: string | null;
-  parent_id?: string | null; // Added for compatibility with existing code
-  user_id: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface MindBlock {
-  id: string;
-  page_id: string;
-  content_type: 'text' | 'todo' | 'heading' | 'image' | 'file' | 'code' | 'quote' | 'callout' | 'heading1' | 'heading2' | 'heading3' | 'toggle' | 'columns' | 'bullet' | 'numbered' | 'table' | 'divider' | 'video';
-  content: any;
-  position?: number;
-  properties?: Record<string, any>;
-  parent_block_id?: string;
-  user_id: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
+// Notebook related interfaces
 export interface Note {
   id: string;
   content: string;
-  notebookId?: string;
-  sectionId?: string;
-  pageId?: string;
-  linkedTaskId?: string;
   user_id: string;
-  created_at: Date;
-  updated_at: Date;
-  timestamp?: Date;
   notebook_id?: string;
-  section_id?: string;
   page_id?: string;
   linked_task_id?: string;
+  timestamp?: Date | string;
+  created_at?: Date | string;
+  updated_at?: Date | string;
+  notebookId?: string;
+  pageId?: string;
+  sectionId?: string;
+  linkedTaskId?: string;
 }
 
 export interface Notebook {
   id: string;
   title: string;
-  sections?: any[];
   user_id: string;
-  created_at?: string;
-  updated_at?: string;
+  sections?: string | any[];
+  created_at?: Date | string;
+  updated_at?: Date | string;
 }
 
 export interface NoteSection {
@@ -167,142 +130,219 @@ export interface NoteSection {
   title: string;
   notebook_id: string;
   color?: string;
-  created_at?: string;
-  updated_at?: string;
+  created_at?: Date | string;
+  updated_at?: Date | string;
 }
 
 export interface NotePage {
   id: string;
   title: string;
   section_id: string;
-  parent_page_id?: string | null;
+  parent_page_id?: string;
   is_subpage?: boolean;
+  created_at?: Date | string;
+  updated_at?: Date | string;
   sectionId?: string;
   isSubpage?: boolean;
-  created_at?: string;
-  updated_at?: string;
-  notebook_id?: string;
   content?: string;
+  notebook_id?: string;
 }
 
-export interface ActionProject {
+// Mindboard related interfaces
+export interface Mindboard {
   id: string;
-  name: string;
+  title: string;
   description?: string;
   user_id: string;
-  created_at?: string;
-  updated_at?: string;
+  icon?: string;
+  color?: string;
+  position?: number;
+  created_at?: Date | string;
+  updated_at?: Date | string;
 }
 
-export interface Project {
+export interface MindSection {
   id: string;
-  name: string;
+  title: string;
   description?: string;
-  created_at?: string;
-  updated_at?: string;
-  user_id?: string;
-  title?: string;
-  owner_id?: string;
+  user_id: string;
+  mindboard_id: string;
+  icon?: string;
+  color?: string;
+  position?: number;
+  created_at?: Date | string;
+  updated_at?: Date | string;
 }
 
+export interface MindPage {
+  id: string;
+  title: string;
+  description?: string;
+  user_id: string;
+  section_id: string;
+  parent_page_id?: string;
+  parent_id?: string;
+  is_pinned?: boolean;
+  position?: number;
+  created_at?: Date | string;
+  updated_at?: Date | string;
+}
+
+export interface MindBlock {
+  id: string;
+  page_id: string;
+  user_id: string;
+  content_type: string;
+  content: any;
+  properties?: any;
+  position?: number;
+  parent_block_id?: string;
+  created_at?: Date | string;
+  updated_at?: Date | string;
+}
+
+// Activity interface
+export interface Activity {
+  id: string;
+  user_id: string;
+  userId?: string;
+  type: string;
+  entity_type: string;
+  entityType?: string;
+  entity_id: string;
+  entityId?: string;
+  content: string;
+  description?: string;
+  timestamp?: Date | string;
+  additional_info?: any;
+  additionalInfo?: any;
+  created_at?: Date | string;
+  relatedItem?: string;
+}
+
+// Ticket interface - expanded to match how it's used in the codebase
 export interface Ticket {
   id: string;
   title: string;
   description?: string;
   status: string;
   priority: string;
-  date?: string;
-  user_id?: string;
-  parent_task_id?: string | null;
-  updated_at?: string;
-  customer?: { name: string; company?: string } | string;
-  summary?: string;
-  actionItems?: any[];
-  comments?: any[];
-  updated?: string;
-  created_at?: string;
-  created_by?: string;
-  reporter_id?: string;
-  assignee_id?: string;
+  created_by: string;
+  assignee?: string;
+  assigned_to?: string;
+  reporter?: string;
+  due_date?: Date | string;
+  created_at?: Date | string;
+  updated_at?: Date | string;
+  created?: Date | string;
+  updated?: Date | string;
   tags?: string[];
+  related?: string[];
+  comments?: any[];
+  user_id?: string;
+  parent_task_id?: string;
+  summary?: string;
+  actionItems?: string[];
+  meetingDate?: Date;
+  meetingAttendees?: string[];
+  communications?: any[];
+  updatedAt?: Date;
+  lastStatusUpdate?: string;
+  customer?: {
+    name: string;
+    company?: string;
+    email?: string;
+  };
 }
 
-export interface Activity {
+// Integration interface
+export interface Integration {
   id: string;
+  name: string;
   type: string;
-  content: string;
-  userId: string;
-  timestamp: Date;
-  entityId?: string;
-  relatedItem?: string;
-  additionalInfo?: any;
-  description?: string;
+  user_id: string;
+  config: any;
+  status?: string;
+  last_sync?: Date | string;
+  lastSync?: Date | string;
+  created_at?: Date | string;
+  updated_at?: Date | string;
 }
 
+// Assistant interface
+export interface Assistant {
+  id: string;
+  name: string;
+  description?: string;
+  capabilities?: string[];
+  openai_assistant_id?: string;
+  is_active?: boolean;
+  configuration?: any;
+  created_at?: Date | string;
+  updated_at?: Date | string;
+  icon?: string;
+}
+
+// MeetingAction interface for MeetingQuickActions
 export interface MeetingAction {
   id: string;
   label: string;
-  meeting_id?: string;
-  icon: React.ReactNode;
+  description: string;
   action: () => void;
-  color: string;
-  description?: string;
-  bgColor?: string; // Added for compatibility with existing code
+  icon: React.ReactNode;
+  bgColor?: string;
 }
 
+// TicketAction interface for TicketQuickActions
 export interface TicketAction {
   id: string;
   label: string;
-  ticket_id?: string;
-  icon: React.ReactNode;
+  description: string;
   action: () => void;
-  color: string;
-  description?: string;
+  icon: React.ReactNode;
+  bgColor?: string;
 }
 
-export interface TaskView {
+// Communication interface
+export interface Communication {
+  id: string;
+  type: 'email' | 'call' | 'meeting' | 'chat';
+  title: string;
+  content: string;
+  contact_id: string;
+  contact_name: string;
+  date: Date | string;
+  created_by: string;
+  created_at?: Date | string;
+  updated_at?: Date | string;
+  from?: string;
+  message?: string;
+  sender?: string;
+}
+
+// Comment interface for tasks and projects
+export interface Comment {
+  id: string;
+  content: string;
+  user_id: string;
+  entity_id: string;
+  entity_type: 'task' | 'project';
+  created_at: string | Date;
+  updated_at: string | Date;
+  author_name?: string;
+  author_avatar?: string;
+}
+
+// ActionProject interface for organizing conversations
+export interface ActionProject {
   id: string;
   name: string;
-  project_id: string;
-  filter_criteria?: any;
-  sort_criteria?: any;
-  created_at?: string;
-  updated_at?: string;
+  description?: string | null;
   user_id: string;
+  created_at?: Date | string;
+  updated_at?: Date | string;
+  conversations?: Message[][];
 }
 
-// Type enums
-export type TaskStatus = 'open' | 'in-progress' | 'completed' | 'closed' | 'resolved';
-export type TaskPriority = 'high' | 'medium' | 'low' | 'urgent';
-
-// Fix for Task interface to match actual usage in code
-export interface Task {
-  id: string;
-  title: string;
-  description?: string;
-  status: 'open' | 'in-progress' | 'completed' | 'closed' | 'resolved';
-  priority: 'high' | 'medium' | 'low' | 'urgent';
-  due_date?: Date | string;
-  assignee?: string;
-  
-  // Additional properties used in the codebase
-  assignee_id?: string;
-  reporter_id?: string;
-  user_id?: string;
-  parent_task_id?: string | null;
-  tags?: string[];
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface SubTask {
-  id: string;
-  title: string;
-  parent_task_id: string;
-  is_completed?: boolean;
-  status?: string;
-  user_id?: string;
-  created_by?: string;
-  created_at?: string;
-  updated_at?: string;
-}
+// TaskView type for different views
+export type TaskView = 'table' | 'board' | 'timeline';

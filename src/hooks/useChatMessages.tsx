@@ -9,10 +9,8 @@ import { openAIChat } from '@/utils/openAIStream';
 import { deepSeekChat } from '@/utils/deepSeekStream';
 import { useModelSelection } from './useModelSelection';
 import { useAuth } from '@/contexts/AuthContext';
-import { ChatMessagesHook } from '@/types/chat-types';
-import { ASSISTANTS } from '@/utils/assistantConfig';
 
-export const useChatMessages = (): ChatMessagesHook => {
+export const useChatMessages = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { assistantConfig } = useAssistantConfig();
@@ -67,27 +65,13 @@ export const useChatMessages = (): ChatMessagesHook => {
         setOpenAiThreadId(activeConversation.open_ai_thread_id || null);
         
         if (activeConversation.assistant_id) {
-          const assistantDetails = Object.values(ASSISTANTS).find(
-            assistant => assistant.id === activeConversation.assistant_id
-          );
-          
-          if (assistantDetails) {
-            const assistantConfig = { 
-              id: assistantDetails.id, 
-              name: assistantDetails.name,
-              description: assistantDetails.contextPrompt,
-              capabilities: []
-            };
-            setActiveAssistant(assistantConfig);
-          } else {
-            const assistantConfig = { 
-              id: activeConversation.assistant_id, 
-              name: "AI Assistant",
-              description: "Default AI Assistant",
-              capabilities: []
-            };
-            setActiveAssistant(assistantConfig);
-          }
+          const assistantConfig = { 
+            id: activeConversation.assistant_id, 
+            name: "AI Assistant",
+            description: "Default AI Assistant",
+            capabilities: []
+          };
+          setActiveAssistant(assistantConfig);
         }
         
         console.log(`Switched to conversation: ${activeConversationId} with thread: ${activeConversation.open_ai_thread_id || 'none'}`);
@@ -258,18 +242,14 @@ export const useChatMessages = (): ChatMessagesHook => {
     
     if (activeConversationId) {
       try {
-        console.log(`Switching to assistant: ${assistant.name} (${assistant.id}) for conversation ${activeConversationId}`);
         await messageApi.switchAssistant(activeConversationId, assistant);
-        
-        const switchMessage = `Switched to ${assistant.name}`;
-        await saveMessage(switchMessage, 'system');
       } catch (error) {
         console.error('Error setting assistant:', error);
       }
     }
     
     return assistant;
-  }, [activeConversationId, saveMessage]);
+  }, [activeConversationId]);
 
   const handleLinkTaskToConversation = useCallback(async (task: Task | null) => {
     setLinkedTask(task);
@@ -318,8 +298,7 @@ export const useChatMessages = (): ChatMessagesHook => {
           conversationId,
           content,
           sender,
-          messageId,
-          activeAssistant?.id
+          messageId
         );
         
         if (messageId) {
@@ -350,7 +329,7 @@ export const useChatMessages = (): ChatMessagesHook => {
       
       return null;
     }
-  }, [activeConversationId, queryClient, activeAssistant]);
+  }, [activeConversationId, queryClient]);
 
   const sendMessage = useCallback(async (
     content: string, 
@@ -400,8 +379,7 @@ export const useChatMessages = (): ChatMessagesHook => {
           timestamp: new Date(),
           isSystem: false,
           conversation_id: conversationId || '',
-          user_id: 'current-user',
-          assistant_id: activeAssistant?.id || null
+          user_id: 'current-user'
         };
         
         addLocalMessage(userMessage);
@@ -419,8 +397,7 @@ export const useChatMessages = (): ChatMessagesHook => {
           isSystem: false,
           isStreaming: true,
           conversation_id: conversationId || '',
-          user_id: 'current-user',
-          assistant_id: activeAssistant?.id || null
+          user_id: 'current-user'
         };
         
         addLocalMessage(assistantMessage);
@@ -439,25 +416,17 @@ export const useChatMessages = (): ChatMessagesHook => {
             content: msg.content
           }));
           
-          let systemPrompt = 'You are an AI assistant designed to help with tasks.';
-          let contextPrompt = '';
-          
-          if (activeAssistant?.id) {
-            const assistantConfig = Object.values(ASSISTANTS).find(
-              config => config.id === activeAssistant.id
-            );
-            
-            if (assistantConfig) {
-              systemPrompt = assistantConfig.prompt;
-              contextPrompt = assistantConfig.contextPrompt;
-              console.log(`Using specialized prompt for ${assistantConfig.name}`);
-            }
+          if (activeAssistant) {
+            messageHistory.unshift({
+              role: 'system',
+              content: `You are ${activeAssistant.name || 'an AI assistant'}. ${activeAssistant.description || ''}`
+            });
+          } else {
+            messageHistory.unshift({
+              role: 'system',
+              content: 'You are ActionBot, an engineering assistant designed to help with coding tasks and technical problems.'
+            });
           }
-          
-          messageHistory.unshift({
-            role: 'system',
-            content: `${systemPrompt}\n\n${contextPrompt}`
-          });
           
           await openAIChat(
             { messages: messageHistory },
@@ -575,8 +544,7 @@ export const useChatMessages = (): ChatMessagesHook => {
           timestamp: new Date(),
           isSystem: sender === 'system',
           conversation_id: conversationId || '',
-          user_id: 'current-user',
-          assistant_id: activeAssistant?.id || null
+          user_id: 'current-user'
         };
         
         addLocalMessage(message);
@@ -610,8 +578,7 @@ export const useChatMessages = (): ChatMessagesHook => {
     addLocalMessage,
     startConversation,
     toast,
-    refetchConversations,
-    generateConversationTitle
+    refetchConversations
   ]);
 
   return {
@@ -627,8 +594,7 @@ export const useChatMessages = (): ChatMessagesHook => {
         timestamp: new Date(),
         isSystem: sender === 'system',
         conversation_id: activeConversationId || 'temp-conversation',
-        user_id: 'current-user',
-        assistant_id: activeAssistant?.id || null
+        user_id: 'current-user'
       };
       return addLocalMessage(message);
     },
@@ -650,4 +616,4 @@ export const useChatMessages = (): ChatMessagesHook => {
   };
 };
 
-export type { ChatMessagesHook } from '@/types/chat-types';
+export type { ChatMessagesHook } from './useChatMessages';

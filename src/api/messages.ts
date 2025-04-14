@@ -242,8 +242,7 @@ export const sendMessage = async (
   conversationId: string, 
   content: string, 
   sender: 'user' | 'assistant' | 'system' = 'user',
-  messageId?: string,
-  assistantId?: string | null
+  messageId?: string
 ): Promise<Message> => {
   const userId = await getCurrentUserId();
   
@@ -251,7 +250,7 @@ export const sendMessage = async (
     throw new Error('User not authenticated');
   }
 
-  console.log(`Saving ${sender} message to conversation ${conversationId} with assistant ${assistantId || 'default'}`);
+  console.log(`Saving ${sender} message to conversation ${conversationId}`);
 
   const { data: conversation, error: convError } = await supabase
     .from('conversations')
@@ -265,9 +264,6 @@ export const sendMessage = async (
     throw new Error(convError.message);
   }
 
-  // Use the current assistant ID from conversation if not explicitly specified
-  const effectiveAssistantId = assistantId || conversation.assistant_id || null;
-  
   const id = messageId || uuidv4();
   
   if (messageId) {
@@ -301,7 +297,7 @@ export const sendMessage = async (
   const messageData = {
     id,
     conversation_id: conversationId,
-    assistant_id: effectiveAssistantId,
+    assistant_id: conversation.assistant_id || 'default',
     user_id: userId,
     content,
     sender,
@@ -312,7 +308,6 @@ export const sendMessage = async (
   console.log('Saving message to database:', {
     id: messageData.id,
     sender: messageData.sender,
-    assistantId: effectiveAssistantId,
     contentPreview: content.substring(0, 50) + (content.length > 50 ? '...' : '')
   });
   
@@ -339,8 +334,7 @@ export const sendMessage = async (
     content: data.content,
     sender: data.sender,
     timestamp: new Date(data.timestamp),
-    isSystem: data.is_system || false,
-    assistant_id: data.assistant_id
+    isSystem: data.is_system || false
   } as Message;
 };
 
@@ -481,8 +475,6 @@ export const switchAssistant = async (conversationId: string, assistant: any): P
     throw new Error('User not authenticated');
   }
 
-  console.log(`Switching to assistant ${assistant.id} (${assistant.name}) for conversation ${conversationId}`);
-
   const { data: conversation, error: convError } = await supabase
     .from('conversations')
     .select()
@@ -509,7 +501,6 @@ export const switchAssistant = async (conversationId: string, assistant: any): P
     return false;
   }
 
-  console.log(`Successfully switched to assistant ${assistant.id} for conversation ${conversationId}`);
   return true;
 };
 

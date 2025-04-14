@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Plus, 
@@ -14,17 +14,15 @@ import { NotebookCreateModal } from './modals/NotebookCreateModal';
 import { useMeetings } from '@/hooks/useMeetings';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import { useChatMessages } from '@/hooks/useChatMessages';
 
 export function FloatingActionBar() {
   const [activeModal, setActiveModal] = useState<'task' | 'meeting' | 'contact' | 'note' | null>(null);
   const { createMeeting } = useMeetings();
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const isMobile = useIsMobile();
-  const { activeConversationId } = useChatMessages();
   
   // Track window resize
-  useEffect(() => {
+  useState(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
     };
@@ -34,7 +32,7 @@ export function FloatingActionBar() {
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, []);
+  });
 
   // Determine display mode based on screen width
   const displayMode = () => {
