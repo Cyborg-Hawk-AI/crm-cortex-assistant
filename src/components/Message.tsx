@@ -1,4 +1,3 @@
-
 import { motion } from 'framer-motion';
 import { Message as MessageType } from '@/utils/types';
 import { User, Bot } from 'lucide-react';
@@ -9,10 +8,9 @@ import { useMemo } from 'react';
 
 interface MessageProps {
   message: MessageType;
-  containerWidth?: string;
 }
 
-export function Message({ message, containerWidth = 'auto' }: MessageProps) {
+export function Message({ message }: MessageProps) {
   const isUser = message.sender === 'user';
   const isSystem = message.isSystem;
   
@@ -135,11 +133,6 @@ export function Message({ message, containerWidth = 'auto' }: MessageProps) {
     return null;
   }
 
-  // Calculate the max width based on container width
-  const maxWidth = containerWidth !== 'auto' 
-    ? `min(75%, ${containerWidth})` 
-    : '75%';
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -151,13 +144,10 @@ export function Message({ message, containerWidth = 'auto' }: MessageProps) {
       )}
       key={message.id}
     >
-      <div 
-        className={cn(
-          'flex gap-3',
-          isUser ? 'flex-row-reverse' : 'flex-row'
-        )}
-        style={{ maxWidth: maxWidth }}
-      >
+      <div className={cn(
+        'max-w-[75%] flex gap-3',
+        isUser ? 'flex-row-reverse' : 'flex-row'
+      )}>
         <div className={cn(
           'w-8 h-8 rounded-full flex items-center justify-center',
           isUser 
