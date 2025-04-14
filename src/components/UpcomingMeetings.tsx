@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { upcomingMeetings } from '@/utils/mockData';
-import { format, isToday, isTomorrow, addDays } from 'date-fns';
+import { format, isToday, isTomorrow, addDays, parseISO } from 'date-fns';
 import { MeetingCreateModal } from '@/components/modals/MeetingCreateModal';
 import { Meeting } from '@/utils/types';
 import { useMeetings } from '@/hooks/useMeetings';
@@ -19,7 +19,8 @@ export function UpcomingMeetings() {
     createMeeting(meetingData);
   };
 
-  const getRelativeDateLabel = (date: Date) => {
+  const getRelativeDateLabel = (dateStr: string) => {
+    const date = parseISO(dateStr);
     if (isToday(date)) {
       return 'Today';
     } else if (isTomorrow(date)) {
@@ -31,7 +32,8 @@ export function UpcomingMeetings() {
     }
   };
 
-  const formatTime = (date: Date) => {
+  const formatTime = (dateStr: string) => {
+    const date = parseISO(dateStr);
     return format(date, 'h:mm a');
   };
 
@@ -91,12 +93,12 @@ export function UpcomingMeetings() {
                         </div>
                         <div className="flex items-center mt-1 text-xs text-[#CBD5E1]">
                           <Users className="h-3 w-3 mr-1 text-neon-purple" />
-                          <span>{meeting.clientName}</span>
+                          <span>{meeting.client_name}</span>
                         </div>
                         
-                        {meeting.meetingLink ? (
+                        {meeting.meeting_link ? (
                           <a
-                            href={meeting.meetingLink}
+                            href={meeting.meeting_link}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-neon-aqua underline flex items-center text-xs mt-2"

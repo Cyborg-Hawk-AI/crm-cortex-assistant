@@ -98,16 +98,20 @@ export const criticalAlerts = [
   {
     id: "a1",
     title: "Server CPU usage above 90%",
+    description: "High CPU utilization detected on production server",
     severity: "critical",
     timestamp: "2023-05-16T08:45:00Z",
-    status: "active"
+    status: "active",
+    clientName: "Acme Corp"
   },
   {
     id: "a2",
     title: "Database connection errors",
+    description: "Multiple failed connection attempts to primary database",
     severity: "high",
     timestamp: "2023-05-16T07:30:00Z",
-    status: "investigating"
+    status: "investigating",
+    clientName: "TechCo"
   }
 ];
 
