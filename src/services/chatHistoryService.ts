@@ -12,7 +12,7 @@ export const updateConversation = async (
     task_id?: string;
     title?: string;
     open_ai_thread_id?: string;
-    project_id?: string;
+    project_id?: string; // Add project_id to the updates type
   }
 ) => {
   const userId = await getCurrentUserId();
@@ -63,8 +63,7 @@ export const getOrCreateConversationThread = async (
   title: string,
   openAiThreadId?: string | null,
   taskId?: string | null,
-  assistantId?: string | null,
-  projectId?: string | null
+  assistantId?: string | null
 ) => {
   const userId = await getCurrentUserId();
   
@@ -99,7 +98,6 @@ export const getOrCreateConversationThread = async (
       task_id: taskId || null,
       assistant_id: assistantId || null,
       open_ai_thread_id: openAiThreadId || null,
-      project_id: projectId || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     })
@@ -171,62 +169,55 @@ export const addMessageToConversation = async (
     throw new Error('User not authenticated');
   }
 
-  try {
-    // Verify the user has access to this conversation
-    const { data: conversation, error: convError } = await supabase
-      .from('conversations')
-      .select()
-      .eq('id', conversationId)
-      .eq('user_id', userId)
-      .single();
-    
-    if (convError) {
-      console.error('Error fetching conversation:', convError);
-      throw new Error(convError.message);
-    }
-
-    // Create the message
-    const messageData = {
-      id: uuidv4(),
-      conversation_id: conversationId,
-      assistant_id: assistantId || conversation.assistant_id || null,
-      user_id: userId,
-      content,
-      sender,
-      timestamp: new Date().toISOString(),
-      is_system: sender === 'system'
-    };
-    
-    const { data, error } = await supabase
-      .from('chat_messages')
-      .insert(messageData)
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('Error adding message to conversation:', error);
-      throw new Error(error.message);
-    }
-    
-    // Update the conversation's last_updated timestamp
-    await supabase
-      .from('conversations')
-      .update({ updated_at: new Date().toISOString() })
-      .eq('id', conversationId);
-    
-    return {
-      id: data.id,
-      content: data.content,
-      sender: data.sender,
-      timestamp: new Date(data.timestamp),
-      isSystem: data.is_system || false,
-      conversation_id: data.conversation_id,
-      user_id: data.user_id
-    };
-  } catch (err) {
-    console.error('Error in addMessageToConversation:', err);
-    throw err;
+  // Verify the user has access to this conversation
+  const { data: conversation, error: convError } = await supabase
+    .from('conversations')
+    .select()
+    .eq('id', conversationId)
+    .eq('user_id', userId)
+    .single();
+  
+  if (convError) {
+    console.error('Error fetching conversation:', convError);
+    throw new Error(convError.message);
   }
+
+  // Create the message
+  const messageData = {
+    id: uuidv4(),
+    conversation_id: conversationId,
+    assistant_id: assistantId || conversation.assistant_id || null,
+    user_id: userId,
+    content,
+    sender,
+    timestamp: new Date().toISOString(),
+    is_system: sender === 'system'
+  };
+  
+  const { data, error } = await supabase
+    .from('chat_messages')
+    .insert(messageData)
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error adding message to conversation:', error);
+    throw new Error(error.message);
+  }
+  
+  // Update the conversation's last_updated timestamp
+  await supabase
+    .from('conversations')
+    .update({ updated_at: new Date().toISOString() })
+    .eq('id', conversationId);
+  
+  return {
+    id: data.id,
+    content: data.content,
+    sender: data.sender,
+    timestamp: new Date(data.timestamp),
+    isSystem: data.is_system || false
+  };
 };
 
 /**
@@ -268,8 +259,6 @@ export const getConversationMessages = async (conversationId: string) => {
     content: msg.content,
     sender: msg.sender,
     timestamp: new Date(msg.timestamp),
-    isSystem: msg.is_system || false,
-    conversation_id: msg.conversation_id,
-    user_id: msg.user_id
+    isSystem: msg.is_system || false
   }));
 };

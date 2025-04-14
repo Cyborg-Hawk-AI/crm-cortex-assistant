@@ -91,11 +91,12 @@ export interface Message {
   id: string;
   content: string;
   sender: 'user' | 'assistant' | 'system';
-  timestamp: Date;
-  isSystem: boolean;
-  isStreaming?: boolean; // Added isStreaming property
-  conversation_id?: string;
-  user_id?: string;
+  conversation_id: string;
+  user_id: string;
+  timestamp: Date | string;
+  isSystem?: boolean;
+  isStreaming?: boolean;
+  metadata?: Record<string, any>;
 }
 
 // Notebook related interfaces
@@ -273,8 +274,13 @@ export interface Assistant {
   id: string;
   name: string;
   description?: string;
+  capabilities?: string[];
+  openai_assistant_id?: string;
+  is_active?: boolean;
+  configuration?: any;
+  created_at?: Date | string;
+  updated_at?: Date | string;
   icon?: string;
-  capabilities: string[];
 }
 
 // MeetingAction interface for MeetingQuickActions

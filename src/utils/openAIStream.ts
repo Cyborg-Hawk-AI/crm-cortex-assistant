@@ -1,5 +1,4 @@
-
-import { StreamCallbacks, StreamOptions } from './streamTypes';
+import { StreamingCallbacks } from './streamTypes';
 
 // OpenAI API configuration
 const OPENAI_API_URL = 'https://api.openai.com/v1';
@@ -7,21 +6,22 @@ const DEFAULT_MODEL = 'gpt-4o-mini';
 // Using the provided OpenAI key 
 const OPENAI_API_KEY = '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';
 
+export interface StreamOptions {
+  model?: string;
+  temperature?: number;
+  max_tokens?: number;
+  messages: Array<{ role: string; content: string }>;
+}
+
 /**
  * Creates a streaming request to the OpenAI API
  */
 export async function createOpenAIStream(
   options: StreamOptions,
-  callbacks: StreamCallbacks
+  callbacks: StreamingCallbacks
 ): Promise<() => boolean> {
   try {
     callbacks.onStart();
-    
-    // Add system prompt to messages if provided
-    let messages = [...options.messages];
-    if (options.systemPrompt) {
-      messages.unshift({ role: 'system', content: options.systemPrompt });
-    }
     
     const response = await fetch(`${OPENAI_API_URL}/chat/completions`, {
       method: 'POST',
@@ -31,7 +31,7 @@ export async function createOpenAIStream(
       },
       body: JSON.stringify({
         model: options.model || DEFAULT_MODEL,
-        messages: messages,
+        messages: options.messages,
         temperature: options.temperature ?? 0.7,
         max_tokens: options.max_tokens,
         stream: true,

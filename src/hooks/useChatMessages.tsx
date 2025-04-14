@@ -7,7 +7,7 @@ import { useToast } from './use-toast';
 import { useAssistantConfig } from './useAssistantConfig';
 import { openAIChat } from '@/utils/openAIStream';
 import { deepSeekChat } from '@/utils/deepSeekStream';
-import { useModelSelection, ModelType } from './useModelSelection';
+import { useModelSelection } from './useModelSelection';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const useChatMessages = () => {
@@ -120,460 +120,500 @@ export const useChatMessages = () => {
     }
   };
 
-  const switchAssistant = async (assistant: Assistant): Promise<boolean> => {
+  const generateConversationTitle = async (
+    conversationId: string, 
+    userMessage: string, 
+    assistantResponse: string
+  ) => {
     try {
-      if (!activeConversationId) {
-        console.error("No active conversation to switch assistant for");
-        return false;
-      }
-
-      console.log(`Switching assistant for conversation ${activeConversationId} to ${assistant.id} (${assistant.name})`);
+      console.log(`Generating title for conversation ${conversationId} based on content`);
       
-      const success = await messageApi.switchAssistant(activeConversationId, assistant);
+      const prompt = `Generate a short, 3-5 word title summarizing the following conversation: 
+      User: ${userMessage.substring(0, 200)}
+      Assistant: ${assistantResponse.substring(0, 200)}`;
       
-      if (success) {
-        setActiveAssistant(assistant);
-        
-        const systemMessage = `Switched to ${assistant.name} assistant`;
-        await saveMessage(systemMessage, 'system', uuidv4(), activeConversationId);
-        
-        queryClient.invalidateQueries({ queryKey: ['conversations'] });
-        queryClient.invalidateQueries({ queryKey: ['messages', activeConversationId] });
-        
-        console.log(`Successfully switched assistant to ${assistant.name}`);
-        return true;
-      }
+      console.log("Sending title generation prompt:", prompt.substring(0, 100) + "...");
       
-      return false;
-    } catch (error) {
-      console.error('Error switching assistant:', error);
-      return false;
-    }
-  };
-
-  const addMessage = (content: string, sender: 'user' | 'assistant' | 'system'): Message => {
-    const message: Message = {
-      id: uuidv4(),
-      content,
-      sender,
-      timestamp: new Date(),
-      isSystem: sender === 'system',
-      conversation_id: activeConversationId || undefined,
-      user_id: user?.id
-    };
-    
-    setLocalMessages(prev => [...prev, message]);
-    return message;
-  };
-
-  const saveMessage = async (content: string, sender: 'user' | 'assistant' | 'system', messageId?: string, specificConversationId?: string): Promise<Message | null> => {
-    try {
-      const conversationId = specificConversationId || activeConversationId;
-      
-      if (!conversationId) {
-        console.error('No conversation ID available to save message.');
-        return null;
-      }
-      
-      console.log(`Saving ${sender} message to conversation ${conversationId}`);
-      
-      const savedMessage = await messageApi.sendMessage(
-        conversationId,
-        content,
-        sender,
-        messageId
-      );
-      
-      queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
-      
-      if (sender === 'user' || sender === 'assistant') {
-        queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      }
-      
-      return savedMessage;
-    } catch (error) {
-      console.error('Error saving message:', error);
-      toast({
-        title: 'Error saving message',
-        description: 'The message may not be saved properly.',
-        variant: 'destructive'
-      });
-      return null;
-    }
-  };
-
-  const generateConversationTitle = async (conversationId: string, userMessage: string, assistantResponse: string): Promise<any> => {
-    try {
-      const titlePrompt = `Based on this conversation, generate a very short, concise title (5 words or less):
-        User: ${userMessage}
-        Assistant: ${assistantResponse}`;
-      
-      let titleResponse = "";
-      
-      if (isStreaming || isSending) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-      
-      await openAIChat(
-        {
-          messages: [{ role: 'user', content: titlePrompt }],
-          temperature: 0.7,
-          model: 'gpt-4o-mini',
-          systemPrompt: undefined,
+      const titleStream = await openAIChat(
+        { 
+          messages: [
+            { role: 'system', content: 'You are a helpful assistant that generates short, concise titles.' },
+            { role: 'user', content: prompt }
+          ] 
         },
         {
           onStart: () => {
             console.log('Starting title generation');
           },
-          onChunk: (chunk: string) => {
-            titleResponse += chunk;
-          },
-          onComplete: async (finalTitle: string) => {
-            console.log('Title generation complete');
+          onChunk: () => {},
+          onComplete: async (titleResponse) => {
+            const cleanTitle = titleResponse
+              .replace(/^["']|["']$/g, '') // Remove quotes at start/end
+              .trim()
+              .replace(/^Title:?\s*/i, ''); // Remove "Title:" prefix if present
             
-            const cleanTitle = finalTitle.replace(/^["']|["']$/g, '').trim();
+            console.log(`Generated title: "${cleanTitle}"`);
             
-            await messageApi.updateConversationTitle(conversationId, cleanTitle);
-            
-            queryClient.invalidateQueries({ queryKey: ['conversations'] });
-            
-            console.log(`Generated title "${cleanTitle}" for conversation ${conversationId}`);
+            try {
+              console.log(`Updating conversation ${conversationId} with new title: "${cleanTitle}"`);
+              
+              let updateSuccess = false;
+              let attempts = 0;
+              const maxAttempts = 3;
+              
+              while (!updateSuccess && attempts < maxAttempts) {
+                attempts++;
+                console.log(`Attempting to update title (attempt ${attempts}/${maxAttempts})...`);
+                
+                try {
+                  updateSuccess = await messageApi.updateConversationTitle(conversationId, cleanTitle);
+                  
+                  if (updateSuccess) {
+                    console.log(`Successfully updated conversation ${conversationId} title to "${cleanTitle}"`);
+                    queryClient.invalidateQueries({ queryKey: ['conversations'] });
+                  } else {
+                    console.warn(`Failed to update title on attempt ${attempts}`);
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                  }
+                } catch (updateError) {
+                  console.error(`Error updating title (attempt ${attempts}):`, updateError);
+                  await new Promise(resolve => setTimeout(resolve, 500));
+                }
+              }
+              
+              if (!updateSuccess) {
+                console.error(`Failed to update conversation title after ${maxAttempts} attempts`);
+              }
+            } catch (err) {
+              console.error('Error in title update process:', err);
+            }
           },
           onError: (error) => {
             console.error('Error generating title:', error);
-            const fallbackTitle = userMessage.split(' ').slice(0, 3).join(' ') + '...';
-            messageApi.updateConversationTitle(conversationId, fallbackTitle);
           }
         }
       );
       
-      return { success: true };
+      return titleStream;
+      
     } catch (error) {
-      console.error('Error in title generation:', error);
-      return { success: false, error };
+      console.error('Error in generateConversationTitle:', error);
+      return null;
     }
   };
 
-  const sendMessage = async (content: string, sender: 'user' | 'assistant' | 'system' = 'user', specificConversationId?: string | null): Promise<Message | null> => {
-    if (isStreaming || isSending) {
-      console.warn('Already streaming or sending a message, ignoring request');
-      toast({
-        title: 'Please wait',
-        description: 'A response is being generated. Please wait before sending another message.',
-      });
-      return null;
-    }
-    
-    const trimmedContent = content.trim();
-    if (!trimmedContent && sender !== 'system') {
-      console.warn('Empty message, ignoring');
-      return null;
-    }
-    
-    setIsSending(true);
-    
-    try {
-      let conversationId = specificConversationId || activeConversationId;
-      
-      if (!conversationId) {
-        console.log('No active conversation, creating new one before sending message');
-        conversationId = await startConversation();
-      }
-      
-      const userMessage = await saveMessage(trimmedContent, sender, undefined, conversationId);
-      
-      if (sender !== 'system') {
-        if (!userMessage) {
-          console.error('Failed to save user message');
-          return null;
-        }
-        
-        const existingMessages = messages();
-        console.log(`Sending ${existingMessages.length} messages for context to maintain conversation history`);
-        
-        const assistantMessageId = uuidv4();
-        const assistantMessage = addMessage("", "assistant");
-        assistantMessage.id = assistantMessageId;
-        assistantMessage.isStreaming = true;
-        
-        setIsStreaming(true);
-        currentStreamingMessageId.current = assistantMessageId;
-        
-        console.log('Starting to stream assistant response');
-        
-        let fullResponse = '';
-        
-        if (modelOption && modelOption.id === 'deepseek') {
-          await deepSeekChat(
-            {
-              messages: existingMessages.map(msg => ({
-                role: msg.sender === 'user' ? 'user' : 'assistant',
-                content: msg.content
-              })),
-              systemPrompt: assistantConfig.prompt,
-            },
-            {
-              onStart: () => {
-                console.log('Stream started');
-              },
-              onChunk: (chunk: string) => {
-                fullResponse += chunk;
-                
-                setLocalMessages(prev => 
-                  prev.map(msg => 
-                    msg.id === assistantMessageId 
-                      ? { ...msg, content: fullResponse, isStreaming: true } 
-                      : msg
-                  )
-                );
-              },
-              onComplete: async (finalResponse: string) => {
-                console.log('Stream complete');
-                setIsStreaming(false);
-                currentStreamingMessageId.current = null;
-                
-                if (fullResponse !== finalResponse) {
-                  fullResponse = finalResponse;
-                  setLocalMessages(prev => 
-                    prev.map(msg => 
-                      msg.id === assistantMessageId 
-                        ? { ...msg, content: fullResponse, isStreaming: false } 
-                        : msg
-                    )
-                  );
-                } else {
-                  setLocalMessages(prev => 
-                    prev.map(msg => 
-                      msg.id === assistantMessageId 
-                        ? { ...msg, isStreaming: false } 
-                        : msg
-                    )
-                  );
-                }
-                
-                console.log('Stream completed, saving final response');
-                await saveMessage(fullResponse, 'assistant', assistantMessageId, conversationId);
-                
-                const convo = conversations.find(c => c.id === conversationId);
-                if (convo && convo.title === 'New conversation' && !specificConversationId) {
-                  console.log('First exchange, generating conversation title');
-                  await generateConversationTitle(conversationId, trimmedContent, fullResponse);
-                }
-              },
-              onError: (error: Error) => {
-                console.error('Error in streaming response:', error);
-                setIsStreaming(false);
-                currentStreamingMessageId.current = null;
-                
-                setLocalMessages(prev => 
-                  prev.map(msg => 
-                    msg.id === assistantMessageId 
-                      ? { ...msg, isStreaming: false } 
-                      : msg
-                  )
-                );
-                
-                toast({
-                  title: 'Error generating response',
-                  description: 'Please try again.',
-                  variant: 'destructive'
-                });
-              }
-            }
-          );
-        } else {
-          await openAIChat(
-            {
-              messages: existingMessages.map(msg => ({
-                role: msg.sender === 'user' ? 'user' : 'assistant',
-                content: msg.content
-              })),
-              systemPrompt: assistantConfig.prompt,
-            },
-            {
-              onStart: () => {
-                console.log('Stream started');
-              },
-              onChunk: (chunk: string) => {
-                fullResponse += chunk;
-                
-                setLocalMessages(prev => 
-                  prev.map(msg => 
-                    msg.id === assistantMessageId 
-                      ? { ...msg, content: fullResponse, isStreaming: true } 
-                      : msg
-                  )
-                );
-              },
-              onComplete: async (finalResponse: string) => {
-                console.log('Stream complete');
-                setIsStreaming(false);
-                currentStreamingMessageId.current = null;
-                
-                if (fullResponse !== finalResponse) {
-                  fullResponse = finalResponse;
-                  setLocalMessages(prev => 
-                    prev.map(msg => 
-                      msg.id === assistantMessageId 
-                        ? { ...msg, content: fullResponse, isStreaming: false } 
-                        : msg
-                    )
-                  );
-                } else {
-                  setLocalMessages(prev => 
-                    prev.map(msg => 
-                      msg.id === assistantMessageId 
-                        ? { ...msg, isStreaming: false } 
-                        : msg
-                    )
-                  );
-                }
-                
-                console.log('Stream completed, saving final response');
-                await saveMessage(fullResponse, 'assistant', assistantMessageId, conversationId);
-                
-                const convo = conversations.find(c => c.id === conversationId);
-                if (convo && convo.title === 'New conversation' && !specificConversationId) {
-                  console.log('First exchange, generating conversation title');
-                  await generateConversationTitle(conversationId, trimmedContent, fullResponse);
-                }
-              },
-              onError: (error: Error) => {
-                console.error('Error in streaming response:', error);
-                setIsStreaming(false);
-                currentStreamingMessageId.current = null;
-                
-                setLocalMessages(prev => 
-                  prev.map(msg => 
-                    msg.id === assistantMessageId 
-                      ? { ...msg, isStreaming: false } 
-                      : msg
-                  )
-                );
-                
-                toast({
-                  title: 'Error generating response',
-                  description: 'Please try again.',
-                  variant: 'destructive'
-                });
-              }
-            }
-          );
-        }
-        
-        return userMessage;
-      } else {
-        return userMessage;
-      }
-    } catch (error) {
-      console.error('Error sending message:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to send message',
-        variant: 'destructive'
-      });
-      return null;
-    } finally {
-      setIsSending(false);
-    }
-  };
+  const addLocalMessage = useCallback((message: Message) => {
+    setLocalMessages(prev => [...prev, message]);
+    return message;
+  }, []);
 
-  const clearMessages = async (conversationId?: string) => {
+  const clearMessages = useCallback(async (conversationId?: string) => {
+    const targetConversationId = conversationId || activeConversationId;
+    if (!targetConversationId) return;
+    
     try {
-      const targetConversationId = conversationId || activeConversationId;
-      if (!targetConversationId) {
-        console.error('No conversation ID to clear messages for');
-        return;
-      }
+      console.log(`Clearing messages for conversation ${targetConversationId}`);
       
       await messageApi.deleteConversationMessages(targetConversationId);
+      
       setLocalMessages([]);
+      currentStreamingMessageId.current = null;
+      pendingMessages.current.clear();
+      processingMessageQueue.current.clear();
+      
       queryClient.invalidateQueries({ queryKey: ['messages', targetConversationId] });
       
-      await saveMessage('Conversation cleared', 'system', uuidv4(), targetConversationId);
-      
       toast({
-        title: 'Conversation cleared',
-        description: 'All messages have been deleted.',
+        title: 'Chat cleared',
+        description: 'All messages have been cleared from this conversation'
       });
     } catch (error) {
       console.error('Error clearing messages:', error);
       toast({
         title: 'Error',
-        description: 'Failed to clear conversation',
+        description: 'Failed to clear messages',
         variant: 'destructive'
       });
     }
-  };
+  }, [activeConversationId, queryClient, toast]);
 
-  const linkTaskToConversation = async (task: Task | null): Promise<Task | null> => {
+  const handleSetActiveAssistant = useCallback(async (assistant: Assistant) => {
+    setActiveAssistant(assistant);
+    
+    if (activeConversationId) {
+      try {
+        await messageApi.switchAssistant(activeConversationId, assistant);
+      } catch (error) {
+        console.error('Error setting assistant:', error);
+      }
+    }
+    
+    return assistant;
+  }, [activeConversationId]);
+
+  const handleLinkTaskToConversation = useCallback(async (task: Task | null) => {
+    setLinkedTask(task);
+    
+    if (activeConversationId && task) {
+      try {
+        await messageApi.linkTaskToConversation(activeConversationId, task);
+      } catch (error) {
+        console.error('Error linking task:', error);
+      }
+    }
+    
+    return task;
+  }, [activeConversationId]);
+
+  const saveMessage = useCallback(async (
+    content: string, 
+    sender: 'user' | 'assistant' | 'system',
+    messageId?: string,
+    specificConversationId?: string
+  ): Promise<Message | null> => {
+    const conversationId = specificConversationId || activeConversationId;
+    
+    if (!conversationId) return null;
+    
     try {
-      if (!activeConversationId) {
-        toast({
-          title: 'No conversation selected',
-          description: 'Please select a conversation first',
-          variant: 'destructive'
-        });
+      if (messageId && processingMessageQueue.current.has(messageId)) {
+        console.log(`Message ${messageId} is already being processed, skipping duplicate save`);
         return null;
       }
       
-      setLinkedTask(task);
-      
-      if (task) {
-        await messageApi.linkTaskToConversation(activeConversationId, task);
-        
-        await saveMessage(`Task linked: ${task.title}`, 'system', uuidv4(), activeConversationId);
-        
-        toast({
-          title: 'Task linked',
-          description: `Task "${task.title}" linked to this conversation`,
-        });
-      } else {
-        await messageApi.linkTaskToConversation(activeConversationId, null);
-        
-        await saveMessage('Task unlinked', 'system', uuidv4(), activeConversationId);
-        
-        toast({
-          title: 'Task unlinked',
-          description: 'The task is no longer linked to this conversation',
-        });
+      if (messageId && pendingMessages.current.has(messageId)) {
+        console.log(`Message ${messageId} is already pending, skipping duplicate save`);
+        return null;
       }
       
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      if (messageId) {
+        processingMessageQueue.current.add(messageId);
+        pendingMessages.current.add(messageId);
+      }
       
-      return task;
+      console.log(`Saving ${sender} message to conversation ${conversationId}`);
+      
+      try {
+        const savedMessage = await messageApi.sendMessage(
+          conversationId,
+          content,
+          sender,
+          messageId
+        );
+        
+        if (messageId) {
+          pendingMessages.current.delete(messageId);
+          processingMessageQueue.current.delete(messageId);
+        }
+        
+        queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+        
+        return savedMessage;
+      } catch (error) {
+        console.error('Error saving message:', error);
+        
+        if (messageId) {
+          pendingMessages.current.delete(messageId);
+          processingMessageQueue.current.delete(messageId);
+        }
+        
+        return null;
+      }
     } catch (error) {
-      console.error('Error linking task to conversation:', error);
+      console.error('Error in saveMessage:', error);
+      
+      if (messageId) {
+        pendingMessages.current.delete(messageId);
+        processingMessageQueue.current.delete(messageId);
+      }
+      
+      return null;
+    }
+  }, [activeConversationId, queryClient]);
+
+  const sendMessage = useCallback(async (
+    content: string, 
+    sender: 'user' | 'assistant' | 'system' = 'user',
+    specificConversationId?: string | null
+  ) => {
+    if (!content.trim()) return null;
+    
+    if (isStreaming) {
       toast({
-        title: 'Error',
-        description: 'Failed to link task to conversation',
-        variant: 'destructive'
+        title: "Please wait",
+        description: "Please wait for the current response to finish"
       });
       return null;
     }
-  };
+    
+    try {
+      if (sender === 'user') {
+        setIsSending(true);
+        
+        let conversationId = specificConversationId || activeConversationId;
+        console.log(`Preparing to send message to conversation: ${conversationId}`);
+        
+        const isNewConversation = !conversationId;
+        
+        if (!conversationId) {
+          console.log("No active conversation, creating a new one...");
+          const newConversationId = await startConversation(
+            activeAssistant?.name ? `Conversation with ${activeAssistant.name}` : 'New conversation'
+          );
+          conversationId = newConversationId;
+          setActiveConversationId(newConversationId);
+          console.log(`Created and activated new conversation: ${newConversationId}`);
+          
+          queryClient.invalidateQueries({ queryKey: ['conversations'] });
+          refetchConversations();
+        }
+        
+        const conversation = conversations.find(c => c.id === conversationId);
+        const threadId = conversation?.open_ai_thread_id || null;
+        
+        const userMessageId = uuidv4();
+        const userMessage: Message = {
+          id: userMessageId,
+          content,
+          sender: 'user',
+          timestamp: new Date(),
+          isSystem: false,
+          conversation_id: conversationId || '',
+          user_id: 'current-user'
+        };
+        
+        addLocalMessage(userMessage);
+        
+        await saveMessage(content, 'user', userMessageId, conversationId);
+        
+        const assistantMessageId = uuidv4();
+        currentStreamingMessageId.current = assistantMessageId;
+        
+        const assistantMessage: Message = {
+          id: assistantMessageId,
+          content: '',
+          sender: 'assistant',
+          timestamp: new Date(),
+          isSystem: false,
+          isStreaming: true,
+          conversation_id: conversationId || '',
+          user_id: 'current-user'
+        };
+        
+        addLocalMessage(assistantMessage);
+        
+        setIsStreaming(true);
+        
+        let fullResponse = '';
+        
+        try {
+          const messagesForContext = await messageApi.getMessages(conversationId);
+          
+          console.log(`Sending ${messagesForContext.length} messages for context to maintain conversation history`);
+          
+          const messageHistory = messagesForContext.map(msg => ({
+            role: msg.sender === 'user' ? 'user' : 'assistant',
+            content: msg.content
+          }));
+          
+          if (activeAssistant) {
+            messageHistory.unshift({
+              role: 'system',
+              content: `You are ${activeAssistant.name || 'an AI assistant'}. ${activeAssistant.description || ''}`
+            });
+          } else {
+            messageHistory.unshift({
+              role: 'system',
+              content: 'You are ActionBot, an engineering assistant designed to help with coding tasks and technical problems.'
+            });
+          }
+          
+          await openAIChat(
+            { messages: messageHistory },
+            {
+              onStart: () => {
+                console.log('Starting to stream assistant response');
+              },
+              onChunk: (chunk: string) => {
+                if (!chunk || typeof chunk !== 'string') return;
+                
+                fullResponse += chunk;
+                
+                setLocalMessages(prev => 
+                  prev.map(msg => 
+                    msg.id === assistantMessageId 
+                      ? { ...msg, content: fullResponse } 
+                      : msg
+                  )
+                );
+              },
+              onComplete: async (finalResponse: string) => {
+                console.log('Stream completed, saving final response');
+                fullResponse = finalResponse;
+                
+                setLocalMessages(prev => 
+                  prev.map(msg => 
+                    msg.id === assistantMessageId 
+                      ? { ...msg, content: fullResponse, isStreaming: false } 
+                      : msg
+                  )
+                );
+                
+                setIsStreaming(false);
+                currentStreamingMessageId.current = null;
+                
+                await saveMessage(fullResponse, 'assistant', assistantMessageId, conversationId);
+                
+                if (isNewConversation || messagesForContext.length <= 1) {
+                  console.log("First exchange in conversation - generating title");
+                  await generateConversationTitle(conversationId, content, finalResponse);
+                }
+                
+                queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+                queryClient.invalidateQueries({ queryKey: ['conversations'] });
+                
+                setIsSending(false);
+              },
+              onError: (error) => {
+                console.error('Error in assistant response:', error);
+                const errorMessage = `Error: ${error.message}`;
+                
+                setLocalMessages(prev => 
+                  prev.map(msg => 
+                    msg.id === assistantMessageId 
+                      ? { ...msg, content: errorMessage, isStreaming: false } 
+                      : msg
+                  )
+                );
+                
+                setIsStreaming(false);
+                currentStreamingMessageId.current = null;
+                
+                saveMessage(errorMessage, 'assistant', assistantMessageId, conversationId);
+                
+                setIsSending(false);
+                
+                toast({
+                  title: 'Error',
+                  description: `Failed to get response: ${error.message}`,
+                  variant: 'destructive'
+                });
+              }
+            }
+          );
+        } catch (error: any) {
+          console.error('Error in sendMessage:', error);
+          
+          setLocalMessages(prev => 
+            prev.map(msg => 
+              msg.id === assistantMessageId 
+                ? { ...msg, content: `Error: ${error.message}`, isStreaming: false } 
+                : msg
+            )
+          );
+          
+          setIsStreaming(false);
+          currentStreamingMessageId.current = null;
+          setIsSending(false);
+          
+          toast({
+            title: 'Error',
+            description: 'Failed to get assistant response',
+            variant: 'destructive'
+          });
+        }
+        
+        return userMessage;
+      } else {
+        let conversationId = specificConversationId || activeConversationId;
+        
+        if (!conversationId) {
+          const newConversationId = await startConversation();
+          conversationId = newConversationId;
+          setActiveConversationId(newConversationId);
+          
+          queryClient.invalidateQueries({ queryKey: ['conversations'] });
+          refetchConversations();
+        }
+        
+        const messageId = uuidv4();
+        const message: Message = {
+          id: messageId,
+          content,
+          sender,
+          timestamp: new Date(),
+          isSystem: sender === 'system',
+          conversation_id: conversationId || '',
+          user_id: 'current-user'
+        };
+        
+        addLocalMessage(message);
+        
+        await saveMessage(content, sender, messageId, conversationId);
+        
+        return message;
+      }
+    } catch (error: any) {
+      console.error('Error in sendMessage:', error);
+      setIsSending(false);
+      setIsStreaming(false);
+      
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to send message',
+        variant: 'destructive'
+      });
+      
+      return null;
+    }
+  }, [
+    activeConversationId,
+    activeAssistant,
+    isStreaming,
+    linkedTask,
+    conversations,
+    openAiThreadId,
+    queryClient,
+    saveMessage,
+    addLocalMessage,
+    startConversation,
+    toast,
+    refetchConversations
+  ]);
 
   return {
     messages: messages(),
-    isLoading: isLoadingMessages || isLoadingConversations,
-    isSending,
-    isStreaming,
     inputValue,
     setInputValue,
     sendMessage,
-    addMessage,
-    saveMessage,
-    clearMessages,
-    activeConversationId,
-    setActiveConversationId,
-    startConversation,
+    addMessage: (content: string, sender: 'user' | 'assistant' | 'system') => {
+      const message: Message = {
+        id: uuidv4(),
+        content,
+        sender,
+        timestamp: new Date(),
+        isSystem: sender === 'system',
+        conversation_id: activeConversationId || 'temp-conversation',
+        user_id: 'current-user'
+      };
+      return addLocalMessage(message);
+    },
     activeAssistant,
-    setActiveAssistant: switchAssistant,
-    switchAssistant,
+    setActiveAssistant: handleSetActiveAssistant,
+    clearMessages,
+    isLoading: isLoadingMessages || isLoadingConversations,
+    isSending,
+    isStreaming,
     linkedTask,
-    linkTaskToConversation,
+    linkTaskToConversation: handleLinkTaskToConversation,
+    activeConversationId,
+    startConversation,
+    setActiveConversationId,
     refetchMessages,
-    refetchConversations: () => refetchConversations(),
+    saveMessage,
     generateConversationTitle,
+    refetchConversations
   };
 };
+
+export type { ChatMessagesHook } from './useChatMessages';

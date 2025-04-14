@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
@@ -31,14 +32,13 @@ export function QuickActions() {
     linkTaskToConversation,
     linkedTask, 
     sendMessage,
-    isStreaming,
-    activeConversationId,
-    startConversation
+    isStreaming
   } = useChatMessages();
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
+  // Update windowWidth state when window is resized
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
@@ -112,53 +112,27 @@ export function QuickActions() {
       return;
     }
     
-    try {
-      let currentConversationId = activeConversationId;
-      if (!currentConversationId) {
-        console.log("No active conversation, creating a new one before switching assistant");
-        currentConversationId = await startConversation('New conversation');
-        console.log(`Created new conversation with ID: ${currentConversationId}`);
-      }
-      
-      const assistant = {
-        id: assistantId,
-        name: assistantName,
-        description: `Specialized in ${label.toLowerCase()} tasks`,
-        icon: typeof icon === 'string' ? icon : undefined,
-        capabilities: []
-      };
-      
-      console.log(`Switching to assistant ${assistantName} (${assistantId}) for conversation ${currentConversationId}`);
-      const switchedAssistant = await setActiveAssistant(assistant);
-      
-      if (!switchedAssistant) {
-        toast({
-          title: "Error",
-          description: `Failed to switch to ${assistantName}`,
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      const messageToSend = inputValue.trim() || `Help me with ${label.toLowerCase()}`;
-      
-      setInputValue('');
-      await sendMessage(messageToSend, 'user');
-      
-      setExpanded(false);
-      
-      toast({
-        title: "Assistant activated",
-        description: `Using the ${assistantName} assistant`
-      });
-    } catch (error) {
-      console.error("Error in handleAction:", error);
-      toast({
-        title: "Error",
-        description: "Failed to use this assistant",
-        variant: "destructive"
-      });
-    }
+    const messageToSend = inputValue.trim() || `Help me with ${label.toLowerCase()}`;
+    
+    // Set the assistant with all required properties
+    await setActiveAssistant({
+      id: assistantId,
+      name: assistantName,
+      description: `Specialized in ${label.toLowerCase()} tasks`,
+      icon: icon as string,
+      capabilities: [], // Adding capabilities to match type
+    });
+    
+    // Clear the input and send the message
+    setInputValue('');
+    sendMessage(messageToSend, 'user');
+    
+    setExpanded(false);
+    
+    toast({
+      title: "Assistant activated",
+      description: `Using the ${assistantName} assistant`
+    });
   };
 
   const handleTaskSelect = (taskId: string) => {
@@ -177,12 +151,14 @@ export function QuickActions() {
     }
   };
 
+  // Determine display mode based on screen width
   const displayMode = () => {
-    if (windowWidth < 480) return 'compact';
-    if (windowWidth < 640) return 'small';
-    return 'full';
+    if (windowWidth < 480) return 'compact'; // Ultra compact for very small screens
+    if (windowWidth < 640) return 'small';   // Smaller grid for small screens
+    return 'full';                           // Full grid for larger screens
   };
 
+  // Mock tasks for this example - in real app this would come from a hook
   const tasks = [];
 
   const getGridCols = () => {
@@ -197,9 +173,9 @@ export function QuickActions() {
     if (expanded) return actions;
     
     switch(displayMode()) {
-      case 'compact': return actions.slice(0, 2);
-      case 'small': return actions.slice(0, 3);
-      default: return actions.slice(0, 3);
+      case 'compact': return actions.slice(0, 2);  // Show only 2 for very small screens
+      case 'small': return actions.slice(0, 3);    // Show 3 for small screens
+      default: return actions.slice(0, 3);         // Show 3 for larger screens by default
     }
   };
 

@@ -1,5 +1,4 @@
-
-import { StreamCallbacks, StreamOptions } from './streamTypes';
+import { StreamingCallbacks } from './streamTypes';
 
 // DeepSeek API configuration
 const DEEPSEEK_API_URL = 'https://api.deepseek.com';
@@ -8,12 +7,19 @@ const DEFAULT_MODEL = 'deepseek-reasoner'; // Using deepseek-reasoner model per 
 // For frontend-only apps, we'll need to have the user provide their API key
 const DEEPSEEK_API_KEY = 'sk-451d1ad580704a6b86c8edd7e9c4a48d'; // Empty by default, will be provided through configuration
 
+export interface StreamOptions {
+  model?: string;
+  temperature?: number;
+  max_tokens?: number;
+  messages: Array<{ role: string; content: string }>;
+}
+
 /**
  * Creates a streaming request to the DeepSeek API
  */
 export async function createDeepSeekStream(
   options: StreamOptions,
-  callbacks: StreamCallbacks
+  callbacks: StreamingCallbacks
 ): Promise<() => boolean> {
   try {
     callbacks.onStart();
@@ -23,12 +29,12 @@ export async function createDeepSeekStream(
     }
     
     // Prepare messages as per DeepSeek docs - each message needs role and content
-    let messages = [...options.messages];
-    if (options.systemPrompt) {
-      messages.unshift({ role: 'system', content: options.systemPrompt });
-    }
+    const cleanMessages = options.messages.map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }));
     
-    console.log(`Sending ${messages.length} messages to DeepSeek`);
+    console.log(`Sending ${cleanMessages.length} messages to DeepSeek`);
     
     const response = await fetch(`${DEEPSEEK_API_URL}/v1/chat/completions`, {
       method: 'POST',
@@ -38,7 +44,7 @@ export async function createDeepSeekStream(
       },
       body: JSON.stringify({
         model: options.model || DEFAULT_MODEL,
-        messages: messages,
+        messages: cleanMessages,
         temperature: options.temperature ?? 0.7,
         max_tokens: options.max_tokens,
         stream: true,
