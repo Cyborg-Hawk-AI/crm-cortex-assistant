@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as messageApi from '@/api/messages';
@@ -9,7 +10,7 @@ import { openAIChat } from '@/utils/openAIStream';
 import { deepSeekChat } from '@/utils/deepSeekStream';
 import { useModelSelection } from './useModelSelection';
 import { useAuth } from '@/contexts/AuthContext';
-import { ChatMessagesHook } from './useChatMessages';
+import { ChatMessagesHook } from '@/types/chat-types';
 
 export const useChatMessages = (): ChatMessagesHook => {
   const { toast } = useToast();
@@ -616,4 +617,5 @@ export const useChatMessages = (): ChatMessagesHook => {
   };
 };
 
-export type { ChatMessagesHook } from './useChatMessages';
+// Export the type from the new file
+export type { ChatMessagesHook } from '@/types/chat-types';

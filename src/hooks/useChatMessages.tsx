@@ -9,8 +9,9 @@ import { openAIChat } from '@/utils/openAIStream';
 import { deepSeekChat } from '@/utils/deepSeekStream';
 import { useModelSelection } from './useModelSelection';
 import { useAuth } from '@/contexts/AuthContext';
+import { ChatMessagesHook } from '@/types/chat-types';
 
-export const useChatMessages = () => {
+export const useChatMessages = (): ChatMessagesHook => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { assistantConfig } = useAssistantConfig();
@@ -616,4 +617,4 @@ export const useChatMessages = () => {
   };
 };
 
-export type { ChatMessagesHook } from './useChatMessages';
+export type { ChatMessagesHook } from '@/types/chat-types';

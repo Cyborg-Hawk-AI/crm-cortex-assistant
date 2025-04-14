@@ -1,0 +1,25 @@
+
+import { Message, Task, Assistant } from '@/utils/types';
+
+export interface ChatMessagesHook {
+  messages: Message[];
+  inputValue: string;
+  setInputValue: (value: string) => void;
+  sendMessage: (content: string, sender?: 'user' | 'assistant' | 'system', specificConversationId?: string | null) => Promise<Message | null>;
+  addMessage: (content: string, sender: 'user' | 'assistant' | 'system') => Message;
+  activeAssistant: Assistant | null;
+  setActiveAssistant: (assistant: Assistant) => Promise<Assistant>;
+  clearMessages: (conversationId?: string) => Promise<void>;
+  isLoading: boolean;
+  isSending: boolean;
+  isStreaming: boolean;
+  linkedTask: Task | null;
+  linkTaskToConversation: (task: Task | null) => Promise<Task | null>;
+  activeConversationId: string | null;
+  startConversation: (title?: string, projectId?: string) => Promise<string>;
+  setActiveConversationId: (id: string | null) => void;
+  refetchMessages: () => void;
+  saveMessage: (content: string, sender: 'user' | 'assistant' | 'system', messageId?: string, specificConversationId?: string) => Promise<Message | null>;
+  generateConversationTitle: (conversationId: string, userMessage: string, assistantResponse: string) => Promise<any>;
+  refetchConversations: () => void;
+}
