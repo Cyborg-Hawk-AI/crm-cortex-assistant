@@ -43,16 +43,20 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
           description: task.description,
           status: task.status || 'Open',
           priority: task.priority || 'Medium',
-          created_at: new Date(task.created_at),
-          updated_at: new Date(task.updated_at),
-          customer: { name: task.assignee_id || 'Unassigned' },
+          created_at: task.created_at, // Keep as string
+          updated_at: task.updated_at, // Keep as string
+          customer: { 
+            name: task.assignee_id || 'Unassigned',
+            company: 'Unknown',
+            email: ''
+          },
           parent_task_id: task.parent_task_id,
           summary: task.description?.substring(0, 100) + (task.description?.length > 100 ? '...' : ''),
           tags: task.tags || [],
           created_by: task.reporter_id || 'Unknown',
+          reporter: task.reporter_id || 'Unknown',
           user_id: task.user_id || 'Unknown',
-          reporter_id: task.reporter_id || 'Unknown',
-          assignee_id: task.assignee_id
+          assignee: task.assignee_id
         }));
       } catch (error) {
         console.error('Failed to fetch recent tickets:', error);

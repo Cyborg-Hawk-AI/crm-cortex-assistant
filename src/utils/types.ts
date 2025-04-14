@@ -1,4 +1,3 @@
-
 // Define task priority and status types based on what's in the database
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type TaskStatus = 'open' | 'in-progress' | 'resolved' | 'closed' | 'completed';
@@ -270,6 +269,8 @@ export interface Integration {
   lastSync?: string;  // Changed from Date to string
   created_at?: string;  // Changed from Date to string
   updated_at?: string;  // Changed from Date to string
+  description?: string;
+  setupInstructions?: string;
 }
 
 // Assistant interface
@@ -351,4 +352,3 @@ export interface ActionProject {
 
 // TaskView type for different views
 export type TaskView = 'table' | 'board' | 'timeline';
-

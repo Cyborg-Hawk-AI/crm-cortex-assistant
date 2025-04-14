@@ -1,8 +1,31 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Integration } from '@/utils/types';
-import { getAvailableIntegrations, configureIntegration } from '@/integrations';
 import { useToast } from '@/hooks/use-toast';
+
+// Mock integration functions since they're missing
+const getAvailableIntegrations = async (): Promise<Integration[]> => {
+  // This is a placeholder implementation until the actual implementation is created
+  return [];
+};
+
+const configureIntegration = async (
+  integrationType: 'notion' | 'salesforce' | 'freshservice' | 'other',
+  config: Record<string, any>
+): Promise<Integration> => {
+  // This is a placeholder implementation until the actual implementation is created
+  return {
+    id: "temp-id",
+    name: integrationType,
+    type: integrationType,
+    user_id: "user-id",
+    config: config,
+    status: "active",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+};
 
 export function useIntegrations() {
   const [integrations, setIntegrations] = useState<Integration[]>([]);
@@ -36,7 +59,7 @@ export function useIntegrations() {
   ) => {
     try {
       setIsLoading(true);
-      configureIntegration(integrationType, config);
+      await configureIntegration(integrationType, config);
       
       // Refresh integrations list
       const updatedIntegrations = await getAvailableIntegrations();
