@@ -1,27 +1,32 @@
 
 import { motion } from 'framer-motion';
 import { Message as MessageType } from '@/utils/types';
-import { User, Bot } from 'lucide-react';
+import { User, Bot, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { useEffect, useMemo, useRef } from 'react';
+import { MessageStatus } from '@/utils/streamTypes';
 
 interface MessageProps {
-  message: MessageType;
+  message: MessageType & {
+    status?: MessageStatus;
+    isOptimistic?: boolean;
+  };
 }
 
 export function Message({ message }: MessageProps) {
   const isUser = message.sender === 'user';
   const isSystem = message.isSystem;
   const messageRef = useRef<HTMLDivElement>(null);
+  const isSending = message.status === 'sending';
   
   // Effect to ensure user messages are immediately visible with auto-focus
   useEffect(() => {
     if (isUser && messageRef.current) {
       messageRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [isUser]);
+  }, [isUser, message.id]);
   
   // Function to render markdown to safe HTML
   const renderMarkdownToSafeHtml = (content: string) => {
@@ -95,7 +100,10 @@ export function Message({ message }: MessageProps) {
   const processedContent = useMemo(() => {
     // User messages should always render immediately even if empty
     if (isUser) {
-      return <p className="text-sm whitespace-pre-wrap">{message.content}</p>;
+      return <p className={cn(
+        "text-sm whitespace-pre-wrap",
+        isSending && "opacity-80 italic"
+      )}>{message.content}</p>;
     }
     
     // For non-user messages, apply special handling
@@ -137,7 +145,7 @@ export function Message({ message }: MessageProps) {
         }}
       />
     );
-  }, [message.content, message.isStreaming, isUser]);
+  }, [message.content, message.isStreaming, isUser, isSending]);
 
   // For user messages, always render even if content is empty
   // For assistant messages, only render if we have content or are streaming
@@ -173,12 +181,34 @@ export function Message({ message }: MessageProps) {
         <div className={cn(
           'rounded-lg px-4 py-3 text-[#F1F5F9]',
           isUser 
-            ? 'bg-gradient-to-r from-[#1C2A3A] to-[#25384D] border border-neon-purple/30' 
+            ? cn(
+                'bg-gradient-to-r from-[#1C2A3A] to-[#25384D] border',
+                message.status === 'sending' 
+                  ? 'border-neon-purple/10 opacity-80'
+                  : message.status === 'error'
+                  ? 'border-red-400/30'
+                  : 'border-neon-purple/30'
+              )
             : isSystem
               ? 'bg-[#25384D] border border-[#3A4D62]'
               : 'bg-[#25384D] border border-[#3A4D62]'
         )}>
           {processedContent}
+          
+          {/* Show sending indicator */}
+          {message.status === 'sending' && (
+            <div className="flex items-center mt-1 opacity-70 text-xs">
+              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              <span>Sending...</span>
+            </div>
+          )}
+          
+          {/* Add error indicator */}
+          {message.status === 'error' && (
+            <div className="flex items-center mt-1 text-red-400 text-xs">
+              <span>Failed to send. Retrying...</span>
+            </div>
+          )}
           
           {/* Add typing indicator when isStreaming is true but no content yet */}
           {message.isStreaming && !message.content && (

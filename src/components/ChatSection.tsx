@@ -51,18 +51,36 @@ export function ChatSection({
     toast
   } = useToast();
   const [retryCount, setRetryCount] = useState(0);
+  const lastMessageTimestamp = useRef<number>(Date.now());
+  const messageSentRef = useRef<boolean>(false);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: 'smooth'
-    });
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({
+        behavior,
+        block: 'end',
+      });
+    }
   };
 
   useEffect(() => {
-    // Ensure we scroll to bottom on any message changes
+    // Check if a new message was added based on length change
+    const needsScroll = messages.length > 0 && 
+                      (Date.now() - lastMessageTimestamp.current < 1000 || 
+                       messageSentRef.current);
+    
+    // Reset the message sent flag
+    messageSentRef.current = false;
+    
+    // Use a short delay to ensure DOM has updated
     const scrollTimer = setTimeout(() => {
-      scrollToBottom();
-    }, 50);
+      // If we just sent a message, use instant scroll
+      const behavior = needsScroll ? 'auto' : 'smooth';
+      scrollToBottom(behavior);
+    }, needsScroll ? 10 : 100);
+    
+    // Update timestamp for next comparison
+    lastMessageTimestamp.current = Date.now();
     
     return () => clearTimeout(scrollTimer);
   }, [messages]);
@@ -87,27 +105,14 @@ export function ChatSection({
       setInputValue(''); // Clear input immediately
       
       console.log('ChatSection: User submitted message, adding to UI immediately');
+      messageSentRef.current = true;
       
-      // Immediately add user message to UI before any async operations
-      // This ensures instant visibility of the user message
-      addMessage(messageContent, 'user');
+      // Immediately add the message to the UI before any backend operations
+      // This is now handled by the optimistic updates in useChatMessages
+      await sendMessage(messageContent, 'user');
       
-      // Force an immediate scroll to make the new message visible
-      setTimeout(scrollToBottom, 10);
-      
-      // Now start the async process of handling the message
-      if (!activeConversationId) {
-        console.log("ChatSection: Creating a new conversation as part of sending the first message");
-        const newConversationId = await startConversation('New conversation');
-        setActiveConversationId(newConversationId);
-        await sendMessage(messageContent, 'user', newConversationId, selectedModel);
-      } else {
-        console.log(`ChatSection: Sending message to active conversation: ${activeConversationId}`);
-        await sendMessage(messageContent, 'user', activeConversationId, selectedModel);
-      }
-      
-      // Ensure we scroll again after assistant response starts
-      setTimeout(scrollToBottom, 100);
+      // Force an immediate scroll right after sending
+      setTimeout(() => scrollToBottom('auto'), 10);
       
     } catch (error: any) {
       console.error('ChatSection: Error sending message:', error);

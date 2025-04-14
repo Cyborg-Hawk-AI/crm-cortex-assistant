@@ -1,4 +1,3 @@
-
 export interface StreamingResponse {
   success: boolean;
   content?: string;
@@ -22,13 +21,34 @@ export interface MessageStreamCallbacks {
   onMessageError?: (error: Error, messageId?: string) => void;
 }
 
-// New message status types for optimistic updates
-export type MessageStatus = 'sending' | 'sent' | 'error' | 'streaming' | 'complete';
-
-// Extended Message type with status field
-export interface OptimisticMessage {
+// Update Message interface to include optional status field
+export interface Message {
   id: string;
-  status?: MessageStatus;
+  content: string;
+  sender: 'user' | 'assistant' | 'system';
+  timestamp: Date;
+  isSystem?: boolean;
+  isStreaming?: boolean;
+  conversation_id?: string;
+  user_id?: string;
+  status?: 'sending' | 'sent' | 'error' | 'streaming' | 'complete';
   isOptimistic?: boolean;
-  retryCount?: number;
+}
+
+export interface Task {
+    id: string;
+    title: string;
+    description: string;
+    status: 'open' | 'in progress' | 'done' | 'blocked';
+    priority: 'low' | 'medium' | 'high';
+    dueDate?: Date;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface Assistant {
+    id: string;
+    name: string;
+    description: string;
+    capabilities: string[];
 }

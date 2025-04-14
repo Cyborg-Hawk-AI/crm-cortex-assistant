@@ -50,8 +50,10 @@ Description: AI-powered chat system with conversation history, streaming respons
 - src/hooks/useAssistantConfig.ts
 
 ### Key Features:
+- Optimistic UI updates for instant user message display
 - Real-time streaming of assistant responses
-- Immediate user message display
+- Visual feedback for message status (sending, sent, error)
+- Automatic retry mechanism for failed messages
 - Multiple specialized AI assistants for different tasks
 - Message history persistence
 - Rich markdown rendering
@@ -306,6 +308,7 @@ The application uses a Supabase PostgreSQL database with tables for:
 - React Query for server state management
 - React Context for auth and application state
 - Custom hooks for feature-specific functionality
+- Optimistic UI updates for instant feedback
 
 ### API Integration
 - OpenAI API for AI assistant functionality
@@ -315,6 +318,9 @@ The application uses a Supabase PostgreSQL database with tables for:
 Last Updated: 2025-04-14
 
 ## Recent Updates
+- Implemented optimistic UI updates for instant message display
+- Added message status indicators (sending, sent, error)
+- Implemented automatic retry mechanism for failed messages
 - Enhanced message streaming capabilities for ActionBot
 - Improved user message display for immediate feedback
 - Optimized OpenAI API integration with better error handling

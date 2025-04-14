@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Message, Task, Assistant } from '@/utils/types';
@@ -7,6 +6,7 @@ import * as assistantService from '@/services/assistantService';
 import { v4 as uuidv4 } from 'uuid';
 import * as messagesApi from '@/api/messages';
 import { createOpenAIStream } from '@/utils/openAIStream';
+import { MessageStatus } from '@/utils/streamTypes';
 
 export function useChatMessages() {
   const { toast } = useToast();
@@ -20,11 +20,12 @@ export function useChatMessages() {
   const [isSending, setIsSending] = useState(false);
   const isInitialLoadDone = useRef(false);
   
-  const [localMessages, setLocalMessages] = useState<Message[]>([]);
+  const [optimisticMessages, setOptimisticMessages] = useState<Message[]>([]);
   
   const pendingMessages = useRef<Set<string>>(new Set());
   const currentStreamingMessageId = useRef<string | null>(null);
   const processingMessageQueue = useRef<Set<string>>(new Set());
+  const messageRetryTimeouts = useRef<Record<string, number>>({});
 
   const { 
     data: conversations = [], 
@@ -51,7 +52,7 @@ export function useChatMessages() {
       console.log(`Loading messages for conversation: ${activeConversationId}`);
       refetchMessages();
       
-      setLocalMessages([]);
+      setOptimisticMessages([]);
       
       const activeConversation = conversations.find(c => c.id === activeConversationId);
       if (activeConversation) {
@@ -72,29 +73,39 @@ export function useChatMessages() {
     }
   }, [activeConversationId, conversations, refetchMessages]);
 
-  const messages = useCallback(() => {
-    const result = [...dbMessages];
+  useEffect(() => {
+    return () => {
+      Object.values(messageRetryTimeouts.current).forEach(timeoutId => {
+        clearTimeout(timeoutId);
+      });
+    };
+  }, []);
+
+  const mergeMessages = useCallback(() => {
+    const messagesMap = new Map<string, Message>();
     
-    const dbMessageIds = new Set(dbMessages.map(msg => msg.id));
+    dbMessages.forEach(msg => {
+      messagesMap.set(msg.id, msg);
+    });
     
-    for (const localMsg of localMessages) {
-      if (!dbMessageIds.has(localMsg.id)) {
-        result.push(localMsg);
+    optimisticMessages.forEach(optMsg => {
+      if (!messagesMap.has(optMsg.id) || optMsg.status === 'error' || optMsg.status === 'sending') {
+        messagesMap.set(optMsg.id, optMsg);
       }
-    }
+    });
     
-    return result.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-  }, [dbMessages, localMessages]);
+    return Array.from(messagesMap.values())
+      .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+  }, [dbMessages, optimisticMessages]);
 
   const startConversation = async (title?: string): Promise<string> => {
     try {
       const conversationTitle = title?.trim() || 'New conversation';
       const conversation = await messagesApi.createConversation(conversationTitle);
       
-      // Automatically set the new conversation as active
       console.log(`Auto-activating new conversation: ${conversation.id}`);
       setActiveConversationId(conversation.id);
-      setLocalMessages([]);
+      setOptimisticMessages([]);
       
       console.log(`Created conversation ${conversation.id} with title "${conversationTitle}" in Open Chats group`);
       
@@ -110,7 +121,6 @@ export function useChatMessages() {
     }
   };
 
-  // Function to generate a title for a new conversation
   const generateConversationTitle = async (
     conversationId: string, 
     userMessage: string, 
@@ -119,15 +129,12 @@ export function useChatMessages() {
     try {
       console.log(`Generating title for conversation ${conversationId}`);
       
-      // Create prompt for generating a title
       const prompt = `Generate a short, 3-5 word title summarizing the following conversation: 
       User: ${userMessage.substring(0, 200)}
       Assistant: ${assistantResponse.substring(0, 200)}`;
       
-      // Log the title generation attempt
       console.log("Sending title generation prompt:", prompt.substring(0, 100) + "...");
       
-      // Create a temporary message stream for the title generation
       const titleStream = await createOpenAIStream(
         { 
           messages: [
@@ -141,7 +148,6 @@ export function useChatMessages() {
           },
           onChunk: () => {},
           onComplete: async (titleResponse) => {
-            // Clean up the title (remove quotes, trim, etc.)
             const cleanTitle = titleResponse
               .replace(/^["']|["']$/g, '') // Remove quotes at start/end
               .trim()
@@ -149,11 +155,9 @@ export function useChatMessages() {
             
             console.log(`Generated title: "${cleanTitle}"`);
             
-            // Update the conversation title in Supabase
             try {
               console.log(`Updating conversation ${conversationId} with new title: "${cleanTitle}"`);
               
-              // Add retries for title updates
               let updateSuccess = false;
               let attempts = 0;
               const maxAttempts = 3;
@@ -167,16 +171,13 @@ export function useChatMessages() {
                   
                   if (updateSuccess) {
                     console.log(`Successfully updated conversation ${conversationId} title to "${cleanTitle}"`);
-                    // Invalidate the conversations query to refresh the sidebar
                     queryClient.invalidateQueries({ queryKey: ['conversations'] });
                   } else {
                     console.warn(`Failed to update title on attempt ${attempts}`);
-                    // Wait briefly before retrying
                     await new Promise(resolve => setTimeout(resolve, 500));
                   }
                 } catch (updateError) {
                   console.error(`Error updating title (attempt ${attempts}):`, updateError);
-                  // Wait briefly before retrying
                   await new Promise(resolve => setTimeout(resolve, 500));
                 }
               }
@@ -194,18 +195,41 @@ export function useChatMessages() {
         }
       );
       
-      // We don't need to do anything with the returned stream since processing happens in onComplete callback
       return titleStream;
-      
     } catch (error) {
       console.error('Error in generateConversationTitle:', error);
       return null;
     }
   };
 
-  const addLocalMessage = useCallback((message: Message) => {
-    setLocalMessages(prev => [...prev, message]);
+  const addOptimisticMessage = useCallback((message: Message) => {
+    console.log(`Adding optimistic message to UI: ${message.id} (${message.sender})`);
+    
+    setOptimisticMessages(prev => [
+      ...prev.filter(m => m.id !== message.id),
+      message
+    ]);
+    
     return message;
+  }, []);
+
+  const updateOptimisticMessage = useCallback((
+    messageId: string, 
+    updates: Partial<Message>
+  ) => {
+    setOptimisticMessages(prev => 
+      prev.map(msg => 
+        msg.id === messageId 
+          ? { ...msg, ...updates } 
+          : msg
+      )
+    );
+  }, []);
+
+  const removeOptimisticMessage = useCallback((messageId: string) => {
+    setOptimisticMessages(prev => 
+      prev.filter(msg => msg.id !== messageId)
+    );
   }, []);
 
   const clearMessages = useCallback(async (conversationId?: string) => {
@@ -217,10 +241,15 @@ export function useChatMessages() {
       
       await messagesApi.deleteConversationMessages(targetConversationId);
       
-      setLocalMessages([]);
+      setOptimisticMessages([]);
       currentStreamingMessageId.current = null;
       pendingMessages.current.clear();
       processingMessageQueue.current.clear();
+      
+      Object.values(messageRetryTimeouts.current).forEach(timeoutId => {
+        clearTimeout(timeoutId);
+      });
+      messageRetryTimeouts.current = {};
       
       queryClient.invalidateQueries({ queryKey: ['messages', targetConversationId] });
       
@@ -266,6 +295,26 @@ export function useChatMessages() {
     return task;
   }, [activeConversationId]);
 
+  const retryMessage = useCallback((message: Message, retryDelay: number = 2000) => {
+    updateOptimisticMessage(message.id, { 
+      status: 'sending',
+      retryCount: (message.retryCount || 0) + 1
+    });
+    
+    if (messageRetryTimeouts.current[message.id]) {
+      clearTimeout(messageRetryTimeouts.current[message.id]);
+    }
+    
+    messageRetryTimeouts.current[message.id] = window.setTimeout(() => {
+      saveMessage(
+        message.content, 
+        message.sender as 'user' | 'assistant' | 'system', 
+        message.id, 
+        message.conversation_id || activeConversationId
+      );
+    }, retryDelay);
+  }, [updateOptimisticMessage, activeConversationId]);
+
   const saveMessage = useCallback(async (
     content: string, 
     sender: 'user' | 'assistant' | 'system',
@@ -305,6 +354,16 @@ export function useChatMessages() {
         if (messageId) {
           pendingMessages.current.delete(messageId);
           processingMessageQueue.current.delete(messageId);
+          
+          updateOptimisticMessage(messageId, { 
+            status: 'sent',
+            isOptimistic: false
+          });
+          
+          if (messageRetryTimeouts.current[messageId]) {
+            clearTimeout(messageRetryTimeouts.current[messageId]);
+            delete messageRetryTimeouts.current[messageId];
+          }
         }
         
         queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
@@ -316,6 +375,15 @@ export function useChatMessages() {
         if (messageId) {
           pendingMessages.current.delete(messageId);
           processingMessageQueue.current.delete(messageId);
+          
+          updateOptimisticMessage(messageId, { 
+            status: 'error'
+          });
+          
+          const message = optimisticMessages.find(m => m.id === messageId);
+          if (message) {
+            retryMessage(message);
+          }
         }
         
         return null;
@@ -330,7 +398,7 @@ export function useChatMessages() {
       
       return null;
     }
-  }, [activeConversationId, queryClient]);
+  }, [activeConversationId, queryClient, optimisticMessages, updateOptimisticMessage, retryMessage]);
 
   const sendMessage = useCallback(async (
     content: string, 
@@ -349,28 +417,27 @@ export function useChatMessages() {
     
     try {
       if (sender === 'user') {
-        // Immediately add the user message to the UI first, before any backend operations
         const userMessageId = uuidv4();
+        
         const userMessage: Message = {
           id: userMessageId,
           content,
           sender: 'user',
           timestamp: new Date(),
           isSystem: false,
+          status: 'sending',
+          isOptimistic: true,
           conversation_id: specificConversationId || activeConversationId || '',
           user_id: 'current-user'
         };
         
-        // Add the user message to the UI immediately
-        addLocalMessage(userMessage);
+        console.log('IMMEDIATELY adding user message to UI:', userMessageId);
+        addOptimisticMessage(userMessage);
         
         setIsSending(true);
         
         let conversationId = specificConversationId || activeConversationId;
         console.log(`Preparing to send message to conversation: ${conversationId}`);
-        
-        // Track if this is a new conversation
-        const isNewConversation = !conversationId;
         
         if (!conversationId) {
           const newConversationId = await startConversation(
@@ -380,14 +447,12 @@ export function useChatMessages() {
           setActiveConversationId(newConversationId);
           console.log(`Created and activated new conversation: ${newConversationId}`);
           
-          // Update the user message's conversation_id if we created a new conversation
-          userMessage.conversation_id = newConversationId;
+          updateOptimisticMessage(userMessageId, { conversation_id: newConversationId });
         }
         
         const conversation = conversations.find(c => c.id === conversationId);
         const threadId = conversation?.open_ai_thread_id || null;
         
-        // Now save the user message to the database in the background
         saveMessage(content, 'user', userMessageId, conversationId).catch(error => {
           console.error('Error saving user message to database:', error);
         });
@@ -402,12 +467,12 @@ export function useChatMessages() {
           timestamp: new Date(),
           isSystem: false,
           isStreaming: true,
+          status: 'streaming',
           conversation_id: conversationId || '',
           user_id: 'current-user'
         };
         
-        // Add the empty assistant message to the UI
-        addLocalMessage(assistantMessage);
+        addOptimisticMessage(assistantMessage);
         
         setIsStreaming(true);
         
@@ -418,13 +483,11 @@ export function useChatMessages() {
           
           console.log(`Sending ${messagesForContext.length} messages for context to maintain conversation history`);
           
-          // Format messages for OpenAI API
           const messageHistory = messagesForContext.map(msg => ({
             role: msg.sender === 'user' ? 'user' : 'assistant',
             content: msg.content
           }));
           
-          // Add system message if we have an active assistant
           if (activeAssistant) {
             messageHistory.unshift({
               role: 'system',
@@ -437,7 +500,6 @@ export function useChatMessages() {
             });
           }
           
-          // Create the stream directly from the frontend
           await createOpenAIStream(
             { messages: messageHistory },
             {
@@ -449,34 +511,23 @@ export function useChatMessages() {
                 
                 fullResponse += chunk;
                 
-                // Update the assistant message content with each chunk
-                setLocalMessages(prev => 
-                  prev.map(msg => 
-                    msg.id === assistantMessageId 
-                      ? { ...msg, content: fullResponse } 
-                      : msg
-                  )
-                );
+                updateOptimisticMessage(assistantMessageId, { content: fullResponse });
               },
               onComplete: async (finalResponse: string) => {
                 console.log('Stream completed, saving final response');
                 fullResponse = finalResponse;
                 
-                setLocalMessages(prev => 
-                  prev.map(msg => 
-                    msg.id === assistantMessageId 
-                      ? { ...msg, content: fullResponse, isStreaming: false } 
-                      : msg
-                  )
-                );
+                updateOptimisticMessage(assistantMessageId, { 
+                  content: fullResponse, 
+                  isStreaming: false,
+                  status: 'complete' 
+                });
                 
                 setIsStreaming(false);
                 currentStreamingMessageId.current = null;
                 
-                // Save the complete response to the database
                 await saveMessage(fullResponse, 'assistant', assistantMessageId, conversationId);
                 
-                // If this is a new conversation's first message exchange, generate a title
                 if (isNewConversation) {
                   console.log("This is a new conversation - generating title after first exchange");
                   await generateConversationTitle(conversationId, content, finalResponse);
@@ -491,13 +542,11 @@ export function useChatMessages() {
                 console.error('Error in assistant response:', error);
                 const errorMessage = `Error: ${error.message}`;
                 
-                setLocalMessages(prev => 
-                  prev.map(msg => 
-                    msg.id === assistantMessageId 
-                      ? { ...msg, content: errorMessage, isStreaming: false } 
-                      : msg
-                  )
-                );
+                updateOptimisticMessage(assistantMessageId, { 
+                  content: errorMessage, 
+                  isStreaming: false,
+                  status: 'error' 
+                });
                 
                 setIsStreaming(false);
                 currentStreamingMessageId.current = null;
@@ -517,13 +566,11 @@ export function useChatMessages() {
         } catch (error: any) {
           console.error('Error in sendMessage:', error);
           
-          setLocalMessages(prev => 
-            prev.map(msg => 
-              msg.id === assistantMessageId 
-                ? { ...msg, content: `Error: ${error.message}`, isStreaming: false } 
-                : msg
-            )
-          );
+          updateOptimisticMessage(assistantMessageId, { 
+            content: `Error: ${error.message}`, 
+            isStreaming: false,
+            status: 'error'
+          });
           
           setIsStreaming(false);
           currentStreamingMessageId.current = null;
@@ -553,11 +600,12 @@ export function useChatMessages() {
           sender,
           timestamp: new Date(),
           isSystem: sender === 'system',
+          status: 'sending',
           conversation_id: conversationId || '',
-          user_id: 'current-user' // Use a default value or get from auth context
+          user_id: 'current-user'
         };
         
-        addLocalMessage(message);
+        addOptimisticMessage(message);
         
         await saveMessage(content, sender, messageId, conversationId);
         
@@ -585,13 +633,14 @@ export function useChatMessages() {
     openAiThreadId,
     queryClient,
     saveMessage,
-    addLocalMessage,
+    addOptimisticMessage,
     startConversation,
-    toast
+    toast,
+    updateOptimisticMessage
   ]);
 
   return {
-    messages: messages(),
+    messages: mergeMessages(),
     inputValue,
     setInputValue,
     sendMessage,
@@ -602,10 +651,12 @@ export function useChatMessages() {
         sender,
         timestamp: new Date(),
         isSystem: sender === 'system',
+        status: sender === 'user' ? 'sending' : undefined,
+        isOptimistic: sender === 'user',
         conversation_id: activeConversationId || 'temp-conversation',
         user_id: 'current-user'
       };
-      return addLocalMessage(message);
+      return addOptimisticMessage(message);
     },
     activeAssistant,
     setActiveAssistant: handleSetActiveAssistant,
