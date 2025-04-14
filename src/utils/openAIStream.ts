@@ -1,3 +1,4 @@
+
 import { StreamingCallbacks } from './streamTypes';
 
 // OpenAI API configuration
@@ -11,6 +12,7 @@ export interface StreamOptions {
   temperature?: number;
   max_tokens?: number;
   messages: Array<{ role: string; content: string }>;
+  systemPrompt?: string;
 }
 
 /**
@@ -23,6 +25,11 @@ export async function createOpenAIStream(
   try {
     callbacks.onStart();
     
+    // If systemPrompt is provided, prepend it to messages
+    const messages = options.systemPrompt 
+      ? [{ role: 'system', content: options.systemPrompt }, ...options.messages]
+      : options.messages;
+    
     const response = await fetch(`${OPENAI_API_URL}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -31,7 +38,7 @@ export async function createOpenAIStream(
       },
       body: JSON.stringify({
         model: options.model || DEFAULT_MODEL,
-        messages: options.messages,
+        messages: messages,
         temperature: options.temperature ?? 0.7,
         max_tokens: options.max_tokens,
         stream: true,

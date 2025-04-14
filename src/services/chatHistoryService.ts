@@ -12,7 +12,7 @@ export const updateConversation = async (
     task_id?: string;
     title?: string;
     open_ai_thread_id?: string;
-    project_id?: string; // Add project_id to the updates type
+    project_id?: string;
   }
 ) => {
   const userId = await getCurrentUserId();
@@ -63,7 +63,8 @@ export const getOrCreateConversationThread = async (
   title: string,
   openAiThreadId?: string | null,
   taskId?: string | null,
-  assistantId?: string | null
+  assistantId?: string | null,
+  projectId?: string | null
 ) => {
   const userId = await getCurrentUserId();
   
@@ -98,6 +99,7 @@ export const getOrCreateConversationThread = async (
       task_id: taskId || null,
       assistant_id: assistantId || null,
       open_ai_thread_id: openAiThreadId || null,
+      project_id: projectId || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     })

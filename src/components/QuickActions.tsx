@@ -32,7 +32,9 @@ export function QuickActions() {
     linkTaskToConversation,
     linkedTask, 
     sendMessage,
-    isStreaming
+    isStreaming,
+    activeConversationId,
+    startConversation
   } = useChatMessages();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -112,27 +114,45 @@ export function QuickActions() {
       return;
     }
     
-    const messageToSend = inputValue.trim() || `Help me with ${label.toLowerCase()}`;
-    
-    // Set the assistant with all required properties
-    await setActiveAssistant({
-      id: assistantId,
-      name: assistantName,
-      description: `Specialized in ${label.toLowerCase()} tasks`,
-      icon: icon as string,
-      capabilities: [], // Adding capabilities to match type
-    });
-    
-    // Clear the input and send the message
-    setInputValue('');
-    sendMessage(messageToSend, 'user');
-    
-    setExpanded(false);
-    
-    toast({
-      title: "Assistant activated",
-      description: `Using the ${assistantName} assistant`
-    });
+    try {
+      // Set the assistant with all required properties
+      await setActiveAssistant({
+        id: assistantId,
+        name: assistantName,
+        description: `Specialized in ${label.toLowerCase()} tasks`,
+        icon: icon as string,
+        capabilities: [], // Adding capabilities to match type
+      });
+      
+      // Prepare message content - use input if available or generic message
+      const messageToSend = inputValue.trim() || `Help me with ${label.toLowerCase()}`;
+      
+      // Ensure we have an active conversation or create one
+      if (!activeConversationId) {
+        await startConversation(`Conversation with ${assistantName}`);
+      }
+      
+      // Clear the input and send the message
+      setInputValue('');
+      
+      // Send the message
+      await sendMessage(messageToSend, 'user');
+      
+      // Collapse the quick actions after use
+      setExpanded(false);
+      
+      toast({
+        title: "Assistant activated",
+        description: `Using the ${assistantName} assistant`
+      });
+    } catch (error) {
+      console.error('Error in quick action:', error);
+      toast({
+        title: "Action failed",
+        description: "There was a problem processing your request",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleTaskSelect = (taskId: string) => {
