@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2, AlertTriangle, Folder, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -78,7 +77,6 @@ export function ChatSection({
     }
   }, [activeConversationId, messages, isLoading, retryCount]);
 
-  // Effect to handle navigation to new conversation after creation
   useEffect(() => {
     if (pendingNavigation && !isSending) {
       const timer = setTimeout(() => {

@@ -19,6 +19,7 @@ import { ProjectsPageWrapper } from "@/components/projects/ProjectsPageWrapper";
 import { Header } from "@/components/Header";
 import { Mindboard } from "@/components/mindboard/Mindboard";
 import { FloatingActionBar } from "@/components/FloatingActionBar";
+import { ChatLayout } from "@/components/ChatLayout";
 
 function App() {
   const [queryClient] = useState(() => new QueryClient({
@@ -51,6 +52,17 @@ function App() {
                 <Route path="/" element={
                   <ProtectedRoute>
                     <Index activeTab={activeTab} setActiveTab={setActiveTab} key={`index-${activeTab}`} />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Add specific route for chat conversations */}
+                <Route path="/chat/:conversationId" element={
+                  <ProtectedRoute>
+                    <div className="container py-4 max-w-6xl h-[calc(100vh-120px)]">
+                      <div className="h-full flex flex-col bg-[#25384D]/90 backdrop-blur-sm border border-[#3A4D62] rounded-lg shadow-md overflow-hidden">
+                        <ChatLayout />
+                      </div>
+                    </div>
                   </ProtectedRoute>
                 } />
                 

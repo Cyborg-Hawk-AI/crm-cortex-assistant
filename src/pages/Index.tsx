@@ -64,6 +64,7 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
   }, [location, navigate, setActiveTab]);
 
   const handleOpenChat = () => {
+    navigate('/chat');
     setActiveTab('chat');
   };
 
