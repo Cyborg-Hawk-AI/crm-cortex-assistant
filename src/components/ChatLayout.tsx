@@ -40,6 +40,8 @@ export function ChatLayout() {
     }
   };
 
+  console.log("ChatLayout rendered with messages count:", messages.length);
+
   return (
     <TooltipProvider>
       <div className="flex h-full w-full overflow-hidden">

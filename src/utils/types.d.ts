@@ -1,3 +1,4 @@
+
 export interface StreamingResponse {
   success: boolean;
   content?: string;
@@ -33,6 +34,7 @@ export interface Message {
   user_id?: string;
   status?: 'sending' | 'sent' | 'error' | 'streaming' | 'complete';
   isOptimistic?: boolean;
+  retryCount?: number;
 }
 
 export interface Task {

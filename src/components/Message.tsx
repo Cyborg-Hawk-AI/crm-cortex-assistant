@@ -98,6 +98,14 @@ export function Message({ message }: MessageProps) {
 
   // Process message content with memoization for performance
   const processedContent = useMemo(() => {
+    // Add debugging logs to see what message data we're receiving
+    console.log(`Processing message: ${message.id}`, {
+      content: message.content,
+      sender: message.sender,
+      status: message.status,
+      isStreaming: message.isStreaming
+    });
+
     // User messages should always render immediately even if empty
     if (isUser) {
       return <p className={cn(
@@ -110,6 +118,7 @@ export function Message({ message }: MessageProps) {
     
     // Completely skip rendering empty messages that aren't streaming
     if (!message.content && !message.isStreaming) {
+      console.log(`Skipping empty message: ${message.id}, not streaming`);
       return null;
     }
     
@@ -145,7 +154,7 @@ export function Message({ message }: MessageProps) {
         }}
       />
     );
-  }, [message.content, message.isStreaming, isUser, isSending]);
+  }, [message.content, message.isStreaming, message.status, isUser, isSending]);
 
   // For user messages, always render even if content is empty
   // For assistant messages, only render if we have content or are streaming

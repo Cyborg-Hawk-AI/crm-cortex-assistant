@@ -63,6 +63,11 @@ export function ChatSection({
     }
   };
 
+  console.log("ChatSection rendered with messages:", messages.length);
+  if (messages.length > 0) {
+    console.log("Sample message:", messages[0]);
+  }
+
   useEffect(() => {
     // Check if a new message was added based on length change
     const needsScroll = messages.length > 0 && 

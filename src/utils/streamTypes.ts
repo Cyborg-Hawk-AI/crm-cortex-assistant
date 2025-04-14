@@ -22,7 +22,7 @@ export interface MessageStreamCallbacks {
   onMessageError?: (error: Error, messageId?: string) => void;
 }
 
-// New message status types for optimistic updates
+// Message status types for optimistic updates
 export type MessageStatus = 'sending' | 'sent' | 'error' | 'streaming' | 'complete';
 
 // Extended Message type with status field

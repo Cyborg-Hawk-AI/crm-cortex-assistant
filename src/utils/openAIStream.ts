@@ -25,6 +25,13 @@ export async function createOpenAIStream(
     // Signal the start of streaming immediately to update UI
     callbacks.onStart();
     console.log("OpenAI Stream: Starting connection to OpenAI API");
+    console.log("OpenAI Stream: Request options:", JSON.stringify({
+      model: options.model || DEFAULT_MODEL,
+      messages: options.messages.length,
+      temperature: options.temperature ?? 0.7,
+      max_tokens: options.max_tokens,
+      stream: true,
+    }));
     
     // Ensure we're starting with the correct API URL
     const response = await fetch(`${OPENAI_API_URL}/chat/completions`, {
