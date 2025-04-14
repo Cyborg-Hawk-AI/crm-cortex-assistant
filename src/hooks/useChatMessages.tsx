@@ -7,7 +7,7 @@ import { useToast } from './use-toast';
 import { useAssistantConfig } from './useAssistantConfig';
 import { openAIChat } from '@/utils/openAIStream';
 import { deepSeekChat } from '@/utils/deepSeekStream';
-import { useModelSelection } from './useModelSelection';
+import { useModelSelection, ModelType } from './useModelSelection';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const useChatMessages = () => {
@@ -218,7 +218,8 @@ export const useChatMessages = () => {
         {
           messages: [{ role: 'user', content: titlePrompt }],
           temperature: 0.7,
-          model: 'gpt-4o-mini'
+          model: 'gpt-4o-mini',
+          systemPrompt: undefined,
         },
         {
           onStart: () => {
@@ -293,6 +294,7 @@ export const useChatMessages = () => {
         const assistantMessageId = uuidv4();
         const assistantMessage = addMessage("", "assistant");
         assistantMessage.id = assistantMessageId;
+        assistantMessage.isStreaming = true;
         
         setIsStreaming(true);
         currentStreamingMessageId.current = assistantMessageId;
@@ -301,7 +303,7 @@ export const useChatMessages = () => {
         
         let fullResponse = '';
         
-        if (modelOption === 'deepseek') {
+        if (modelOption.id === 'deepseek') {
           await deepSeekChat(
             {
               messages: existingMessages.map(msg => ({
@@ -320,7 +322,7 @@ export const useChatMessages = () => {
                 setLocalMessages(prev => 
                   prev.map(msg => 
                     msg.id === assistantMessageId 
-                      ? { ...msg, content: fullResponse } 
+                      ? { ...msg, content: fullResponse, isStreaming: true } 
                       : msg
                   )
                 );
@@ -335,7 +337,15 @@ export const useChatMessages = () => {
                   setLocalMessages(prev => 
                     prev.map(msg => 
                       msg.id === assistantMessageId 
-                        ? { ...msg, content: fullResponse } 
+                        ? { ...msg, content: fullResponse, isStreaming: false } 
+                        : msg
+                    )
+                  );
+                } else {
+                  setLocalMessages(prev => 
+                    prev.map(msg => 
+                      msg.id === assistantMessageId 
+                        ? { ...msg, isStreaming: false } 
                         : msg
                     )
                   );
@@ -354,6 +364,15 @@ export const useChatMessages = () => {
                 console.error('Error in streaming response:', error);
                 setIsStreaming(false);
                 currentStreamingMessageId.current = null;
+                
+                setLocalMessages(prev => 
+                  prev.map(msg => 
+                    msg.id === assistantMessageId 
+                      ? { ...msg, isStreaming: false } 
+                      : msg
+                  )
+                );
+                
                 toast({
                   title: 'Error generating response',
                   description: 'Please try again.',
@@ -381,7 +400,7 @@ export const useChatMessages = () => {
                 setLocalMessages(prev => 
                   prev.map(msg => 
                     msg.id === assistantMessageId 
-                      ? { ...msg, content: fullResponse } 
+                      ? { ...msg, content: fullResponse, isStreaming: true } 
                       : msg
                   )
                 );
@@ -396,7 +415,15 @@ export const useChatMessages = () => {
                   setLocalMessages(prev => 
                     prev.map(msg => 
                       msg.id === assistantMessageId 
-                        ? { ...msg, content: fullResponse } 
+                        ? { ...msg, content: fullResponse, isStreaming: false } 
+                        : msg
+                    )
+                  );
+                } else {
+                  setLocalMessages(prev => 
+                    prev.map(msg => 
+                      msg.id === assistantMessageId 
+                        ? { ...msg, isStreaming: false } 
                         : msg
                     )
                   );
@@ -415,6 +442,15 @@ export const useChatMessages = () => {
                 console.error('Error in streaming response:', error);
                 setIsStreaming(false);
                 currentStreamingMessageId.current = null;
+                
+                setLocalMessages(prev => 
+                  prev.map(msg => 
+                    msg.id === assistantMessageId 
+                      ? { ...msg, isStreaming: false } 
+                      : msg
+                  )
+                );
+                
                 toast({
                   title: 'Error generating response',
                   description: 'Please try again.',

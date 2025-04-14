@@ -1,3 +1,4 @@
+
 // Define task priority and status types based on what's in the database
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type TaskStatus = 'open' | 'in-progress' | 'resolved' | 'closed' | 'completed';
@@ -93,6 +94,7 @@ export interface Message {
   sender: 'user' | 'assistant' | 'system';
   timestamp: Date;
   isSystem: boolean;
+  isStreaming?: boolean; // Added isStreaming property
   conversation_id?: string;
   user_id?: string;
 }

@@ -207,7 +207,8 @@ export const mockMessages: Message[] = [
     sender: 'user',
     timestamp: new Date('2023-11-11T14:35:10'),
     user_id: 'user-123',
-    conversation_id: 'conv-123'
+    conversation_id: 'conv-123',
+    isSystem: false
   },
   {
     id: '2',
@@ -215,7 +216,8 @@ export const mockMessages: Message[] = [
     sender: 'assistant',
     timestamp: new Date('2023-11-11T14:36:22'),
     user_id: 'user-123',
-    conversation_id: 'conv-123'
+    conversation_id: 'conv-123',
+    isSystem: false
   },
   {
     id: '3',
@@ -223,7 +225,8 @@ export const mockMessages: Message[] = [
     sender: 'user',
     timestamp: new Date('2023-11-11T14:38:45'),
     user_id: 'user-123',
-    conversation_id: 'conv-123'
+    conversation_id: 'conv-123',
+    isSystem: false
   },
   {
     id: '4',
@@ -231,7 +234,8 @@ export const mockMessages: Message[] = [
     sender: 'assistant',
     timestamp: new Date('2023-11-11T14:40:12'),
     user_id: 'user-123',
-    conversation_id: 'conv-123'
+    conversation_id: 'conv-123',
+    isSystem: false
   }
 ];
 
