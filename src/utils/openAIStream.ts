@@ -44,7 +44,7 @@ export async function createOpenAIStream(
       content: message.content
     }));
     
-    // FIXED: Corrected the endpoint URL - removed extra '/v1' segment
+    // FIXED: Corrected the endpoint URL
     const response = await fetch(`${OPENAI_API_URL}/responses`, {
       method: 'POST',
       headers: {
