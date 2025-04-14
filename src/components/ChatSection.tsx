@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2, AlertTriangle, Folder, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,8 @@ import { Alert } from '@/components/ui/alert';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ProjectSelect } from '@/components/ProjectSelect';
+import { useProjects } from '@/hooks/useProjects';
 
 interface ChatSectionProps {
   activeConversationId: string | null;
@@ -29,6 +32,7 @@ export function ChatSection({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const {
     selectedModel,
     toggleModel
@@ -78,7 +82,7 @@ export function ChatSection({
     try {
       if (!activeConversationId) {
         console.log("Creating a new conversation as part of sending the first message");
-        const newConversationId = await startConversation('New conversation');
+        const newConversationId = await startConversation('New conversation', selectedProjectId);
         setActiveConversationId(newConversationId);
         refetchConversations();
         await sendMessage(inputValue, 'user', newConversationId);
@@ -103,7 +107,7 @@ export function ChatSection({
 
   const handleNewChat = async () => {
     try {
-      const newConversationId = await startConversation('New conversation');
+      const newConversationId = await startConversation('New conversation', selectedProjectId);
       setActiveConversationId(newConversationId);
       refetchConversations();
       setInputValue('');
@@ -240,9 +244,16 @@ export function ChatSection({
           {selectedModel === 'deepseek' && (
             <Alert className="mb-4 bg-amber-900/30 text-amber-200 border-amber-600/50">
               <AlertTriangle className="h-4 w-4 mr-2" />
-              <span>DeepSeek requires API configuration. Please add your API key in the settings.</span>
+              <span>DeepSeek API key is missing or invalid. The service requires configuration.</span>
             </Alert>
           )}
+          
+          <div className="mb-4">
+            <ProjectSelect
+              onProjectSelect={setSelectedProjectId}
+              className="w-full mb-4"
+            />
+          </div>
           
           <div className="relative">
             <Textarea 

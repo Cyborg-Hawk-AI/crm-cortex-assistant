@@ -28,14 +28,14 @@ export const getConversations = async () => {
 };
 
 // Create a new conversation
-export const createConversation = async (title?: string) => {
+export const createConversation = async (title?: string, projectId?: string) => {
   const userId = await getCurrentUserId();
   
   if (!userId) {
     throw new Error('User not authenticated');
   }
 
-  console.log(`Creating new conversation with title: ${title || 'New conversation'}`);
+  console.log(`Creating new conversation with title: ${title || 'New conversation'} and project: ${projectId || 'Open Chats'}`);
 
   const conversationId = uuidv4();
   
@@ -48,7 +48,7 @@ export const createConversation = async (title?: string) => {
       title: title || 'New conversation',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      // project_id is null by default, placing it in "Open Chats" group
+      project_id: projectId || null  // Use null for "Open Chats"
     })
     .select()
     .single();

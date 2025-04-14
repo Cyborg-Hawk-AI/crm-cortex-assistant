@@ -13,13 +13,13 @@ export interface ModelOption {
 export const MODEL_OPTIONS: Record<ModelType, ModelOption> = {
   openai: {
     id: 'openai',
-    name: 'ActionAlpha',
+    name: 'action.it Core',
     description: 'ActionBot Core',
     apiModel: 'gpt-4o-mini'
   },
   deepseek: {
     id: 'deepseek',
-    name: 'ActionOmega',
+    name: 'Jaxira MYK',
     description: 'DeepCognition Protocol',
     apiModel: 'deepseek-chat'
   }

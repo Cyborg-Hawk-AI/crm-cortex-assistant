@@ -1,15 +1,22 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import * as messageApi from '@/api/messages';
 import { Message, Task, Assistant } from '@/utils/types';
-import { useToast } from '@/hooks/use-toast';
-import * as assistantService from '@/services/assistantService';
 import { v4 as uuidv4 } from 'uuid';
-import * as messagesApi from '@/api/messages';
-import { createOpenAIStream } from '@/utils/openAIStream';
+import { useToast } from './use-toast';
+import { useAssistantConfig } from './useAssistantConfig';
+import { openAIChat } from '@/utils/openAIStream';
+import { deepSeekChat } from '@/utils/deepSeekStream';
+import { useModelSelection } from './useModelSelection';
+import { useAuth } from '@/contexts/AuthContext';
 
-export function useChatMessages() {
+export const useChatMessages = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { assistantConfig } = useAssistantConfig();
+  const { modelSelection } = useModelSelection();
+  const { user } = useAuth();
+
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [activeAssistant, setActiveAssistant] = useState<Assistant | null>(null);
   const [linkedTask, setLinkedTask] = useState<Task | null>(null);
@@ -18,9 +25,9 @@ export function useChatMessages() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const isInitialLoadDone = useRef(false);
-  
+
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
-  
+
   const pendingMessages = useRef<Set<string>>(new Set());
   const currentStreamingMessageId = useRef<string | null>(null);
   const processingMessageQueue = useRef<Set<string>>(new Set());
@@ -31,7 +38,7 @@ export function useChatMessages() {
     refetch: refetchConversations
   } = useQuery({
     queryKey: ['conversations'],
-    queryFn: () => messagesApi.getConversations(),
+    queryFn: () => messageApi.getConversations(),
   });
 
   const {
@@ -41,7 +48,7 @@ export function useChatMessages() {
   } = useQuery({
     queryKey: ['messages', activeConversationId],
     queryFn: () => activeConversationId 
-      ? messagesApi.getMessages(activeConversationId) 
+      ? messageApi.getMessages(activeConversationId) 
       : Promise.resolve([]),
     enabled: !!activeConversationId,
   });
@@ -86,10 +93,10 @@ export function useChatMessages() {
     return result.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
   }, [dbMessages, localMessages]);
 
-  const startConversation = async (title?: string): Promise<string> => {
+  const startConversation = async (title?: string, projectId: string = ''): Promise<string> => {
     try {
       const conversationTitle = title?.trim() || 'New conversation';
-      const conversation = await messagesApi.createConversation(conversationTitle);
+      const conversation = await messageApi.createConversation(conversationTitle, projectId || undefined);
       
       console.log(`Auto-activating new conversation: ${conversation.id}`);
       setActiveConversationId(conversation.id);
@@ -127,7 +134,7 @@ export function useChatMessages() {
       
       console.log("Sending title generation prompt:", prompt.substring(0, 100) + "...");
       
-      const titleStream = await createOpenAIStream(
+      const titleStream = await openAIChat(
         { 
           messages: [
             { role: 'system', content: 'You are a helpful assistant that generates short, concise titles.' },
@@ -159,7 +166,7 @@ export function useChatMessages() {
                 console.log(`Attempting to update title (attempt ${attempts}/${maxAttempts})...`);
                 
                 try {
-                  updateSuccess = await messagesApi.updateConversationTitle(conversationId, cleanTitle);
+                  updateSuccess = await messageApi.updateConversationTitle(conversationId, cleanTitle);
                   
                   if (updateSuccess) {
                     console.log(`Successfully updated conversation ${conversationId} title to "${cleanTitle}"`);
@@ -207,7 +214,7 @@ export function useChatMessages() {
     try {
       console.log(`Clearing messages for conversation ${targetConversationId}`);
       
-      await messagesApi.deleteConversationMessages(targetConversationId);
+      await messageApi.deleteConversationMessages(targetConversationId);
       
       setLocalMessages([]);
       currentStreamingMessageId.current = null;
@@ -235,7 +242,7 @@ export function useChatMessages() {
     
     if (activeConversationId) {
       try {
-        await assistantService.switchAssistant(activeConversationId, assistant);
+        await messageApi.switchAssistant(activeConversationId, assistant);
       } catch (error) {
         console.error('Error setting assistant:', error);
       }
@@ -249,7 +256,7 @@ export function useChatMessages() {
     
     if (activeConversationId && task) {
       try {
-        await assistantService.linkTaskToConversation(activeConversationId, task);
+        await messageApi.linkTaskToConversation(activeConversationId, task);
       } catch (error) {
         console.error('Error linking task:', error);
       }
@@ -287,7 +294,7 @@ export function useChatMessages() {
       console.log(`Saving ${sender} message to conversation ${conversationId}`);
       
       try {
-        const savedMessage = await messagesApi.sendMessage(
+        const savedMessage = await messageApi.sendMessage(
           conversationId,
           content,
           sender,
@@ -400,7 +407,7 @@ export function useChatMessages() {
         let fullResponse = '';
         
         try {
-          const messagesForContext = await messagesApi.getMessages(conversationId);
+          const messagesForContext = await messageApi.getMessages(conversationId);
           
           console.log(`Sending ${messagesForContext.length} messages for context to maintain conversation history`);
           
@@ -421,7 +428,7 @@ export function useChatMessages() {
             });
           }
           
-          await createOpenAIStream(
+          await openAIChat(
             { messages: messageHistory },
             {
               onStart: () => {
@@ -607,4 +614,6 @@ export function useChatMessages() {
     generateConversationTitle,
     refetchConversations
   };
-}
+};
+
+export type { ChatMessagesHook } from './useChatMessages';
