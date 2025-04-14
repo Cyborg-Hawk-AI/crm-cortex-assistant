@@ -151,18 +151,20 @@ export function Message({ message }: MessageProps) {
       )}>
         <div className={cn(
           'w-8 h-8 rounded-full flex items-center justify-center',
-          isUser ? 'bg-primary text-black' : 'bg-accent text-black'
+          isUser 
+            ? 'bg-neon-aqua text-[#111827]' 
+            : 'bg-neon-purple text-[#111827]'
         )}>
           {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
         </div>
         
         <div className={cn(
-          'rounded-lg px-4 py-3',
+          'rounded-lg px-4 py-3 shadow-md',
           isUser 
-            ? 'bg-primary text-black' 
+            ? 'bg-gradient-to-r from-neon-aqua to-neon-aqua/80 text-[#111827]' 
             : isSystem
-              ? 'bg-secondary border border-border/30 text-foreground'
-              : 'bg-secondary/70 border border-border/30 text-foreground'
+              ? 'bg-gradient-to-r from-neon-purple to-neon-purple/80 text-foreground border border-border/30'
+              : 'bg-gradient-to-r from-neon-purple/70 to-neon-purple/50 text-foreground border border-border/30'
         )}>
           {processedContent}
         </div>
@@ -170,3 +172,4 @@ export function Message({ message }: MessageProps) {
     </motion.div>
   );
 }
+
