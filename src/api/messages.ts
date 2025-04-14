@@ -475,9 +475,11 @@ export const switchAssistant = async (conversationId: string, assistant: any): P
     throw new Error('User not authenticated');
   }
 
+  console.log(`API: Switching assistant for conversation ${conversationId} to ${assistant.id} (${assistant.name})`);
+
   const { data: conversation, error: convError } = await supabase
     .from('conversations')
-    .select()
+    .select('*')
     .eq('id', conversationId)
     .eq('user_id', userId)
     .single();
@@ -486,6 +488,8 @@ export const switchAssistant = async (conversationId: string, assistant: any): P
     console.error('Error fetching conversation:', convError);
     return false;
   }
+
+  console.log(`Found conversation ${conversationId}, updating assistant_id to ${assistant.id}`);
 
   const { error } = await supabase
     .from('conversations')
@@ -498,9 +502,12 @@ export const switchAssistant = async (conversationId: string, assistant: any): P
 
   if (error) {
     console.error('Error switching assistant:', error);
+    console.error('Error details:', error.details);
+    console.error('Error message:', error.message);
     return false;
   }
 
+  console.log(`Successfully updated conversation ${conversationId} with assistant ${assistant.id}`);
   return true;
 };
 

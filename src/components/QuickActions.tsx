@@ -28,11 +28,12 @@ export function QuickActions() {
     addMessage, 
     inputValue, 
     setInputValue, 
-    setActiveAssistant, 
+    switchAssistant, 
     linkTaskToConversation,
     linkedTask, 
     sendMessage,
-    isStreaming
+    isStreaming,
+    activeConversationId
   } = useChatMessages();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -112,27 +113,54 @@ export function QuickActions() {
       return;
     }
     
-    const messageToSend = inputValue.trim() || `Help me with ${label.toLowerCase()}`;
+    if (!activeConversationId) {
+      toast({
+        title: "No active conversation",
+        description: "Please start a conversation first"
+      });
+      return;
+    }
     
-    // Set the assistant with all required properties
-    await setActiveAssistant({
-      id: assistantId,
-      name: assistantName,
-      description: `Specialized in ${label.toLowerCase()} tasks`,
-      icon: icon as string,
-      capabilities: [], // Adding capabilities to match type
-    });
-    
-    // Clear the input and send the message
-    setInputValue('');
-    sendMessage(messageToSend, 'user');
-    
-    setExpanded(false);
-    
-    toast({
-      title: "Assistant activated",
-      description: `Using the ${assistantName} assistant`
-    });
+    try {
+      // First switch the assistant for the current conversation
+      const success = await switchAssistant({
+        id: assistantId,
+        name: assistantName,
+        description: `Specialized in ${label.toLowerCase()} tasks`,
+        icon: icon as string,
+        capabilities: []
+      });
+      
+      if (!success) {
+        toast({
+          title: "Error",
+          description: `Failed to switch to ${assistantName}`,
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Get the message to send (either from input or default)
+      const messageToSend = inputValue.trim() || `Help me with ${label.toLowerCase()}`;
+      
+      // Clear the input and send the message
+      setInputValue('');
+      await sendMessage(messageToSend, 'user');
+      
+      setExpanded(false);
+      
+      toast({
+        title: "Assistant activated",
+        description: `Using the ${assistantName} assistant`
+      });
+    } catch (error) {
+      console.error("Error in handleAction:", error);
+      toast({
+        title: "Error",
+        description: "Failed to use this assistant",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleTaskSelect = (taskId: string) => {
