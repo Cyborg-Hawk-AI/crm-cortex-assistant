@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2, AlertTriangle, Folder, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -60,11 +61,16 @@ export function ChatSection({
     scrollToBottom();
   }, [messages]);
   
+  // Add retry mechanism for missing data
   useEffect(() => {
+    // If messages array is empty but we should have messages (activeConversationId exists),
+    // and we're not currently loading, try to reload the data
     if (activeConversationId && messages.length === 0 && !isLoading && retryCount < 3) {
       const timer = setTimeout(() => {
         console.warn('Chat messages appear to be missing, retrying fetch...');
+        // This will trigger a re-fetch in the parent component
         setRetryCount(prev => prev + 1);
+        // We're not directly refetching here because that logic is in the parent component
       }, 1000);
       
       return () => clearTimeout(timer);
@@ -162,15 +168,9 @@ export function ChatSection({
     );
   };
 
-  const chatBackgrounds = {
-    emptyState: 'bg-[#1A1F2C]',
-    messagesContainer: 'bg-gradient-to-br from-[#1C2A3A] to-[#25384D]',
-    inputArea: 'bg-[#25384D] border-[#3A4D62]'
-  };
-
   if (isLoading) {
     return (
-      <div className={`flex flex-col h-full justify-center items-center text-muted-foreground ${chatBackgrounds.emptyState}`}>
+      <div className="flex flex-col h-full justify-center items-center text-muted-foreground">
         <div className="loading-dots flex items-center">
           <div className="h-3 w-3 bg-neon-purple rounded-full mx-1 animate-pulse"></div>
           <div className="h-3 w-3 bg-neon-purple rounded-full mx-1 animate-pulse" style={{
@@ -185,9 +185,11 @@ export function ChatSection({
     );
   }
 
+  // If we have an activeConversationId but no messages and we've tried multiple times to fetch,
+  // show a temporary loading state instead of empty chat screen
   if (activeConversationId && messages.length === 0 && retryCount > 0 && retryCount < 3) {
     return (
-      <div className={`flex flex-col h-full justify-center items-center text-muted-foreground ${chatBackgrounds.emptyState}`}>
+      <div className="flex flex-col h-full justify-center items-center text-muted-foreground">
         <Loader2 className="h-8 w-8 text-neon-purple animate-spin" />
         <p className="mt-4 font-medium">Loading conversation...</p>
       </div>
@@ -196,8 +198,8 @@ export function ChatSection({
 
   if (messages.length === 0) {
     return (
-      <div className={`flex flex-col h-full justify-center items-center p-4 text-center ${chatBackgrounds.emptyState}`}>
-        <div className="max-w-md actionbot-card p-8 rounded-xl border border-gray-700 shadow-lg bg-[#1A1F2C]">
+      <div className="flex flex-col h-full justify-center items-center p-4 text-center">
+        <div className="max-w-md actionbot-card p-8 rounded-xl border border-gray-100 shadow-lg bg-cyan-950">
           <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-[#C084FC] to-[#D946EF] rounded-full flex items-center justify-center text-white shadow-[0_0_15px_rgba(168,85,247,0.3)]">
             <Send className="h-6 w-6" />
           </div>
@@ -206,15 +208,15 @@ export function ChatSection({
             Your engineering assistant is ready to help. What would you like to accomplish today?
           </p>
           
-          <div className="grid gap-2 mb-8 max-w-full">
+          <div className="grid gap-2 mb-8">
             {["Debug this error: TypeError: Cannot read property 'map' of undefined", "Review my API endpoint for security issues", "Optimize this database query for better performance", "Help me set up Kubernetes monitoring for our cluster"].map((question, i) => (
               <Button 
                 key={i} 
                 variant="outline" 
                 onClick={() => setInputValue(question)} 
-                className="justify-start h-auto border border-neon-purple/20 hover:border-neon-purple/40 hover:shadow-[0_0_8px_rgba(168,85,247,0.3)] transition-all py-[8px] text-left mx-0 my-0 font-thin whitespace-normal break-words overflow-hidden text-ellipsis max-w-full"
+                className="justify-start h-auto border border-neon-purple/20 hover:border-neon-purple/40 hover:shadow-[0_0_8px_rgba(168,85,247,0.3)] transition-all py-[8px] text-left mx-0 my-0 font-thin"
               >
-                <span className="truncate">{question}</span>
+                {question}
               </Button>
             ))}
           </div>
@@ -234,7 +236,7 @@ export function ChatSection({
               onCompositionStart={() => setIsComposing(true)} 
               onCompositionEnd={() => setIsComposing(false)} 
               placeholder="Type your engineering question here..." 
-              className="min-h-[80px] resize-none pr-12 rounded-md border border-neon-purple/30 bg-[#25384D] text-[#F1F5F9] focus:border-neon-purple focus:shadow-[0_0_8px_rgba(168,85,247,0.2)] transition-all" 
+              className="min-h-[80px] resize-none pr-12 rounded-md border border-neon-purple/30 focus:border-neon-purple focus:shadow-[0_0_8px_rgba(168,85,247,0.2)] transition-all" 
             />
             <Button 
               size="icon" 
@@ -256,14 +258,15 @@ export function ChatSection({
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className={`flex-1 overflow-y-auto p-4 space-y-5 ${chatBackgrounds.messagesContainer}`}>
+      <div className="flex-1 overflow-y-auto p-4 space-y-5 bg-gradient-to-br from-white to-gray-50 bg-slate-900">
         {messages.map((message: Message) => (
           <MessageComponent key={message.id} message={message} />
         ))}
         <div ref={messagesEndRef} />
       </div>
       
-      <div className={`border-t border-gray-700 p-4 ${chatBackgrounds.inputArea}`}>
+      <div className="border-t border-gray-200 p-4 bg-slate-700">
+        {/* Quick Actions Section */}
         <QuickActions />
         
         {apiError && (
@@ -285,6 +288,7 @@ export function ChatSection({
             Clear conversation
           </Button>
           
+          {/* Model Selection */}
           <div className="flex space-x-2">
             <div className="model-toggle">
               <ModelToggle currentModel={selectedModel} onToggle={toggleModel} />
@@ -300,7 +304,7 @@ export function ChatSection({
             onCompositionStart={() => setIsComposing(true)} 
             onCompositionEnd={() => setIsComposing(false)} 
             placeholder="Type your engineering question here..." 
-            className="min-h-[80px] resize-none pr-12 rounded-md border border-neon-purple/30 bg-[#1A1F2C] text-[#F1F5F9] focus:border-neon-purple focus:shadow-[0_0_8px_rgba(168,85,247,0.2)] transition-all" 
+            className="min-h-[80px] resize-none pr-12 rounded-md border border-neon-purple/30 focus:border-neon-purple focus:shadow-[0_0_8px_rgba(168,85,247,0.2)] transition-all" 
             disabled={isSending || isStreaming || !activeConversationId} 
           />
           

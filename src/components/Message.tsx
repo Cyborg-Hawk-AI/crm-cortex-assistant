@@ -151,20 +151,18 @@ export function Message({ message }: MessageProps) {
       )}>
         <div className={cn(
           'w-8 h-8 rounded-full flex items-center justify-center',
-          isUser 
-            ? 'bg-neon-purple text-white' 
-            : 'bg-neon-purple text-white'
+          isUser ? 'bg-primary text-black' : 'bg-accent text-black'
         )}>
           {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
         </div>
         
         <div className={cn(
-          'rounded-lg px-4 py-3 text-[#F1F5F9]',
+          'rounded-lg px-4 py-3',
           isUser 
-            ? 'bg-gradient-to-r from-[#1C2A3A] to-[#25384D] border border-neon-purple/30' 
+            ? 'bg-primary text-black' 
             : isSystem
-              ? 'bg-[#25384D] border border-[#3A4D62]'
-              : 'bg-[#25384D] border border-[#3A4D62]'
+              ? 'bg-secondary border border-border/30 text-foreground'
+              : 'bg-secondary/70 border border-border/30 text-foreground'
         )}>
           {processedContent}
         </div>
