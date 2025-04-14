@@ -117,15 +117,15 @@ export function QuickActions() {
   ];
 
   const handleAction = async (assistantId: string, assistantName: string, icon: React.ReactNode, label: string, systemPrompt?: string) => {
-    if (isStreaming || isSending) {
-      toast({
-        title: "Please wait",
-        description: "Please wait for the current response to finish before sending a new message"
-      });
-      return;
-    }
+    console.log('📍 QuickActions: handleAction triggered', {
+      assistantId,
+      assistantName,
+      label,
+      activeConversationId,
+      inputValue
+    });
     
-    // Verify we have an active conversation
+    // Check if we have an active conversation
     if (!activeConversationId) {
       toast({
         title: "No active conversation",
@@ -134,15 +134,15 @@ export function QuickActions() {
       return;
     }
     
-    try {
-      console.log('📍 QuickActions: handleAction triggered', {
-        assistantId,
-        assistantName,
-        label,
-        activeConversationId,
-        inputValue
+    if (isStreaming || isSending) {
+      toast({
+        title: "Please wait",
+        description: "Please wait for the current response to finish before sending a new message"
       });
-      
+      return;
+    }
+    
+    try {
       // Set the assistant with all required properties
       const assistantIcon = typeof icon === 'string' ? icon : label.charAt(0);
       
@@ -160,14 +160,11 @@ export function QuickActions() {
       const messageToSend = inputValue.trim() || `Help me with ${label.toLowerCase()}`;
       console.log('📍 QuickActions: Message to send', { messageToSend });
       
-      // Always use the existing conversation
-      console.log(`📍 QuickActions: Using existing conversation: ${activeConversationId}`);
-      
       // Clear the input before sending to avoid double sends
       setInputValue('');
       
-      // Send message within the existing conversation (explicitly don't pass specificConversationId)
-      await sendMessage(messageToSend, 'user');
+      // Send message within the existing conversation
+      await sendMessage(messageToSend, 'user', activeConversationId);
       
       // Collapse the quick actions after use
       setExpanded(false);
@@ -229,6 +226,9 @@ export function QuickActions() {
       default: return actions.slice(0, 3);         // Show 3 for larger screens by default
     }
   };
+  
+  // Determine if buttons should be disabled
+  const areButtonsDisabled = !activeConversationId || isStreaming || isSending;
 
   return (
     <motion.div
@@ -246,6 +246,7 @@ export function QuickActions() {
                 variant="ghost" 
                 size="sm"
                 className="text-xs h-6 w-6 p-0 text-foreground"
+                disabled={areButtonsDisabled}
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
@@ -262,6 +263,7 @@ export function QuickActions() {
                     }
                   }}
                   className="flex items-center gap-2"
+                  disabled={action.action ? false : areButtonsDisabled}
                 >
                   <span className={`p-1 rounded-full ${action.color}`}>{action.icon}</span>
                   <span>{action.label}</span>
@@ -275,6 +277,7 @@ export function QuickActions() {
             size="sm"
             onClick={() => setExpanded(!expanded)}
             className="text-xs h-6 px-2 text-foreground"
+            disabled={areButtonsDisabled && !expanded}
           >
             {expanded ? 'Collapse' : 'View all'}
             <ArrowRight className={`h-3 w-3 ml-1 transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`} />
@@ -322,14 +325,17 @@ export function QuickActions() {
                       handleAction(action.assistantId, action.assistantName, action.icon, action.label, action.systemPrompt);
                     }
                   }}
-                  className={`w-10 h-10 p-0 rounded-full flex items-center justify-center ${action.color}`}
-                  disabled={isStreaming || isSending || !activeConversationId}
+                  className={`w-10 h-10 p-0 rounded-full flex items-center justify-center ${action.color} ${areButtonsDisabled && !action.action ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={action.action ? false : areButtonsDisabled}
                 >
                   {(isStreaming || isSending) ? <Loader2 className="h-4 w-4 animate-spin" /> : action.icon}
                 </Button>
               </HoverCardTrigger>
               <HoverCardContent className="p-2 text-center">
                 <span className="text-xs text-foreground">{action.label}</span>
+                {!activeConversationId && !action.action && (
+                  <p className="text-xs text-muted-foreground mt-1">Start a conversation first</p>
+                )}
               </HoverCardContent>
             </HoverCard>
           </motion.div>
@@ -348,7 +354,7 @@ export function QuickActions() {
               size="sm"
               onClick={() => setExpanded(true)}
               className="w-10 h-10 p-0 rounded-full flex items-center justify-center bg-muted/80 text-foreground"
-              disabled={isStreaming || isSending}
+              disabled={areButtonsDisabled}
             >
               <MoreHorizontal className="h-4 w-4" />
             </Button>
