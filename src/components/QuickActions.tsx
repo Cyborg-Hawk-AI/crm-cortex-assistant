@@ -55,6 +55,7 @@ export function QuickActions() {
       color: 'bg-primary text-primary-foreground',
       assistantId: ASSISTANTS.CODE_REVIEW.id,
       assistantName: ASSISTANTS.CODE_REVIEW.name,
+      systemPrompt: ASSISTANTS.CODE_REVIEW.prompt
     },
     {
       id: 'documentation',
@@ -63,6 +64,7 @@ export function QuickActions() {
       color: 'bg-accent text-accent-foreground',
       assistantId: ASSISTANTS.DOCUMENTATION.id,
       assistantName: ASSISTANTS.DOCUMENTATION.name,
+      systemPrompt: ASSISTANTS.DOCUMENTATION.prompt
     },
     {
       id: 'risk-assessment',
@@ -71,6 +73,7 @@ export function QuickActions() {
       color: 'bg-primary text-primary-foreground',
       assistantId: ASSISTANTS.RISK_ASSESSMENT.id,
       assistantName: ASSISTANTS.RISK_ASSESSMENT.name,
+      systemPrompt: ASSISTANTS.RISK_ASSESSMENT.prompt
     },
     {
       id: 'summarize',
@@ -79,6 +82,7 @@ export function QuickActions() {
       color: 'bg-secondary text-secondary-foreground',
       assistantId: ASSISTANTS.SUMMARIZER.id,
       assistantName: ASSISTANTS.SUMMARIZER.name,
+      systemPrompt: ASSISTANTS.SUMMARIZER.prompt
     },
     {
       id: 'search',
@@ -87,6 +91,7 @@ export function QuickActions() {
       color: 'bg-secondary text-secondary-foreground',
       assistantId: ASSISTANTS.SEARCH.id,
       assistantName: ASSISTANTS.SEARCH.name,
+      systemPrompt: ASSISTANTS.SEARCH.prompt
     },
     {
       id: 'help',
@@ -95,6 +100,7 @@ export function QuickActions() {
       color: 'bg-muted text-muted-foreground',
       assistantId: ASSISTANTS.HELP.id,
       assistantName: ASSISTANTS.HELP.name,
+      systemPrompt: ASSISTANTS.HELP.prompt
     },
     {
       id: 'link-task',
@@ -105,7 +111,7 @@ export function QuickActions() {
     }
   ];
 
-  const handleAction = async (assistantId: string, assistantName: string, icon: React.ReactNode, label: string) => {
+  const handleAction = async (assistantId: string, assistantName: string, icon: React.ReactNode, label: string, systemPrompt?: string) => {
     if (isStreaming) {
       toast({
         title: "Please wait",
@@ -119,7 +125,7 @@ export function QuickActions() {
       await setActiveAssistant({
         id: assistantId,
         name: assistantName,
-        description: `Specialized in ${label.toLowerCase()} tasks`,
+        description: systemPrompt || `Specialized in ${label.toLowerCase()} tasks`,
         icon: icon as string,
         capabilities: [], // Adding capabilities to match type
       });
@@ -127,20 +133,25 @@ export function QuickActions() {
       // Prepare message content - use input if available or generic message
       const messageToSend = inputValue.trim() || `Help me with ${label.toLowerCase()}`;
       
-      // Use current conversation if it exists, otherwise create a new one
-      let conversationIdToUse = activeConversationId;
-      if (!conversationIdToUse) {
-        console.log("No active conversation, creating a new one for quick action");
-        conversationIdToUse = await startConversation(`Conversation with ${assistantName}`);
+      // If no active conversation, create one - otherwise use existing conversation
+      if (!activeConversationId) {
+        const newConversationId = await startConversation(`Conversation with ${assistantName}`);
+        console.log(`Created new conversation: ${newConversationId}`);
+        
+        // Clear the input
+        setInputValue('');
+        
+        // Send message to new conversation
+        await sendMessage(messageToSend, 'user', newConversationId);
       } else {
         console.log(`Using existing conversation: ${activeConversationId}`);
+        
+        // Clear the input
+        setInputValue('');
+        
+        // Send message to existing conversation
+        await sendMessage(messageToSend, 'user', activeConversationId);
       }
-      
-      // Clear the input and send the message
-      setInputValue('');
-      
-      // Send the message to the existing conversation
-      await sendMessage(messageToSend, 'user', conversationIdToUse);
       
       // Collapse the quick actions after use
       setExpanded(false);
@@ -231,7 +242,7 @@ export function QuickActions() {
                     if (action.action) {
                       action.action();
                     } else if (action.assistantId && action.assistantName) {
-                      handleAction(action.assistantId, action.assistantName, action.icon, action.label);
+                      handleAction(action.assistantId, action.assistantName, action.icon, action.label, action.systemPrompt);
                     }
                   }}
                   className="flex items-center gap-2"
@@ -292,7 +303,7 @@ export function QuickActions() {
                     if (action.action) {
                       action.action();
                     } else if (action.assistantId && action.assistantName) {
-                      handleAction(action.assistantId, action.assistantName, action.icon, action.label);
+                      handleAction(action.assistantId, action.assistantName, action.icon, action.label, action.systemPrompt);
                     }
                   }}
                   className={`w-10 h-10 p-0 rounded-full flex items-center justify-center ${action.color}`}
