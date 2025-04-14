@@ -9,7 +9,6 @@ import { openAIChat } from '@/utils/openAIStream';
 import { deepSeekChat } from '@/utils/deepSeekStream';
 import { useModelSelection } from './useModelSelection';
 import { useAuth } from '@/contexts/AuthContext';
-import * as messageService from '@/services/chatHistoryService';
 
 export const useChatMessages = () => {
   const { toast } = useToast();
@@ -153,14 +152,12 @@ export const useChatMessages = () => {
   };
 
   const addMessage = (content: string, sender: 'user' | 'assistant' | 'system'): Message => {
-    const message = {
+    const message: Message = {
       id: uuidv4(),
       content,
       sender,
       timestamp: new Date(),
-      isSystem: sender === 'system',
-      conversation_id: activeConversationId || '',
-      user_id: user?.id || ''
+      isSystem: sender === 'system'
     };
     
     setLocalMessages(prev => [...prev, message]);
@@ -251,14 +248,14 @@ export const useChatMessages = () => {
         
         let fullResponse = '';
         
-        if (modelOption.id === 'deepseek') {
+        if (modelOption === 'deepseek') {
           await deepSeekChat(
             {
               messages: existingMessages.map(msg => ({
                 role: msg.sender === 'user' ? 'user' : 'assistant',
                 content: msg.content
               })),
-              prompt: assistantConfig.prompt,
+              systemPrompt: assistantConfig.prompt,
             },
             {
               onStart: () => {
@@ -464,49 +461,6 @@ export const useChatMessages = () => {
         variant: 'destructive'
       });
       return null;
-    }
-  };
-
-  const generateConversationTitle = async (
-    conversationId: string, 
-    userMessage: string, 
-    assistantResponse: string
-  ): Promise<void> => {
-    try {
-      const titleGenerationPrompt = `Generate a concise, descriptive title for this conversation based on the context. 
-        User message: "${userMessage}"
-        Assistant response: "${assistantResponse}"
-        
-        Title (3-5 words):`;
-
-      let finalTitle = "";
-      
-      await openAIChat(
-        {
-          messages: [{ role: 'user', content: titleGenerationPrompt }],
-          model: 'gpt-4o-mini',
-        },
-        {
-          onStart: () => console.log('Title generation started'),
-          onChunk: (chunk) => {
-            console.log('Title chunk received:', chunk);
-            finalTitle += chunk;
-          },
-          onComplete: async (text) => {
-            console.log('Title generation complete:', text);
-            finalTitle = text;
-            
-            if (finalTitle && typeof finalTitle === 'string' && finalTitle.trim()) {
-              await messageApi.updateConversationTitle(conversationId, finalTitle.trim());
-            } else {
-              console.error('Failed to generate title, got:', finalTitle);
-            }
-          },
-          onError: (error) => console.error('Title generation error:', error)
-        }
-      );
-    } catch (error) {
-      console.error('Error generating conversation title:', error);
     }
   };
 
