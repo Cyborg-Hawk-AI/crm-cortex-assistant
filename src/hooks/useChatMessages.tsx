@@ -1,7 +1,8 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as messageApi from '@/api/messages';
-import { Message, Task, Assistant, ModelOption } from '@/utils/types';
+import { Message, Task, Assistant } from '@/utils/types';
 import { v4 as uuidv4 } from 'uuid';
 import { useToast } from './use-toast';
 import { useAssistantConfig } from './useAssistantConfig';
@@ -153,12 +154,14 @@ export const useChatMessages = () => {
   };
 
   const addMessage = (content: string, sender: 'user' | 'assistant' | 'system'): Message => {
-    const message: Message = {
+    const message = {
       id: uuidv4(),
       content,
       sender,
       timestamp: new Date(),
-      isSystem: sender === 'system'
+      isSystem: sender === 'system',
+      conversation_id: activeConversationId || '',
+      user_id: user?.id || ''
     };
     
     setLocalMessages(prev => [...prev, message]);
@@ -484,7 +487,7 @@ export const useChatMessages = () => {
 
       const generatedTitle = response.trim();
       
-      await messageService.updateConversationTitle(conversationId, generatedTitle);
+      await messageApi.updateConversationTitle(conversationId, generatedTitle);
     } catch (error) {
       console.error('Error generating conversation title:', error);
     }

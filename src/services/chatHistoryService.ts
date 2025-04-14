@@ -1,4 +1,3 @@
-
 import { supabase, getCurrentUserId } from '@/lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -12,7 +11,7 @@ export const updateConversation = async (
     task_id?: string;
     title?: string;
     open_ai_thread_id?: string;
-    project_id?: string; // Add project_id to the updates type
+    project_id?: string; 
   }
 ) => {
   const userId = await getCurrentUserId();
@@ -261,4 +260,26 @@ export const getConversationMessages = async (conversationId: string) => {
     timestamp: new Date(msg.timestamp),
     isSystem: msg.is_system || false
   }));
+};
+
+/**
+ * Update conversation title
+ */
+export const updateConversationTitle = async (conversationId: string, title: string): Promise<boolean> => {
+  try {
+    const userId = await getCurrentUserId();
+    
+    if (!userId) {
+      console.error('Cannot update title: User not authenticated');
+      return false;
+    }
+    
+    console.log(`Updating conversation ${conversationId} title to "${title}"`);
+    
+    const result = await updateConversation(conversationId, { title });
+    return !!result;
+  } catch (error) {
+    console.error('Error updating conversation title:', error);
+    return false;
+  }
 };
