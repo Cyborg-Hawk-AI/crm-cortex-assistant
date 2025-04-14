@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as messageApi from '@/api/messages';
-import { Message, Task, Assistant } from '@/utils/types';
+import { Message, Task, Assistant, ModelOption } from '@/utils/types';
 import { v4 as uuidv4 } from 'uuid';
 import { useToast } from './use-toast';
 import { useAssistantConfig } from './useAssistantConfig';
@@ -9,6 +9,7 @@ import { openAIChat } from '@/utils/openAIStream';
 import { deepSeekChat } from '@/utils/deepSeekStream';
 import { useModelSelection } from './useModelSelection';
 import { useAuth } from '@/contexts/AuthContext';
+import * as messageService from '@/services/chatHistoryService';
 
 export const useChatMessages = () => {
   const { toast } = useToast();
@@ -461,6 +462,31 @@ export const useChatMessages = () => {
         variant: 'destructive'
       });
       return null;
+    }
+  };
+
+  const generateConversationTitle = async (
+    conversationId: string, 
+    userMessage: string, 
+    assistantResponse: string
+  ): Promise<void> => {
+    try {
+      const titleGenerationPrompt = `Generate a concise, descriptive title for this conversation based on the context. 
+        User message: "${userMessage}"
+        Assistant response: "${assistantResponse}"
+        
+        Title (3-5 words):`;
+
+      const response = await openAIChat({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: titleGenerationPrompt }],
+      });
+
+      const generatedTitle = response.trim();
+      
+      await messageService.updateConversationTitle(conversationId, generatedTitle);
+    } catch (error) {
+      console.error('Error generating conversation title:', error);
     }
   };
 
