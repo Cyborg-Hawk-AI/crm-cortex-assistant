@@ -1,4 +1,3 @@
-
 export interface Message {
   id: string;
   content: string;
@@ -17,7 +16,7 @@ export interface Task {
   description?: string;
   status: 'open' | 'in-progress' | 'completed' | 'closed' | 'resolved';
   priority: 'high' | 'medium' | 'low' | 'urgent';
-  due_date?: Date;
+  due_date?: Date | string;
   assignee?: string;
   
   // Additional properties used in the codebase
@@ -64,6 +63,9 @@ export interface Contact {
   last_contact?: Date;
   created_at?: string;
   updated_at?: string;
+  company?: string;
+  title?: string;
+  user_id?: string;
 }
 
 export interface Meeting {
@@ -79,6 +81,7 @@ export interface Meeting {
   created_by: string;
   created_at?: string;
   updated_at?: string;
+  attendees?: any[];
 }
 
 export interface Mindboard {
@@ -114,6 +117,7 @@ export interface MindPage {
   position?: number;
   is_pinned?: boolean;
   parent_page_id?: string | null;
+  parent_id?: string | null; // Added for compatibility with existing code
   user_id: string;
   created_at?: string;
   updated_at?: string;
@@ -122,7 +126,7 @@ export interface MindPage {
 export interface MindBlock {
   id: string;
   page_id: string;
-  content_type: 'text' | 'todo' | 'heading' | 'image' | 'file' | 'code' | 'quote' | 'callout' | 'heading1' | 'heading2' | 'heading3' | 'toggle' | 'columns' | 'bullet' | 'numbered';
+  content_type: 'text' | 'todo' | 'heading' | 'image' | 'file' | 'code' | 'quote' | 'callout' | 'heading1' | 'heading2' | 'heading3' | 'toggle' | 'columns' | 'bullet' | 'numbered' | 'table' | 'divider' | 'video';
   content: any;
   position?: number;
   properties?: Record<string, any>;
@@ -143,6 +147,10 @@ export interface Note {
   created_at: Date;
   updated_at: Date;
   timestamp?: Date;
+  notebook_id?: string;
+  section_id?: string;
+  page_id?: string;
+  linked_task_id?: string;
 }
 
 export interface Notebook {
@@ -173,6 +181,8 @@ export interface NotePage {
   isSubpage?: boolean;
   created_at?: string;
   updated_at?: string;
+  notebook_id?: string;
+  content?: string;
 }
 
 export interface ActionProject {
@@ -191,6 +201,8 @@ export interface Project {
   created_at?: string;
   updated_at?: string;
   user_id?: string;
+  title?: string;
+  owner_id?: string;
 }
 
 export interface Ticket {
@@ -203,11 +215,16 @@ export interface Ticket {
   user_id?: string;
   parent_task_id?: string | null;
   updated_at?: string;
-  customer?: string;
+  customer?: { name: string; company?: string } | string;
   summary?: string;
   actionItems?: any[];
   comments?: any[];
   updated?: string;
+  created_at?: string;
+  created_by?: string;
+  reporter_id?: string;
+  assignee_id?: string;
+  tags?: string[];
 }
 
 export interface Activity {
@@ -230,6 +247,7 @@ export interface MeetingAction {
   action: () => void;
   color: string;
   description?: string;
+  bgColor?: string; // Added for compatibility with existing code
 }
 
 export interface TicketAction {
@@ -256,3 +274,35 @@ export interface TaskView {
 // Type enums
 export type TaskStatus = 'open' | 'in-progress' | 'completed' | 'closed' | 'resolved';
 export type TaskPriority = 'high' | 'medium' | 'low' | 'urgent';
+
+// Fix for Task interface to match actual usage in code
+export interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  status: 'open' | 'in-progress' | 'completed' | 'closed' | 'resolved';
+  priority: 'high' | 'medium' | 'low' | 'urgent';
+  due_date?: Date | string;
+  assignee?: string;
+  
+  // Additional properties used in the codebase
+  assignee_id?: string;
+  reporter_id?: string;
+  user_id?: string;
+  parent_task_id?: string | null;
+  tags?: string[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface SubTask {
+  id: string;
+  title: string;
+  parent_task_id: string;
+  is_completed?: boolean;
+  status?: string;
+  user_id?: string;
+  created_by?: string;
+  created_at?: string;
+  updated_at?: string;
+}

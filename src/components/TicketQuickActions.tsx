@@ -44,7 +44,8 @@ export function TicketQuickActions() {
           description: "Opening reply composer for this ticket"
         });
       },
-      icon: <MessageSquareText className="h-4 w-4" />
+      icon: <MessageSquareText className="h-4 w-4" />,
+      color: 'bg-teal-green/90 text-white'
     },
     {
       id: 'summarize',
@@ -56,7 +57,8 @@ export function TicketQuickActions() {
           description: "Generating AI summary for this ticket"
         });
       },
-      icon: <ClipboardCheck className="h-4 w-4" />
+      icon: <ClipboardCheck className="h-4 w-4" />,
+      color: 'bg-aqua-tint/90 text-white'
     },
     {
       id: 'status',
@@ -68,7 +70,8 @@ export function TicketQuickActions() {
           description: "Opening status selector for this ticket"
         });
       },
-      icon: <BadgeCheck className="h-4 w-4" />
+      icon: <BadgeCheck className="h-4 w-4" />,
+      color: 'bg-primary/90 text-white'
     },
     {
       id: 'history',
@@ -80,7 +83,8 @@ export function TicketQuickActions() {
           description: "Loading full ticket history"
         });
       },
-      icon: <History className="h-4 w-4" />
+      icon: <History className="h-4 w-4" />,
+      color: 'bg-warm-sand/90 text-foreground'
     },
     {
       id: 'notify',
@@ -92,7 +96,8 @@ export function TicketQuickActions() {
           description: "Opening notification options"
         });
       },
-      icon: <Bell className="h-4 w-4" />
+      icon: <Bell className="h-4 w-4" />,
+      color: 'bg-deep-taupe/20 text-foreground'
     },
     {
       id: 'resolve',
@@ -104,7 +109,8 @@ export function TicketQuickActions() {
           description: "Marking ticket as resolved"
         });
       },
-      icon: <CheckSquare className="h-4 w-4" />
+      icon: <CheckSquare className="h-4 w-4" />,
+      color: 'bg-teal-green/90 text-white'
     },
     {
       id: 'assign',
@@ -116,7 +122,8 @@ export function TicketQuickActions() {
           description: "Opening assignment dialog"
         });
       },
-      icon: <UserPlus className="h-4 w-4" />
+      icon: <UserPlus className="h-4 w-4" />,
+      color: 'bg-secondary text-foreground'
     },
     {
       id: 'sla',
@@ -128,7 +135,8 @@ export function TicketQuickActions() {
           description: "Checking SLA status for this ticket"
         });
       },
-      icon: <Timer className="h-4 w-4" />
+      icon: <Timer className="h-4 w-4" />,
+      color: 'bg-secondary text-foreground'
     },
     {
       id: 'escalate',
@@ -140,7 +148,8 @@ export function TicketQuickActions() {
           description: "Opening escalation options"
         });
       },
-      icon: <Send className="h-4 w-4" />
+      icon: <Send className="h-4 w-4" />,
+      color: 'bg-secondary text-foreground'
     },
     {
       id: 'export',
@@ -152,7 +161,8 @@ export function TicketQuickActions() {
           description: "Preparing ticket data for export"
         });
       },
-      icon: <FileSpreadsheet className="h-4 w-4" />
+      icon: <FileSpreadsheet className="h-4 w-4" />,
+      color: 'bg-secondary text-foreground'
     },
     {
       id: 'link',
@@ -164,7 +174,8 @@ export function TicketQuickActions() {
           description: "Opening ticket linking interface"
         });
       },
-      icon: <Link className="h-4 w-4" />
+      icon: <Link className="h-4 w-4" />,
+      color: 'bg-secondary text-foreground'
     },
     {
       id: 'checklist',
@@ -176,7 +187,8 @@ export function TicketQuickActions() {
           description: "Opening resolution checklist"
         });
       },
-      icon: <FileCheck className="h-4 w-4" />
+      icon: <FileCheck className="h-4 w-4" />,
+      color: 'bg-secondary text-foreground'
     }
   ];
 

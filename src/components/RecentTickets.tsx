@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardTitle, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -43,8 +42,8 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
           description: task.description,
           status: task.status || 'Open',
           priority: task.priority || 'Medium',
-          created_at: new Date(task.created_at),
-          updated_at: new Date(task.updated_at),
+          created_at: task.created_at,
+          updated_at: task.updated_at,
           customer: { name: task.assignee_id || 'Unassigned' },
           parent_task_id: task.parent_task_id,
           summary: task.description?.substring(0, 100) + (task.description?.length > 100 ? '...' : ''),
@@ -53,7 +52,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
           user_id: task.user_id || 'Unknown',
           reporter_id: task.reporter_id || 'Unknown',
           assignee_id: task.assignee_id
-        }));
+        })) as Ticket[];
       } catch (error) {
         console.error('Failed to fetch recent tickets:', error);
         return [];
@@ -196,7 +195,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
                 </div>
                 <div>
                   <div className="text-xs text-[#CBD5E1]">Open</div>
-                  <div className="text-lg font-bold">{isLoadingStats ? '...' : taskStats.open}</div>
+                  <div className="text-lg font-bold">{isLoading ? '...' : (tickets.filter(t => t.status === 'open').length)}</div>
                 </div>
               </div>
               <div className="bg-gradient-to-br from-gray-800/50 to-gray-700/30 rounded-md p-3 flex items-center">
@@ -205,7 +204,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
                 </div>
                 <div>
                   <div className="text-xs text-[#CBD5E1]">In Progress</div>
-                  <div className="text-lg font-bold">{isLoadingStats ? '...' : taskStats.inProgress}</div>
+                  <div className="text-lg font-bold">{isLoading ? '...' : (tickets.filter(t => t.status === 'in-progress').length)}</div>
                 </div>
               </div>
               <div className="bg-gradient-to-br from-gray-800/50 to-gray-700/30 rounded-md p-3 flex items-center">
@@ -214,7 +213,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
                 </div>
                 <div>
                   <div className="text-xs text-[#CBD5E1]">Completed</div>
-                  <div className="text-lg font-bold">{isLoadingStats ? '...' : taskStats.completed}</div>
+                  <div className="text-lg font-bold">{isLoading ? '...' : (tickets.filter(t => t.status === 'completed').length)}</div>
                 </div>
               </div>
             </div>

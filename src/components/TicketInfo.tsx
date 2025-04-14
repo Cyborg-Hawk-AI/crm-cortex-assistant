@@ -82,6 +82,20 @@ export function TicketInfo({
       } 
     });
   };
+  
+  // Function to get customer name safely
+  const getCustomerName = () => {
+    if (!ticket.customer) return 'Unassigned';
+    if (typeof ticket.customer === 'string') return ticket.customer;
+    return ticket.customer.name || 'Unassigned';
+  };
+  
+  // Function to get customer company safely
+  const getCustomerCompany = () => {
+    if (!ticket.customer) return null;
+    if (typeof ticket.customer === 'object' && ticket.customer.company) return ticket.customer.company;
+    return null;
+  };
 
   return (
     <motion.div 
@@ -119,12 +133,12 @@ export function TicketInfo({
           <div className="flex flex-wrap items-center text-xs text-white/80 space-x-4 mt-3">
             <div className="flex items-center">
               <User className="h-3 w-3 mr-1" />
-              <span>{ticket.customer?.name || 'Unassigned'}</span>
+              <span>{getCustomerName()}</span>
             </div>
-            {ticket.customer?.company && (
+            {getCustomerCompany() && (
               <div className="flex items-center">
                 <Building className="h-3 w-3 mr-1" />
-                <span>{ticket.customer.company}</span>
+                <span>{getCustomerCompany()}</span>
               </div>
             )}
             <div className="flex items-center">
