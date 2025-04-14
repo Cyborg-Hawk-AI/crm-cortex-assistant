@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as messageApi from '@/api/messages';
@@ -480,25 +479,32 @@ export const useChatMessages = () => {
         
         Title (3-5 words):`;
 
-      const response = await openAIChat(
+      let finalTitle = "";
+      
+      await openAIChat(
         {
           messages: [{ role: 'user', content: titleGenerationPrompt }],
           model: 'gpt-4o-mini',
         },
         {
           onStart: () => console.log('Title generation started'),
-          onChunk: (chunk) => console.log('Title chunk received:', chunk),
-          onComplete: (text) => console.log('Title generation complete:', text),
+          onChunk: (chunk) => {
+            console.log('Title chunk received:', chunk);
+            finalTitle += chunk;
+          },
+          onComplete: async (text) => {
+            console.log('Title generation complete:', text);
+            finalTitle = text;
+            
+            if (finalTitle && typeof finalTitle === 'string' && finalTitle.trim()) {
+              await messageApi.updateConversationTitle(conversationId, finalTitle.trim());
+            } else {
+              console.error('Failed to generate title, got:', finalTitle);
+            }
+          },
           onError: (error) => console.error('Title generation error:', error)
         }
       );
-
-      // The response will be a string
-      if (typeof response === 'string' && response.trim()) {
-        await messageApi.updateConversationTitle(conversationId, response.trim());
-      } else {
-        console.error('Failed to generate title, got:', response);
-      }
     } catch (error) {
       console.error('Error generating conversation title:', error);
     }
@@ -528,4 +534,3 @@ export const useChatMessages = () => {
     generateConversationTitle,
   };
 };
-
