@@ -1,4 +1,3 @@
-
 import { supabase, getCurrentUserId } from '@/lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
 import { Message } from '@/utils/types';
@@ -22,7 +21,6 @@ export const getConversations = async () => {
     throw new Error(error.message);
   }
   
-  // Debug log to verify data is being received
   console.log(`Fetched ${data?.length || 0} conversations from the database`);
   return data || [];
 };
@@ -39,7 +37,6 @@ export const createConversation = async (title?: string, projectId?: string) => 
 
   const conversationId = uuidv4();
   
-  // Include the ID to ensure it's what we expect
   const { data, error } = await supabase
     .from('conversations')
     .insert({
@@ -48,7 +45,7 @@ export const createConversation = async (title?: string, projectId?: string) => 
       title: title || 'New conversation',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      project_id: projectId || null  // Use null for "Open Chats"
+      project_id: projectId || null
     })
     .select()
     .single();
@@ -70,7 +67,6 @@ export const deleteConversation = async (conversationId: string): Promise<boolea
     throw new Error('User not authenticated');
   }
 
-  // Verify the user has access to this conversation
   const { data: conversation, error: convError } = await supabase
     .from('conversations')
     .select()
@@ -83,7 +79,6 @@ export const deleteConversation = async (conversationId: string): Promise<boolea
     return false;
   }
 
-  // Delete all messages in the conversation
   const { error: messagesError } = await supabase
     .from('chat_messages')
     .delete()
@@ -94,7 +89,6 @@ export const deleteConversation = async (conversationId: string): Promise<boolea
     return false;
   }
 
-  // Delete the conversation
   const { error } = await supabase
     .from('conversations')
     .delete()
@@ -137,18 +131,15 @@ export const checkSimilarMessageExists = async (
   conversationId: string,
   sender: string,
   content: string,
-  timeWindow: number = 5000 // 5 seconds window
+  timeWindow: number = 5000
 ): Promise<boolean> => {
   try {
-    // Get the current time and the time 5 seconds ago
     const now = new Date();
     const fiveSecondsAgo = new Date(now.getTime() - timeWindow);
     
-    // Format for Supabase timestamp comparison
     const nowIso = now.toISOString();
     const fiveSecondsAgoIso = fiveSecondsAgo.toISOString();
     
-    // Check for similar messages in the last 5 seconds
     const { count, error } = await supabase
       .from('chat_messages')
       .select('id', { count: 'exact', head: true })
@@ -174,14 +165,12 @@ export const checkSimilarMessageExists = async (
 
 // Update an existing message's content (for streaming)
 export const updateMessageContent = async (id: string, content: string): Promise<Message | null> => {
-  // First check if the message exists
   const exists = await checkMessageExists(id);
   if (!exists) {
     console.error(`Message with ID ${id} does not exist, cannot update`);
     return null;
   }
   
-  // Update the message
   console.log(`Updating message content for ID ${id}`);
   const { data, error } = await supabase
     .from('chat_messages')
@@ -214,7 +203,6 @@ export const getMessages = async (conversationId: string): Promise<Message[]> =>
 
   console.log(`Fetching messages for conversation: ${conversationId}`);
 
-  // First verify the user has access to this conversation
   const { data: conversation, error: convError } = await supabase
     .from('conversations')
     .select()
@@ -254,7 +242,7 @@ export const sendMessage = async (
   conversationId: string, 
   content: string, 
   sender: 'user' | 'assistant' | 'system' = 'user',
-  messageId?: string // Optional message ID for deduplication
+  messageId?: string
 ): Promise<Message> => {
   const userId = await getCurrentUserId();
   
@@ -264,7 +252,6 @@ export const sendMessage = async (
 
   console.log(`Saving ${sender} message to conversation ${conversationId}`);
 
-  // Verify the user has access to this conversation
   const { data: conversation, error: convError } = await supabase
     .from('conversations')
     .select()
@@ -277,17 +264,14 @@ export const sendMessage = async (
     throw new Error(convError.message);
   }
 
-  // Generate or use provided message ID
   const id = messageId || uuidv4();
   
-  // Check for duplicate by ID or similarity
   if (messageId) {
     const exists = await checkMessageExists(messageId);
     if (exists) {
       console.log(`Message ${messageId} already exists, updating content instead`);
       const updatedMessage = await updateMessageContent(messageId, content);
       if (updatedMessage) {
-        // Only update conversation timestamp on content updates
         await supabase
           .from('conversations')
           .update({ updated_at: new Date().toISOString() })
@@ -297,13 +281,11 @@ export const sendMessage = async (
       }
     }
   } else {
-    // If we don't have a specific ID, check for similar messages to prevent duplicates
     const similarExists = await checkSimilarMessageExists(conversationId, sender, content);
     if (similarExists) {
       console.log(`Similar message already exists in conversation, skipping save`);
-      // Return a dummy message to avoid disrupting the flow, but don't save it
       return {
-        id: uuidv4(), // Generate a temporary ID for the UI
+        id: uuidv4(),
         content,
         sender,
         timestamp: new Date(),
@@ -312,7 +294,6 @@ export const sendMessage = async (
     }
   }
 
-  // Create the message
   const messageData = {
     id,
     conversation_id: conversationId,
@@ -341,7 +322,6 @@ export const sendMessage = async (
     throw new Error(error.message);
   }
   
-  // Update the conversation's last_updated timestamp
   await supabase
     .from('conversations')
     .update({ updated_at: new Date().toISOString() })
@@ -366,7 +346,6 @@ export const deleteConversationMessages = async (conversationId: string): Promis
     throw new Error('User not authenticated');
   }
 
-  // Verify the user has access to this conversation
   const { data: conversation, error: convError } = await supabase
     .from('conversations')
     .select()
@@ -379,7 +358,6 @@ export const deleteConversationMessages = async (conversationId: string): Promis
     return false;
   }
 
-  // Delete all messages from this conversation
   const { error } = await supabase
     .from('chat_messages')
     .delete()
@@ -402,7 +380,6 @@ export const assignConversationToProject = async (conversationId: string, projec
     throw new Error('User not authenticated');
   }
 
-  // Verify the user has access to this conversation
   const { data: conversation, error: convError } = await supabase
     .from('conversations')
     .select()
@@ -415,10 +392,8 @@ export const assignConversationToProject = async (conversationId: string, projec
     return false;
   }
 
-  // If projectId is empty string, treat as moving to "Open Chats"
   const finalProjectId = projectId === '' ? null : projectId;
 
-  // Verify the user has access to this project if it's not null
   if (finalProjectId !== null) {
     const { data: project, error: projectError } = await supabase
       .from('action_projects')
@@ -433,7 +408,6 @@ export const assignConversationToProject = async (conversationId: string, projec
     }
   }
 
-  // Update the conversation
   const { error } = await supabase
     .from('conversations')
     .update({ 
@@ -462,7 +436,6 @@ export const updateConversationTitle = async (conversationId: string, title: str
 
   console.log(`API call: Updating conversation ${conversationId} title to "${title}"`);
 
-  // Verify the user has access to this conversation
   const { data: conversation, error: convError } = await supabase
     .from('conversations')
     .select()
@@ -475,7 +448,6 @@ export const updateConversationTitle = async (conversationId: string, title: str
     return false;
   }
 
-  // Update the conversation title
   const { error, data } = await supabase
     .from('conversations')
     .update({ 
@@ -492,5 +464,79 @@ export const updateConversationTitle = async (conversationId: string, title: str
   }
 
   console.log(`Successfully updated conversation ${conversationId} title to "${title}"`, data);
+  return true;
+};
+
+// Switch assistant for a conversation
+export const switchAssistant = async (conversationId: string, assistant: any): Promise<boolean> => {
+  const userId = await getCurrentUserId();
+  
+  if (!userId) {
+    throw new Error('User not authenticated');
+  }
+
+  const { data: conversation, error: convError } = await supabase
+    .from('conversations')
+    .select()
+    .eq('id', conversationId)
+    .eq('user_id', userId)
+    .single();
+
+  if (convError) {
+    console.error('Error fetching conversation:', convError);
+    return false;
+  }
+
+  const { error } = await supabase
+    .from('conversations')
+    .update({ 
+      assistant_id: assistant.id,
+      updated_at: new Date().toISOString() 
+    })
+    .eq('id', conversationId)
+    .eq('user_id', userId);
+
+  if (error) {
+    console.error('Error switching assistant:', error);
+    return false;
+  }
+
+  return true;
+};
+
+// Link a task to a conversation
+export const linkTaskToConversation = async (conversationId: string, task: any): Promise<boolean> => {
+  const userId = await getCurrentUserId();
+  
+  if (!userId) {
+    throw new Error('User not authenticated');
+  }
+
+  const { data: conversation, error: convError } = await supabase
+    .from('conversations')
+    .select()
+    .eq('id', conversationId)
+    .eq('user_id', userId)
+    .single();
+
+  if (convError) {
+    console.error('Error fetching conversation:', convError);
+    return false;
+  }
+
+  const { error } = await supabase
+    .from('conversations')
+    .update({ 
+      task_id: task.id,
+      updated_at: new Date().toISOString() 
+    })
+    .eq('id', conversationId)
+    .eq('user_id', userId);
+
+  if (error) {
+    console.error('Error linking task to conversation:', error);
+    return false;
+  }
+
   return true;
 };

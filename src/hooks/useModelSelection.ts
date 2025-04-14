@@ -47,6 +47,11 @@ export const useModelSelection = () => {
     selectedModel,
     setSelectedModel,
     toggleModel,
-    modelOption: getModelOption()
+    modelOption: getModelOption(),
+    // Add the modelSelection property that was missing
+    modelSelection: {
+      id: selectedModel,
+      ...MODEL_OPTIONS[selectedModel]
+    }
   };
 };

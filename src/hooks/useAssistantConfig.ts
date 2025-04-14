@@ -51,6 +51,8 @@ export function useAssistantConfig() {
     currentAssistantId,
     setCurrentAssistantId,
     getAssistantConfig,
-    setStreamingCallbacks
+    setStreamingCallbacks,
+    // Add the missing assistantConfig property
+    assistantConfig: getAssistantConfig()
   };
 }

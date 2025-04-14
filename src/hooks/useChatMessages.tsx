@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as messageApi from '@/api/messages';
 import { Message, Task, Assistant } from '@/utils/types';
@@ -14,7 +15,7 @@ export const useChatMessages = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { assistantConfig } = useAssistantConfig();
-  const { modelSelection } = useModelSelection();
+  const { modelOption, modelSelection } = useModelSelection();
   const { user } = useAuth();
 
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);

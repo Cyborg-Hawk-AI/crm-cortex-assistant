@@ -126,3 +126,6 @@ export async function createDeepSeekStream(
     return () => true; // Return a function that indicates streaming is complete due to error
   }
 }
+
+// Export the deepSeekChat function that was missing
+export const deepSeekChat = createDeepSeekStream;

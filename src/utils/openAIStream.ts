@@ -112,3 +112,6 @@ export async function createOpenAIStream(
     return () => true; // Return a function that indicates streaming is complete due to error
   }
 }
+
+// Export the openAIChat function that was missing
+export const openAIChat = createOpenAIStream;
