@@ -29,7 +29,7 @@ export function useAssistantConfig() {
     };
   }, [currentAssistantId, onStartStreaming, onToken, onComplete, onError]);
   
-  // Update the streaming callbacks
+  // Update the streaming callbacks - ensure they execute immediately for responsive UI
   const setStreamingCallbacks = useCallback(({
     onStart,
     onTokenReceived,

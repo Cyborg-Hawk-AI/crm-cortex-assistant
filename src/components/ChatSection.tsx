@@ -57,7 +57,11 @@ export function ChatSection({
   };
 
   useEffect(() => {
-    scrollToBottom();
+    const scrollTimer = setTimeout(() => {
+      scrollToBottom();
+    }, 50);
+    
+    return () => clearTimeout(scrollTimer);
   }, [messages]);
   
   useEffect(() => {
@@ -74,17 +78,23 @@ export function ChatSection({
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
     setApiError(null);
+    
     try {
+      const messageContent = inputValue;
+      setInputValue('');
+      
       if (!activeConversationId) {
         console.log("Creating a new conversation as part of sending the first message");
         const newConversationId = await startConversation('New conversation');
         setActiveConversationId(newConversationId);
-        await sendMessage(inputValue, 'user', newConversationId, selectedModel);
+        await sendMessage(messageContent, 'user', newConversationId, selectedModel);
       } else {
         console.log(`Sending message to active conversation: ${activeConversationId}`);
-        await sendMessage(inputValue, 'user', activeConversationId, selectedModel);
+        await sendMessage(messageContent, 'user', activeConversationId, selectedModel);
       }
-      setInputValue('');
+      
+      setTimeout(scrollToBottom, 100);
+      
     } catch (error: any) {
       console.error('Error sending message:', error);
       if (error.message?.includes('API key') && selectedModel === 'deepseek') {

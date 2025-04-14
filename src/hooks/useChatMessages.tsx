@@ -349,6 +349,21 @@ export function useChatMessages() {
     
     try {
       if (sender === 'user') {
+        // Immediately add the user message to the UI first, before any backend operations
+        const userMessageId = uuidv4();
+        const userMessage: Message = {
+          id: userMessageId,
+          content,
+          sender: 'user',
+          timestamp: new Date(),
+          isSystem: false,
+          conversation_id: specificConversationId || activeConversationId || '',
+          user_id: 'current-user'
+        };
+        
+        // Add the user message to the UI immediately
+        addLocalMessage(userMessage);
+        
         setIsSending(true);
         
         let conversationId = specificConversationId || activeConversationId;
@@ -364,25 +379,18 @@ export function useChatMessages() {
           conversationId = newConversationId;
           setActiveConversationId(newConversationId);
           console.log(`Created and activated new conversation: ${newConversationId}`);
+          
+          // Update the user message's conversation_id if we created a new conversation
+          userMessage.conversation_id = newConversationId;
         }
         
         const conversation = conversations.find(c => c.id === conversationId);
         const threadId = conversation?.open_ai_thread_id || null;
         
-        const userMessageId = uuidv4();
-        const userMessage: Message = {
-          id: userMessageId,
-          content,
-          sender: 'user',
-          timestamp: new Date(),
-          isSystem: false,
-          conversation_id: conversationId || '',
-          user_id: 'current-user' // Use a default value or get from auth context
-        };
-        
-        addLocalMessage(userMessage);
-        
-        await saveMessage(content, 'user', userMessageId, conversationId);
+        // Now save the user message to the database in the background
+        saveMessage(content, 'user', userMessageId, conversationId).catch(error => {
+          console.error('Error saving user message to database:', error);
+        });
         
         const assistantMessageId = uuidv4();
         currentStreamingMessageId.current = assistantMessageId;
@@ -395,9 +403,10 @@ export function useChatMessages() {
           isSystem: false,
           isStreaming: true,
           conversation_id: conversationId || '',
-          user_id: 'current-user' // Use a default value or get from auth context
+          user_id: 'current-user'
         };
         
+        // Add the empty assistant message to the UI
         addLocalMessage(assistantMessage);
         
         setIsStreaming(true);
@@ -440,6 +449,7 @@ export function useChatMessages() {
                 
                 fullResponse += chunk;
                 
+                // Update the assistant message content with each chunk
                 setLocalMessages(prev => 
                   prev.map(msg => 
                     msg.id === assistantMessageId 

@@ -85,7 +85,14 @@ export function Message({ message }: MessageProps) {
 
   // Process message content with memoization for performance
   const processedContent = useMemo(() => {
-    // Completely skip rendering empty messages
+    // User messages should always render immediately even if empty
+    if (isUser) {
+      return <p className="text-sm whitespace-pre-wrap">{message.content}</p>;
+    }
+    
+    // For non-user messages, apply special handling
+    
+    // Completely skip rendering empty messages that aren't streaming
     if (!message.content && !message.isStreaming) {
       return null;
     }
@@ -93,11 +100,6 @@ export function Message({ message }: MessageProps) {
     // Handle ticket content special case
     if (message.content && message.content.startsWith('TICKETCONTENTS-')) {
       return formatTicketContent(message.content);
-    }
-    
-    // Only apply markdown parsing to assistant and system messages
-    if (isUser) {
-      return <p className="text-sm whitespace-pre-wrap">{message.content}</p>;
     }
     
     // Special handling for streaming messages
@@ -129,8 +131,9 @@ export function Message({ message }: MessageProps) {
     );
   }, [message.content, message.isStreaming, isUser]);
 
-  // If processedContent is null, don't render the message at all
-  if (processedContent === null) {
+  // For user messages, always render even if content is empty
+  // For assistant messages, only render if we have content or are streaming
+  if (processedContent === null && !isUser) {
     return null;
   }
 
@@ -167,6 +170,15 @@ export function Message({ message }: MessageProps) {
               : 'bg-[#25384D] border border-[#3A4D62]'
         )}>
           {processedContent}
+          
+          {/* Add typing indicator when isStreaming is true but no content yet */}
+          {message.isStreaming && !message.content && (
+            <div className="typing-indicator">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

@@ -22,8 +22,10 @@ export async function createOpenAIStream(
   callbacks: StreamingCallbacks
 ): Promise<() => boolean> {
   try {
+    // Signal the start of streaming
     callbacks.onStart();
     
+    // Ensure we're starting with the correct API URL
     const response = await fetch(`${OPENAI_API_URL}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -41,6 +43,7 @@ export async function createOpenAIStream(
     
     if (!response.ok) {
       const error = await response.text();
+      console.error(`OpenAI API error: ${response.status} ${error}`);
       throw new Error(`OpenAI API error: ${response.status} ${error}`);
     }
     
@@ -62,6 +65,7 @@ export async function createOpenAIStream(
           if (done) {
             console.log('Stream complete');
             isComplete = true;
+            // Ensure we call onComplete with the final text
             callbacks.onComplete(fullText);
             break;
           }
@@ -87,6 +91,7 @@ export async function createOpenAIStream(
               
               if (content) {
                 fullText += content;
+                // Send each chunk for immediate UI update
                 callbacks.onChunk(content);
               }
             } catch (e) {
@@ -101,7 +106,7 @@ export async function createOpenAIStream(
       }
     };
     
-    // Start processing the stream
+    // Start processing the stream without waiting
     processStream();
     
     // Return function to check if streaming is complete
