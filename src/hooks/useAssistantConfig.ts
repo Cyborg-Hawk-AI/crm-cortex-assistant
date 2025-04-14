@@ -1,5 +1,6 @@
 
 import { useState, useCallback } from 'react';
+import { flushSync } from 'react-dom';
 import { ASSISTANTS, getAssistantConfigById } from '@/utils/assistantConfig';
 import { Assistant } from '@/utils/types';
 
@@ -17,13 +18,29 @@ export function useAssistantConfig() {
   const getAssistantConfig = useCallback(() => {
     const config = getAssistantConfigById(currentAssistantId);
     
+    // Wrap the token callback with flushSync to ensure immediate UI updates
+    const wrappedOnToken = onToken 
+      ? (messageId: string, token: string, fullContent: string) => {
+          try {
+            // Use flushSync to force immediate UI update for each token
+            flushSync(() => {
+              onToken(messageId, token, fullContent);
+            });
+          } catch (error) {
+            console.error('Error in token streaming callback:', error);
+            // Fall back to regular update if flushSync fails
+            onToken(messageId, token, fullContent);
+          }
+        }
+      : undefined;
+    
     return {
       assistantId: currentAssistantId || ASSISTANTS.DEFAULT.id,
       prompt: config.prompt,
       contextPrompt: config.contextPrompt,
       name: config.name,
       onStartStreaming: onStartStreaming || undefined,
-      onToken: onToken || undefined,
+      onToken: wrappedOnToken,
       onComplete: onComplete || undefined,
       onError: onError || undefined
     };
