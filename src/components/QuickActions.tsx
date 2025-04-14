@@ -127,16 +127,20 @@ export function QuickActions() {
       // Prepare message content - use input if available or generic message
       const messageToSend = inputValue.trim() || `Help me with ${label.toLowerCase()}`;
       
-      // Ensure we have an active conversation or create one
-      if (!activeConversationId) {
-        await startConversation(`Conversation with ${assistantName}`);
+      // Use current conversation if it exists, otherwise create a new one
+      let conversationIdToUse = activeConversationId;
+      if (!conversationIdToUse) {
+        console.log("No active conversation, creating a new one for quick action");
+        conversationIdToUse = await startConversation(`Conversation with ${assistantName}`);
+      } else {
+        console.log(`Using existing conversation: ${activeConversationId}`);
       }
       
       // Clear the input and send the message
       setInputValue('');
       
-      // Send the message
-      await sendMessage(messageToSend, 'user');
+      // Send the message to the existing conversation
+      await sendMessage(messageToSend, 'user', conversationIdToUse);
       
       // Collapse the quick actions after use
       setExpanded(false);
