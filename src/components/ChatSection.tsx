@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2, AlertTriangle, Folder, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -45,8 +44,9 @@ export function ChatSection({
     isSending,
     isStreaming,
     startConversation,
-    setActiveConversationId,
-    refetchConversations 
+    setActiveConversationId: setActiveConversationIdHook,
+    refetchConversations,
+    activeAssistant
   } = useChatMessages();
   const [isComposing, setIsComposing] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -54,6 +54,19 @@ export function ChatSection({
     toast
   } = useToast();
   const [retryCount, setRetryCount] = useState(0);
+
+  useEffect(() => {
+    console.log('⚡ ChatSection: activeConversationId prop updated:', activeConversationId);
+    
+    if (activeConversationId) {
+      setActiveConversationIdHook(activeConversationId);
+    }
+  }, [activeConversationId, setActiveConversationIdHook]);
+
+  useEffect(() => {
+    console.log('🎭 ChatSection: Active Assistant:', activeAssistant ? 
+      { id: activeAssistant.id, name: activeAssistant.name } : 'null');
+  }, [activeAssistant]);
 
   useEffect(() => {
     console.log('📋 ChatSection: Component mounted/updated with props:', { 
@@ -314,6 +327,15 @@ export function ChatSection({
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
+      {process.env.NODE_ENV === 'development' && (
+        <div className="p-2 bg-yellow-500/10 text-xs border-b border-yellow-500/30">
+          <strong>Debug Info:</strong> 
+          <div>Active Conversation: {activeConversationId || 'none'}</div>
+          <div>Active Assistant: {activeAssistant?.name || 'none'}</div>
+          <div>Messages: {messages?.length || 0}</div>
+        </div>
+      )}
+      
       <div className="flex-1 overflow-y-auto p-4 space-y-5 bg-gradient-to-br from-[#1C2A3A] to-[#25384D]">
         {messages.map((message: Message) => (
           <MessageComponent key={message.id} message={message} />

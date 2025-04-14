@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as messageApi from '@/api/messages';
@@ -32,6 +31,15 @@ export const useChatMessages = () => {
   const pendingMessages = useRef<Set<string>>(new Set());
   const currentStreamingMessageId = useRef<string | null>(null);
   const processingMessageQueue = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    console.log('🔄 useChatMessages: activeConversationId changed:', activeConversationId);
+  }, [activeConversationId]);
+
+  useEffect(() => {
+    console.log('🔄 useChatMessages: activeAssistant changed:', activeAssistant ? 
+      { id: activeAssistant.id, name: activeAssistant.name } : 'null');
+  }, [activeAssistant]);
 
   const { 
     data: conversations = [], 
@@ -256,6 +264,7 @@ export const useChatMessages = () => {
       try {
         console.log(`👤 useChatMessages: Updating assistant for conversation ${activeConversationId}`);
         await messageApi.switchAssistant(activeConversationId, assistant);
+        console.log(`👤 useChatMessages: Successfully updated assistant for conversation ${activeConversationId}`);
       } catch (error) {
         console.error('❌ useChatMessages: Error setting assistant:', error);
       }
@@ -369,7 +378,8 @@ export const useChatMessages = () => {
         console.log(`📝 useChatMessages: Preparing to send message to conversation:`, { 
           specificConversationId, 
           activeConversationId, 
-          resolvedConversationId: conversationId 
+          resolvedConversationId: conversationId,
+          activeAssistantInfo: activeAssistant ? { id: activeAssistant.id, name: activeAssistant.name } : 'null'
         });
         
         const isNewConversation = !conversationId;
@@ -608,7 +618,6 @@ export const useChatMessages = () => {
     refetchConversations
   ]);
 
-  // Log the current state on each render for debugging
   useEffect(() => {
     console.log('🔍 useChatMessages: Current State', {
       activeConversationId,

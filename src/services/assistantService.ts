@@ -49,6 +49,8 @@ export const sendMessage = async (
     // Get the assistant configuration based on the assistant ID
     const assistantConfig = getAssistantConfigById(assistantId);
     
+    console.log(`assistantService: Using assistant ID ${assistantId} (${assistantConfig.name})`);
+    
     // Step 1: Get or create a conversation in our database
     const conversation = await chatHistoryService.getOrCreateConversationThread(
       assistant?.name ? `Conversation with ${assistant.name}` : 'New conversation',
@@ -56,6 +58,8 @@ export const sendMessage = async (
       task?.id,
       assistantId
     );
+
+    console.log(`assistantService: Using conversation ${conversation.id}`);
 
     // Step 2: Add user message to the thread only, database save handled separately
     console.log(`Processing user message for conversation ${conversation.id}`);

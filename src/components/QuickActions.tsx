@@ -47,6 +47,10 @@ export function QuickActions() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  useEffect(() => {
+    console.log('📍 QuickActions: Current active conversation ID:', activeConversationId);
+  }, [activeConversationId]);
+
   const actions = [
     {
       id: 'code-review',
@@ -130,21 +134,32 @@ export function QuickActions() {
       });
       
       // Set the assistant with all required properties
+      const assistantIcon = typeof icon === 'string' ? icon : label.charAt(0);
+      
       await setActiveAssistant({
         id: assistantId,
         name: assistantName,
         description: systemPrompt || `Specialized in ${label.toLowerCase()} tasks`,
-        icon: icon as string,
+        icon: assistantIcon,
         capabilities: [], 
       });
+      
       console.log('📍 QuickActions: Assistant set successfully', { assistantId, assistantName });
       
       // Prepare message content - use input if available or generic message
       const messageToSend = inputValue.trim() || `Help me with ${label.toLowerCase()}`;
       console.log('📍 QuickActions: Message to send', { messageToSend });
       
-      // Always use the existing conversation if available, only create a new one if needed
-      if (!activeConversationId) {
+      if (activeConversationId) {
+        console.log(`📍 QuickActions: Using existing conversation: ${activeConversationId}`);
+        
+        // Clear the input
+        setInputValue('');
+        
+        // Send message to existing conversation
+        await sendMessage(messageToSend, 'user', activeConversationId);
+        console.log(`📍 QuickActions: Message sent to existing conversation: ${activeConversationId}`);
+      } else {
         console.log('📍 QuickActions: No active conversation, creating a new one');
         const newConversationId = await startConversation(`Conversation with ${assistantName}`);
         console.log(`📍 QuickActions: Created new conversation: ${newConversationId}`);
@@ -155,15 +170,6 @@ export function QuickActions() {
         // Send message to new conversation
         await sendMessage(messageToSend, 'user', newConversationId);
         console.log(`📍 QuickActions: Message sent to new conversation: ${newConversationId}`);
-      } else {
-        console.log(`📍 QuickActions: Using existing conversation: ${activeConversationId}`);
-        
-        // Clear the input
-        setInputValue('');
-        
-        // Send message to existing conversation
-        await sendMessage(messageToSend, 'user');
-        console.log(`📍 QuickActions: Message sent to existing conversation: ${activeConversationId}`);
       }
       
       // Collapse the quick actions after use
