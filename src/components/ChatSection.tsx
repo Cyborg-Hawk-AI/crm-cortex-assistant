@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2, AlertTriangle, Folder, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -41,7 +42,8 @@ export function ChatSection({
     isSending,
     isStreaming,
     startConversation,
-    setActiveConversationId
+    setActiveConversationId,
+    addMessage
   } = useChatMessages();
   const [isComposing, setIsComposing] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -57,6 +59,7 @@ export function ChatSection({
   };
 
   useEffect(() => {
+    // Ensure we scroll to bottom on any message changes
     const scrollTimer = setTimeout(() => {
       scrollToBottom();
     }, 50);
@@ -81,22 +84,33 @@ export function ChatSection({
     
     try {
       const messageContent = inputValue;
-      setInputValue('');
+      setInputValue(''); // Clear input immediately
       
+      console.log('ChatSection: User submitted message, adding to UI immediately');
+      
+      // Immediately add user message to UI before any async operations
+      // This ensures instant visibility of the user message
+      addMessage(messageContent, 'user');
+      
+      // Force an immediate scroll to make the new message visible
+      setTimeout(scrollToBottom, 10);
+      
+      // Now start the async process of handling the message
       if (!activeConversationId) {
-        console.log("Creating a new conversation as part of sending the first message");
+        console.log("ChatSection: Creating a new conversation as part of sending the first message");
         const newConversationId = await startConversation('New conversation');
         setActiveConversationId(newConversationId);
         await sendMessage(messageContent, 'user', newConversationId, selectedModel);
       } else {
-        console.log(`Sending message to active conversation: ${activeConversationId}`);
+        console.log(`ChatSection: Sending message to active conversation: ${activeConversationId}`);
         await sendMessage(messageContent, 'user', activeConversationId, selectedModel);
       }
       
+      // Ensure we scroll again after assistant response starts
       setTimeout(scrollToBottom, 100);
       
     } catch (error: any) {
-      console.error('Error sending message:', error);
+      console.error('ChatSection: Error sending message:', error);
       if (error.message?.includes('API key') && selectedModel === 'deepseek') {
         setApiError('DeepSeek API key is missing or invalid. The service requires configuration.');
       } else {
@@ -266,7 +280,10 @@ export function ChatSection({
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className={`flex-1 overflow-y-auto p-4 space-y-5 ${chatBackgrounds.messagesContainer}`}>
+      <div 
+        className={`flex-1 overflow-y-auto p-4 space-y-5 ${chatBackgrounds.messagesContainer}`}
+        id="chat-messages-container"
+      >
         {messages.map((message: Message) => (
           <MessageComponent key={message.id} message={message} />
         ))}

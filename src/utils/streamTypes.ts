@@ -14,3 +14,10 @@ export interface StreamingCallbacks {
   onComplete: (fullResponse: string) => void;
   onError: (error: Error) => void;
 }
+
+export interface MessageStreamCallbacks {
+  onMessageStart?: (messageId: string) => void;
+  onTokenReceived?: (messageId: string, token: string, fullContent: string) => void;
+  onMessageComplete?: (messageId: string, fullContent: string) => void;
+  onMessageError?: (error: Error, messageId?: string) => void;
+}

@@ -5,7 +5,7 @@ import { User, Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 interface MessageProps {
   message: MessageType;
@@ -14,6 +14,14 @@ interface MessageProps {
 export function Message({ message }: MessageProps) {
   const isUser = message.sender === 'user';
   const isSystem = message.isSystem;
+  const messageRef = useRef<HTMLDivElement>(null);
+  
+  // Effect to ensure user messages are immediately visible with auto-focus
+  useEffect(() => {
+    if (isUser && messageRef.current) {
+      messageRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [isUser]);
   
   // Function to render markdown to safe HTML
   const renderMarkdownToSafeHtml = (content: string) => {
@@ -139,6 +147,7 @@ export function Message({ message }: MessageProps) {
 
   return (
     <motion.div
+      ref={messageRef}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
