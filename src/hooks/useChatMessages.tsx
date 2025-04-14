@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Message, Task, Assistant } from '@/utils/types';
@@ -92,15 +91,12 @@ export function useChatMessages() {
       const conversationTitle = title?.trim() || 'New conversation';
       const conversation = await messagesApi.createConversation(conversationTitle);
       
-      // Automatically set the new conversation as active
       console.log(`Auto-activating new conversation: ${conversation.id}`);
       setActiveConversationId(conversation.id);
       setLocalMessages([]);
       
-      // Explicitly invalidate the conversations query to ensure the sidebar updates
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
       
-      // Ensure we refetch the conversations list right away
       refetchConversations();
       
       console.log(`Created conversation ${conversation.id} with title "${conversationTitle}" in Open Chats group`);
@@ -117,7 +113,6 @@ export function useChatMessages() {
     }
   };
 
-  // Function to generate a title for a new conversation
   const generateConversationTitle = async (
     conversationId: string, 
     userMessage: string, 
@@ -126,15 +121,12 @@ export function useChatMessages() {
     try {
       console.log(`Generating title for conversation ${conversationId}`);
       
-      // Create prompt for generating a title
       const prompt = `Generate a short, 3-5 word title summarizing the following conversation: 
       User: ${userMessage.substring(0, 200)}
       Assistant: ${assistantResponse.substring(0, 200)}`;
       
-      // Log the title generation attempt
       console.log("Sending title generation prompt:", prompt.substring(0, 100) + "...");
       
-      // Create a temporary message stream for the title generation
       const titleStream = await createOpenAIStream(
         { 
           messages: [
@@ -148,7 +140,6 @@ export function useChatMessages() {
           },
           onChunk: () => {},
           onComplete: async (titleResponse) => {
-            // Clean up the title (remove quotes, trim, etc.)
             const cleanTitle = titleResponse
               .replace(/^["']|["']$/g, '') // Remove quotes at start/end
               .trim()
@@ -156,11 +147,9 @@ export function useChatMessages() {
             
             console.log(`Generated title: "${cleanTitle}"`);
             
-            // Update the conversation title in Supabase
             try {
               console.log(`Updating conversation ${conversationId} with new title: "${cleanTitle}"`);
               
-              // Add retries for title updates
               let updateSuccess = false;
               let attempts = 0;
               const maxAttempts = 3;
@@ -174,16 +163,13 @@ export function useChatMessages() {
                   
                   if (updateSuccess) {
                     console.log(`Successfully updated conversation ${conversationId} title to "${cleanTitle}"`);
-                    // Invalidate the conversations query to refresh the sidebar
                     queryClient.invalidateQueries({ queryKey: ['conversations'] });
                   } else {
                     console.warn(`Failed to update title on attempt ${attempts}`);
-                    // Wait briefly before retrying
                     await new Promise(resolve => setTimeout(resolve, 500));
                   }
                 } catch (updateError) {
                   console.error(`Error updating title (attempt ${attempts}):`, updateError);
-                  // Wait briefly before retrying
                   await new Promise(resolve => setTimeout(resolve, 500));
                 }
               }
@@ -201,7 +187,6 @@ export function useChatMessages() {
         }
       );
       
-      // We don't need to do anything with the returned stream since processing happens in onComplete callback
       return titleStream;
       
     } catch (error) {
@@ -361,7 +346,6 @@ export function useChatMessages() {
         let conversationId = specificConversationId || activeConversationId;
         console.log(`Preparing to send message to conversation: ${conversationId}`);
         
-        // Track if this is a new conversation
         const isNewConversation = !conversationId;
         
         if (!conversationId) {
@@ -373,7 +357,6 @@ export function useChatMessages() {
           setActiveConversationId(newConversationId);
           console.log(`Created and activated new conversation: ${newConversationId}`);
           
-          // Important: Make sure conversations are immediately refetched
           queryClient.invalidateQueries({ queryKey: ['conversations'] });
           refetchConversations();
         }
@@ -389,7 +372,7 @@ export function useChatMessages() {
           timestamp: new Date(),
           isSystem: false,
           conversation_id: conversationId || '',
-          user_id: 'current-user' // Use a default value or get from auth context
+          user_id: 'current-user'
         };
         
         addLocalMessage(userMessage);
@@ -407,7 +390,7 @@ export function useChatMessages() {
           isSystem: false,
           isStreaming: true,
           conversation_id: conversationId || '',
-          user_id: 'current-user' // Use a default value or get from auth context
+          user_id: 'current-user'
         };
         
         addLocalMessage(assistantMessage);
@@ -421,13 +404,11 @@ export function useChatMessages() {
           
           console.log(`Sending ${messagesForContext.length} messages for context to maintain conversation history`);
           
-          // Format messages for OpenAI API
           const messageHistory = messagesForContext.map(msg => ({
             role: msg.sender === 'user' ? 'user' : 'assistant',
             content: msg.content
           }));
           
-          // Add system message if we have an active assistant
           if (activeAssistant) {
             messageHistory.unshift({
               role: 'system',
@@ -440,7 +421,6 @@ export function useChatMessages() {
             });
           }
           
-          // Create the stream directly from the frontend
           await createOpenAIStream(
             { messages: messageHistory },
             {
@@ -475,10 +455,8 @@ export function useChatMessages() {
                 setIsStreaming(false);
                 currentStreamingMessageId.current = null;
                 
-                // Save the complete response to the database
                 await saveMessage(fullResponse, 'assistant', assistantMessageId, conversationId);
                 
-                // If this is a new conversation's first message exchange, generate a title
                 if (isNewConversation) {
                   console.log("This is a new conversation - generating title after first exchange");
                   await generateConversationTitle(conversationId, content, finalResponse);
@@ -547,7 +525,6 @@ export function useChatMessages() {
           conversationId = newConversationId;
           setActiveConversationId(newConversationId);
           
-          // Make sure conversations are immediately refetched
           queryClient.invalidateQueries({ queryKey: ['conversations'] });
           refetchConversations();
         }
@@ -560,7 +537,7 @@ export function useChatMessages() {
           timestamp: new Date(),
           isSystem: sender === 'system',
           conversation_id: conversationId || '',
-          user_id: 'current-user' // Use a default value or get from auth context
+          user_id: 'current-user'
         };
         
         addLocalMessage(message);
@@ -628,6 +605,6 @@ export function useChatMessages() {
     refetchMessages,
     saveMessage,
     generateConversationTitle,
-    refetchConversations // Export the refetchConversations function
+    refetchConversations
   };
 }
