@@ -47,6 +47,7 @@ export function QuickActions() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Log the active conversation ID when it changes
   useEffect(() => {
     console.log('📍 QuickActions: Current active conversation ID:', activeConversationId);
   }, [activeConversationId]);
@@ -150,6 +151,7 @@ export function QuickActions() {
       const messageToSend = inputValue.trim() || `Help me with ${label.toLowerCase()}`;
       console.log('📍 QuickActions: Message to send', { messageToSend });
       
+      // Check for active conversation and use it directly
       if (activeConversationId) {
         console.log(`📍 QuickActions: Using existing conversation: ${activeConversationId}`);
         

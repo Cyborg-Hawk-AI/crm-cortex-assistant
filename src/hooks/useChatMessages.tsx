@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as messageApi from '@/api/messages';
@@ -374,6 +375,7 @@ export const useChatMessages = () => {
       if (sender === 'user') {
         setIsSending(true);
         
+        // Important: Use specificConversationId if provided, otherwise use activeConversationId
         let conversationId = specificConversationId || activeConversationId;
         console.log(`📝 useChatMessages: Preparing to send message to conversation:`, { 
           specificConversationId, 
@@ -557,6 +559,7 @@ export const useChatMessages = () => {
         
         return userMessage;
       } else {
+        // For system or assistant messages
         let conversationId = specificConversationId || activeConversationId;
         console.log(`📝 useChatMessages: Sending ${sender} message to conversation:`, {
           specificConversationId,
@@ -615,7 +618,8 @@ export const useChatMessages = () => {
     addLocalMessage,
     startConversation,
     toast,
-    refetchConversations
+    refetchConversations,
+    generateConversationTitle
   ]);
 
   useEffect(() => {

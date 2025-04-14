@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2, AlertTriangle, Folder, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -60,6 +61,8 @@ export function ChatSection({
     console.log('⚡ ChatSection: activeConversationId prop updated:', activeConversationId);
     
     if (activeConversationId) {
+      // Make sure activeConversationId is set in useChatMessages
+      console.log('⚡ ChatSection: Setting active conversation ID in hook:', activeConversationId);
       setActiveConversationId(activeConversationId);
     }
   }, [activeConversationId, setActiveConversationId]);
