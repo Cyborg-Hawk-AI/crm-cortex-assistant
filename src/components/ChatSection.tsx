@@ -79,10 +79,10 @@ export function ChatSection({
         console.log("Creating a new conversation as part of sending the first message");
         const newConversationId = await startConversation('New conversation');
         setActiveConversationId(newConversationId);
-        await sendMessage(inputValue, 'user', newConversationId);
+        await sendMessage(inputValue, 'user', newConversationId, selectedModel);
       } else {
         console.log(`Sending message to active conversation: ${activeConversationId}`);
-        await sendMessage(inputValue, 'user', activeConversationId);
+        await sendMessage(inputValue, 'user', activeConversationId, selectedModel);
       }
       setInputValue('');
     } catch (error: any) {

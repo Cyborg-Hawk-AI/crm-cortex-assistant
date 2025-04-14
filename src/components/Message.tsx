@@ -5,7 +5,7 @@ import { User, Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
-import { useMemo, useRef, useEffect } from 'react';
+import { useMemo } from 'react';
 
 interface MessageProps {
   message: MessageType;
@@ -14,15 +14,6 @@ interface MessageProps {
 export function Message({ message }: MessageProps) {
   const isUser = message.sender === 'user';
   const isSystem = message.isSystem;
-  const isStreaming = message.isStreaming;
-  const contentRef = useRef<HTMLDivElement>(null);
-  
-  // Scroll to bottom of content when streaming
-  useEffect(() => {
-    if (isStreaming && contentRef.current) {
-      contentRef.current.scrollTop = contentRef.current.scrollHeight;
-    }
-  }, [isStreaming, message.content]);
   
   // Function to render markdown to safe HTML
   const renderMarkdownToSafeHtml = (content: string) => {
@@ -93,7 +84,6 @@ export function Message({ message }: MessageProps) {
   };
 
   // Process message content with memoization for performance
-  // Add message.isStreaming to dependencies to force re-render during streaming
   const processedContent = useMemo(() => {
     // Completely skip rendering empty messages
     if (!message.content && !message.isStreaming) {
@@ -120,7 +110,6 @@ export function Message({ message }: MessageProps) {
       // Otherwise show the partial content with a blinking cursor
       return (
         <div 
-          ref={contentRef}
           className="text-sm markdown-content after:content-['▋'] after:ml-0.5 after:animate-blink"
           dangerouslySetInnerHTML={{
             __html: renderMarkdownToSafeHtml(message.content)
