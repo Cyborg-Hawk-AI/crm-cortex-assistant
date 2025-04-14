@@ -42,7 +42,8 @@ export function ChatSection({
     isSending,
     isStreaming,
     startConversation,
-    setActiveConversationId
+    setActiveConversationId,
+    refetchConversations
   } = useChatMessages();
   const [isComposing, setIsComposing] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -85,6 +86,8 @@ export function ChatSection({
         console.log("Creating a new conversation as part of sending the first message");
         const newConversationId = await startConversation('New conversation');
         setActiveConversationId(newConversationId);
+        // Force a refresh of the conversations list
+        refetchConversations();
         await sendMessage(inputValue, 'user', newConversationId, selectedModel);
       } else {
         console.log(`Sending message to active conversation: ${activeConversationId}`);
@@ -102,6 +105,33 @@ export function ChatSection({
           variant: 'destructive'
         });
       }
+    }
+  };
+
+  const handleNewChat = async () => {
+    try {
+      // Create a new conversation
+      const newConversationId = await startConversation('New conversation');
+      // Set it as active
+      setActiveConversationId(newConversationId);
+      // Make sure the sidebar updates
+      refetchConversations();
+      // Reset input
+      setInputValue('');
+      // Reset any errors
+      setApiError(null);
+      
+      toast({
+        title: 'New chat started',
+        description: 'You can now start a new conversation'
+      });
+    } catch (error) {
+      console.error('Error creating new chat:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create a new chat',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -248,7 +278,14 @@ export function ChatSection({
             </Button>
           </div>
           
-          <div className="flex justify-end mt-4">
+          <div className="flex justify-between items-center mt-4">
+            <Button 
+              variant="outline" 
+              onClick={handleNewChat}
+              className="text-neon-purple border-neon-purple/40 hover:bg-neon-purple/10"
+            >
+              Start New Chat
+            </Button>
             <ModelToggle currentModel={selectedModel} onToggle={toggleModel} />
           </div>
         </div>
@@ -277,16 +314,28 @@ export function ChatSection({
         )}
         
         <div className="flex justify-between items-center mb-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="text-muted-foreground hover:text-neon-red hover:border-neon-red/30 hover:shadow-[0_0_8px_rgba(244,63,94,0.2)]" 
-            onClick={handleClearChat} 
-            disabled={!activeConversationId}
-          >
-            <Trash2 className="h-4 w-4 mr-1" />
-            Clear conversation
-          </Button>
+          <div className="flex space-x-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-neon-purple border-neon-purple/30 hover:border-neon-purple/60 hover:bg-neon-purple/10" 
+              onClick={handleNewChat}
+            >
+              <Send className="h-4 w-4 mr-1" />
+              New chat
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-muted-foreground hover:text-neon-red hover:border-neon-red/30 hover:shadow-[0_0_8px_rgba(244,63,94,0.2)]" 
+              onClick={handleClearChat} 
+              disabled={!activeConversationId}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Clear conversation
+            </Button>
+          </div>
           
           {/* Model Selection */}
           <div className="flex space-x-2">

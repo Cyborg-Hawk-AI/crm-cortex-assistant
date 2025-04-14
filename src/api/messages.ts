@@ -22,7 +22,9 @@ export const getConversations = async () => {
     throw new Error(error.message);
   }
   
-  return data;
+  // Debug log to verify data is being received
+  console.log(`Fetched ${data?.length || 0} conversations from the database`);
+  return data || [];
 };
 
 // Create a new conversation
@@ -35,10 +37,13 @@ export const createConversation = async (title?: string) => {
 
   console.log(`Creating new conversation with title: ${title || 'New conversation'}`);
 
+  const conversationId = uuidv4();
+  
+  // Include the ID to ensure it's what we expect
   const { data, error } = await supabase
     .from('conversations')
     .insert({
-      id: uuidv4(),
+      id: conversationId,
       user_id: userId,
       title: title || 'New conversation',
       created_at: new Date().toISOString(),
@@ -233,9 +238,9 @@ export const getMessages = async (conversationId: string): Promise<Message[]> =>
     throw new Error(error.message);
   }
   
-  console.log(`Retrieved ${data.length} messages from database`);
+  console.log(`Retrieved ${data?.length || 0} messages from database`);
   
-  return data.map(msg => ({
+  return (data || []).map(msg => ({
     id: msg.id,
     content: msg.content,
     sender: msg.sender,

@@ -67,8 +67,16 @@ export const ConversationSidebar = forwardRef<{
     refetch: refetchConversations
   } = useQuery({
     queryKey: ['conversations'],
-    queryFn: getConversations
+    queryFn: getConversations,
+    refetchInterval: 5000, // Poll every 5 seconds to ensure we get new conversations
   });
+
+  useEffect(() => {
+    console.log('Conversations data loaded:', conversations.length > 0 ? 'Yes' : 'No');
+    if (conversations.length > 0) {
+      console.log('Sample conversation:', conversations[0]);
+    }
+  }, [conversations]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -81,8 +89,15 @@ export const ConversationSidebar = forwardRef<{
   }, [isOpen]);
 
   const handleNewConversation = async () => {
-    setActiveConversationId(null);
-    if (isMobile) setIsOpen(false);
+    try {
+      console.log("Creating new conversation from sidebar");
+      const newId = await startNewConversation();
+      setActiveConversationId(newId);
+      refetchConversations();
+      if (isMobile) setIsOpen(false);
+    } catch (error) {
+      console.error("Error creating new conversation:", error);
+    }
   };
 
   const handleConversationClick = (conversationId: string) => {

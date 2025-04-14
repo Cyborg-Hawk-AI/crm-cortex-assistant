@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Message, Task, Assistant } from '@/utils/types';
@@ -28,7 +27,8 @@ export function useChatMessages() {
 
   const { 
     data: conversations = [], 
-    isLoading: isLoadingConversations
+    isLoading: isLoadingConversations,
+    refetch: refetchConversations
   } = useQuery({
     queryKey: ['conversations'],
     queryFn: () => messagesApi.getConversations(),
@@ -95,6 +95,12 @@ export function useChatMessages() {
       console.log(`Auto-activating new conversation: ${conversation.id}`);
       setActiveConversationId(conversation.id);
       setLocalMessages([]);
+      
+      // Explicitly invalidate the conversations query to ensure the sidebar updates
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      
+      // Ensure we refetch the conversations list right away
+      refetchConversations();
       
       console.log(`Created conversation ${conversation.id} with title "${conversationTitle}" in Open Chats group`);
       
@@ -358,12 +364,17 @@ export function useChatMessages() {
         const isNewConversation = !conversationId;
         
         if (!conversationId) {
+          console.log("No active conversation, creating a new one...");
           const newConversationId = await startConversation(
             activeAssistant?.name ? `Conversation with ${activeAssistant.name}` : 'New conversation'
           );
           conversationId = newConversationId;
           setActiveConversationId(newConversationId);
           console.log(`Created and activated new conversation: ${newConversationId}`);
+          
+          // Important: Make sure conversations are immediately refetched
+          queryClient.invalidateQueries({ queryKey: ['conversations'] });
+          refetchConversations();
         }
         
         const conversation = conversations.find(c => c.id === conversationId);
@@ -534,6 +545,10 @@ export function useChatMessages() {
           const newConversationId = await startConversation();
           conversationId = newConversationId;
           setActiveConversationId(newConversationId);
+          
+          // Make sure conversations are immediately refetched
+          queryClient.invalidateQueries({ queryKey: ['conversations'] });
+          refetchConversations();
         }
         
         const messageId = uuidv4();
@@ -577,7 +592,8 @@ export function useChatMessages() {
     saveMessage,
     addLocalMessage,
     startConversation,
-    toast
+    toast,
+    refetchConversations
   ]);
 
   return {
@@ -610,6 +626,7 @@ export function useChatMessages() {
     setActiveConversationId,
     refetchMessages,
     saveMessage,
-    generateConversationTitle
+    generateConversationTitle,
+    refetchConversations
   };
 }
