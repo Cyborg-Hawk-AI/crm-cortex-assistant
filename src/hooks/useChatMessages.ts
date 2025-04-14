@@ -17,7 +17,7 @@ export interface ChatMessagesHook {
   linkedTask: Task | null;
   linkTaskToConversation: (task: Task | null) => Promise<Task | null>;
   activeConversationId: string | null;
-  startConversation: (title?: string, projectId?: string) => Promise<string>;
+  startConversation: (title?: string) => Promise<string>;
   setActiveConversationId: (id: string | null) => void;
   refetchMessages: (options?: RefetchOptions) => Promise<QueryObserverResult<Message[], Error>>;
   saveMessage: (content: string, sender: 'user' | 'assistant' | 'system', messageId?: string, specificConversationId?: string) => Promise<Message | null>;

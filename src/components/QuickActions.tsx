@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { 
   Code, FileText, ShieldAlert, MessageCircleReply, 
   Search, HelpCircle, Menu, LinkIcon, X,
-  ArrowRight, MoreHorizontal, Loader2
+  ArrowRight, MoreHorizontal
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useChatMessages } from '@/hooks/useChatMessages';
@@ -32,9 +32,7 @@ export function QuickActions() {
     linkTaskToConversation,
     linkedTask, 
     sendMessage,
-    isStreaming,
-    isSending,
-    activeConversationId
+    isStreaming
   } = useChatMessages();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -47,11 +45,6 @@ export function QuickActions() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Log the active conversation ID when it changes
-  useEffect(() => {
-    console.log('📍 QuickActions: Current active conversation ID:', activeConversationId);
-  }, [activeConversationId]);
-
   const actions = [
     {
       id: 'code-review',
@@ -60,7 +53,6 @@ export function QuickActions() {
       color: 'bg-primary text-primary-foreground',
       assistantId: ASSISTANTS.CODE_REVIEW.id,
       assistantName: ASSISTANTS.CODE_REVIEW.name,
-      systemPrompt: ASSISTANTS.CODE_REVIEW.prompt
     },
     {
       id: 'documentation',
@@ -69,7 +61,6 @@ export function QuickActions() {
       color: 'bg-accent text-accent-foreground',
       assistantId: ASSISTANTS.DOCUMENTATION.id,
       assistantName: ASSISTANTS.DOCUMENTATION.name,
-      systemPrompt: ASSISTANTS.DOCUMENTATION.prompt
     },
     {
       id: 'risk-assessment',
@@ -78,7 +69,6 @@ export function QuickActions() {
       color: 'bg-primary text-primary-foreground',
       assistantId: ASSISTANTS.RISK_ASSESSMENT.id,
       assistantName: ASSISTANTS.RISK_ASSESSMENT.name,
-      systemPrompt: ASSISTANTS.RISK_ASSESSMENT.prompt
     },
     {
       id: 'summarize',
@@ -87,7 +77,6 @@ export function QuickActions() {
       color: 'bg-secondary text-secondary-foreground',
       assistantId: ASSISTANTS.SUMMARIZER.id,
       assistantName: ASSISTANTS.SUMMARIZER.name,
-      systemPrompt: ASSISTANTS.SUMMARIZER.prompt
     },
     {
       id: 'search',
@@ -96,7 +85,6 @@ export function QuickActions() {
       color: 'bg-secondary text-secondary-foreground',
       assistantId: ASSISTANTS.SEARCH.id,
       assistantName: ASSISTANTS.SEARCH.name,
-      systemPrompt: ASSISTANTS.SEARCH.prompt
     },
     {
       id: 'help',
@@ -105,7 +93,6 @@ export function QuickActions() {
       color: 'bg-muted text-muted-foreground',
       assistantId: ASSISTANTS.HELP.id,
       assistantName: ASSISTANTS.HELP.name,
-      systemPrompt: ASSISTANTS.HELP.prompt
     },
     {
       id: 'link-task',
@@ -116,25 +103,8 @@ export function QuickActions() {
     }
   ];
 
-  const handleAction = async (assistantId: string, assistantName: string, icon: React.ReactNode, label: string, systemPrompt?: string) => {
-    console.log('📍 QuickActions: handleAction triggered', {
-      assistantId,
-      assistantName,
-      label,
-      activeConversationId,
-      inputValue
-    });
-    
-    // Check if we have an active conversation
-    if (!activeConversationId) {
-      toast({
-        title: "No active conversation",
-        description: "Please start a conversation first using the message input below"
-      });
-      return;
-    }
-    
-    if (isStreaming || isSending) {
+  const handleAction = async (assistantId: string, assistantName: string, icon: React.ReactNode, label: string) => {
+    if (isStreaming) {
       toast({
         title: "Please wait",
         description: "Please wait for the current response to finish before sending a new message"
@@ -142,45 +112,27 @@ export function QuickActions() {
       return;
     }
     
-    try {
-      // Set the assistant with all required properties
-      const assistantIcon = typeof icon === 'string' ? icon : label.charAt(0);
-      
-      await setActiveAssistant({
-        id: assistantId,
-        name: assistantName,
-        description: systemPrompt || `Specialized in ${label.toLowerCase()} tasks`,
-        icon: assistantIcon,
-        capabilities: [], 
-      });
-      
-      console.log('📍 QuickActions: Assistant set successfully', { assistantId, assistantName });
-      
-      // Prepare message content - use input if available or generic message
-      const messageToSend = inputValue.trim() || `Help me with ${label.toLowerCase()}`;
-      console.log('📍 QuickActions: Message to send', { messageToSend });
-      
-      // Clear the input before sending to avoid double sends
-      setInputValue('');
-      
-      // Send message within the existing conversation
-      await sendMessage(messageToSend, 'user', activeConversationId);
-      
-      // Collapse the quick actions after use
-      setExpanded(false);
-      
-      toast({
-        title: "Assistant activated",
-        description: `Using the ${assistantName} assistant`
-      });
-    } catch (error) {
-      console.error('📍 QuickActions: Error in quick action:', error);
-      toast({
-        title: "Action failed",
-        description: "There was a problem processing your request",
-        variant: "destructive"
-      });
-    }
+    const messageToSend = inputValue.trim() || `Help me with ${label.toLowerCase()}`;
+    
+    // Set the assistant with all required properties
+    await setActiveAssistant({
+      id: assistantId,
+      name: assistantName,
+      description: `Specialized in ${label.toLowerCase()} tasks`,
+      icon: icon as string,
+      capabilities: [], // Adding capabilities to match type
+    });
+    
+    // Clear the input and send the message
+    setInputValue('');
+    sendMessage(messageToSend, 'user');
+    
+    setExpanded(false);
+    
+    toast({
+      title: "Assistant activated",
+      description: `Using the ${assistantName} assistant`
+    });
   };
 
   const handleTaskSelect = (taskId: string) => {
@@ -226,9 +178,6 @@ export function QuickActions() {
       default: return actions.slice(0, 3);         // Show 3 for larger screens by default
     }
   };
-  
-  // Determine if buttons should be disabled
-  const areButtonsDisabled = !activeConversationId || isStreaming || isSending;
 
   return (
     <motion.div
@@ -246,7 +195,6 @@ export function QuickActions() {
                 variant="ghost" 
                 size="sm"
                 className="text-xs h-6 w-6 p-0 text-foreground"
-                disabled={areButtonsDisabled}
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
@@ -259,11 +207,10 @@ export function QuickActions() {
                     if (action.action) {
                       action.action();
                     } else if (action.assistantId && action.assistantName) {
-                      handleAction(action.assistantId, action.assistantName, action.icon, action.label, action.systemPrompt);
+                      handleAction(action.assistantId, action.assistantName, action.icon, action.label);
                     }
                   }}
                   className="flex items-center gap-2"
-                  disabled={action.action ? false : areButtonsDisabled}
                 >
                   <span className={`p-1 rounded-full ${action.color}`}>{action.icon}</span>
                   <span>{action.label}</span>
@@ -277,7 +224,6 @@ export function QuickActions() {
             size="sm"
             onClick={() => setExpanded(!expanded)}
             className="text-xs h-6 px-2 text-foreground"
-            disabled={areButtonsDisabled && !expanded}
           >
             {expanded ? 'Collapse' : 'View all'}
             <ArrowRight className={`h-3 w-3 ml-1 transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`} />
@@ -322,20 +268,17 @@ export function QuickActions() {
                     if (action.action) {
                       action.action();
                     } else if (action.assistantId && action.assistantName) {
-                      handleAction(action.assistantId, action.assistantName, action.icon, action.label, action.systemPrompt);
+                      handleAction(action.assistantId, action.assistantName, action.icon, action.label);
                     }
                   }}
-                  className={`w-10 h-10 p-0 rounded-full flex items-center justify-center ${action.color} ${areButtonsDisabled && !action.action ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  disabled={action.action ? false : areButtonsDisabled}
+                  className={`w-10 h-10 p-0 rounded-full flex items-center justify-center ${action.color}`}
+                  disabled={isStreaming}
                 >
-                  {(isStreaming || isSending) ? <Loader2 className="h-4 w-4 animate-spin" /> : action.icon}
+                  {action.icon}
                 </Button>
               </HoverCardTrigger>
               <HoverCardContent className="p-2 text-center">
                 <span className="text-xs text-foreground">{action.label}</span>
-                {!activeConversationId && !action.action && (
-                  <p className="text-xs text-muted-foreground mt-1">Start a conversation first</p>
-                )}
               </HoverCardContent>
             </HoverCard>
           </motion.div>
@@ -354,7 +297,6 @@ export function QuickActions() {
               size="sm"
               onClick={() => setExpanded(true)}
               className="w-10 h-10 p-0 rounded-full flex items-center justify-center bg-muted/80 text-foreground"
-              disabled={areButtonsDisabled}
             >
               <MoreHorizontal className="h-4 w-4" />
             </Button>

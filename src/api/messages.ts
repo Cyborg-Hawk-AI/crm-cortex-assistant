@@ -250,10 +250,6 @@ export const sendMessage = async (
     throw new Error('User not authenticated');
   }
 
-  if (!conversationId) {
-    throw new Error('No conversation ID provided');
-  }
-
   console.log(`Saving ${sender} message to conversation ${conversationId}`);
 
   const { data: conversation, error: convError } = await supabase
@@ -265,7 +261,7 @@ export const sendMessage = async (
   
   if (convError) {
     console.error('Error fetching conversation:', convError);
-    throw new Error('Conversation not found or access denied');
+    throw new Error(convError.message);
   }
 
   const id = messageId || uuidv4();

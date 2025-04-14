@@ -1,4 +1,3 @@
-
 import { StreamingCallbacks } from './streamTypes';
 
 // DeepSeek API configuration
@@ -13,7 +12,6 @@ export interface StreamOptions {
   temperature?: number;
   max_tokens?: number;
   messages: Array<{ role: string; content: string }>;
-  systemPrompt?: string;
 }
 
 /**
@@ -31,12 +29,12 @@ export async function createDeepSeekStream(
     }
     
     // Prepare messages as per DeepSeek docs - each message needs role and content
-    // If systemPrompt is provided, prepend it to messages
-    const messages = options.systemPrompt 
-      ? [{ role: 'system', content: options.systemPrompt }, ...options.messages]
-      : options.messages;
+    const cleanMessages = options.messages.map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }));
     
-    console.log(`Sending ${messages.length} messages to DeepSeek`);
+    console.log(`Sending ${cleanMessages.length} messages to DeepSeek`);
     
     const response = await fetch(`${DEEPSEEK_API_URL}/v1/chat/completions`, {
       method: 'POST',
@@ -46,7 +44,7 @@ export async function createDeepSeekStream(
       },
       body: JSON.stringify({
         model: options.model || DEFAULT_MODEL,
-        messages: messages,
+        messages: cleanMessages,
         temperature: options.temperature ?? 0.7,
         max_tokens: options.max_tokens,
         stream: true,
