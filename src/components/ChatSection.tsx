@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2, AlertTriangle, Folder, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -45,7 +46,8 @@ export function ChatSection({
     isStreaming,
     startConversation,
     setActiveConversationId,
-    refetchConversations 
+    refetchConversations,
+    activeConversationId: currentConversationId 
   } = useChatMessages();
   const [isComposing, setIsComposing] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -53,6 +55,7 @@ export function ChatSection({
     toast
   } = useToast();
   const [retryCount, setRetryCount] = useState(0);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({
@@ -75,6 +78,20 @@ export function ChatSection({
     }
   }, [activeConversationId, messages, isLoading, retryCount]);
 
+  // Effect to handle navigation to new conversation after creation
+  useEffect(() => {
+    if (pendingNavigation && !isSending) {
+      const timer = setTimeout(() => {
+        console.log(`Navigating to conversation: ${pendingNavigation}`);
+        setActiveConversationId(pendingNavigation);
+        navigate(`/chat/${pendingNavigation}`);
+        setPendingNavigation(null);
+      }, 1500); // Small delay to allow UI to update
+      
+      return () => clearTimeout(timer);
+    }
+  }, [pendingNavigation, isSending, navigate, setActiveConversationId]);
+
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
     setApiError(null);
@@ -82,7 +99,7 @@ export function ChatSection({
       if (!activeConversationId) {
         console.log("Creating a new conversation as part of sending the first message");
         const newConversationId = await startConversation('New conversation', selectedProjectId);
-        setActiveConversationId(newConversationId);
+        setPendingNavigation(newConversationId);
         refetchConversations();
         await sendMessage(inputValue, 'user', newConversationId);
       } else {
@@ -107,7 +124,7 @@ export function ChatSection({
   const handleNewChat = async () => {
     try {
       const newConversationId = await startConversation('New conversation', selectedProjectId);
-      setActiveConversationId(newConversationId);
+      setPendingNavigation(newConversationId);
       refetchConversations();
       setInputValue('');
       setApiError(null);
