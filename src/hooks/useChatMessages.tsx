@@ -119,7 +119,7 @@ export function useChatMessages() {
     assistantResponse: string
   ) => {
     try {
-      console.log(`Generating title for conversation ${conversationId}`);
+      console.log(`Generating title for conversation ${conversationId} based on content`);
       
       const prompt = `Generate a short, 3-5 word title summarizing the following conversation: 
       User: ${userMessage.substring(0, 200)}
@@ -457,8 +457,8 @@ export function useChatMessages() {
                 
                 await saveMessage(fullResponse, 'assistant', assistantMessageId, conversationId);
                 
-                if (isNewConversation) {
-                  console.log("This is a new conversation - generating title after first exchange");
+                if (isNewConversation || messagesForContext.length <= 1) {
+                  console.log("First exchange in conversation - generating title");
                   await generateConversationTitle(conversationId, content, finalResponse);
                 }
                 
