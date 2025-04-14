@@ -188,9 +188,7 @@ export const updateMessageContent = async (id: string, content: string): Promise
     id: data.id,
     content: data.content,
     sender: data.sender,
-    conversation_id: data.conversation_id,
-    user_id: data.user_id,
-    timestamp: data.timestamp,
+    timestamp: new Date(data.timestamp),
     isSystem: data.is_system || false
   } as Message;
 };
@@ -234,9 +232,7 @@ export const getMessages = async (conversationId: string): Promise<Message[]> =>
     id: msg.id,
     content: msg.content,
     sender: msg.sender,
-    conversation_id: msg.conversation_id,
-    user_id: msg.user_id,
-    timestamp: msg.timestamp,
+    timestamp: new Date(msg.timestamp),
     isSystem: msg.is_system || false
   })) as Message[];
 };
@@ -292,9 +288,7 @@ export const sendMessage = async (
         id: uuidv4(),
         content,
         sender,
-        conversation_id: conversationId,
-        user_id: userId,
-        timestamp: new Date().toISOString(),
+        timestamp: new Date(),
         isSystem: sender === 'system'
       } as Message;
     }
@@ -339,9 +333,7 @@ export const sendMessage = async (
     id: data.id,
     content: data.content,
     sender: data.sender,
-    conversation_id: data.conversation_id,
-    user_id: data.user_id,
-    timestamp: data.timestamp,
+    timestamp: new Date(data.timestamp),
     isSystem: data.is_system || false
   } as Message;
 };

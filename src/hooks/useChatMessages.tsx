@@ -376,7 +376,7 @@ export const useChatMessages = () => {
           id: userMessageId,
           content,
           sender: 'user',
-          timestamp: new Date().toISOString(),
+          timestamp: new Date(),
           isSystem: false,
           conversation_id: conversationId || '',
           user_id: 'current-user'
@@ -393,7 +393,7 @@ export const useChatMessages = () => {
           id: assistantMessageId,
           content: '',
           sender: 'assistant',
-          timestamp: new Date().toISOString(),
+          timestamp: new Date(),
           isSystem: false,
           isStreaming: true,
           conversation_id: conversationId || '',
@@ -541,7 +541,7 @@ export const useChatMessages = () => {
           id: messageId,
           content,
           sender,
-          timestamp: new Date().toISOString(),
+          timestamp: new Date(),
           isSystem: sender === 'system',
           conversation_id: conversationId || '',
           user_id: 'current-user'
@@ -591,7 +591,7 @@ export const useChatMessages = () => {
         id: uuidv4(),
         content,
         sender,
-        timestamp: new Date().toISOString(),
+        timestamp: new Date(),
         isSystem: sender === 'system',
         conversation_id: activeConversationId || 'temp-conversation',
         user_id: 'current-user'
