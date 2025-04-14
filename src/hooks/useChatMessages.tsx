@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as messageApi from '@/api/messages';
@@ -55,7 +56,7 @@ export const useChatMessages = () => {
 
   useEffect(() => {
     if (activeConversationId) {
-      console.log(`Loading messages for conversation: ${activeConversationId}`);
+      console.log(`🔄 useChatMessages: Loading messages for conversation: ${activeConversationId}`);
       refetchMessages();
       
       setLocalMessages([]);
@@ -72,9 +73,10 @@ export const useChatMessages = () => {
             capabilities: []
           };
           setActiveAssistant(assistantConfig);
+          console.log(`🔄 useChatMessages: Set assistant from conversation:`, assistantConfig);
         }
         
-        console.log(`Switched to conversation: ${activeConversationId} with thread: ${activeConversation.open_ai_thread_id || 'none'}`);
+        console.log(`🔄 useChatMessages: Switched to conversation: ${activeConversationId} with thread: ${activeConversation.open_ai_thread_id || 'none'}`);
       }
     }
   }, [activeConversationId, conversations, refetchMessages]);
@@ -95,10 +97,11 @@ export const useChatMessages = () => {
 
   const startConversation = async (title?: string, projectId: string = ''): Promise<string> => {
     try {
+      console.log(`🆕 useChatMessages: Starting new conversation with title: "${title || 'New conversation'}", projectId: "${projectId || 'none'}"`);
       const conversationTitle = title?.trim() || 'New conversation';
       const conversation = await messageApi.createConversation(conversationTitle, projectId || undefined);
       
-      console.log(`Auto-activating new conversation: ${conversation.id}`);
+      console.log(`🆕 useChatMessages: Auto-activating new conversation: ${conversation.id}`);
       setActiveConversationId(conversation.id);
       setLocalMessages([]);
       
@@ -106,11 +109,11 @@ export const useChatMessages = () => {
       
       refetchConversations();
       
-      console.log(`Created conversation ${conversation.id} with title "${conversationTitle}" in Open Chats group`);
+      console.log(`🆕 useChatMessages: Created conversation ${conversation.id} with title "${conversationTitle}"`);
       
       return conversation.id;
     } catch (error) {
-      console.error('Error starting conversation:', error);
+      console.error('❌ useChatMessages: Error starting conversation:', error);
       toast({
         title: 'Error',
         description: 'Failed to start a new conversation',
@@ -203,6 +206,11 @@ export const useChatMessages = () => {
   };
 
   const addLocalMessage = useCallback((message: Message) => {
+    console.log(`➕ useChatMessages: Adding local message:`, {
+      id: message.id,
+      sender: message.sender,
+      content: message.content.substring(0, 50) + (message.content.length > 50 ? '...' : '')
+    });
     setLocalMessages(prev => [...prev, message]);
     return message;
   }, []);
@@ -212,7 +220,7 @@ export const useChatMessages = () => {
     if (!targetConversationId) return;
     
     try {
-      console.log(`Clearing messages for conversation ${targetConversationId}`);
+      console.log(`🧹 useChatMessages: Clearing messages for conversation ${targetConversationId}`);
       
       await messageApi.deleteConversationMessages(targetConversationId);
       
@@ -228,7 +236,7 @@ export const useChatMessages = () => {
         description: 'All messages have been cleared from this conversation'
       });
     } catch (error) {
-      console.error('Error clearing messages:', error);
+      console.error('❌ useChatMessages: Error clearing messages:', error);
       toast({
         title: 'Error',
         description: 'Failed to clear messages',
@@ -238,14 +246,21 @@ export const useChatMessages = () => {
   }, [activeConversationId, queryClient, toast]);
 
   const handleSetActiveAssistant = useCallback(async (assistant: Assistant) => {
+    console.log(`👤 useChatMessages: Setting active assistant:`, {
+      id: assistant.id,
+      name: assistant.name
+    });
     setActiveAssistant(assistant);
     
     if (activeConversationId) {
       try {
+        console.log(`👤 useChatMessages: Updating assistant for conversation ${activeConversationId}`);
         await messageApi.switchAssistant(activeConversationId, assistant);
       } catch (error) {
-        console.error('Error setting assistant:', error);
+        console.error('❌ useChatMessages: Error setting assistant:', error);
       }
+    } else {
+      console.log(`❓ useChatMessages: No active conversation to update assistant for`);
     }
     
     return assistant;
@@ -351,21 +366,27 @@ export const useChatMessages = () => {
         setIsSending(true);
         
         let conversationId = specificConversationId || activeConversationId;
-        console.log(`Preparing to send message to conversation: ${conversationId}`);
+        console.log(`📝 useChatMessages: Preparing to send message to conversation:`, { 
+          specificConversationId, 
+          activeConversationId, 
+          resolvedConversationId: conversationId 
+        });
         
         const isNewConversation = !conversationId;
         
         if (!conversationId) {
-          console.log("No active conversation, creating a new one...");
+          console.log("📝 useChatMessages: No active conversation, creating a new one...");
           const newConversationId = await startConversation(
             activeAssistant?.name ? `Conversation with ${activeAssistant.name}` : 'New conversation'
           );
           conversationId = newConversationId;
           setActiveConversationId(newConversationId);
-          console.log(`Created and activated new conversation: ${newConversationId}`);
+          console.log(`📝 useChatMessages: Created and activated new conversation: ${newConversationId}`);
           
           queryClient.invalidateQueries({ queryKey: ['conversations'] });
           refetchConversations();
+        } else {
+          console.log(`📝 useChatMessages: Using existing conversation: ${conversationId}`);
         }
         
         const conversation = conversations.find(c => c.id === conversationId);
@@ -409,7 +430,7 @@ export const useChatMessages = () => {
         try {
           const messagesForContext = await messageApi.getMessages(conversationId);
           
-          console.log(`Sending ${messagesForContext.length} messages for context to maintain conversation history`);
+          console.log(`📝 useChatMessages: Sending ${messagesForContext.length} messages for context to maintain conversation history`);
           
           const messageHistory = messagesForContext.map(msg => ({
             role: msg.sender === 'user' ? 'user' : 'assistant',
@@ -417,6 +438,7 @@ export const useChatMessages = () => {
           }));
           
           if (activeAssistant) {
+            console.log(`📝 useChatMessages: Adding system prompt for active assistant: ${activeAssistant.name}`);
             messageHistory.unshift({
               role: 'system',
               content: `You are ${activeAssistant.name || 'an AI assistant'}. ${activeAssistant.description || ''}`
@@ -432,7 +454,7 @@ export const useChatMessages = () => {
             { messages: messageHistory },
             {
               onStart: () => {
-                console.log('Starting to stream assistant response');
+                console.log('📝 useChatMessages: Starting to stream assistant response');
               },
               onChunk: (chunk: string) => {
                 if (!chunk || typeof chunk !== 'string') return;
@@ -448,7 +470,7 @@ export const useChatMessages = () => {
                 );
               },
               onComplete: async (finalResponse: string) => {
-                console.log('Stream completed, saving final response');
+                console.log('📝 useChatMessages: Stream completed, saving final response');
                 fullResponse = finalResponse;
                 
                 setLocalMessages(prev => 
@@ -465,7 +487,7 @@ export const useChatMessages = () => {
                 await saveMessage(fullResponse, 'assistant', assistantMessageId, conversationId);
                 
                 if (isNewConversation || messagesForContext.length <= 1) {
-                  console.log("First exchange in conversation - generating title");
+                  console.log("📝 useChatMessages: First exchange in conversation - generating title");
                   await generateConversationTitle(conversationId, content, finalResponse);
                 }
                 
@@ -475,7 +497,7 @@ export const useChatMessages = () => {
                 setIsSending(false);
               },
               onError: (error) => {
-                console.error('Error in assistant response:', error);
+                console.error('❌ useChatMessages: Error in assistant response:', error);
                 const errorMessage = `Error: ${error.message}`;
                 
                 setLocalMessages(prev => 
@@ -502,7 +524,7 @@ export const useChatMessages = () => {
             }
           );
         } catch (error: any) {
-          console.error('Error in sendMessage:', error);
+          console.error('❌ useChatMessages: Error in sendMessage:', error);
           
           setLocalMessages(prev => 
             prev.map(msg => 
@@ -526,6 +548,11 @@ export const useChatMessages = () => {
         return userMessage;
       } else {
         let conversationId = specificConversationId || activeConversationId;
+        console.log(`📝 useChatMessages: Sending ${sender} message to conversation:`, {
+          specificConversationId,
+          activeConversationId,
+          resolvedConversationId: conversationId
+        });
         
         if (!conversationId) {
           const newConversationId = await startConversation();
@@ -554,7 +581,7 @@ export const useChatMessages = () => {
         return message;
       }
     } catch (error: any) {
-      console.error('Error in sendMessage:', error);
+      console.error('❌ useChatMessages: Error in sendMessage:', error);
       setIsSending(false);
       setIsStreaming(false);
       
@@ -581,12 +608,30 @@ export const useChatMessages = () => {
     refetchConversations
   ]);
 
+  // Log the current state on each render for debugging
+  useEffect(() => {
+    console.log('🔍 useChatMessages: Current State', {
+      activeConversationId,
+      hasActiveAssistant: !!activeAssistant,
+      activeAssistantName: activeAssistant?.name || 'none',
+      messagesCount: messages().length,
+      isStreaming,
+      isSending
+    });
+  }, [activeConversationId, activeAssistant, messages, isStreaming, isSending]);
+
   return {
     messages: messages(),
     inputValue,
     setInputValue,
     sendMessage,
     addMessage: (content: string, sender: 'user' | 'assistant' | 'system') => {
+      console.log(`➕ useChatMessages: Adding message via addMessage helper:`, {
+        sender,
+        conversationId: activeConversationId || 'temp-conversation',
+        contentPreview: content.substring(0, 50) + (content.length > 50 ? '...' : '')
+      });
+      
       const message: Message = {
         id: uuidv4(),
         content,

@@ -121,36 +121,49 @@ export function QuickActions() {
     }
     
     try {
+      console.log('📍 QuickActions: handleAction triggered', {
+        assistantId,
+        assistantName,
+        label,
+        activeConversationId,
+        inputValue
+      });
+      
       // Set the assistant with all required properties
       await setActiveAssistant({
         id: assistantId,
         name: assistantName,
         description: systemPrompt || `Specialized in ${label.toLowerCase()} tasks`,
         icon: icon as string,
-        capabilities: [], // Adding capabilities to match type
+        capabilities: [], 
       });
+      console.log('📍 QuickActions: Assistant set successfully', { assistantId, assistantName });
       
       // Prepare message content - use input if available or generic message
       const messageToSend = inputValue.trim() || `Help me with ${label.toLowerCase()}`;
+      console.log('📍 QuickActions: Message to send', { messageToSend });
       
-      // If no active conversation, create one - otherwise use existing conversation
+      // Always use the existing conversation if available, only create a new one if needed
       if (!activeConversationId) {
+        console.log('📍 QuickActions: No active conversation, creating a new one');
         const newConversationId = await startConversation(`Conversation with ${assistantName}`);
-        console.log(`Created new conversation: ${newConversationId}`);
+        console.log(`📍 QuickActions: Created new conversation: ${newConversationId}`);
         
         // Clear the input
         setInputValue('');
         
         // Send message to new conversation
         await sendMessage(messageToSend, 'user', newConversationId);
+        console.log(`📍 QuickActions: Message sent to new conversation: ${newConversationId}`);
       } else {
-        console.log(`Using existing conversation: ${activeConversationId}`);
+        console.log(`📍 QuickActions: Using existing conversation: ${activeConversationId}`);
         
         // Clear the input
         setInputValue('');
         
         // Send message to existing conversation
-        await sendMessage(messageToSend, 'user', activeConversationId);
+        await sendMessage(messageToSend, 'user');
+        console.log(`📍 QuickActions: Message sent to existing conversation: ${activeConversationId}`);
       }
       
       // Collapse the quick actions after use
@@ -161,7 +174,7 @@ export function QuickActions() {
         description: `Using the ${assistantName} assistant`
       });
     } catch (error) {
-      console.error('Error in quick action:', error);
+      console.error('📍 QuickActions: Error in quick action:', error);
       toast({
         title: "Action failed",
         description: "There was a problem processing your request",

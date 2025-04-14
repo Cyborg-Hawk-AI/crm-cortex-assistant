@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2, AlertTriangle, Folder, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -54,6 +55,14 @@ export function ChatSection({
   } = useToast();
   const [retryCount, setRetryCount] = useState(0);
 
+  useEffect(() => {
+    console.log('📋 ChatSection: Component mounted/updated with props:', { 
+      activeConversationId, 
+      messagesCount: messages?.length || 0,
+      isLoading 
+    });
+  }, [activeConversationId, messages, isLoading]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({
       behavior: 'smooth'
@@ -66,8 +75,9 @@ export function ChatSection({
   
   useEffect(() => {
     if (activeConversationId && messages.length === 0 && !isLoading && retryCount < 3) {
+      console.log('⚠️ ChatSection: Messages appear to be missing, scheduling retry fetch');
       const timer = setTimeout(() => {
-        console.warn('Chat messages appear to be missing, retrying fetch...');
+        console.warn('⚠️ ChatSection: Chat messages appear to be missing, retrying fetch...');
         setRetryCount(prev => prev + 1);
       }, 1000);
       
@@ -79,19 +89,24 @@ export function ChatSection({
     if (!inputValue.trim()) return;
     setApiError(null);
     try {
+      console.log('📝 ChatSection: handleSendMessage triggered', { 
+        activeConversationId, 
+        inputValue: inputValue.substring(0, 50) + (inputValue.length > 50 ? '...' : '')
+      });
+      
       if (!activeConversationId) {
-        console.log("Creating a new conversation as part of sending the first message");
+        console.log("📝 ChatSection: Creating a new conversation as part of sending the first message");
         const newConversationId = await startConversation('New conversation', selectedProjectId);
         setActiveConversationId(newConversationId);
         refetchConversations();
         await sendMessage(inputValue, 'user', newConversationId);
       } else {
-        console.log(`Sending message to active conversation: ${activeConversationId}`);
+        console.log(`📝 ChatSection: Sending message to active conversation: ${activeConversationId}`);
         await sendMessage(inputValue, 'user', activeConversationId);
       }
       setInputValue('');
     } catch (error: any) {
-      console.error('Error sending message:', error);
+      console.error('❌ ChatSection: Error sending message:', error);
       if (error.message?.includes('API key') && selectedModel === 'deepseek') {
         setApiError('DeepSeek API key is missing or invalid. The service requires configuration.');
       } else {
@@ -190,6 +205,7 @@ export function ChatSection({
   };
 
   if (isLoading) {
+    console.log('📋 ChatSection: Loading state active');
     return (
       <div className="flex flex-col h-full justify-center items-center text-muted-foreground">
         <div className="loading-dots flex items-center">
@@ -207,6 +223,7 @@ export function ChatSection({
   }
 
   if (activeConversationId && messages.length === 0 && retryCount > 0 && retryCount < 3) {
+    console.log('📋 ChatSection: Retrying message load', { retryCount });
     return (
       <div className="flex flex-col h-full justify-center items-center text-muted-foreground">
         <Loader2 className="h-8 w-8 text-neon-purple animate-spin" />
@@ -216,6 +233,7 @@ export function ChatSection({
   }
 
   if (messages.length === 0) {
+    console.log('📋 ChatSection: Empty conversation state');
     return (
       <div className="flex flex-col h-full justify-center items-center p-4 text-center">
         <div className="max-w-md actionbot-card p-8 rounded-xl border border-gray-100 shadow-lg bg-cyan-950">
@@ -288,6 +306,11 @@ export function ChatSection({
       </div>
     );
   }
+
+  console.log('📋 ChatSection: Rendering conversation with messages', { 
+    activeConversationId, 
+    messagesCount: messages?.length || 0 
+  });
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
