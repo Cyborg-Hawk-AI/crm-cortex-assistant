@@ -14,6 +14,7 @@ import { Alert } from '@/components/ui/alert';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useSidebar } from '@/components/ui/sidebar';
 
 interface ChatSectionProps {
   activeConversationId: string | null;
@@ -29,6 +30,7 @@ export function ChatSection({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const { state: sidebarState } = useSidebar();
   const {
     selectedModel,
     toggleModel
@@ -71,6 +73,27 @@ export function ChatSection({
       return () => clearTimeout(timer);
     }
   }, [activeConversationId, messages, isLoading, retryCount]);
+
+  const [contentWidth, setContentWidth] = useState('auto');
+  
+  useEffect(() => {
+    const updateContentWidth = () => {
+      const chatContainer = document.querySelector('.chat-messages-container');
+      if (chatContainer) {
+        const containerWidth = chatContainer.getBoundingClientRect().width;
+        setContentWidth(`${containerWidth - 40}px`);
+      }
+    };
+
+    updateContentWidth();
+    
+    if (sidebarState) {
+      setTimeout(updateContentWidth, 300);
+    }
+    
+    window.addEventListener('resize', updateContentWidth);
+    return () => window.removeEventListener('resize', updateContentWidth);
+  }, [sidebarState]);
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
@@ -281,9 +304,15 @@ export function ChatSection({
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex-1 overflow-y-auto p-4 space-y-5 bg-gradient-to-br from-[#1C2A3A] to-[#25384D]">
+      <div 
+        className="chat-messages-container flex-1 overflow-y-auto p-4 space-y-5 bg-gradient-to-br from-[#1C2A3A] to-[#25384D]"
+      >
         {messages.map((message: Message) => (
-          <MessageComponent key={message.id} message={message} />
+          <MessageComponent 
+            key={message.id} 
+            message={message} 
+            containerWidth={contentWidth}
+          />
         ))}
         <div ref={messagesEndRef} />
       </div>

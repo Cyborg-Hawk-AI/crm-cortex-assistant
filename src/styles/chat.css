@@ -96,3 +96,28 @@
   border-radius: 1px;
   background: currentColor;
 }
+
+/* Responsive chat content adjustments */
+.chat-messages-container {
+  transition: width 0.3s ease, padding 0.3s ease;
+  position: relative;
+}
+
+.chat-messages-container .message-container {
+  max-width: 100%;
+  transition: max-width 0.3s ease;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+/* Prevent horizontal scrolling in messages */
+.markdown-content {
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+.markdown-content pre {
+  max-width: 100%;
+  overflow-x: auto;
+}
