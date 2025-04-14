@@ -122,10 +122,11 @@ export interface MindPage {
 export interface MindBlock {
   id: string;
   page_id: string;
-  content_type: 'text' | 'todo' | 'heading' | 'image' | 'file' | 'code' | 'quote' | 'callout';
+  content_type: 'text' | 'todo' | 'heading' | 'image' | 'file' | 'code' | 'quote' | 'callout' | 'heading1' | 'heading2' | 'heading3' | 'toggle' | 'columns' | 'bullet' | 'numbered';
   content: any;
   position?: number;
   properties?: Record<string, any>;
+  parent_block_id?: string;
   user_id: string;
   created_at?: string;
   updated_at?: string;
@@ -141,6 +142,7 @@ export interface Note {
   user_id: string;
   created_at: Date;
   updated_at: Date;
+  timestamp?: Date;
 }
 
 export interface Notebook {
@@ -167,6 +169,8 @@ export interface NotePage {
   section_id: string;
   parent_page_id?: string | null;
   is_subpage?: boolean;
+  sectionId?: string;
+  isSubpage?: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -197,6 +201,13 @@ export interface Ticket {
   priority: string;
   date?: string;
   user_id?: string;
+  parent_task_id?: string | null;
+  updated_at?: string;
+  customer?: string;
+  summary?: string;
+  actionItems?: any[];
+  comments?: any[];
+  updated?: string;
 }
 
 export interface Activity {
@@ -208,24 +219,27 @@ export interface Activity {
   entityId?: string;
   relatedItem?: string;
   additionalInfo?: any;
+  description?: string;
 }
 
 export interface MeetingAction {
   id: string;
   label: string;
   meeting_id?: string;
-  icon: string;
-  action: string;
+  icon: React.ReactNode;
+  action: () => void;
   color: string;
+  description?: string;
 }
 
 export interface TicketAction {
   id: string;
   label: string;
   ticket_id?: string;
-  icon: string;
-  action: string;
+  icon: React.ReactNode;
+  action: () => void;
   color: string;
+  description?: string;
 }
 
 export interface TaskView {

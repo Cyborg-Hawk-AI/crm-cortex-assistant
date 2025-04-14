@@ -132,7 +132,7 @@ export function QuickActions() {
       id: assistantId,
       name: assistantName,
       description: `Specialized in ${label.toLowerCase()} tasks`,
-      icon: icon as string,
+      icon: icon as any,
       capabilities: [], // Adding capabilities to match type
     });
     
