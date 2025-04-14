@@ -281,7 +281,7 @@ export function ChatSection({
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex-1 overflow-y-auto p-4 space-y-5 bg-gradient-to-br from-white to-gray-50 bg-slate-900">
+      <div className="flex-1 overflow-y-auto p-4 space-y-5 bg-gradient-to-br from-[#1C2A3A] to-[#25384D]">
         {messages.map((message: Message) => (
           <MessageComponent key={message.id} message={message} />
         ))}
