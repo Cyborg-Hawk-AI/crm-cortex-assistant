@@ -34,8 +34,7 @@ export function QuickActions() {
     sendMessage,
     isStreaming,
     isSending,
-    activeConversationId,
-    startConversation
+    activeConversationId
   } = useChatMessages();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -126,6 +125,15 @@ export function QuickActions() {
       return;
     }
     
+    // Verify we have an active conversation
+    if (!activeConversationId) {
+      toast({
+        title: "No active conversation",
+        description: "Please start a conversation first using the message input below"
+      });
+      return;
+    }
+    
     try {
       console.log('📍 QuickActions: handleAction triggered', {
         assistantId,
@@ -152,25 +160,14 @@ export function QuickActions() {
       const messageToSend = inputValue.trim() || `Help me with ${label.toLowerCase()}`;
       console.log('📍 QuickActions: Message to send', { messageToSend });
       
-      // Check if we have an active conversation
-      if (activeConversationId) {
-        console.log(`📍 QuickActions: Using existing conversation: ${activeConversationId}`);
-        
-        // Clear the input before sending to avoid double sends
-        setInputValue('');
-        
-        // Send message within the existing conversation
-        await sendMessage(messageToSend, 'user');
-      } else {
-        // Only create a new conversation if there isn't an active one
-        console.log('📍 QuickActions: No active conversation, creating a new one');
-        
-        // Clear the input before sending to avoid double sends
-        setInputValue('');
-        
-        // Let sendMessage create the conversation as needed
-        await sendMessage(messageToSend, 'user');
-      }
+      // Always use the existing conversation
+      console.log(`📍 QuickActions: Using existing conversation: ${activeConversationId}`);
+      
+      // Clear the input before sending to avoid double sends
+      setInputValue('');
+      
+      // Send message within the existing conversation (explicitly don't pass specificConversationId)
+      await sendMessage(messageToSend, 'user');
       
       // Collapse the quick actions after use
       setExpanded(false);
@@ -326,7 +323,7 @@ export function QuickActions() {
                     }
                   }}
                   className={`w-10 h-10 p-0 rounded-full flex items-center justify-center ${action.color}`}
-                  disabled={isStreaming || isSending}
+                  disabled={isStreaming || isSending || !activeConversationId}
                 >
                   {(isStreaming || isSending) ? <Loader2 className="h-4 w-4 animate-spin" /> : action.icon}
                 </Button>
@@ -351,6 +348,7 @@ export function QuickActions() {
               size="sm"
               onClick={() => setExpanded(true)}
               className="w-10 h-10 p-0 rounded-full flex items-center justify-center bg-muted/80 text-foreground"
+              disabled={isStreaming || isSending}
             >
               <MoreHorizontal className="h-4 w-4" />
             </Button>

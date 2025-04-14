@@ -375,30 +375,28 @@ export const useChatMessages = () => {
         setIsSending(true);
         
         // Important: Use specificConversationId if provided, otherwise use activeConversationId
-        let conversationId = specificConversationId || activeConversationId;
-        console.log(`📝 useChatMessages: Preparing to send message to conversation:`, { 
+        // And require an existing conversation ID
+        const conversationId = specificConversationId || activeConversationId;
+        console.log(`📝 useChatMessages: Sending message to conversation:`, { 
           specificConversationId, 
           activeConversationId, 
           resolvedConversationId: conversationId,
           activeAssistantInfo: activeAssistant ? { id: activeAssistant.id, name: activeAssistant.name } : 'null'
         });
         
-        const isNewConversation = !conversationId;
-        
+        // Early return if no active conversation
         if (!conversationId) {
-          console.log("📝 useChatMessages: No active conversation, creating a new one...");
-          const newConversationId = await startConversation(
-            activeAssistant?.name ? `Conversation with ${activeAssistant.name}` : 'New conversation'
-          );
-          conversationId = newConversationId;
-          setActiveConversationId(newConversationId);
-          console.log(`📝 useChatMessages: Created and activated new conversation: ${newConversationId}`);
-          
-          queryClient.invalidateQueries({ queryKey: ['conversations'] });
-          refetchConversations();
-        } else {
-          console.log(`📝 useChatMessages: Using existing conversation: ${conversationId}`);
+          console.error("📝 useChatMessages: No active conversation, cannot send message");
+          setIsSending(false);
+          toast({
+            title: "No active conversation",
+            description: "Please start a conversation first",
+            variant: "destructive"
+          });
+          return null;
         }
+        
+        console.log(`📝 useChatMessages: Using existing conversation: ${conversationId}`);
         
         const conversation = conversations.find(c => c.id === conversationId);
         const threadId = conversation?.open_ai_thread_id || null;
@@ -410,7 +408,7 @@ export const useChatMessages = () => {
           sender: 'user',
           timestamp: new Date(),
           isSystem: false,
-          conversation_id: conversationId || '',
+          conversation_id: conversationId,
           user_id: 'current-user'
         };
         
@@ -428,7 +426,7 @@ export const useChatMessages = () => {
           timestamp: new Date(),
           isSystem: false,
           isStreaming: true,
-          conversation_id: conversationId || '',
+          conversation_id: conversationId,
           user_id: 'current-user'
         };
         
@@ -495,12 +493,7 @@ export const useChatMessages = () => {
                 setIsStreaming(false);
                 currentStreamingMessageId.current = null;
                 
-                await saveMessage(fullResponse, 'assistant', assistantMessageId, conversationId);
-                
-                if (isNewConversation || messagesForContext.length <= 1) {
-                  console.log("📝 useChatMessages: First exchange in conversation - generating title");
-                  await generateConversationTitle(conversationId, content, finalResponse);
-                }
+                await saveMessage(finalResponse, 'assistant', assistantMessageId, conversationId);
                 
                 queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
                 queryClient.invalidateQueries({ queryKey: ['conversations'] });
@@ -559,20 +552,23 @@ export const useChatMessages = () => {
         return userMessage;
       } else {
         // For system or assistant messages
-        let conversationId = specificConversationId || activeConversationId;
+        // Also require an existing conversation
+        const conversationId = specificConversationId || activeConversationId;
         console.log(`📝 useChatMessages: Sending ${sender} message to conversation:`, {
           specificConversationId,
           activeConversationId,
           resolvedConversationId: conversationId
         });
         
+        // Early return if no active conversation
         if (!conversationId) {
-          const newConversationId = await startConversation();
-          conversationId = newConversationId;
-          setActiveConversationId(newConversationId);
-          
-          queryClient.invalidateQueries({ queryKey: ['conversations'] });
-          refetchConversations();
+          console.error("📝 useChatMessages: No active conversation for system/assistant message");
+          toast({
+            title: "No active conversation",
+            description: "Please start a conversation first",
+            variant: "destructive"
+          });
+          return null;
         }
         
         const messageId = uuidv4();
@@ -582,7 +578,7 @@ export const useChatMessages = () => {
           sender,
           timestamp: new Date(),
           isSystem: sender === 'system',
-          conversation_id: conversationId || '',
+          conversation_id: conversationId,
           user_id: 'current-user'
         };
         
@@ -615,10 +611,7 @@ export const useChatMessages = () => {
     queryClient,
     saveMessage,
     addLocalMessage,
-    startConversation,
     toast,
-    refetchConversations,
-    generateConversationTitle
   ]);
 
   useEffect(() => {
