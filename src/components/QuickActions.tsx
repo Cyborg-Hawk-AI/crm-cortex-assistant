@@ -28,12 +28,13 @@ export function QuickActions() {
     addMessage, 
     inputValue, 
     setInputValue, 
-    switchAssistant, 
+    setActiveAssistant, 
     linkTaskToConversation,
     linkedTask, 
     sendMessage,
     isStreaming,
-    activeConversationId
+    activeConversationId,
+    startConversation
   } = useChatMessages();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -113,25 +114,28 @@ export function QuickActions() {
       return;
     }
     
-    if (!activeConversationId) {
-      toast({
-        title: "No active conversation",
-        description: "Please start a conversation first"
-      });
-      return;
-    }
-    
     try {
-      // First switch the assistant for the current conversation
-      const success = await switchAssistant({
+      // Check if we have an active conversation, and create one if needed
+      let currentConversationId = activeConversationId;
+      if (!currentConversationId) {
+        console.log("No active conversation, creating a new one before switching assistant");
+        currentConversationId = await startConversation('New conversation');
+        console.log(`Created new conversation with ID: ${currentConversationId}`);
+      }
+      
+      // Now switch the assistant for the current conversation
+      const assistant = {
         id: assistantId,
         name: assistantName,
         description: `Specialized in ${label.toLowerCase()} tasks`,
-        icon: icon as string,
+        icon: typeof icon === 'string' ? icon : undefined,
         capabilities: []
-      });
+      };
       
-      if (!success) {
+      console.log(`Switching to assistant ${assistantName} (${assistantId}) for conversation ${currentConversationId}`);
+      const switchedAssistant = await setActiveAssistant(assistant);
+      
+      if (!switchedAssistant) {
         toast({
           title: "Error",
           description: `Failed to switch to ${assistantName}`,
