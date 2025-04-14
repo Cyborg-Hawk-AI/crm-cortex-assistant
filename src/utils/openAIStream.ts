@@ -44,8 +44,8 @@ export async function createOpenAIStream(
       content: message.content
     }));
     
-    // Use the responses API with streaming enabled
-    const response = await fetch(`${OPENAI_API_URL}/v1/responses`, {
+    // FIXED: Corrected the endpoint URL - removed extra '/v1' segment
+    const response = await fetch(`${OPENAI_API_URL}/responses`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -62,11 +62,13 @@ export async function createOpenAIStream(
     });
     
     if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`OpenAI API error: ${response.status} ${error}`);
+      const errorText = await response.text();
+      logWithTime(`API request failed with status ${response.status}:`, errorText);
+      throw new Error(`OpenAI API error: ${response.status} ${errorText}`);
     }
     
     if (!response.body) {
+      logWithTime('Response body is null');
       throw new Error('Response body is null');
     }
     
@@ -97,6 +99,7 @@ export async function createOpenAIStream(
           
           // Decode the chunk and parse the events
           const chunk = decoder.decode(value, { stream: true });
+          logWithTime('Received raw chunk:', chunk.substring(0, 100) + (chunk.length > 100 ? '...' : ''));
           
           // Process the SSE format - each line starts with "data: "
           const lines = chunk
@@ -106,6 +109,7 @@ export async function createOpenAIStream(
           
           for (const line of lines) {
             if (line === '[DONE]') {
+              logWithTime('Received [DONE] signal');
               isComplete = true;
               continue;
             }
@@ -113,6 +117,7 @@ export async function createOpenAIStream(
             try {
               // Parse the event data
               const event = JSON.parse(line);
+              logWithTime('Parsed event:', { type: event.type });
               
               // Handle different event types from the streaming responses API
               switch (event.type) {
@@ -144,6 +149,7 @@ export async function createOpenAIStream(
                   
                 default:
                   // Handle other event types if needed
+                  logWithTime(`Unhandled event type: ${event.type}`);
                   break;
               }
             } catch (e) {
