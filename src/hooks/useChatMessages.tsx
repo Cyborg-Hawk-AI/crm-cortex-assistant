@@ -303,7 +303,7 @@ export const useChatMessages = () => {
         
         let fullResponse = '';
         
-        if (modelOption.id === 'deepseek') {
+        if (modelOption && modelOption.id === 'deepseek') {
           await deepSeekChat(
             {
               messages: existingMessages.map(msg => ({

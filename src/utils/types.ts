@@ -1,4 +1,3 @@
-
 // Define task priority and status types based on what's in the database
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type TaskStatus = 'open' | 'in-progress' | 'resolved' | 'closed' | 'completed';
@@ -274,13 +273,8 @@ export interface Assistant {
   id: string;
   name: string;
   description?: string;
-  capabilities?: string[];
-  openai_assistant_id?: string;
-  is_active?: boolean;
-  configuration?: any;
-  created_at?: Date | string;
-  updated_at?: Date | string;
   icon?: string;
+  capabilities: string[];
 }
 
 // MeetingAction interface for MeetingQuickActions

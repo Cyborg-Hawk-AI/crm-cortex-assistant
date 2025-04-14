@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
@@ -40,7 +39,6 @@ export function QuickActions() {
   const isMobile = useIsMobile();
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
-  // Update windowWidth state when window is resized
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
@@ -115,7 +113,6 @@ export function QuickActions() {
     }
     
     try {
-      // Check if we have an active conversation, and create one if needed
       let currentConversationId = activeConversationId;
       if (!currentConversationId) {
         console.log("No active conversation, creating a new one before switching assistant");
@@ -123,7 +120,6 @@ export function QuickActions() {
         console.log(`Created new conversation with ID: ${currentConversationId}`);
       }
       
-      // Now switch the assistant for the current conversation
       const assistant = {
         id: assistantId,
         name: assistantName,
@@ -144,10 +140,8 @@ export function QuickActions() {
         return;
       }
       
-      // Get the message to send (either from input or default)
       const messageToSend = inputValue.trim() || `Help me with ${label.toLowerCase()}`;
       
-      // Clear the input and send the message
       setInputValue('');
       await sendMessage(messageToSend, 'user');
       
@@ -183,14 +177,12 @@ export function QuickActions() {
     }
   };
 
-  // Determine display mode based on screen width
   const displayMode = () => {
-    if (windowWidth < 480) return 'compact'; // Ultra compact for very small screens
-    if (windowWidth < 640) return 'small';   // Smaller grid for small screens
-    return 'full';                           // Full grid for larger screens
+    if (windowWidth < 480) return 'compact';
+    if (windowWidth < 640) return 'small';
+    return 'full';
   };
 
-  // Mock tasks for this example - in real app this would come from a hook
   const tasks = [];
 
   const getGridCols = () => {
@@ -205,9 +197,9 @@ export function QuickActions() {
     if (expanded) return actions;
     
     switch(displayMode()) {
-      case 'compact': return actions.slice(0, 2);  // Show only 2 for very small screens
-      case 'small': return actions.slice(0, 3);    // Show 3 for small screens
-      default: return actions.slice(0, 3);         // Show 3 for larger screens by default
+      case 'compact': return actions.slice(0, 2);
+      case 'small': return actions.slice(0, 3);
+      default: return actions.slice(0, 3);
     }
   };
 

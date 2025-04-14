@@ -1,24 +1,15 @@
 
-export interface StreamingResponse {
-  success: boolean;
-  content?: string;
-  error?: string;
-  conversationId: string;
-  threadId?: string;
-  isComplete: boolean;
+export interface StreamOptions {
+  messages: Array<{ role: string; content: string }>;
+  systemPrompt?: string;  // Make sure this is added
+  temperature?: number;
+  model?: string;
+  max_tokens?: number;
 }
 
-export interface StreamingCallbacks {
+export interface StreamCallbacks {
   onStart: () => void;
   onChunk: (chunk: string) => void;
   onComplete: (fullResponse: string) => void;
   onError: (error: Error) => void;
-}
-
-export interface StreamOptions {
-  model?: string;
-  temperature?: number;
-  max_tokens?: number;
-  messages: Array<{ role: string; content: string }>;
-  systemPrompt?: string;
 }
