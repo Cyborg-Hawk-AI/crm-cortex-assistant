@@ -94,8 +94,8 @@ export function ContactCreateModal({ open, onOpenChange, onContactCreated }: Con
       title: data.title,
       notes: data.notes,
       tags: tags,
-      created_at: new Date(),
-      updated_at: new Date(),
+      created_at: new Date().toISOString(), // Convert to string
+      updated_at: new Date().toISOString(), // Convert to string
       user_id: 'current-user'
     };
     

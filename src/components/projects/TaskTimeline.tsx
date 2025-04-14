@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Task } from '@/utils/types';
 import { Badge } from '@/components/ui/badge';
@@ -93,10 +92,8 @@ export function TaskTimeline({ tasks, onTaskClick }: TaskTimelineProps) {
     return date < new Date();
   };
 
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('default', { day: 'numeric', month: 'short' });
+  const formatDate = (date: string): string => {
+    return new Date(date).toLocaleDateString();
   };
 
   // Helper function to get the month name safely

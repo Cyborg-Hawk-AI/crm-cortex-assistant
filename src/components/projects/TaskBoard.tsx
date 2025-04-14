@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { 
@@ -65,6 +64,11 @@ export function TaskBoard({ tasks, onTaskClick }: TaskBoardProps) {
     }
   };
 
+  const formatDueDate = (date: string | null): string => {
+    if (!date) return 'No due date';
+    return new Date(date).toLocaleDateString();
+  };
+
   const renderDueDate = (dueDate: string | null) => {
     if (!dueDate) return null;
     
@@ -74,7 +78,7 @@ export function TaskBoard({ tasks, onTaskClick }: TaskBoardProps) {
     return (
       <div className={`flex items-center text-xs ${isOverdue ? 'text-red-400' : 'text-gray-400'}`}>
         <ClockIcon className="w-3 h-3 mr-1" />
-        <span>{date.toLocaleDateString()}</span>
+        <span>{formatDueDate(dueDate)}</span>
       </div>
     );
   };

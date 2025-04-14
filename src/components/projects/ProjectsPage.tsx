@@ -79,6 +79,7 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
         return (data || []).map(task => ({
           id: task.id || '',
           title: task.title || 'Untitled Project',
+          name: task.title || 'Untitled Project',
           description: task.description || '',
           status: task.status || 'open',
           owner_id: task.reporter_id || task.user_id || '',
@@ -244,6 +245,10 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
               <p className="text-sm text-[#CBD5E1] mb-6">
                 Please sign in to view your projects and missions.
               </p>
+              <ProjectCreateButton 
+                onProjectCreated={handleProjectCreated}
+                navigateToProject={false} 
+              />
             </div>
           </CardContent>
         </Card>
@@ -277,7 +282,7 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
               </p>
               <ProjectCreateButton 
                 onProjectCreated={handleProjectCreated}
-                navigateToProject={false} 
+                navigateToProject={false}
               />
             </div>
           </CardContent>
@@ -331,6 +336,7 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
           project={projects.find(p => p.id === internalSelectedProjectId) || {
             id: internalSelectedProjectId,
             title: 'Loading...',
+            name: 'Loading...',
             description: '',
             status: 'open',
             owner_id: '',

@@ -1,3 +1,4 @@
+
 // Define task priority and status types based on what's in the database
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type TaskStatus = 'open' | 'in-progress' | 'resolved' | 'closed' | 'completed';
@@ -9,13 +10,13 @@ export interface Task {
   description: string | null;
   status: TaskStatus;
   priority: TaskPriority;
-  due_date: string | null;
+  due_date: string | null;  // Changed from Date to string | null
   assignee_id: string | null;
   reporter_id: string;
   user_id: string;
   parent_task_id: string | null;
-  created_at: string | Date;
-  updated_at: string | Date;
+  created_at: string;  // Changed from Date to string
+  updated_at: string;  // Changed from Date to string
   tags: string[];
 }
 
@@ -27,8 +28,8 @@ export interface SubTask {
   user_id: string;
   is_completed: boolean;
   created_by: string | null;
-  created_at: string | Date;
-  updated_at: string | Date;
+  created_at: string;  // Changed from Date to string
+  updated_at: string;  // Changed from Date to string
 }
 
 // Contact interface
@@ -42,16 +43,17 @@ export interface Contact {
   notes?: string;
   tags?: string[];
   avatar?: string;
-  last_contact?: Date | string;
-  created_at?: Date | string;
-  updated_at?: Date | string;
+  last_contact?: string;  // Changed from Date to string
+  created_at?: string;  // Changed from Date to string
+  updated_at?: string;  // Changed from Date to string
+  company?: string;  // Added to match usage in components
 }
 
 // Meeting interface
 export interface Meeting {
   id: string;
   title: string;
-  date: Date | string;
+  date: string;  // Changed from Date to string
   duration: number;
   client_id?: string;
   client_name: string;
@@ -59,8 +61,8 @@ export interface Meeting {
   agenda?: string;
   notes?: string;
   meeting_link?: string;
-  created_at?: Date | string;
-  updated_at?: Date | string;
+  created_at?: string;  // Changed from Date to string
+  updated_at?: string;  // Changed from Date to string
   attendees?: Array<{
     id: string;
     name: string;
@@ -76,14 +78,15 @@ export interface Project {
   title: string;
   description: string | null;
   owner_id: string;
-  status: string;
-  created_at: string | Date;
-  updated_at: string | Date;
+  status: string;  // Added to match usage in components
+  created_at: string;  // Changed from Date to string
+  updated_at: string;  // Changed from Date to string
   tags: string[];
   cover_image?: string;
-  icon?: string;
-  task_count?: number;
-  completed_count?: number;
+  icon?: string;  // Added to match usage in components
+  task_count?: number;  // Added to match usage in components
+  completed_count?: number;  // Added to match usage in components
+  name?: string;  // Added to maintain backward compatibility
 }
 
 // Message interface - updated to match how it's used in the codebase
@@ -93,7 +96,7 @@ export interface Message {
   sender: 'user' | 'assistant' | 'system';
   conversation_id: string;
   user_id: string;
-  timestamp: Date | string;
+  timestamp: string;  // Changed from Date to string
   isSystem?: boolean;
   isStreaming?: boolean;
   metadata?: Record<string, any>;
@@ -157,8 +160,8 @@ export interface Mindboard {
   icon?: string;
   color?: string;
   position?: number;
-  created_at?: Date | string;
-  updated_at?: Date | string;
+  created_at?: string;  // Changed from Date to string
+  updated_at?: string;  // Changed from Date to string
 }
 
 export interface MindSection {
@@ -170,8 +173,8 @@ export interface MindSection {
   icon?: string;
   color?: string;
   position?: number;
-  created_at?: Date | string;
-  updated_at?: Date | string;
+  created_at?: string;  // Changed from Date to string
+  updated_at?: string;  // Changed from Date to string
 }
 
 export interface MindPage {
@@ -181,11 +184,11 @@ export interface MindPage {
   user_id: string;
   section_id: string;
   parent_page_id?: string;
-  parent_id?: string;
+  parent_id?: string;  // Added to match usage in components
   is_pinned?: boolean;
   position?: number;
-  created_at?: Date | string;
-  updated_at?: Date | string;
+  created_at?: string;  // Changed from Date to string
+  updated_at?: string;  // Changed from Date to string
 }
 
 export interface MindBlock {
@@ -197,26 +200,26 @@ export interface MindBlock {
   properties?: any;
   position?: number;
   parent_block_id?: string;
-  created_at?: Date | string;
-  updated_at?: Date | string;
+  created_at?: string;  // Changed from Date to string
+  updated_at?: string;  // Changed from Date to string
 }
 
 // Activity interface
 export interface Activity {
   id: string;
-  user_id: string;
-  userId?: string;
+  userId?: string;  // Changed from user_id to userId to match usage in components
+  user_id?: string;  // Keep backward compatibility
   type: string;
-  entity_type: string;
-  entityType?: string;
-  entity_id: string;
-  entityId?: string;
+  entityType?: string;  // Changed from entity_type to entityType to match usage
+  entity_type?: string;  // Keep backward compatibility
+  entityId?: string;  // Changed from entity_id to entityId to match usage
+  entity_id?: string;  // Keep backward compatibility
   content: string;
   description?: string;
-  timestamp?: Date | string;
-  additional_info?: any;
-  additionalInfo?: any;
-  created_at?: Date | string;
+  timestamp?: string;  // Changed from Date to string
+  additionalInfo?: any;  // Changed from additional_info to additionalInfo
+  additional_info?: any;  // Keep backward compatibility
+  created_at?: string;  // Changed from Date to string
   relatedItem?: string;
 }
 
@@ -231,11 +234,11 @@ export interface Ticket {
   assignee?: string;
   assigned_to?: string;
   reporter?: string;
-  due_date?: Date | string;
-  created_at?: Date | string;
-  updated_at?: Date | string;
-  created?: Date | string;
-  updated?: Date | string;
+  due_date?: string;  // Changed from Date to string
+  created_at?: string;  // Changed from Date to string
+  updated_at?: string;  // Changed from Date to string
+  created?: string;  // Changed from Date to string
+  updated?: string;  // Changed from Date to string
   tags?: string[];
   related?: string[];
   comments?: any[];
@@ -243,15 +246,15 @@ export interface Ticket {
   parent_task_id?: string;
   summary?: string;
   actionItems?: string[];
-  meetingDate?: Date;
+  meetingDate?: string;  // Changed from Date to string
   meetingAttendees?: string[];
   communications?: any[];
-  updatedAt?: Date;
+  updatedAt?: string;  // Changed from Date to string
   lastStatusUpdate?: string;
   customer?: {
     name: string;
     company?: string;
-    email?: string;
+    email?: string;  // Added to match usage in components
   };
 }
 
@@ -263,10 +266,10 @@ export interface Integration {
   user_id: string;
   config: any;
   status?: string;
-  last_sync?: Date | string;
-  lastSync?: Date | string;
-  created_at?: Date | string;
-  updated_at?: Date | string;
+  last_sync?: string;  // Changed from Date to string
+  lastSync?: string;  // Changed from Date to string
+  created_at?: string;  // Changed from Date to string
+  updated_at?: string;  // Changed from Date to string
 }
 
 // Assistant interface
@@ -290,7 +293,8 @@ export interface MeetingAction {
   description: string;
   action: () => void;
   icon: React.ReactNode;
-  bgColor?: string;
+  bgColor?: string;  // Keep bgColor for backward compatibility
+  color?: string;    // Add color for new components
 }
 
 // TicketAction interface for TicketQuickActions
@@ -300,7 +304,8 @@ export interface TicketAction {
   description: string;
   action: () => void;
   icon: React.ReactNode;
-  bgColor?: string;
+  bgColor?: string;  // Keep bgColor for backward compatibility
+  color?: string;    // Required property as referenced in errors
 }
 
 // Communication interface
@@ -311,10 +316,10 @@ export interface Communication {
   content: string;
   contact_id: string;
   contact_name: string;
-  date: Date | string;
+  date: string;  // Changed from Date to string
   created_by: string;
-  created_at?: Date | string;
-  updated_at?: Date | string;
+  created_at?: string;  // Changed from Date to string
+  updated_at?: string;  // Changed from Date to string
   from?: string;
   message?: string;
   sender?: string;
@@ -346,3 +351,4 @@ export interface ActionProject {
 
 // TaskView type for different views
 export type TaskView = 'table' | 'board' | 'timeline';
+
