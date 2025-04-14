@@ -157,7 +157,9 @@ export const useChatMessages = () => {
       content,
       sender,
       timestamp: new Date(),
-      isSystem: sender === 'system'
+      isSystem: sender === 'system',
+      conversation_id: activeConversationId || undefined,
+      user_id: user?.id
     };
     
     setLocalMessages(prev => [...prev, message]);
@@ -197,6 +199,57 @@ export const useChatMessages = () => {
         variant: 'destructive'
       });
       return null;
+    }
+  };
+
+  const generateConversationTitle = async (conversationId: string, userMessage: string, assistantResponse: string): Promise<any> => {
+    try {
+      const titlePrompt = `Based on this conversation, generate a very short, concise title (5 words or less):
+        User: ${userMessage}
+        Assistant: ${assistantResponse}`;
+      
+      let titleResponse = "";
+      
+      if (isStreaming || isSending) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      
+      await openAIChat(
+        {
+          messages: [{ role: 'user', content: titlePrompt }],
+          temperature: 0.7,
+          model: 'gpt-4o-mini'
+        },
+        {
+          onStart: () => {
+            console.log('Starting title generation');
+          },
+          onChunk: (chunk: string) => {
+            titleResponse += chunk;
+          },
+          onComplete: async (finalTitle: string) => {
+            console.log('Title generation complete');
+            
+            const cleanTitle = finalTitle.replace(/^["']|["']$/g, '').trim();
+            
+            await messageApi.updateConversationTitle(conversationId, cleanTitle);
+            
+            queryClient.invalidateQueries({ queryKey: ['conversations'] });
+            
+            console.log(`Generated title "${cleanTitle}" for conversation ${conversationId}`);
+          },
+          onError: (error) => {
+            console.error('Error generating title:', error);
+            const fallbackTitle = userMessage.split(' ').slice(0, 3).join(' ') + '...';
+            messageApi.updateConversationTitle(conversationId, fallbackTitle);
+          }
+        }
+      );
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error in title generation:', error);
+      return { success: false, error };
     }
   };
 

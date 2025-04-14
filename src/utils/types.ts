@@ -91,12 +91,10 @@ export interface Message {
   id: string;
   content: string;
   sender: 'user' | 'assistant' | 'system';
-  conversation_id: string;
-  user_id: string;
-  timestamp: Date | string;
-  isSystem?: boolean;
-  isStreaming?: boolean;
-  metadata?: Record<string, any>;
+  timestamp: Date;
+  isSystem: boolean;
+  conversation_id?: string;
+  user_id?: string;
 }
 
 // Notebook related interfaces

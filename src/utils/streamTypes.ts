@@ -14,3 +14,11 @@ export interface StreamingCallbacks {
   onComplete: (fullResponse: string) => void;
   onError: (error: Error) => void;
 }
+
+export interface StreamOptions {
+  model?: string;
+  temperature?: number;
+  max_tokens?: number;
+  messages: Array<{ role: string; content: string }>;
+  systemPrompt?: string;
+}
