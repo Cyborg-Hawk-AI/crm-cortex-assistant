@@ -54,7 +54,6 @@ export function ChatSection({
     toast
   } = useToast();
   const [retryCount, setRetryCount] = useState(0);
-  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({
@@ -77,19 +76,6 @@ export function ChatSection({
     }
   }, [activeConversationId, messages, isLoading, retryCount]);
 
-  useEffect(() => {
-    if (pendingNavigation && !isSending) {
-      const timer = setTimeout(() => {
-        console.log(`Navigating to conversation: ${pendingNavigation}`);
-        setActiveConversationId(pendingNavigation);
-        navigate(`/chat/${pendingNavigation}`);
-        setPendingNavigation(null);
-      }, 1500); // Small delay to allow UI to update
-      
-      return () => clearTimeout(timer);
-    }
-  }, [pendingNavigation, isSending, navigate, setActiveConversationId]);
-
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
     setApiError(null);
@@ -97,7 +83,13 @@ export function ChatSection({
       if (!activeConversationId) {
         console.log("Creating a new conversation as part of sending the first message");
         const newConversationId = await startConversation('New conversation', selectedProjectId);
-        setPendingNavigation(newConversationId);
+        
+        // Navigate immediately to the new conversation
+        console.log(`Immediately navigating to new conversation: ${newConversationId}`);
+        setActiveConversationId(newConversationId);
+        navigate(`/chat/${newConversationId}`);
+        
+        // Then send the message to that conversation
         refetchConversations();
         await sendMessage(inputValue, 'user', newConversationId);
       } else {
@@ -122,7 +114,12 @@ export function ChatSection({
   const handleNewChat = async () => {
     try {
       const newConversationId = await startConversation('New conversation', selectedProjectId);
-      setPendingNavigation(newConversationId);
+      
+      // Navigate immediately to the new conversation
+      console.log(`Immediately navigating to new chat: ${newConversationId}`);
+      setActiveConversationId(newConversationId);
+      navigate(`/chat/${newConversationId}`);
+      
       refetchConversations();
       setInputValue('');
       setApiError(null);
