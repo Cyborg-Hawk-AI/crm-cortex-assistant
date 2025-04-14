@@ -43,7 +43,7 @@ export function ChatSection({
     isStreaming,
     startConversation,
     setActiveConversationId,
-    refetchConversations
+    refetchConversations // Make sure this is correctly destructured from the hook
   } = useChatMessages();
   const [isComposing, setIsComposing] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
