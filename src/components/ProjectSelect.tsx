@@ -17,11 +17,12 @@ interface ProjectSelectProps {
 
 export function ProjectSelect({ onProjectSelect, className = "" }: ProjectSelectProps) {
   const { projects, isLoadingProjects } = useProjects();
-  const [selectedProject, setSelectedProject] = useState<string>('');
+  const [selectedProject, setSelectedProject] = useState<string>('open-chats');
   
   const handleProjectChange = (value: string) => {
     setSelectedProject(value);
-    onProjectSelect(value);
+    // Convert 'open-chats' back to '' for the API
+    onProjectSelect(value === 'open-chats' ? '' : value);
   };
   
   return (
@@ -30,12 +31,12 @@ export function ProjectSelect({ onProjectSelect, className = "" }: ProjectSelect
         className={`w-full border-neon-purple/30 hover:border-neon-purple/50 bg-slate-800/50 ${className}`}
       >
         <div className="flex items-center">
-          {selectedProject ? <Folder className="h-4 w-4 mr-2 text-neon-purple/80" /> : <FolderOpen className="h-4 w-4 mr-2 text-neon-aqua/80" />}
+          {selectedProject !== 'open-chats' ? <Folder className="h-4 w-4 mr-2 text-neon-purple/80" /> : <FolderOpen className="h-4 w-4 mr-2 text-neon-aqua/80" />}
           <SelectValue placeholder="Open Chats" />
         </div>
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="">
+        <SelectItem value="open-chats">
           <div className="flex items-center">
             <FolderOpen className="h-4 w-4 mr-2" />
             <span>Open Chats</span>

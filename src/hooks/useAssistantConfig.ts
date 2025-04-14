@@ -47,12 +47,13 @@ export function useAssistantConfig() {
     if (onErrorOccurred) setOnError(() => onErrorOccurred);
   }, []);
   
+  const assistantConfig = getAssistantConfig();
+  
   return {
     currentAssistantId,
     setCurrentAssistantId,
     getAssistantConfig,
     setStreamingCallbacks,
-    // Add the missing assistantConfig property
-    assistantConfig: getAssistantConfig()
+    assistantConfig
   };
 }

@@ -1,4 +1,3 @@
-
 import { StreamingCallbacks } from './streamTypes';
 
 // DeepSeek API configuration
@@ -127,5 +126,5 @@ export async function createDeepSeekStream(
   }
 }
 
-// Export the deepSeekChat function that was missing
+// Export the deepSeekChat function
 export const deepSeekChat = createDeepSeekStream;

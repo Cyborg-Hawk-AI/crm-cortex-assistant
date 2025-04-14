@@ -1,4 +1,3 @@
-
 import { StreamingCallbacks } from './streamTypes';
 
 // OpenAI API configuration
@@ -113,5 +112,5 @@ export async function createOpenAIStream(
   }
 }
 
-// Export the openAIChat function that was missing
+// Export the openAIChat function
 export const openAIChat = createOpenAIStream;
