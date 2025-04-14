@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Table, List, Zap, Grid3X3 } from 'lucide-react';
+import { Table, List, Zap, Grid3X3, LogIn } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -23,6 +22,30 @@ export function MissionsPage() {
   const [viewMode, setViewMode] = useState<'table' | 'list'>('table');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(taskId || null);
   const [isTaskEditorOpen, setIsTaskEditorOpen] = useState<boolean>(!!taskId);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  
+  // Check if user is authenticated
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const userId = await getCurrentUserId();
+        setIsAuthenticated(!!userId);
+        
+        if (!userId) {
+          toast({
+            title: "Authentication Required",
+            description: "Please sign in to view your missions",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error("Error checking authentication:", error);
+        setIsAuthenticated(false);
+      }
+    };
+    
+    checkAuth();
+  }, []);
   
   // Reset selectedTaskId when taskId param changes
   useEffect(() => {
@@ -58,15 +81,16 @@ export function MissionsPage() {
         console.error('Error in mission fetch:', err);
         return [];
       }
-    }
+    },
+    enabled: isAuthenticated === true
   });
 
   // Select first mission by default if no missionId provided
   useEffect(() => {
-    if (missions && missions.length > 0 && !missionId) {
+    if (missions && missions.length > 0 && !missionId && isAuthenticated) {
       navigate(`/missions/${missions[0].id}`);
     }
-  }, [missions, missionId, navigate]);
+  }, [missions, missionId, navigate, isAuthenticated]);
 
   const handleTaskClick = (taskId: string) => {
     if (missionId) {
@@ -95,7 +119,25 @@ export function MissionsPage() {
     });
   };
   
-  if (loadingMissions) {
+  if (isAuthenticated === false) {
+    return (
+      <div className="h-full flex items-center justify-center p-4">
+        <Card className="w-full max-w-lg bg-[#25384D] border-[#3A4D62]">
+          <CardContent className="pt-6 flex flex-col items-center">
+            <div className="text-center">
+              <LogIn className="h-12 w-12 text-neon-aqua/50 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-[#F1F5F9] mb-2">Authentication Required</h3>
+              <p className="text-sm text-[#CBD5E1] mb-6">
+                Please sign in to view your missions
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (loadingMissions || isAuthenticated === null) {
     return (
       <div className="h-full flex items-center justify-center p-4">
         <div className="w-full max-w-lg p-6">

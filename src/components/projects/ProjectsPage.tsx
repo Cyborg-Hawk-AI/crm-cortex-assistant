@@ -11,6 +11,8 @@ import { TaskDetail } from '@/components/projects/TaskDetail';
 import { ProjectCreateButton } from '@/components/projects/ProjectCreateButton';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { getCurrentUserId } from '@/lib/supabase';
+import { useToast } from '@/hooks/use-toast';
 
 interface ProjectsPageProps {
   selectedProjectId?: string | null;
@@ -20,10 +22,34 @@ interface ProjectsPageProps {
 export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }: ProjectsPageProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [internalSelectedProjectId, setInternalSelectedProjectId] = useState<string | null>(selectedProjectId);
   const [internalSelectedTaskId, setInternalSelectedTaskId] = useState<string | null>(selectedTaskId);
   const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(!!selectedTaskId);
   const [isNewProjectDialogOpen, setIsNewProjectDialogOpen] = useState(false);
+  const [isUserAuthenticated, setIsUserAuthenticated] = useState<boolean | null>(null);
+  
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const userId = await getCurrentUserId();
+        setIsUserAuthenticated(!!userId);
+        
+        if (!userId) {
+          toast({
+            title: "Authentication Required",
+            description: "Please sign in to view your projects",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error("Error checking authentication:", error);
+        setIsUserAuthenticated(false);
+      }
+    };
+    
+    checkAuth();
+  }, []);
   
   useEffect(() => {
     if (selectedProjectId !== internalSelectedProjectId) {
@@ -66,7 +92,8 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
         console.error('Failed to fetch projects:', err);
         return [];
       }
-    }
+    },
+    enabled: isUserAuthenticated === true
   });
 
   const { data: projectTasks = [], isLoading: loadingTasks } = useQuery({
@@ -92,7 +119,7 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
         return [];
       }
     },
-    enabled: !!internalSelectedProjectId
+    enabled: !!internalSelectedProjectId && isUserAuthenticated === true
   });
   
   const { data: selectedTask, isLoading: loadingTask } = useQuery({
@@ -118,7 +145,7 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
         return null;
       }
     },
-    enabled: !!internalSelectedTaskId
+    enabled: !!internalSelectedTaskId && isUserAuthenticated === true
   });
 
   const { data: subtasks = [], isLoading: loadingSubtasks } = useQuery({
@@ -167,7 +194,7 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
         return [];
       }
     },
-    enabled: !!internalSelectedTaskId && isTaskDetailOpen
+    enabled: !!internalSelectedTaskId && isUserAuthenticated === true && isTaskDetailOpen
   });
 
   const handleProjectClick = (projectId: string) => {
@@ -206,7 +233,25 @@ export function ProjectsPage({ selectedProjectId = null, selectedTaskId = null }
     queryClient.invalidateQueries({ queryKey: ['projects'] });
   };
   
-  if (loadingProjects) {
+  if (isUserAuthenticated === false) {
+    return (
+      <div className="h-full flex items-center justify-center p-4">
+        <Card className="w-full max-w-lg bg-[#25384D] border-[#3A4D62]">
+          <CardContent className="pt-6 flex flex-col items-center">
+            <div className="text-center">
+              <Grid3X3 className="h-12 w-12 text-neon-aqua/50 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-[#F1F5F9] mb-2">Authentication Required</h3>
+              <p className="text-sm text-[#CBD5E1] mb-6">
+                Please sign in to view your projects and missions.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (loadingProjects || isUserAuthenticated === null) {
     return (
       <div className="h-full flex items-center justify-center p-4">
         <div className="w-full max-w-lg p-6">

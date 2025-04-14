@@ -1,3 +1,4 @@
+
 import { Task, SubTask } from '@/utils/types';
 import { supabase, getCurrentUserId } from '@/lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
@@ -44,11 +45,10 @@ export const getTasks = async (): Promise<Task[]> => {
   const userId = await getCurrentUserId();
   if (!userId) throw new Error('User must be authenticated to fetch tasks');
   
-  // Filter by reporter_id or user_id and only get top-level tasks (where parent_task_id is null)
+  // RLS will automatically filter to only show user's own tasks
   const { data, error } = await supabase
     .from('tasks')
     .select('*')
-    .or(`reporter_id.eq.${userId},user_id.eq.${userId}`)
     .is('parent_task_id', null)
     .order('created_at', { ascending: false });
   
@@ -60,26 +60,12 @@ export const getTasks = async (): Promise<Task[]> => {
   return data as Task[];
 };
 
-// Update an existing task - verify ownership via reporter_id or user_id
+// Update an existing task
 export const updateTask = async (task: Task): Promise<Task> => {
   const userId = await getCurrentUserId();
   if (!userId) throw new Error('User must be authenticated to update tasks');
   
-  // Verify task belongs to current user
-  const { data: existingTask, error: checkError } = await supabase
-    .from('tasks')
-    .select('reporter_id, user_id')
-    .eq('id', task.id)
-    .single();
-  
-  if (checkError || !existingTask) {
-    throw new Error('Task not found or access denied');
-  }
-  
-  if (existingTask.reporter_id !== userId && existingTask.user_id !== userId) {
-    throw new Error('You do not have permission to update this task');
-  }
-  
+  // RLS will ensure user can only update their own tasks
   const { data, error } = await supabase
     .from('tasks')
     .update({
@@ -98,7 +84,7 @@ export const updateTask = async (task: Task): Promise<Task> => {
   return data as Task;
 };
 
-// Delete a task - verify ownership via reporter_id or user_id
+// Delete a task
 export const deleteTask = async (taskId: string): Promise<void> => {
   console.log(`API: Attempting to delete task with ID: ${taskId}`);
   const userId = await getCurrentUserId();
@@ -121,21 +107,7 @@ export const deleteTask = async (taskId: string): Promise<void> => {
     console.log(`Error checking subtasks table: ${err}. Proceeding to check tasks table.`);
   }
   
-  // Verify task belongs to current user
-  const { data: existingTask, error: checkError } = await supabase
-    .from('tasks')
-    .select('reporter_id, user_id')
-    .eq('id', taskId)
-    .single();
-  
-  if (checkError || !existingTask) {
-    throw new Error('Task not found or access denied');
-  }
-  
-  if (existingTask.reporter_id !== userId && existingTask.user_id !== userId) {
-    throw new Error('You do not have permission to delete this task');
-  }
-  
+  // RLS will ensure user can only delete their own tasks
   const { error } = await supabase
     .from('tasks')
     .delete()
@@ -149,7 +121,7 @@ export const deleteTask = async (taskId: string): Promise<void> => {
   console.log(`Successfully deleted task: ${taskId}`);
 };
 
-// Create subtask with parent_task_id, reporter_id and user_id
+// Create subtask
 export const createSubtask = async (subtask: Omit<SubTask, 'id'>): Promise<SubTask> => {
   const userId = await getCurrentUserId();
   if (!userId) throw new Error('User must be authenticated to create subtasks');
@@ -157,8 +129,8 @@ export const createSubtask = async (subtask: Omit<SubTask, 'id'>): Promise<SubTa
   const subtaskWithDefaults = {
     ...subtask,
     id: uuidv4(),
-    user_id: subtask.user_id || userId, // Use provided user_id or default to current user
-    created_by: subtask.created_by || userId,
+    user_id: userId, // Set current user as owner
+    created_by: userId, // Set current user as creator
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   };
@@ -177,16 +149,16 @@ export const createSubtask = async (subtask: Omit<SubTask, 'id'>): Promise<SubTa
   return data as SubTask;
 };
 
-// Get subtasks for a task - filter by parent_task_id and user_id/created_by
+// Get subtasks for a task
 export const getSubtasks = async (taskId: string): Promise<SubTask[]> => {
   const userId = await getCurrentUserId();
   if (!userId) throw new Error('User must be authenticated to fetch subtasks');
   
+  // RLS will automatically filter to only show user's own subtasks
   const { data, error } = await supabase
     .from('subtasks')
     .select('*')
     .eq('parent_task_id', taskId)
-    .or(`user_id.eq.${userId},created_by.eq.${userId}`)
     .order('created_at', { ascending: true });
   
   if (error) {
@@ -197,26 +169,12 @@ export const getSubtasks = async (taskId: string): Promise<SubTask[]> => {
   return data as SubTask[];
 };
 
-// Update subtask - verify user_id/created_by ownership
+// Update subtask
 export const updateSubtask = async (subtask: SubTask): Promise<SubTask> => {
   const userId = await getCurrentUserId();
   if (!userId) throw new Error('User must be authenticated to update subtasks');
   
-  // Verify subtask belongs to current user
-  const { data: existingSubtask, error: checkError } = await supabase
-    .from('subtasks')
-    .select('user_id, created_by')
-    .eq('id', subtask.id)
-    .single();
-  
-  if (checkError || !existingSubtask) {
-    throw new Error('Subtask not found');
-  }
-  
-  if (existingSubtask.user_id !== userId && existingSubtask.created_by !== userId) {
-    throw new Error('You do not have permission to update this subtask');
-  }
-  
+  // RLS will ensure user can only update their own subtasks
   const { data, error } = await supabase
     .from('subtasks')
     .update({
@@ -235,26 +193,12 @@ export const updateSubtask = async (subtask: SubTask): Promise<SubTask> => {
   return data as SubTask;
 };
 
-// Delete subtask - verify user_id/created_by ownership
+// Delete subtask
 export const deleteSubtask = async (subtaskId: string): Promise<void> => {
   const userId = await getCurrentUserId();
   if (!userId) throw new Error('User must be authenticated to delete subtasks');
   
-  // Verify subtask belongs to current user
-  const { data: subtask, error: getSubtaskError } = await supabase
-    .from('subtasks')
-    .select('user_id, created_by')
-    .eq('id', subtaskId)
-    .single();
-  
-  if (getSubtaskError || !subtask) {
-    throw new Error('Subtask not found');
-  }
-  
-  if (subtask.user_id !== userId && subtask.created_by !== userId) {
-    throw new Error('You do not have permission to delete this subtask');
-  }
-  
+  // RLS will ensure user can only delete their own subtasks
   const { error } = await supabase
     .from('subtasks')
     .delete()
