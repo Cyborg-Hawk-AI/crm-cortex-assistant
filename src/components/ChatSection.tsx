@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2, AlertTriangle, Folder, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -62,16 +61,11 @@ export function ChatSection({
     scrollToBottom();
   }, [messages]);
   
-  // Add retry mechanism for missing data
   useEffect(() => {
-    // If messages array is empty but we should have messages (activeConversationId exists),
-    // and we're not currently loading, try to reload the data
     if (activeConversationId && messages.length === 0 && !isLoading && retryCount < 3) {
       const timer = setTimeout(() => {
         console.warn('Chat messages appear to be missing, retrying fetch...');
-        // This will trigger a re-fetch in the parent component
         setRetryCount(prev => prev + 1);
-        // We're not directly refetching here because that logic is in the parent component
       }, 1000);
       
       return () => clearTimeout(timer);
@@ -86,12 +80,11 @@ export function ChatSection({
         console.log("Creating a new conversation as part of sending the first message");
         const newConversationId = await startConversation('New conversation');
         setActiveConversationId(newConversationId);
-        // Force a refresh of the conversations list
         refetchConversations();
-        await sendMessage(inputValue, 'user', newConversationId, selectedModel);
+        await sendMessage(inputValue, 'user', newConversationId);
       } else {
         console.log(`Sending message to active conversation: ${activeConversationId}`);
-        await sendMessage(inputValue, 'user', activeConversationId, selectedModel);
+        await sendMessage(inputValue, 'user', activeConversationId);
       }
       setInputValue('');
     } catch (error: any) {
@@ -110,15 +103,10 @@ export function ChatSection({
 
   const handleNewChat = async () => {
     try {
-      // Create a new conversation
       const newConversationId = await startConversation('New conversation');
-      // Set it as active
       setActiveConversationId(newConversationId);
-      // Make sure the sidebar updates
       refetchConversations();
-      // Reset input
       setInputValue('');
-      // Reset any errors
       setApiError(null);
       
       toast({
@@ -215,8 +203,6 @@ export function ChatSection({
     );
   }
 
-  // If we have an activeConversationId but no messages and we've tried multiple times to fetch,
-  // show a temporary loading state instead of empty chat screen
   if (activeConversationId && messages.length === 0 && retryCount > 0 && retryCount < 3) {
     return (
       <div className="flex flex-col h-full justify-center items-center text-muted-foreground">
@@ -303,7 +289,6 @@ export function ChatSection({
       </div>
       
       <div className="border-t border-gray-200 p-4 bg-slate-700">
-        {/* Quick Actions Section */}
         <QuickActions />
         
         {apiError && (
@@ -337,7 +322,6 @@ export function ChatSection({
             </Button>
           </div>
           
-          {/* Model Selection */}
           <div className="flex space-x-2">
             <div className="model-toggle">
               <ModelToggle currentModel={selectedModel} onToggle={toggleModel} />

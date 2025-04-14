@@ -25,5 +25,5 @@ export interface ChatMessagesHook {
   refetchConversations: (options?: RefetchOptions) => Promise<QueryObserverResult<any[], Error>>;
 }
 
-// This is just for type definition, the actual implementation is in useChatMessages.tsx
-export function useChatMessages(): ChatMessagesHook;
+// Using proper export from the implementation file
+export { useChatMessages } from './useChatMessages.tsx';
