@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Menu, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMediaQuery } from '@/hooks/use-media-query';
@@ -56,6 +56,16 @@ export function MindboardLayout({
   onDeleteBlock,
 }: MindboardLayoutProps) {
   const isMobile = useMediaQuery('(max-width: 768px)');
+  // Add state for expanded boards
+  const [expandedBoards, setExpandedBoards] = useState<Record<string, boolean>>({});
+
+  // Function to toggle board expansion
+  const handleToggleExpand = (boardId: string) => {
+    setExpandedBoards(prev => ({
+      ...prev,
+      [boardId]: !prev[boardId]
+    }));
+  };
 
   return (
     <SidebarProvider defaultOpen={!isMobile}>
@@ -75,6 +85,8 @@ export function MindboardLayout({
               boards={mindboards}
               activeBoardId={activeMindboardId}
               onSelectBoard={setActiveMindboardId}
+              expandedBoards={expandedBoards}
+              onToggleExpand={handleToggleExpand}
             />
           </SidebarContent>
         </Sidebar>
