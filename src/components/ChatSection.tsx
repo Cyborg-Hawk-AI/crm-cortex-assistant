@@ -14,6 +14,7 @@ import { Alert } from '@/components/ui/alert';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ChatSectionProps {
   activeConversationId: string | null;
@@ -58,6 +59,11 @@ export function ChatSection({
   const [isOnChatTab, setIsOnChatTab] = useState(false);
   const navigationTimerRef = useRef<number | null>(null);
   const latestCreatedConversationRef = useRef<string | null>(null);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  
+  const lastScrollPosition = useRef<number>(0);
+  const isManuallyScrolling = useRef<boolean>(false);
 
   useEffect(() => {
     const state = location.state as { activeTab?: string } | undefined;
@@ -81,80 +87,53 @@ export function ChatSection({
     }
   }, [location, setActiveConversationId, activeConversationId]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: 'smooth'
-    });
-  };
-
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-  
-  useEffect(() => {
-    if (activeConversationId && messages.length === 0 && !isLoading && retryCount < 3) {
-      const timer = setTimeout(() => {
-        console.log('Chat messages appear to be missing, retrying fetch...');
-        setRetryCount(prev => prev + 1);
-      }, 1000);
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
       
-      return () => clearTimeout(timer);
-    }
-  }, [activeConversationId, messages, isLoading, retryCount]);
-
-  const forceNavigation = (path: string, state: any) => {
-    console.log(`🚀 FORCE NAVIGATION to ${path} with state:`, state);
-    
-    console.log(`📊 Navigation Debug - Current conversation: ${activeConversationId}, Latest created: ${latestCreatedConversationRef.current}`);
-    
-    if (navigationTimerRef.current) {
-      window.clearTimeout(navigationTimerRef.current);
-    }
-    
-    const timestamp = Date.now();
-    navigationHistoryRef.current.push({
-      timestamp,
-      action: 'force_navigation',
-      path
-    });
-    
-    const finalState = {
-      ...state,
-      forceReload: timestamp,
-      pendingConversationId: latestCreatedConversationRef.current
+      if (Math.abs(scrollTop - lastScrollPosition.current) > 10) {
+        isManuallyScrolling.current = true;
+        setShouldAutoScroll(isAtBottom);
+      }
+      
+      lastScrollPosition.current = scrollTop;
     };
     
-    console.log(`🔄 ChatSection: Navigation state will include pendingConversationId: ${finalState.pendingConversationId}`);
-    
-    navigationTimerRef.current = window.setTimeout(() => {
-      console.log(`⏱️ Executing delayed navigation to ${path} with timestamp ${timestamp}`);
-      navigate(path, { 
-        state: finalState,
-        replace: true 
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToBottom = () => {
+    if (shouldAutoScroll && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({
+        behavior: 'smooth'
       });
-      
-      setTimeout(() => {
-        const currentState = location.state as { activeTab?: string, forceReload?: number, pendingConversationId?: string } | undefined;
-        console.log(`✅ Navigation verification check: currentTab=${currentState?.activeTab}, targetTab=${state.activeTab}, forceReload=${currentState?.forceReload}, pendingConversationId=${currentState?.pendingConversationId}`);
-        
-        if (currentState?.activeTab !== 'chat' && state.activeTab === 'chat') {
-          console.log(`⚠️ Navigation failed! Trying emergency navigation to chat tab`);
-          navigate('/', { 
-            state: {
-              ...finalState,
-              forceReload: Date.now() + 1000,
-              emergency: true
-            },
-            replace: true
-          });
-        }
-      }, 500);
-    }, 300);
+    }
   };
 
+  useEffect(() => {
+    if ((isStreaming || isSending || messages.length > 0) && shouldAutoScroll) {
+      scrollToBottom();
+    }
+  }, [messages, isStreaming, isSending, shouldAutoScroll]);
+
+  useEffect(() => {
+    if (isSending) {
+      setShouldAutoScroll(true);
+      isManuallyScrolling.current = false;
+    }
+  }, [isSending]);
+  
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
     setApiError(null);
+    
+    setShouldAutoScroll(true);
+    isManuallyScrolling.current = false;
     
     try {
       if (!activeConversationId) {
@@ -465,12 +444,19 @@ export function ChatSection({
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {renderNavigationDebug()}
-      <div className="flex-1 overflow-y-auto p-4 space-y-5 bg-gradient-to-br from-[#1C2A3A] to-[#25384D]">
-        {messages.map((message: Message) => (
-          <MessageComponent key={message.id} message={message} />
-        ))}
-        <div ref={messagesEndRef} />
-      </div>
+      
+      <ScrollArea 
+        className="flex-1 p-4 space-y-5 bg-gradient-to-br from-[#1C2A3A] to-[#25384D]"
+        autoScroll={false}
+        hideScrollbar={false}
+      >
+        <div ref={messagesContainerRef} className="flex flex-col space-y-5">
+          {messages.map((message: Message) => (
+            <MessageComponent key={message.id} message={message} />
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
+      </ScrollArea>
       
       <div className="border-t border-gray-200 p-4 bg-slate-700">
         <QuickActions activeConversationId={activeConversationId} />
