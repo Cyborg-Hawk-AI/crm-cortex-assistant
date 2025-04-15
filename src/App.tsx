@@ -1,9 +1,21 @@
+
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { Header } from "@/components/Header";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { FloatingActionBar } from "@/components/FloatingActionBar";
+import Login from "@/pages/auth/Login";
+import Signup from "@/pages/auth/Signup";
+import ForgotPassword from "@/pages/auth/ForgotPassword";
+import UpdatePassword from "@/pages/auth/UpdatePassword";
+import NotFound from "@/pages/NotFound";
+import Index from "@/pages/Index";
+import { ProjectsPageWrapper } from "@/components/projects/ProjectsPageWrapper";
+import { Mindboard } from "@/components/mindboard/Mindboard";
 
 import "./components/chat.css";
 
