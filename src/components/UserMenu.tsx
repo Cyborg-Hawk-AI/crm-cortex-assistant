@@ -20,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const themes = [
   { id: 'natural', name: 'Natural Light', description: 'Soft, nature-inspired tones' },
-  { id: 'steel', name: 'Steel Blue (Default)', description: 'Our signature futuristic look' },
+  { id: 'steel', name: 'Steel Blue', description: 'Our signature futuristic look' },
   { id: 'midnight', name: 'Midnight', description: 'Deep, dark, and focused' },
   { id: 'vibrant', name: 'Vibrant', description: 'Bold and energetic' }
 ] as const;
@@ -31,7 +31,7 @@ export function UserMenu() {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
 
-  const handleThemeChange = (newTheme: 'steel' | 'midnight' | 'vibrant') => {
+  const handleThemeChange = (newTheme: 'steel' | 'midnight' | 'vibrant' | 'natural') => {
     if (theme === newTheme) return; // Skip if theme is already selected
     
     console.log(`Changing theme from ${theme} to ${newTheme}`);
