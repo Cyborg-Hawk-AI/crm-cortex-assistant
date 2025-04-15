@@ -5,6 +5,7 @@ import BlockRenderer from './BlockRenderer';
 import { Button } from '@/components/ui/button';
 import { Plus, Type } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import debounce from 'lodash.debounce';
 
 interface BlockEditorProps {
   pageId: string;
@@ -22,6 +23,7 @@ export function BlockEditor({
   onDeleteBlock 
 }: BlockEditorProps) {
   const [orderedBlocks, setOrderedBlocks] = useState<MindBlock[]>([]);
+  const [pendingUpdates, setPendingUpdates] = useState<Record<string, any>>({});
 
   useEffect(() => {
     if (blocks && blocks.length > 0) {
@@ -46,24 +48,56 @@ export function BlockEditor({
     }
   }, [blocks, pageId]);
 
-  const handleUpdateBlock = useCallback(async (block: MindBlock, content: any) => {
-    console.log('BlockEditor - Before update:', {
+  // Create a debounced save function
+  const debouncedSave = useCallback(
+    debounce(async (blockId: string, content: any) => {
+      console.log('BlockEditor - Debounced save triggered for block:', blockId.substring(0, 8));
+      try {
+        const block = orderedBlocks.find(b => b.id === blockId);
+        if (block) {
+          await onUpdateBlock(blockId, content, { position: block.position });
+          console.log('BlockEditor - Debounced save completed');
+        }
+      } catch (error) {
+        console.error('BlockEditor - Debounced save error:', error);
+      }
+    }, 1500),
+    [orderedBlocks, onUpdateBlock]
+  );
+
+  // Cleanup debounced function on unmount
+  useEffect(() => {
+    return () => {
+      debouncedSave.cancel();
+    };
+  }, [debouncedSave]);
+
+  const handleUpdateBlock = useCallback(async (block: MindBlock, content: any, shouldSaveImmediately = false) => {
+    console.log('BlockEditor - Content update:', {
       blockId: block.id.substring(0, 8),
-      position: block.position,
-      updated_at: block.updated_at
+      immediate: shouldSaveImmediately,
+      content: typeof content === 'string' ? content.substring(0, 20) : '[complex content]'
     });
-    
-    try {
-      const updatedBlock = await onUpdateBlock(block.id, content, { position: block.position });
-      console.log('BlockEditor - After update:', {
-        blockId: updatedBlock.id.substring(0, 8),
-        position: updatedBlock.position,
-        updated_at: updatedBlock.updated_at
-      });
-    } catch (error) {
-      console.error('BlockEditor - Update error:', error);
+
+    // Update pending state immediately for UI
+    setPendingUpdates(prev => ({
+      ...prev,
+      [block.id]: content
+    }));
+
+    if (shouldSaveImmediately) {
+      console.log('BlockEditor - Immediate save triggered');
+      try {
+        await onUpdateBlock(block.id, content, { position: block.position });
+        console.log('BlockEditor - Immediate save completed');
+      } catch (error) {
+        console.error('BlockEditor - Immediate save error:', error);
+      }
+    } else {
+      // Trigger debounced save
+      debouncedSave(block.id, content);
     }
-  }, [onUpdateBlock]);
+  }, [onUpdateBlock, debouncedSave]);
 
   const handleAddTextBlock = async () => {
     if (blocks.length === 0) {
@@ -105,10 +139,14 @@ export function BlockEditor({
             )}
           >
             <BlockRenderer
-              block={block}
+              block={{
+                ...block,
+                content: pendingUpdates[block.id] || block.content
+              }}
               onUpdate={(content) => handleUpdateBlock(block, content)}
               onTypeChange={handleTypeChange}
               onDelete={() => onDeleteBlock(block.id)}
+              onEnterPress={(content) => handleUpdateBlock(block, content, true)}
             />
           </div>
         ))}

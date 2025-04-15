@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { MindBlock } from '@/utils/types';
 import { Card } from '@/components/ui/card';
@@ -12,14 +11,16 @@ interface BlockRendererProps {
   block: MindBlock;
   onUpdate?: (content: any) => void;
   onTypeChange?: (blockId: string, newType: string, content: any) => void;
-  onDelete?: () => void; // Add this new prop to fix the error
+  onDelete?: () => void;
+  onEnterPress?: (content: any) => void;
 }
 
 export const BlockRenderer: React.FC<BlockRendererProps> = ({ 
   block, 
   onUpdate,
   onTypeChange,
-  onDelete // Add this to the destructuring
+  onDelete,
+  onEnterPress
 }) => {
   const [localContent, setLocalContent] = useState<any>(block.content);
   const [showCommands, setShowCommands] = useState(false);
@@ -53,6 +54,12 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
       });
       setShowCommands(true);
       setCommandQuery('/');
+    } else if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      console.log('BlockRenderer - Enter key pressed, triggering immediate save');
+      if (onEnterPress) {
+        onEnterPress(localContent);
+      }
     }
   };
 
@@ -68,13 +75,10 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
     const newContent = { ...localContent, text: value };
     console.log('BlockRenderer - Content changed:', {
       blockId: block.id.substring(0, 8),
-      oldText: localContent.text?.substring(0, 20),
-      newText: value.substring(0, 20),
-      position: block.position
+      textPreview: value.substring(0, 20)
     });
     setLocalContent(newContent);
     if (onUpdate) {
-      console.log('BlockRenderer - Triggering onUpdate');
       onUpdate(newContent);
     }
   };
