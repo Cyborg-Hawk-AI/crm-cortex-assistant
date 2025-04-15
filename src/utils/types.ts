@@ -68,6 +68,7 @@ export interface Meeting {
     status?: 'pending' | 'accepted' | 'declined';
     role?: string;
   }>;
+  bot_id?: string;
 }
 
 // Project interface for the new Notion-like Project management

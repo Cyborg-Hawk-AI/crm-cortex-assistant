@@ -12,6 +12,9 @@ import { Meeting } from '@/utils/types';
 import { useMeetings } from '@/hooks/useMeetings';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/useToast';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface MeetingCreateModalProps {
   open: boolean;
@@ -27,7 +30,9 @@ export function MeetingCreateModal({ open, onOpenChange, onSubmit }: MeetingCrea
   const [clientName, setClientName] = useState('');
   const [meetingLink, setMeetingLink] = useState('');
   const [agenda, setAgenda] = useState('');
-  const { isCreating } = useMeetings();
+  const { toast } = useToast();
+  const { createMeeting } = useMeetings();
+  const { getCurrentUserId } = useAuth();
 
   const resetForm = () => {
     setTitle('');
@@ -39,50 +44,82 @@ export function MeetingCreateModal({ open, onOpenChange, onSubmit }: MeetingCrea
     setAgenda('');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!title || !date || !clientName) return;
-    
-    // Combine date and time
-    const [hours, minutes] = time.split(':').map(Number);
-    const meetingDate = new Date(date);
-    meetingDate.setHours(hours, minutes, 0, 0);
-    
-    const meetingData: Partial<Meeting> = {
-      title,
-      date: meetingDate.toISOString(), // Convert Date to string
-      duration,
-      client_name: clientName,
-      attendees: [{
-        id: '', // Add a placeholder ID
-        name: clientName,
-        email: ''
-      }] as any, // Cast to fix type issue
-      meeting_link: meetingLink,
-      agenda
-    };
-    
-    onSubmit(meetingData);
-    
-    resetForm();
-    onOpenChange(false);
+    if (!title || !date || !clientName || !meetingLink) {
+      toast({
+        title: "Missing fields",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const userId = await getCurrentUserId();
+      
+      // Create meeting bot via Edge Function
+      const botResponse = await supabase.functions.invoke('create-meeting-bot', {
+        body: { 
+          meetingUrl: meetingLink,
+          meetingName: title,
+          userId 
+        }
+      });
+
+      if (botResponse.error) {
+        throw new Error(botResponse.error.message);
+      }
+
+      // Combine date and time
+      const [hours, minutes] = time.split(':').map(Number);
+      const meetingDate = new Date(date);
+      meetingDate.setHours(hours, minutes, 0, 0);
+      
+      const meetingData: Partial<Meeting> = {
+        title,
+        date: meetingDate.toISOString(),
+        duration,
+        client_name: clientName,
+        meeting_link: meetingLink,
+        agenda,
+        bot_id: botResponse.data.id // Store the bot_id from Recall.ai
+      };
+      
+      await createMeeting(meetingData);
+      
+      toast({
+        title: "Success",
+        description: "SyncUp meeting created successfully"
+      });
+      
+      resetForm();
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error creating meeting:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create meeting. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Schedule New Meeting</DialogTitle>
+          <DialogTitle>Schedule New SyncUp</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Meeting Title</Label>
+            <Label htmlFor="title">Meeting Name</Label>
             <Input 
               id="title" 
               value={title} 
               onChange={(e) => setTitle(e.target.value)} 
-              placeholder="Discuss project requirements" 
+              placeholder="Weekly Team Sync" 
               required
             />
           </div>
@@ -166,6 +203,7 @@ export function MeetingCreateModal({ open, onOpenChange, onSubmit }: MeetingCrea
               value={meetingLink} 
               onChange={(e) => setMeetingLink(e.target.value)} 
               placeholder="https://meet.google.com/..." 
+              required
             />
           </div>
           
@@ -184,8 +222,8 @@ export function MeetingCreateModal({ open, onOpenChange, onSubmit }: MeetingCrea
             <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isCreating}>
-              {isCreating ? 'Scheduling...' : 'Schedule Meeting'}
+            <Button type="submit">
+              Schedule SyncUp
             </Button>
           </div>
         </form>
