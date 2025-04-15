@@ -85,7 +85,7 @@ export function ChatLayout() {
   // Respond immediately to conversation changes with enhanced logging
   useEffect(() => {
     if (activeConversationId) {
-      console.log(`🔍 ChatLayout: Activating conversation: ${activeConversationId}`);
+      console.log(`🔍 ChatLayout: Activating conversation: ${activeConversationId}, with project: ${selectedProjectIdRef.current || 'none'}`);
       
       // First set a flag to show we're handling this particular conversation
       const currentConversation = activeConversationId;
@@ -113,7 +113,7 @@ export function ChatLayout() {
           });
           
           // Attempt to force navigation to chat tab if needed
-          const state = location.state as { activeTab?: string } | undefined;
+          const state = location.state as { activeTab?: string, selectedProjectId?: string } | undefined;
           if (state?.activeTab !== 'chat') {
             console.log('🔄 ChatLayout: Current tab is not chat, attempting to navigate');
             
@@ -168,6 +168,7 @@ export function ChatLayout() {
             activeConversationId={activeConversationId}
             messages={messages}
             isLoading={isLoading}
+            initialProjectId={selectedProjectIdRef.current || ''}
           />
         </div>
       </div>

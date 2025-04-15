@@ -21,18 +21,20 @@ interface ChatSectionProps {
   activeConversationId: string | null;
   messages: Message[];
   isLoading: boolean;
+  initialProjectId?: string;
 }
 
 export function ChatSection({
   activeConversationId,
   messages,
-  isLoading
+  isLoading,
+  initialProjectId = ''
 }: ChatSectionProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const location = useLocation();
-  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
+  const [selectedProjectId, setSelectedProjectId] = useState<string>(initialProjectId);
   const {
     selectedModel,
     toggleModel
@@ -59,7 +61,15 @@ export function ChatSection({
   const [isOnChatTab, setIsOnChatTab] = useState(false);
   const navigationTimerRef = useRef<number | null>(null);
   const latestCreatedConversationRef = useRef<string | null>(null);
-  const persistentProjectIdRef = useRef<string>('');
+  const persistentProjectIdRef = useRef<string>(initialProjectId);
+
+  useEffect(() => {
+    if (initialProjectId && initialProjectId !== persistentProjectIdRef.current) {
+      console.log(`🔄 ChatSection: Initializing project ID from prop: ${initialProjectId}`);
+      persistentProjectIdRef.current = initialProjectId;
+      setSelectedProjectId(initialProjectId);
+    }
+  }, [initialProjectId]);
 
   useEffect(() => {
     persistentProjectIdRef.current = selectedProjectId;
@@ -71,6 +81,7 @@ export function ChatSection({
     if (state?.selectedProjectId) {
       console.log(`🔄 ChatSection: Setting selected project from location state: ${state.selectedProjectId}`);
       setSelectedProjectId(state.selectedProjectId);
+      persistentProjectIdRef.current = state.selectedProjectId;
     }
   }, [location.state]);
 
@@ -154,6 +165,7 @@ export function ChatSection({
     });
     
     const projectIdForNavigation = persistentProjectIdRef.current;
+    console.log(`🔄 Using project ID for navigation: ${projectIdForNavigation || 'Open Chats'}`);
     
     const finalState = {
       ...state,
@@ -319,35 +331,14 @@ export function ChatSection({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey && !isComposing) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
-  const handleClearChat = async () => {
-    if (window.confirm('Are you sure you want to clear this conversation?')) {
-      await clearMessages(activeConversationId);
-      toast({
-        title: 'Chat cleared',
-        description: 'All messages have been cleared from this conversation'
-      });
-    }
-  };
-
-  const navigateToDashboard = () => {
-    navigate('/', {
-      state: {
-        activeTab: 'main'
-      }
-    });
-  };
-
   const handleProjectSelect = (projectId: string) => {
     console.log(`🔄 ChatSection: Project selected: ${projectId || 'Open Chats'}`);
     setSelectedProjectId(projectId);
     persistentProjectIdRef.current = projectId;
+    
+    if (activeConversationId) {
+      console.log(`ℹ️ ChatSection: Note - Not moving existing conversation to new project automatically`);
+    }
   };
 
   const MoveToProjectDialog = ({ isOpen, onClose, onMove, selectedConversation, projects }: any) => {
