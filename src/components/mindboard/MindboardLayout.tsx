@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Menu, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -10,6 +9,7 @@ import { NoteList } from './navigation/NoteList';
 import { BlockEditor } from './BlockEditor';
 import { MindBlock } from '@/utils/types';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/components/ui/use-toast';
 
 interface MindboardLayoutProps {
   mindboards: any[];
@@ -28,6 +28,8 @@ interface MindboardLayoutProps {
   onCreateBlock: (type: string, content: any, position?: number, parentId?: string) => Promise<MindBlock>;
   onUpdateBlock: (id: string, content: any, properties?: Record<string, any>) => Promise<MindBlock>;
   onDeleteBlock: (id: string) => Promise<void>;
+  onDeleteMindboard: (id: string) => Promise<void>;
+  onDeleteSection: (id: string) => Promise<void>;
 }
 
 export function MindboardLayout({
@@ -47,14 +49,49 @@ export function MindboardLayout({
   onCreateBlock,
   onUpdateBlock,
   onDeleteBlock,
+  onDeleteMindboard,
+  onDeleteSection,
 }: MindboardLayoutProps) {
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
   const [expandedBoards, setExpandedBoards] = useState<Record<string, boolean>>({});
   const isMobile = useMediaQuery('(max-width: 768px)');
+  const { toast } = useToast();
 
   const toggleBoard = (id: string) => {
     setExpandedBoards(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleDeleteMindboard = async (id: string) => {
+    try {
+      await onDeleteMindboard(id);
+      toast({
+        title: "Success",
+        description: "Mindboard deleted successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete mindboard",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteSection = async (id: string) => {
+    try {
+      await onDeleteSection(id);
+      toast({
+        title: "Success",
+        description: "Section deleted successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete section",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -86,6 +123,7 @@ export function MindboardLayout({
             onSelectBoard={setActiveMindboardId}
             expandedBoards={expandedBoards}
             onToggleExpand={toggleBoard}
+            onDeleteBoard={handleDeleteMindboard}
           />
         </div>
       </motion.div>
@@ -107,6 +145,7 @@ export function MindboardLayout({
               sections={sections}
               activeSection={activeSectionId}
               onSelectSection={setActiveSectionId}
+              onDeleteSection={handleDeleteSection}
             />
           </div>
           
