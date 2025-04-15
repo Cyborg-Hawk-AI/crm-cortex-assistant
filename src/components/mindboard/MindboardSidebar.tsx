@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useSidebar } from '@/components/ui/sidebar'; // Assuming this exists in the Shadcn sidebar implementation
 
 interface MindboardSidebarProps {
   mindboards: Mindboard[];
@@ -32,6 +33,8 @@ export function MindboardSidebar({
   onDeleteMindboard,
   isLoading
 }: MindboardSidebarProps) {
+  const { isCollapsed } = useSidebar(); // Use the sidebar context to check if sidebar is collapsed
+
   if (isLoading) {
     return (
       <div className="p-2 space-y-2">
@@ -48,7 +51,11 @@ export function MindboardSidebar({
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between p-3 border-b border-[#3A4D62]">
-        <h2 className="text-lg font-semibold text-[#F1F5F9] bg-clip-text text-transparent bg-gradient-to-r from-neon-blue to-neon-aqua">Mindboards</h2>
+        {!isCollapsed && (
+          <h2 className="text-lg font-semibold text-[#F1F5F9] bg-clip-text text-transparent bg-gradient-to-r from-neon-blue to-neon-aqua">
+            Mindboards
+          </h2>
+        )}
         <Button 
           onClick={onCreateMindboard}
           variant="ghost" 
