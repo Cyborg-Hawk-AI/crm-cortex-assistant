@@ -8,9 +8,10 @@ import { MODEL_OPTIONS } from '@/hooks/useModelSelection';
 interface ModelToggleProps {
   currentModel: ModelType;
   onToggle: () => void;
+  disabled?: boolean;
 }
 
-export const ModelToggle = ({ currentModel, onToggle }: ModelToggleProps) => {
+export const ModelToggle = ({ currentModel, onToggle, disabled = false }: ModelToggleProps) => {
   return (
     <TooltipProvider>
       <div className="flex items-center">
@@ -24,6 +25,8 @@ export const ModelToggle = ({ currentModel, onToggle }: ModelToggleProps) => {
                 onClick={() => {
                   if (currentModel !== 'openai') onToggle();
                 }}
+                disabled={disabled}
+                data-active={currentModel === 'openai'}
               >
                 <span className="text-xs font-medium">Core</span>
               </ToggleGroupItem>
@@ -42,6 +45,8 @@ export const ModelToggle = ({ currentModel, onToggle }: ModelToggleProps) => {
                 onClick={() => {
                   if (currentModel !== 'deepseek') onToggle();
                 }}
+                disabled={disabled}
+                data-active={currentModel === 'deepseek'}
               >
                 <span className="text-xs font-medium">MYK</span>
               </ToggleGroupItem>

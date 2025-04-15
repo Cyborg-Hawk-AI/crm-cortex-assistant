@@ -536,15 +536,28 @@ Last updated: ${new Date(mission.updated_at).toLocaleString()}`;
             content: systemPrompt
           });
           
-          // Choose stream function based on selected model
-          const chatFunction = modelSelection.id === 'deepseek' ? deepSeekChat : openAIChat;
-          console.log(`Using ${modelSelection.id} model (${modelSelection.name}) for chat`);
+          // Select the appropriate chat function based on model
+          const currentModel = modelSelection.id;
+          console.log(`Using ${currentModel} model (${modelSelection.name}) for chat`);
+          
+          // Get the correct stream function based on selected model
+          let chatFunction;
+          if (currentModel === 'deepseek') {
+            chatFunction = deepSeekChat;
+            console.log('Using DeepSeek API for this message');
+          } else {
+            chatFunction = openAIChat;
+            console.log('Using OpenAI API for this message');
+          }
           
           await chatFunction(
-            { messages: messageHistory },
+            { 
+              messages: messageHistory,
+              model: modelSelection.apiModel
+            },
             {
               onStart: () => {
-                console.log(`Starting to stream ${modelSelection.id} response`);
+                console.log(`Starting to stream ${currentModel} response`);
               },
               onChunk: (chunk: string) => {
                 if (!chunk || typeof chunk !== 'string') return;
@@ -560,7 +573,7 @@ Last updated: ${new Date(mission.updated_at).toLocaleString()}`;
                 );
               },
               onComplete: async (finalResponse: string) => {
-                console.log(`${modelSelection.id} stream completed, saving final response`);
+                console.log(`${currentModel} stream completed, saving final response`);
                 fullResponse = finalResponse;
                 
                 setLocalMessages(prev => 
@@ -587,7 +600,7 @@ Last updated: ${new Date(mission.updated_at).toLocaleString()}`;
                 setIsSending(false);
               },
               onError: (error) => {
-                console.error(`Error in ${modelSelection.id} response:`, error);
+                console.error(`Error in ${currentModel} response:`, error);
                 const errorMessage = `Error: ${error.message}`;
                 
                 setLocalMessages(prev => 

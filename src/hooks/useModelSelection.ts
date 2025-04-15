@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export type ModelType = 'openai' | 'deepseek';
 
@@ -25,12 +25,40 @@ export const MODEL_OPTIONS: Record<ModelType, ModelOption> = {
   }
 };
 
+// Local storage key for persisting model selection
+const MODEL_SELECTION_KEY = 'actionit-model-selection';
+
 export const useModelSelection = () => {
-  // Always initialize with a valid default model
-  const [selectedModel, setSelectedModel] = useState<ModelType>('openai');
+  // Get the stored model or use default
+  const getSavedModel = (): ModelType => {
+    try {
+      const saved = localStorage.getItem(MODEL_SELECTION_KEY);
+      if (saved && (saved === 'openai' || saved === 'deepseek')) {
+        return saved;
+      }
+    } catch (e) {
+      console.warn('Could not access localStorage for model selection');
+    }
+    return 'openai';
+  };
+
+  // Initialize with saved or default model
+  const [selectedModel, setSelectedModel] = useState<ModelType>(getSavedModel());
+
+  // Save model selection to localStorage when it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(MODEL_SELECTION_KEY, selectedModel);
+      console.log(`Model selection saved: ${selectedModel}`);
+    } catch (e) {
+      console.warn('Could not save model selection to localStorage');
+    }
+  }, [selectedModel]);
 
   const toggleModel = () => {
-    setSelectedModel(prev => prev === 'openai' ? 'deepseek' : 'openai');
+    const newModel = selectedModel === 'openai' ? 'deepseek' : 'openai';
+    setSelectedModel(newModel);
+    console.log(`Model toggled to: ${newModel}`);
   };
 
   // Ensure we always return a valid model option

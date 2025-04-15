@@ -35,7 +35,7 @@ export async function createDeepSeekStream(
       content: msg.content
     }));
     
-    console.log(`Sending ${cleanMessages.length} messages to DeepSeek API`);
+    console.log(`Sending ${cleanMessages.length} messages to DeepSeek API using model: ${options.model || DEFAULT_MODEL}`);
     
     const response = await fetch(`${DEEPSEEK_API_URL}/v1/chat/completions`, {
       method: 'POST',
