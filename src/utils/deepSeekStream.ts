@@ -5,7 +5,7 @@ const DEEPSEEK_API_URL = 'https://api.deepseek.com';
 const DEFAULT_MODEL = 'deepseek-reasoner'; // Using deepseek-reasoner model per documentation
 // API key should be retrieved from environment variables in a secure way
 // For frontend-only apps, we'll need to have the user provide their API key
-const DEEPSEEK_API_KEY = 'sk-451d1ad580704a6b86c8edd7e9c4a48d'; // Empty by default, will be provided through configuration
+const DEEPSEEK_API_KEY = 'sk-18518fb88a40422e9f61b5769a1feeca';
 
 export interface StreamOptions {
   model?: string;
