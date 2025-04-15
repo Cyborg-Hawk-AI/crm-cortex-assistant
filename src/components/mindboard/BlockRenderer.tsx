@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { MindBlock } from '@/utils/types';
 import { Card } from '@/components/ui/card';
@@ -15,6 +16,15 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({ block, onUpdate })
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   useEffect(() => {
+    console.log('BlockRenderer - Block updated from props:', {
+      blockId: block.id.substring(0, 8),
+      position: block.position,
+      updated_at: block.updated_at,
+    });
+    setLocalContent(block.content);
+  }, [block]);
+  
+  useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
@@ -23,14 +33,27 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({ block, onUpdate })
 
   const handleContentChange = (value: string) => {
     const newContent = { ...localContent, text: value };
+    console.log('BlockRenderer - Content changed:', {
+      blockId: block.id.substring(0, 8),
+      oldText: localContent.text?.substring(0, 20),
+      newText: value.substring(0, 20),
+      position: block.position
+    });
     setLocalContent(newContent);
     if (onUpdate) {
+      console.log('BlockRenderer - Triggering onUpdate');
       onUpdate(newContent);
     }
   };
 
   const handleTodoToggle = (checked: boolean) => {
     if (onUpdate && block.content_type === 'todo') {
+      console.log('BlockRenderer - Todo toggled:', {
+        blockId: block.id.substring(0, 8),
+        oldState: localContent.checked,
+        newState: checked,
+        position: block.position
+      });
       const newContent = { ...localContent, checked };
       setLocalContent(newContent);
       onUpdate(newContent);

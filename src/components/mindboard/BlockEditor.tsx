@@ -23,10 +23,42 @@ export function BlockEditor({
 }: BlockEditorProps) {
   const [newBlockType, setNewBlockType] = useState<string>('text');
 
+  // Diagnostic logging: Log blocks whenever they change
+  useEffect(() => {
+    console.log('BlockEditor - Blocks updated:', blocks.map(b => ({
+      id: b.id.substring(0, 8),
+      type: b.content_type,
+      position: b.position,
+      updated_at: b.updated_at,
+      text: b.content_type === 'text' ? b.content.text?.substring(0, 20) : '[non-text]'
+    })));
+  }, [blocks]);
+
   const handleAddBlock = async () => {
     console.log('Creating new block of type:', newBlockType);
     const content = newBlockType === 'text' ? { text: '' } : {};
     await onCreateBlock(newBlockType, content);
+  };
+
+  const handleUpdateBlock = async (block: MindBlock, content: any) => {
+    console.log('BlockEditor - Before update:', {
+      blockId: block.id.substring(0, 8),
+      position: block.position,
+      updated_at: block.updated_at,
+      content: JSON.stringify(content).substring(0, 50)
+    });
+    
+    try {
+      const updatedBlock = await onUpdateBlock(block.id, content);
+      console.log('BlockEditor - After update:', {
+        blockId: updatedBlock.id.substring(0, 8),
+        position: updatedBlock.position,
+        updated_at: updatedBlock.updated_at,
+        content: JSON.stringify(updatedBlock.content).substring(0, 50)
+      });
+    } catch (error) {
+      console.error('BlockEditor - Update error:', error);
+    }
   };
 
   return (
@@ -44,8 +76,8 @@ export function BlockEditor({
             <BlockRenderer
               block={block}
               onUpdate={(content) => {
-                console.log('Updating block:', block.id, content);
-                onUpdateBlock(block.id, content);
+                console.log(`BlockEditor - Updating block ${block.id.substring(0, 8)} at index ${index}, position ${block.position}`);
+                handleUpdateBlock(block, content);
               }}
             />
           </div>

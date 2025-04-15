@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Mindboard, MindSection, MindPage, MindBlock } from '@/utils/types';
 import * as mindboardApi from '@/api/mindboard';
@@ -74,11 +74,41 @@ export function useMindboard() {
     error: blocksError
   } = useQuery({
     queryKey: ['mind_blocks', activePageId],
-    queryFn: () => activePageId 
-      ? mindboardApi.getMindBlocks(activePageId) 
-      : Promise.resolve([]),
+    queryFn: async () => {
+      if (!activePageId) return Promise.resolve([]);
+      console.log('useMindboard - Fetching blocks for page:', activePageId);
+      try {
+        const result = await mindboardApi.getMindBlocks(activePageId);
+        console.log('useMindboard - API returned blocks:', result.map(b => ({
+          id: b.id.substring(0, 8),
+          position: b.position,
+          updated_at: b.updated_at,
+          content_type: b.content_type
+        })));
+        return result;
+      } catch (error) {
+        console.error('useMindboard - Error fetching blocks:', error);
+        throw error;
+      }
+    },
     enabled: !!activePageId,
   });
+  
+  useEffect(() => {
+    if (blocks.length > 0 && activePageId) {
+      console.log('useMindboard - Current blocks in state:', {
+        pageId: activePageId,
+        blockCount: blocks.length,
+        blocks: blocks.map(b => ({
+          id: b.id.substring(0, 8),
+          position: b.position,
+          updated_at: b.updated_at,
+          content_type: b.content_type,
+          text: b.content_type === 'text' ? b.content.text?.substring(0, 20) : '[non-text]'
+        }))
+      });
+    }
+  }, [blocks, activePageId]);
   
   const createMindboardMutation = useMutation({
     mutationFn: (params: { title: string, description?: string, color?: string, icon?: string }) => 
@@ -324,8 +354,28 @@ export function useMindboard() {
   });
   
   const updateBlockMutation = useMutation({
-    mutationFn: mindboardApi.updateMindBlock,
-    onSuccess: () => {
+    mutationFn: async (block: Partial<MindBlock> & { id: string }) => {
+      console.log('useMindboard - Before updating block in API:', {
+        blockId: block.id.substring(0, 8),
+        position: block.position,
+        content: block.content ? JSON.stringify(block.content).substring(0, 50) : undefined
+      });
+      const result = await mindboardApi.updateMindBlock(block);
+      console.log('useMindboard - API update result:', {
+        blockId: result.id.substring(0, 8),
+        position: result.position,
+        updated_at: result.updated_at
+      });
+      return result;
+    },
+    onMutate: async (updatedBlock) => {
+      console.log('useMindboard - Optimistic update start:', {
+        blockId: updatedBlock.id.substring(0, 8)
+      });
+      // We could implement optimistic updates here
+    },
+    onSuccess: (result, variables) => {
+      console.log('useMindboard - Update success, invalidating query for:', activePageId);
       queryClient.invalidateQueries({ queryKey: ['mind_blocks', activePageId] });
       if (shouldShowToast('block')) {
         toast({
@@ -335,6 +385,7 @@ export function useMindboard() {
       }
     },
     onError: (error: Error) => {
+      console.error('useMindboard - Update error:', error);
       toast({
         title: 'Error',
         description: `Failed to update block: ${error.message}`,
@@ -451,7 +502,14 @@ export function useMindboard() {
     deletePage: deletePageMutation.mutateAsync,
     
     createBlock: createBlockMutation.mutateAsync,
-    updateBlock: updateBlockMutation.mutateAsync,
+    updateBlock: async (block: Partial<MindBlock> & { id: string }) => {
+      console.log('useMindboard - updateBlock called:', {
+        blockId: block.id.substring(0, 8),
+        position: block.position,
+        updated_at: block.updated_at
+      });
+      return updateBlockMutation.mutateAsync(block);
+    },
     deleteBlock: deleteBlockMutation.mutateAsync,
     moveBlock: moveBlockMutation.mutateAsync,
     duplicateBlock: duplicateBlockMutation.mutateAsync,

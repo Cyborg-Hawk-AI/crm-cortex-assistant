@@ -1,4 +1,3 @@
-
 import { supabase, getCurrentUserId } from '@/lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
 import { Mindboard, MindSection, MindPage, MindBlock } from '@/utils/types';
@@ -534,7 +533,7 @@ export const createMindBlock = async (
   return data as MindBlock;
 };
 
-// Update a block
+// Update a block with enhanced logging
 export const updateMindBlock = async (block: Partial<MindBlock> & { id: string }): Promise<MindBlock> => {
   const userId = await getCurrentUserId();
   
@@ -543,6 +542,7 @@ export const updateMindBlock = async (block: Partial<MindBlock> & { id: string }
   }
 
   // Check ownership
+  console.log('API - updateMindBlock - Fetching existing block:', block.id);
   const { data: existing, error: fetchError } = await supabase
     .from('mind_blocks')
     .select()
@@ -551,14 +551,33 @@ export const updateMindBlock = async (block: Partial<MindBlock> & { id: string }
     .single();
   
   if (fetchError) {
-    console.error('Error fetching mind block:', fetchError);
+    console.error('API - Error fetching mind block:', fetchError);
     throw new Error(fetchError.message);
   }
+  
+  console.log('API - updateMindBlock - Existing block:', {
+    id: existing.id.substring(0, 8),
+    position: existing.position,
+    content_type: existing.content_type,
+    updated_at: existing.updated_at
+  });
   
   const updates = {
     ...block,
     updated_at: new Date().toISOString()
   };
+  
+  // Preserve position if not explicitly changing it
+  if (block.position === undefined && existing.position !== undefined) {
+    console.log('API - updateMindBlock - Preserving position:', existing.position);
+    updates.position = existing.position;
+  }
+  
+  console.log('API - updateMindBlock - Sending update with data:', {
+    id: updates.id.substring(0, 8),
+    position: updates.position,
+    updated_at: updates.updated_at
+  });
   
   const { data, error } = await supabase
     .from('mind_blocks')
@@ -568,9 +587,15 @@ export const updateMindBlock = async (block: Partial<MindBlock> & { id: string }
     .single();
   
   if (error) {
-    console.error('Error updating mind block:', error);
+    console.error('API - Error updating mind block:', error);
     throw new Error(error.message);
   }
+  
+  console.log('API - updateMindBlock - Updated block result:', {
+    id: data.id.substring(0, 8),
+    position: data.position,
+    updated_at: data.updated_at
+  });
   
   return data as MindBlock;
 };
