@@ -88,6 +88,21 @@ export const useChatMessages = () => {
                 
               if (!error && data) {
                 setLinkedTask(data as Task);
+                
+                const systemMessageExists = dbMessages.some(msg => 
+                  msg.isSystem && msg.content.includes(`Task linked: ${data.title}`)
+                );
+                
+                if (!systemMessageExists) {
+                  await saveMessage(
+                    `Task linked: ${data.title} (${data.status}, ${data.priority})`,
+                    'system',
+                    uuidv4(),
+                    activeConversationId
+                  );
+                  
+                  refetchMessages();
+                }
               }
             } catch (error) {
               console.error('Error fetching linked task:', error);
@@ -102,7 +117,7 @@ export const useChatMessages = () => {
         console.log(`Switched to conversation: ${activeConversationId} with thread: ${activeConversation.open_ai_thread_id || 'none'}`);
       }
     }
-  }, [activeConversationId, conversations, refetchMessages]);
+  }, [activeConversationId, conversations, refetchMessages, dbMessages]);
 
   const messages = useCallback(() => {
     const result = [...dbMessages];
@@ -308,7 +323,15 @@ export const useChatMessages = () => {
           throw error;
         }
         
+        await saveMessage(
+          `Task linked: ${mission.title} (${mission.status}, ${mission.priority})`,
+          'system',
+          uuidv4(),
+          activeConversationId
+        );
+        
         queryClient.invalidateQueries({ queryKey: ['conversations'] });
+        refetchMessages();
       } catch (error) {
         console.error('Error linking mission:', error);
         throw error;
@@ -316,7 +339,7 @@ export const useChatMessages = () => {
     }
     
     return mission;
-  }, [activeConversationId, queryClient]);
+  }, [activeConversationId, queryClient, refetchMessages, saveMessage]);
 
   const saveMessage = useCallback(async (
     content: string, 

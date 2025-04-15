@@ -25,6 +25,36 @@ const convertMessagesToChatMessages = (messages: Message[], conversationId: stri
   }));
 };
 
+// Format task information into a readable string for context
+const formatTaskDetails = (task: Task | null): string => {
+  if (!task) return '';
+  
+  let taskDetails = `
+TASK DETAILS:
+- Title: ${task.title}
+- Status: ${task.status}
+- Priority: ${task.priority}
+`;
+
+  if (task.description && task.description.trim()) {
+    taskDetails += `- Description: ${task.description}\n`;
+  }
+  
+  if (task.due_date) {
+    taskDetails += `- Due Date: ${new Date(task.due_date).toLocaleDateString()}\n`;
+  }
+  
+  if (task.assignee_id) {
+    taskDetails += `- Assigned To: ${task.assignee_id}\n`;
+  }
+  
+  if (task.parent_task_id) {
+    taskDetails += `- Part of Mission: ${task.parent_task_id}\n`;
+  }
+  
+  return taskDetails;
+};
+
 // Send a message to an assistant and get a response with streaming support
 export const sendMessage = async (
   content: string, 
@@ -88,11 +118,16 @@ export const sendMessage = async (
     // Format the history for context
     const historyForContext = chatHistoryService.formatHistoryForContext(messagesForContext);
     
-    // Create a properly formatted prompt with the assistant's prompt and context
+    // Include task information in the prompt when available
+    const taskContext = task ? formatTaskDetails(task) : '';
+    
+    // Create a properly formatted prompt with the assistant's prompt, context and task information
     const formattedPrompt = `
 ${assistantConfig.prompt}
 
 ${assistantConfig.contextPrompt}
+
+${taskContext ? 'ASSOCIATED TASK INFORMATION:\n' + taskContext + '\n' : ''}
 
 Conversation History:
 ${historyForContext}
@@ -101,18 +136,39 @@ Current Query: ${content}
 `;
 
     console.log(`Using assistant ${assistantId} (${assistantConfig.name}) with customized prompt`);
+    console.log(`Task information included in prompt: ${!!taskContext}`);
     
     // Step 5: Format the conversation history for OpenAI
-    const messagesForOpenAI = existingMessages
-      .filter(msg => msg.sender !== 'system') // Filter out system messages
+    const messagesForOpenAI = [...existingMessages];
+    
+    // If we have a task, inject it as a system message at the beginning if it's not already there
+    if (task && !messagesForOpenAI.some(msg => 
+      msg.isSystem && msg.content.includes(`Task linked: ${task.title}`)
+    )) {
+      // Add task details as a system message at the start for context
+      messagesForOpenAI.unshift({
+        id: uuidv4(),
+        content: `This conversation is about the following task: ${formatTaskDetails(task)}`,
+        sender: 'system',
+        timestamp: new Date(),
+        isSystem: true,
+        conversation_id: conversation.id,
+        user_id: 'system'
+      });
+    }
+    
+    // Filter and map messages for the OpenAI API
+    const processedMessagesForOpenAI = messagesForOpenAI
+      .filter(msg => msg.sender !== 'system' || (msg.isSystem && task)) // Include system messages about tasks
       .map(msg => {
         return {
-          role: msg.sender === 'user' ? 'user' : 'assistant',
+          role: msg.sender === 'user' ? 'user' : 
+                msg.sender === 'system' ? 'system' : 'assistant',
           content: msg.content
         };
       });
     
-    console.log(`Using ${messagesForOpenAI.length} formatted messages for OpenAI with assistant ${assistantId}`);
+    console.log(`Using ${processedMessagesForOpenAI.length} formatted messages for OpenAI with assistant ${assistantId}`);
     
     // Step 6: Check if we need to clear the thread first (for threads with too much history)
     // This is important for handling long conversations that might exceed token limits
@@ -123,8 +179,8 @@ Current Query: ${content}
     if (threadMessages.length === 0) {
       // If thread is empty (new thread), add all conversation history
       console.log("New thread detected, adding full conversation history");
-      if (messagesForOpenAI.length > 0) {
-        await openaiClient.addMessagesToThread(threadId, messagesForOpenAI, apiKey);
+      if (processedMessagesForOpenAI.length > 0) {
+        await openaiClient.addMessagesToThread(threadId, processedMessagesForOpenAI, apiKey);
       }
     } else if (threadMessages.length > 50) {
       // Thread has too many messages, clear it and re-add recent history
@@ -132,11 +188,11 @@ Current Query: ${content}
       await openaiClient.clearThreadMessages(threadId, apiKey);
       
       // Re-add only the most recent 30 messages to keep context but stay within limits
-      const recentMessages = messagesForOpenAI.slice(-30);
+      const recentMessages = processedMessagesForOpenAI.slice(-30);
       if (recentMessages.length > 0) {
         await openaiClient.addMessagesToThread(threadId, recentMessages, apiKey);
       }
-    } else if (messagesForOpenAI.length > threadMessages.length) {
+    } else if (processedMessagesForOpenAI.length > threadMessages.length) {
       // If our history has more messages than the thread, we might need to add missing ones
       console.log("Checking for missing messages in thread history");
       
@@ -144,7 +200,7 @@ Current Query: ${content}
       const threadMsgContents = threadMessages.map(msg => msg.content).join("");
       
       // Find messages that might not be in the thread
-      const messagesToAdd = messagesForOpenAI.filter(msg => {
+      const messagesToAdd = processedMessagesForOpenAI.filter(msg => {
         // Simple heuristic: if the thread doesn't contain this content, it's probably missing
         return !threadMsgContents.includes(msg.content);
       });
