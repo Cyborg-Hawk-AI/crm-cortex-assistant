@@ -62,7 +62,7 @@ export function JoinSyncUpModal({ open, onOpenChange }: JoinSyncUpModalProps) {
       // Save the meeting data to our database
       const meetingId = uuidv4();
       const now = new Date().toISOString();
-      const { error: meetingError } = await supabase
+      const { data, error: meetingError } = await supabase
         .from('meetings')
         .insert({
           id: meetingId,
@@ -72,14 +72,18 @@ export function JoinSyncUpModal({ open, onOpenChange }: JoinSyncUpModalProps) {
           client_name: 'External Meeting',
           created_by: userId,
           meeting_link: meetingLink,
-          bot_id: botResponse.data.id, // Store the bot ID from Recall API
+          bot_id: botResponse.data?.id, // Safely access bot ID
           created_at: now,
           updated_at: now
-        });
+        })
+        .select();
       
       if (meetingError) {
+        console.error('Error saving meeting:', meetingError);
         throw new Error(meetingError.message);
       }
+
+      console.log('Meeting saved:', data);
 
       toast({
         title: "Success",

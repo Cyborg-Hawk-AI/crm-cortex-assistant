@@ -473,6 +473,7 @@ export type Database = {
       meetings: {
         Row: {
           agenda: string | null
+          bot_id: string | null
           client_id: string | null
           client_name: string
           created_at: string | null
@@ -487,6 +488,7 @@ export type Database = {
         }
         Insert: {
           agenda?: string | null
+          bot_id?: string | null
           client_id?: string | null
           client_name: string
           created_at?: string | null
@@ -501,6 +503,7 @@ export type Database = {
         }
         Update: {
           agenda?: string | null
+          bot_id?: string | null
           client_id?: string | null
           client_name?: string
           created_at?: string | null
