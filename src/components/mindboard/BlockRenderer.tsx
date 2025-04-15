@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { MindBlock } from '@/utils/types';
 import { Card } from '@/components/ui/card';
@@ -11,12 +12,14 @@ interface BlockRendererProps {
   block: MindBlock;
   onUpdate?: (content: any) => void;
   onTypeChange?: (blockId: string, newType: string, content: any) => void;
+  onDelete?: () => void; // Add this new prop to fix the error
 }
 
 export const BlockRenderer: React.FC<BlockRendererProps> = ({ 
   block, 
   onUpdate,
-  onTypeChange
+  onTypeChange,
+  onDelete // Add this to the destructuring
 }) => {
   const [localContent, setLocalContent] = useState<any>(block.content);
   const [showCommands, setShowCommands] = useState(false);
