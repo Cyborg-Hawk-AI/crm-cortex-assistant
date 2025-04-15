@@ -18,7 +18,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
   onUpdate,
   onTypeChange
 }) => {
-  const [localContent, setLocalContent] = useState(block.content);
+  const [localContent, setLocalContent] = useState<any>(block.content);
   const [showCommands, setShowCommands] = useState(false);
   const [commandQuery, setCommandQuery] = useState('');
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
@@ -84,7 +84,10 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
         newState: checked,
         position: block.position
       });
-      const newContent = { ...localContent, checked };
+      const newContent = { 
+        ...localContent, 
+        checked: checked 
+      };
       setLocalContent(newContent);
       onUpdate(newContent);
     }
@@ -94,7 +97,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
     setShowCommands(false);
     setCommandQuery('');
     if (onTypeChange) {
-      const newContent = { text: '' };
+      let newContent: any = { text: '' };
       if (command.type === 'todo') {
         newContent.checked = false;
       }
@@ -129,7 +132,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
         return (
           <div className="p-2 flex items-start gap-2" style={{ marginLeft: `${indentPadding}px` }}>
             <Checkbox
-              checked={localContent.checked}
+              checked={localContent.checked || false}
               onCheckedChange={handleTodoToggle}
               className="mt-1"
             />
