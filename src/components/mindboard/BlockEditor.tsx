@@ -130,6 +130,7 @@ export function BlockEditor({
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
                 page_id: pageId,
+                user_id: 'current-user' // Adding the required user_id property
               }}
               onUpdate={(content) => handleAddTextBlock()}
               onTypeChange={(newType: string, content: any) => handleAddTextBlock()}
@@ -142,4 +143,3 @@ export function BlockEditor({
     </div>
   );
 }
-
