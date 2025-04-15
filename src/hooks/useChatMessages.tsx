@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as messageApi from '@/api/messages';
@@ -82,15 +83,32 @@ export const useChatMessages = () => {
   const messages = useCallback(() => {
     const result = [...dbMessages];
     
-    const dbMessageIds = new Set(dbMessages.map(msg => msg.id));
+    // Convert database messages to the Message format
+    const formattedDbMessages = dbMessages.map(msg => ({
+      id: msg.id,
+      content: msg.content,
+      sender: msg.role, // Map 'role' to 'sender'
+      timestamp: new Date(msg.created_at),
+      isSystem: msg.is_system,
+      conversation_id: msg.conversation_id,
+      user_id: 'current-user' // Use a default value since user_id doesn't exist
+    }));
     
+    const dbMessageIds = new Set(formattedDbMessages.map(msg => msg.id));
+    
+    // Add local messages that don't exist in DB
     for (const localMsg of localMessages) {
       if (!dbMessageIds.has(localMsg.id)) {
         result.push(localMsg);
       }
     }
     
-    return result.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+    return result.sort((a, b) => {
+      // Make sure timestamps are Date objects
+      const timeA = a.timestamp instanceof Date ? a.timestamp.getTime() : new Date(a.timestamp).getTime();
+      const timeB = b.timestamp instanceof Date ? b.timestamp.getTime() : new Date(b.timestamp).getTime();
+      return timeA - timeB;
+    });
   }, [dbMessages, localMessages]);
 
   const startConversation = async (title?: string, projectId: string = ''): Promise<string> => {
@@ -309,7 +327,18 @@ export const useChatMessages = () => {
         
         queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
         
-        return savedMessage;
+        // Transform the saved message to match our Message type
+        const messageObj: Message = {
+          id: savedMessage.id,
+          content: savedMessage.content,
+          sender: savedMessage.role, // Map 'role' to 'sender'
+          timestamp: new Date(savedMessage.created_at),
+          isSystem: savedMessage.is_system,
+          conversation_id: savedMessage.conversation_id,
+          user_id: 'current-user' // Use a default value since user_id doesn't exist
+        };
+        
+        return messageObj;
       } catch (error) {
         console.error('Error saving message:', error);
         

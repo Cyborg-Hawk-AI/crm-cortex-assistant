@@ -1,3 +1,4 @@
+
 import { supabase, getCurrentUserId } from '@/lib/supabase';
 import { ActionProject } from '@/utils/types';
 
@@ -345,12 +346,12 @@ export const getMessages = async (conversationId: string): Promise<any[]> => {
     throw new Error('User not authenticated');
   }
 
+  // Fix: Remove the non-existent user_id filter from the query
   const { data, error } = await supabase
     .from('messages')
     .select('*')
     .eq('conversation_id', conversationId)
-    .eq('user_id', userId)
-    .order('timestamp', { ascending: true });
+    .order('created_at', { ascending: true });
   
   if (error) {
     console.error('Error fetching messages:', error);
@@ -368,15 +369,15 @@ export const sendMessage = async (conversationId: string, content: string, sende
     throw new Error('User not authenticated');
   }
 
+  // Fix: Adjust the fields to match the actual database schema
   const { data, error } = await supabase
     .from('messages')
     .insert({
       id: messageId,
       conversation_id: conversationId,
-      user_id: userId,
       content: content,
-      sender: sender,
-      timestamp: new Date().toISOString(),
+      role: sender, // Use 'role' instead of 'sender'
+      created_at: new Date().toISOString(),
       is_system: sender === 'system'
     })
     .select()
@@ -398,11 +399,11 @@ export const deleteConversationMessages = async (conversationId: string): Promis
     throw new Error('User not authenticated');
   }
 
+  // Fix: Remove the non-existent user_id filter from the query
   const { error } = await supabase
     .from('messages')
     .delete()
-    .eq('conversation_id', conversationId)
-    .eq('user_id', userId);
+    .eq('conversation_id', conversationId);
   
   if (error) {
     console.error('Error deleting messages:', error);
