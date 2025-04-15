@@ -28,14 +28,22 @@ export function ChatLayout() {
   const navigationAttemptRef = useRef(0);
   const lastNavigationTimeRef = useRef(0);
   const restoredConversationIdRef = useRef<string | null>(null);
+  const selectedProjectIdRef = useRef<string | null>(null);
 
-  // Check for forceReload parameter and pendingConversationId in location state
+  // Check for forceReload parameter, pendingConversationId and selectedProjectId in location state
   useEffect(() => {
     const state = location.state as { 
       forceReload?: number,
       pendingConversationId?: string,
-      newConversationId?: string
+      newConversationId?: string,
+      selectedProjectId?: string
     } | undefined;
+
+    // Track selected project ID
+    if (state?.selectedProjectId) {
+      console.log(`🔍 ChatLayout: Found selectedProjectId in state: ${state.selectedProjectId}`);
+      selectedProjectIdRef.current = state.selectedProjectId;
+    }
 
     // Handle pending conversation ID from navigation
     if (state?.pendingConversationId || state?.newConversationId) {
@@ -63,7 +71,7 @@ export function ChatLayout() {
 
   // Set up debug effect to monitor relevant state
   useEffect(() => {
-    console.log(`🏗️ ChatLayout: Component rendered with activeConversationId=${activeConversationId}, forceRefresh=${forceRefresh}, restoredId=${restoredConversationIdRef.current}`);
+    console.log(`🏗️ ChatLayout: Component rendered with activeConversationId=${activeConversationId}, forceRefresh=${forceRefresh}, restoredId=${restoredConversationIdRef.current}, projectId=${selectedProjectIdRef.current}`);
     
     // If we have a restored ID but no active conversation, set it
     if (restoredConversationIdRef.current && !activeConversationId) {
@@ -113,7 +121,8 @@ export function ChatLayout() {
                 state: { 
                   activeTab: 'chat', 
                   forceReload: timestamp,
-                  pendingConversationId: activeConversationId // Pass the conversation ID
+                  pendingConversationId: activeConversationId, // Pass the conversation ID
+                  selectedProjectId: selectedProjectIdRef.current // Pass the project ID
                 },
                 replace: true
               });
@@ -151,7 +160,7 @@ export function ChatLayout() {
           className="flex-1 overflow-hidden flex flex-col"
           onClick={handleChatAreaClick}
           ref={chatSectionRef}
-          key={`chat-section-${activeConversationId || 'new'}-${forceRefresh}`}
+          key={`chat-section-${activeConversationId || 'new'}-${selectedProjectIdRef.current || 'default'}-${forceRefresh}`}
         >
           <ChatSection
             activeConversationId={activeConversationId}

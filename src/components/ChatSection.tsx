@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2, AlertTriangle, Folder, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -121,10 +122,11 @@ export function ChatSection({
     const finalState = {
       ...state,
       forceReload: timestamp,
-      pendingConversationId: latestCreatedConversationRef.current
+      pendingConversationId: latestCreatedConversationRef.current,
+      selectedProjectId: selectedProjectId // Include the selected project ID in navigation state
     };
     
-    console.log(`🔄 ChatSection: Navigation state will include pendingConversationId: ${finalState.pendingConversationId}`);
+    console.log(`🔄 ChatSection: Navigation state will include pendingConversationId: ${finalState.pendingConversationId} and projectId: ${finalState.selectedProjectId}`);
     
     navigationTimerRef.current = window.setTimeout(() => {
       console.log(`⏱️ Executing delayed navigation to ${path} with timestamp ${timestamp}`);
@@ -164,9 +166,9 @@ export function ChatSection({
         setInputValue('');
         setIsNavigating(true);
         
-        console.log("🔍 ChatSection: Creating new conversation...");
+        console.log(`🔍 ChatSection: Creating new conversation with project ID: ${selectedProjectId}`);
         const newConversationId = await startConversation('New conversation', selectedProjectId);
-        console.log(`✅ ChatSection: New chat created with ID: ${newConversationId}`);
+        console.log(`✅ ChatSection: New chat created with ID: ${newConversationId} in project: ${selectedProjectId}`);
         
         latestCreatedConversationRef.current = newConversationId;
         
@@ -180,7 +182,8 @@ export function ChatSection({
         
         forceNavigation('/', { 
           activeTab: 'chat',
-          newConversationId: newConversationId
+          newConversationId: newConversationId,
+          selectedProjectId: selectedProjectId // Include project ID in navigation state
         });
         
         setTimeout(async () => {
@@ -228,7 +231,7 @@ export function ChatSection({
 
   const handleNewChat = async () => {
     try {
-      console.log("🔍 ChatSection: handleNewChat - Creating new conversation");
+      console.log(`🔍 ChatSection: handleNewChat - Creating new conversation with project ID: ${selectedProjectId}`);
       setIsNavigating(true);
       
       const newConversationId = await startConversation('New conversation', selectedProjectId);
@@ -247,7 +250,8 @@ export function ChatSection({
       console.log("🚀 ChatSection: handleNewChat - Initiating navigation to chat tab");
       forceNavigation('/', { 
         activeTab: 'chat',
-        newConversationId: newConversationId
+        newConversationId: newConversationId,
+        selectedProjectId: selectedProjectId
       });
       
       setTimeout(() => {
@@ -343,6 +347,7 @@ export function ChatSection({
           <div>{`💬 Latest Conv: ${latestCreatedConversationRef.current || 'none'}`}</div>
           <div>{`🔄 Force Reload: ${(location.state as any)?.forceReload || 'none'}`}</div>
           <div>{`🔄 Pending Conv: ${(location.state as any)?.pendingConversationId || 'none'}`}</div>
+          <div>{`📁 Project ID: ${selectedProjectId || 'none'}`}</div>
         </div>
       );
     }
