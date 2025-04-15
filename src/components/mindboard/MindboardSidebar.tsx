@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Book, Plus, MoreVertical } from 'lucide-react';
+import { Book, Plus, MoreVertical, Check } from 'lucide-react';
 import { Mindboard } from '@/utils/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,7 @@ interface MindboardSidebarProps {
   mindboards: Mindboard[];
   activeMindboardId: string | null;
   setActiveMindboardId: (id: string) => void;
-  onCreateMindboard: (title: string) => void; // Update this line
+  onCreateMindboard: (title: string) => Promise<void>; // Make sure this accepts a title and returns a Promise
   onRenameMindboard: (id: string) => void;
   onDeleteMindboard: (id: string) => void;
   isLoading: boolean;
@@ -36,11 +36,15 @@ export function MindboardSidebar({
   const [isCreating, setIsCreating] = useState(false);
   const [newBoardTitle, setNewBoardTitle] = useState('');
 
-  const handleCreateBoard = () => {
+  const handleCreateBoard = async () => {
     if (newBoardTitle.trim()) {
-      onCreateMindboard(newBoardTitle.trim());
-      setNewBoardTitle('');
-      setIsCreating(false);
+      try {
+        await onCreateMindboard(newBoardTitle.trim());
+        setNewBoardTitle('');
+        setIsCreating(false);
+      } catch (error) {
+        console.error("Failed to create mindboard:", error);
+      }
     }
   };
 
@@ -100,9 +104,7 @@ export function MindboardSidebar({
                 className="h-7 w-7"
                 onClick={handleCreateBoard}
               >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+                <Check className="h-4 w-4" />
               </Button>
             </div>
           )}

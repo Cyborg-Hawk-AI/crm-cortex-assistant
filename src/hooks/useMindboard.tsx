@@ -113,8 +113,8 @@ export function useMindboard() {
   }, [blocks, activePageId]);
   
   const createMindboardMutation = useMutation({
-    mutationFn: (params: { title: string, description?: string, color?: string, icon?: string }) => 
-      mindboardApi.createMindboard(params.title, params),
+    mutationFn: (title: string) => 
+      mindboardApi.createMindboard(title),
     onSuccess: (newMindboard) => {
       queryClient.invalidateQueries({ queryKey: ['mindboards'] });
       setActiveMindboardId(newMindboard.id);
