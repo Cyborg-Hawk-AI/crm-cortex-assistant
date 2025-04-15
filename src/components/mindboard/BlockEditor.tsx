@@ -93,8 +93,8 @@ export function BlockEditor({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 py-6">
-      <div className="space-y-1">
+    <div className="w-full h-full max-w-4xl mx-auto px-4 py-6 overflow-y-auto">
+      <div className="space-y-1 min-h-full">
         {orderedBlocks.map((block) => (
           <div 
             key={block.id}

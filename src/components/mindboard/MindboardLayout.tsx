@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Menu, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -75,10 +74,8 @@ export function MindboardLayout({
     try {
       const newBoard = await onCreateBoard({ title: "New Board" });
       if (newBoard && newBoard.id) {
-        // After creating a board, create a section
         const newSection = await onCreateSection({ mindboardId: newBoard.id, title: "New Section" });
         if (newSection && newSection.id) {
-          // After creating a section, create a page
           await onCreatePage({ sectionId: newSection.id, title: "New Page" });
         }
       }
@@ -173,7 +170,7 @@ export function MindboardLayout({
   };
 
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="flex h-screen overflow-hidden">
       {/* Left Sidebar - Boards & Notes */}
       <motion.div
         initial={false}
@@ -182,7 +179,7 @@ export function MindboardLayout({
           x: leftSidebarOpen ? 0 : '-100%'
         }}
         className={cn(
-          "border-r border-border bg-background/95 backdrop-blur",
+          "border-r border-border bg-background/95 backdrop-blur h-full",
           "supports-[backdrop-filter]:bg-background/60",
           isMobile && leftSidebarOpen ? "absolute inset-0 z-50" : "relative"
         )}
@@ -208,8 +205,8 @@ export function MindboardLayout({
       </motion.div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex items-center border-b px-4 h-14">
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
+        <div className="flex items-center border-b px-4 h-14 flex-shrink-0">
           <Button
             variant="ghost"
             size="icon"
@@ -259,14 +256,14 @@ export function MindboardLayout({
               width: !isMobile && rightSidebarOpen && activeSectionId ? '16rem' : '0rem',
               x: rightSidebarOpen ? 0 : '100%'
             }}
-            className="border-r border-border bg-card"
+            className="border-r border-border bg-card h-full overflow-y-auto"
           >
             {activeSectionId && (
               <NoteList
                 notes={pages}
                 activeNoteId={activePageId}
                 onSelectNote={setActivePageId}
-                onCreateNote={(title) => onCreatePage({ sectionId: activeSectionId, title })}
+                onCreateNote={handleCreatePage}
                 onDeleteNote={onDeletePage}
                 onRenameNote={onRenamePage}
               />
@@ -274,7 +271,7 @@ export function MindboardLayout({
           </motion.div>
 
           {/* Block Editor */}
-          <div className="flex-1 overflow-auto bg-gradient-to-br from-background/95 to-background/90">
+          <div className="flex-1 overflow-auto bg-gradient-to-br from-background/95 to-background/90 h-full">
             {activePageId ? (
               <BlockEditor
                 pageId={activePageId}
