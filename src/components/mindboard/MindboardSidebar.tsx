@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, Plus, MoreVertical, Book } from 'lucide-react';
 import { Mindboard } from '@/utils/types';
@@ -36,6 +36,32 @@ export function MindboardSidebar({
   const [renamingBoard, setRenamingBoard] = useState<{ id: string, title: string } | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
+  // Debug logging
+  useEffect(() => {
+    console.log('[MindboardSidebar] Component mounted');
+    return () => console.log('[MindboardSidebar] Component unmounted');
+  }, []);
+
+  useEffect(() => {
+    console.log('[MindboardSidebar] isCreating state changed:', isCreating);
+  }, [isCreating]);
+
+  const handleCreateClick = () => {
+    console.log('[MindboardSidebar] Create button clicked, setting isCreating to true');
+    setIsCreating(true);
+  };
+
+  const handleCreateDialogClose = () => {
+    console.log('[MindboardSidebar] Create dialog close called, setting isCreating to false');
+    setIsCreating(false);
+  };
+
+  const handleCreateMindboard = (title: string) => {
+    console.log(`[MindboardSidebar] Creating new mindboard with title: "${title}"`);
+    onCreateMindboard({ title });
+    setIsCreating(false);
+  };
+
   if (isLoading) {
     return (
       <div className="p-2 space-y-2">
@@ -54,7 +80,7 @@ export function MindboardSidebar({
       <div className="flex items-center justify-between p-3 border-b border-[#3A4D62]">
         <h2 className="text-lg font-semibold text-[#F1F5F9] bg-clip-text text-transparent bg-gradient-to-r from-neon-blue to-neon-aqua">Mindboards</h2>
         <Button 
-          onClick={() => setIsCreating(true)}
+          onClick={handleCreateClick}
           variant="ghost" 
           size="sm" 
           className="h-8 w-8 p-0 text-neon-blue hover:text-neon-aqua hover:bg-[#3A4D62]/50"
@@ -109,6 +135,7 @@ export function MindboardSidebar({
                       className="text-xs cursor-pointer"
                       onClick={(e) => {
                         e.stopPropagation();
+                        console.log('[MindboardSidebar] Opening rename dialog for mindboard:', mindboard.id);
                         setRenamingBoard({ id: mindboard.id, title: mindboard.title });
                       }}
                     >
@@ -118,6 +145,7 @@ export function MindboardSidebar({
                       className="text-xs cursor-pointer text-neon-red"
                       onClick={(e) => {
                         e.stopPropagation();
+                        console.log('[MindboardSidebar] Deleting mindboard:', mindboard.id);
                         onDeleteMindboard(mindboard.id);
                       }}
                     >
@@ -134,8 +162,12 @@ export function MindboardSidebar({
       {renamingBoard && (
         <RenameDialog
           isOpen={!!renamingBoard}
-          onClose={() => setRenamingBoard(null)}
+          onClose={() => {
+            console.log('[MindboardSidebar] Closing rename dialog');
+            setRenamingBoard(null);
+          }}
           onRename={(newTitle) => {
+            console.log(`[MindboardSidebar] Renaming mindboard ${renamingBoard.id} to: "${newTitle}"`);
             onRenameMindboard(renamingBoard.id, newTitle);
             setRenamingBoard(null);
           }}
@@ -145,15 +177,11 @@ export function MindboardSidebar({
 
       <RenameDialog
         isOpen={isCreating}
-        onClose={() => setIsCreating(false)}
-        onRename={(title) => {
-          onCreateMindboard({ title });
-          setIsCreating(false);
-        }}
+        onClose={handleCreateDialogClose}
+        onRename={handleCreateMindboard}
         currentTitle=""
         entityType="new mindboard"
       />
     </div>
   );
 }
-
