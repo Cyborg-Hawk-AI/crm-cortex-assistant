@@ -33,7 +33,8 @@ export function ChatSection({
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const {
     selectedModel,
-    toggleModel
+    toggleModel,
+    modelSelection
   } = useModelSelection();
   const {
     inputValue,
@@ -185,6 +186,7 @@ export function ChatSection({
         setTimeout(async () => {
           try {
             console.log(`✉️ ChatSection: Sending first message to conversation ${newConversationId}`);
+            console.log(`🤖 Using ${selectedModel} model for this message`);
             await sendMessage(userMessage, 'user', newConversationId);
             console.log(`✅ ChatSection: Successfully sent first message to ${newConversationId}`);
             
@@ -206,6 +208,7 @@ export function ChatSection({
         }, 800);
       } else {
         console.log(`✉️ ChatSection: Sending message to existing conversation: ${activeConversationId}`);
+        console.log(`🤖 Using ${selectedModel} model for this message`);
         await sendMessage(inputValue, 'user', activeConversationId);
         setInputValue('');
       }
@@ -431,12 +434,16 @@ export function ChatSection({
               onKeyDown={handleKeyDown} 
               onCompositionStart={() => setIsComposing(true)} 
               onCompositionEnd={() => setIsComposing(false)} 
-              placeholder="Type your engineering question here..." 
+              placeholder={`Type your engineering question here... (using ${modelSelection.name})`}
               className="min-h-[80px] resize-none pr-12 rounded-md border border-neon-purple/30 focus:border-neon-purple focus:shadow-[0_0_8px_rgba(168,85,247,0.2)] transition-all" 
             />
             <Button 
               size="icon" 
-              className="absolute right-2 bottom-2 bg-gradient-to-r from-[#C084FC] to-[#D946EF] text-white hover:brightness-110 hover:shadow-[0_0_8px_rgba(168,85,247,0.4)]" 
+              className={`absolute right-2 bottom-2 ${
+                selectedModel === 'deepseek' 
+                  ? 'bg-gradient-to-r from-[#8B5CF6] to-[#A855F7] hover:brightness-110 hover:shadow-[0_0_8px_rgba(168,85,247,0.4)]'
+                  : 'bg-gradient-to-r from-[#0EA5E9] to-[#14B8A6] hover:brightness-110 hover:shadow-[0_0_8px_rgba(20,184,166,0.4)]'
+              } text-white`}
               onClick={handleSendMessage} 
               disabled={!inputValue.trim() || isSending || isNavigating}
             >
@@ -446,6 +453,9 @@ export function ChatSection({
           
           <div className="flex justify-between items-center mt-4">
             <ModelToggle currentModel={selectedModel} onToggle={toggleModel} />
+            <div className="text-xs text-muted-foreground">
+              Using {modelSelection.name}
+            </div>
           </div>
         </div>
       </div>
@@ -486,7 +496,10 @@ export function ChatSection({
             </Button>
           </div>
           
-          <div className="flex space-x-2">
+          <div className="flex items-center space-x-2">
+            <div className="text-xs text-muted-foreground mr-2">
+              Using {modelSelection.name}
+            </div>
             <div className="model-toggle">
               <ModelToggle currentModel={selectedModel} onToggle={toggleModel} />
             </div>
@@ -500,14 +513,18 @@ export function ChatSection({
             onKeyDown={handleKeyDown} 
             onCompositionStart={() => setIsComposing(true)} 
             onCompositionEnd={() => setIsComposing(false)} 
-            placeholder="Type your engineering question here..." 
+            placeholder={`Type your engineering question here... (using ${modelSelection.name})`} 
             className="min-h-[80px] resize-none pr-12 rounded-md border border-neon-purple/30 focus:border-neon-purple focus:shadow-[0_0_8px_rgba(168,85,247,0.2)] transition-all" 
             disabled={isSending || isStreaming || !activeConversationId || isNavigating} 
           />
           
           <Button 
             size="icon" 
-            className="absolute right-2 bottom-2 bg-gradient-to-r from-[#C084FC] to-[#D946EF] text-white hover:brightness-110 hover:shadow-[0_0_8px_rgba(168,85,247,0.4)]" 
+            className={`absolute right-2 bottom-2 ${
+              selectedModel === 'deepseek' 
+                ? 'bg-gradient-to-r from-[#8B5CF6] to-[#A855F7] hover:brightness-110 hover:shadow-[0_0_8px_rgba(168,85,247,0.4)]'
+                : 'bg-gradient-to-r from-[#0EA5E9] to-[#14B8A6] hover:brightness-110 hover:shadow-[0_0_8px_rgba(20,184,166,0.4)]'
+            } text-white`}
             onClick={handleSendMessage} 
             disabled={!inputValue.trim() || isSending || isStreaming || !activeConversationId || isNavigating}
           >

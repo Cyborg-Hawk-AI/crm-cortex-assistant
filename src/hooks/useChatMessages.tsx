@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as messageApi from '@/api/messages';
@@ -535,11 +536,15 @@ Last updated: ${new Date(mission.updated_at).toLocaleString()}`;
             content: systemPrompt
           });
           
-          await openAIChat(
+          // Choose stream function based on selected model
+          const chatFunction = modelSelection.id === 'deepseek' ? deepSeekChat : openAIChat;
+          console.log(`Using ${modelSelection.id} model (${modelSelection.name}) for chat`);
+          
+          await chatFunction(
             { messages: messageHistory },
             {
               onStart: () => {
-                console.log('Starting to stream assistant response');
+                console.log(`Starting to stream ${modelSelection.id} response`);
               },
               onChunk: (chunk: string) => {
                 if (!chunk || typeof chunk !== 'string') return;
@@ -555,7 +560,7 @@ Last updated: ${new Date(mission.updated_at).toLocaleString()}`;
                 );
               },
               onComplete: async (finalResponse: string) => {
-                console.log('Stream completed, saving final response');
+                console.log(`${modelSelection.id} stream completed, saving final response`);
                 fullResponse = finalResponse;
                 
                 setLocalMessages(prev => 
@@ -582,7 +587,7 @@ Last updated: ${new Date(mission.updated_at).toLocaleString()}`;
                 setIsSending(false);
               },
               onError: (error) => {
-                console.error('Error in assistant response:', error);
+                console.error(`Error in ${modelSelection.id} response:`, error);
                 const errorMessage = `Error: ${error.message}`;
                 
                 setLocalMessages(prev => 
@@ -686,7 +691,8 @@ Last updated: ${new Date(mission.updated_at).toLocaleString()}`;
     startConversation,
     toast,
     refetchConversations,
-    generateConversationTitle
+    generateConversationTitle,
+    modelSelection // Added modelSelection dependency
   ]);
 
   useEffect(() => {

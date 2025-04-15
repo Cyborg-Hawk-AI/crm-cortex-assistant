@@ -1,8 +1,9 @@
+
 import { StreamingCallbacks } from './streamTypes';
 
 // DeepSeek API configuration
 const DEEPSEEK_API_URL = 'https://api.deepseek.com';
-const DEFAULT_MODEL = 'deepseek-reasoner'; // Using deepseek-reasoner model per documentation
+const DEFAULT_MODEL = 'deepseek-chat'; // Using deepseek-chat model
 // API key should be retrieved from environment variables in a secure way
 // For frontend-only apps, we'll need to have the user provide their API key
 const DEEPSEEK_API_KEY = 'sk-18518fb88a40422e9f61b5769a1feeca';
@@ -34,7 +35,7 @@ export async function createDeepSeekStream(
       content: msg.content
     }));
     
-    console.log(`Sending ${cleanMessages.length} messages to DeepSeek`);
+    console.log(`Sending ${cleanMessages.length} messages to DeepSeek API`);
     
     const response = await fetch(`${DEEPSEEK_API_URL}/v1/chat/completions`, {
       method: 'POST',
@@ -73,7 +74,7 @@ export async function createDeepSeekStream(
           const { done, value } = await reader.read();
           
           if (done) {
-            console.log('Stream complete');
+            console.log('DeepSeek stream complete');
             isComplete = true;
             callbacks.onComplete(fullText);
             break;
@@ -103,12 +104,12 @@ export async function createDeepSeekStream(
                 callbacks.onChunk(content);
               }
             } catch (e) {
-              console.error('Error parsing SSE line:', line, e);
+              console.error('Error parsing DeepSeek SSE line:', line, e);
             }
           }
         }
       } catch (error) {
-        console.error('Error in stream processing:', error);
+        console.error('Error in DeepSeek stream processing:', error);
         callbacks.onError(error instanceof Error ? error : new Error(String(error)));
         isComplete = true;
       }
@@ -120,7 +121,7 @@ export async function createDeepSeekStream(
     // Return function to check if streaming is complete
     return () => isComplete;
   } catch (error) {
-    console.error('Failed to create stream:', error);
+    console.error('Failed to create DeepSeek stream:', error);
     callbacks.onError(error instanceof Error ? error : new Error(String(error)));
     return () => true; // Return a function that indicates streaming is complete due to error
   }
