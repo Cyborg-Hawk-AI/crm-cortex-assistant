@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Plus, MoreVertical, Book } from 'lucide-react';
+import { BookOpen, Plus, MoreVertical, Book, Check } from 'lucide-react';
 import { Mindboard } from '@/utils/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MindboardCreateModal } from '@/components/modals/MindboardCreateModal';
+import { Input } from '@/components/ui/input';
 
 interface MindboardSidebarProps {
   mindboards: Mindboard[];
@@ -32,12 +32,47 @@ export function MindboardSidebar({
   onDeleteMindboard,
   isLoading
 }: MindboardSidebarProps) {
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingMindboardId, setEditingMindboardId] = useState<string | null>(null);
+  const [newMindboardTitle, setNewMindboardTitle] = useState('');
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
 
-  const handleCreateMindboard = async (title: string) => {
-    const newMindboard = await onCreateMindboard({ title });
-    return newMindboard;
+  const handleCreateMindboard = async () => {
+    setIsCreatingNew(true);
+    setNewMindboardTitle('New Mindboard');
   };
+
+  const handleSaveNewMindboard = async () => {
+    if (newMindboardTitle.trim()) {
+      try {
+        const newMindboard = await onCreateMindboard({ title: newMindboardTitle.trim() });
+        console.log('New mindboard created:', newMindboard);
+        setActiveMindboardId(newMindboard.id);
+      } catch (error) {
+        console.error('Error creating mindboard:', error);
+      }
+    }
+    setIsCreatingNew(false);
+  };
+
+  const handleCancelNewMindboard = () => {
+    setIsCreatingNew(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSaveNewMindboard();
+    } else if (e.key === 'Escape') {
+      handleCancelNewMindboard();
+    }
+  };
+  
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  React.useEffect(() => {
+    if (isCreatingNew && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isCreatingNew]);
 
   if (isLoading) {
     return (
@@ -57,7 +92,7 @@ export function MindboardSidebar({
       <div className="flex items-center justify-between p-3 border-b border-[#3A4D62]">
         <h2 className="text-lg font-semibold text-[#F1F5F9] bg-clip-text text-transparent bg-gradient-to-r from-neon-blue to-neon-aqua">Mindboards</h2>
         <Button 
-          onClick={() => setIsCreateModalOpen(true)}
+          onClick={handleCreateMindboard}
           variant="ghost" 
           size="sm" 
           className="h-8 w-8 p-0 text-neon-blue hover:text-neon-aqua hover:bg-[#3A4D62]/50"
@@ -68,7 +103,36 @@ export function MindboardSidebar({
       
       <ScrollArea className="flex-1">
         <div className="p-2">
-          {mindboards.length === 0 ? (
+          {isCreatingNew && (
+            <motion.div
+              initial={{ opacity: 0.6, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center p-2 rounded-md mb-1 bg-[#3A4D62]/70 shadow-[0_0_8px_rgba(0,247,239,0.3)]"
+            >
+              <Book className="h-4 w-4 mr-2 text-neon-aqua" />
+              
+              <Input 
+                ref={inputRef}
+                value={newMindboardTitle}
+                onChange={(e) => setNewMindboardTitle(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="flex-1 bg-transparent border-none focus-visible:ring-0 text-[#F1F5F9] h-7 px-0 py-0"
+                placeholder="Mindboard name"
+                autoFocus
+              />
+
+              <Button 
+                onClick={handleSaveNewMindboard} 
+                variant="ghost" 
+                size="sm" 
+                className="h-6 w-6 p-0 ml-1 opacity-80 hover:opacity-100"
+              >
+                <Check className="h-3 w-3" />
+              </Button>
+            </motion.div>
+          )}
+
+          {mindboards.length === 0 && !isCreatingNew ? (
             <div className="flex flex-col items-center justify-center h-40 text-center p-4">
               <BookOpen className="h-12 w-12 text-[#3A4D62] mb-2" />
               <p className="text-sm text-[#CBD5E1]">No mindboards yet</p>
@@ -133,12 +197,6 @@ export function MindboardSidebar({
           )}
         </div>
       </ScrollArea>
-
-      <MindboardCreateModal 
-        open={isCreateModalOpen}
-        onOpenChange={setIsCreateModalOpen}
-        onSubmit={handleCreateMindboard}
-      />
     </div>
   );
 }
