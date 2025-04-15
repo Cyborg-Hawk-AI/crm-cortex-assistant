@@ -13,7 +13,7 @@ import { Meeting } from '@/utils/types';
 import { useMeetings } from '@/hooks/useMeetings';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -48,10 +48,10 @@ export function MeetingCreateModal({ open, onOpenChange, onSubmit }: MeetingCrea
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!title || !date || !clientName || !meetingLink) {
+    if (!title || !meetingLink) {
       toast({
         title: "Missing fields",
-        description: "Please fill in all required fields",
+        description: "Please provide both a meeting name and URL",
         variant: "destructive"
       });
       return;

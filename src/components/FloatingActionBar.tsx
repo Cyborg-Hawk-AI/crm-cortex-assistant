@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
@@ -21,7 +20,6 @@ export function FloatingActionBar() {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const isMobile = useIsMobile();
   
-  // Track window resize
   useState(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
@@ -34,11 +32,10 @@ export function FloatingActionBar() {
     };
   });
 
-  // Determine display mode based on screen width
   const displayMode = () => {
-    if (windowWidth < 640) return 'compact'; // Very small screens - ultra compact
-    if (windowWidth < 768) return 'iconOnly'; // Small screens - icons only
-    return 'full'; // Larger screens - full buttons with text
+    if (windowWidth < 640) return 'compact';
+    if (windowWidth < 768) return 'iconOnly';
+    return 'full';
   };
   
   const quickActions = [
@@ -50,7 +47,7 @@ export function FloatingActionBar() {
     },
     {
       id: 'meeting',
-      label: 'New SyncUp',
+      label: 'Join SyncUp',
       icon: <CalendarPlus className="h-4 w-4 text-neon-blue" />,
       className: "bg-gradient-to-r from-neon-blue/20 to-neon-blue/10 text-[#F1F5F9] border-neon-blue/30 hover:bg-gradient-to-r hover:from-neon-blue/30 hover:to-neon-blue/20 hover:shadow-[0_0_8px_rgba(14,165,233,0.4)]"
     },
@@ -75,14 +72,12 @@ export function FloatingActionBar() {
       >
         <div className="max-w-6xl mx-auto px-4">
           <div className="bg-[#25384D] border border-[#3A4D62] rounded-t-lg shadow-[0_-4px_20px_rgba(0,247,239,0.15)]">
-            {/* Single row for Quick Actions label and buttons */}
             <div className="flex items-center justify-between py-3 px-4">
               <h3 className="text-sm font-medium text-[#F1F5F9]">Quick Actions</h3>
               
               <div className="flex items-center">
                 <div className={`flex ${displayMode() === 'compact' ? 'gap-2' : 'gap-3'}`}>
                   {displayMode() === 'full' ? (
-                    // Full view for larger screens
                     quickActions.map(action => (
                       <Button
                         key={action.id}
@@ -95,7 +90,6 @@ export function FloatingActionBar() {
                       </Button>
                     ))
                   ) : displayMode() === 'iconOnly' ? (
-                    // Icon-only view for small screens
                     <TooltipProvider>
                       {quickActions.map(action => (
                         <Tooltip key={action.id}>
@@ -116,7 +110,6 @@ export function FloatingActionBar() {
                       ))}
                     </TooltipProvider>
                   ) : (
-                    // Compact view for very small screens
                     <TooltipProvider>
                       {quickActions.map(action => (
                         <Tooltip key={action.id}>

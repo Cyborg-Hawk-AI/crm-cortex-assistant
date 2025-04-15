@@ -14,11 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    const RECALL_API_KEY = Deno.env.get('RECALL_API_KEY');
-    if (!RECALL_API_KEY) {
-      throw new Error('Missing RECALL_API_KEY');
-    }
-
+    // Extract input data from request
     const { meetingUrl, meetingName, userId } = await req.json();
 
     if (!meetingUrl || !meetingName) {
@@ -29,7 +25,7 @@ serve(async (req) => {
     const response = await fetch('https://us-west-2.recall.ai/api/v1/bot', {
       method: 'POST',
       headers: {
-        'Authorization': `Token ${RECALL_API_KEY}`,
+        'Authorization': `Token 8c0933578c0fbc870e520b43432b392aba8c3da9`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
