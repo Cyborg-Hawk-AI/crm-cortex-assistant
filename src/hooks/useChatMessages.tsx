@@ -58,7 +58,6 @@ export const useChatMessages = () => {
 
   const [linkedProject, setLinkedProject] = useState<any | null>(null);
 
-  // Define saveMessage early since it's used in other functions below
   const saveMessage = useCallback(async (
     content: string, 
     sender: 'user' | 'assistant' | 'system',
@@ -156,7 +155,6 @@ export const useChatMessages = () => {
                 .single();
                 
               if (!error && data) {
-                // Create a complete Task object with all required properties
                 const fullTask: Task = {
                   id: data.id,
                   title: data.title,
@@ -175,7 +173,6 @@ export const useChatMessages = () => {
                 
                 setLinkedTask(fullTask);
                 
-                // Format the task information for the system message
                 const taskMessage = `Task linked: ${data.title} (Status: ${data.status}, Priority: ${data.priority})
 Description: ${data.description || 'No description provided'}
 Due date: ${data.due_date ? new Date(data.due_date).toLocaleDateString() : 'No due date'}
@@ -415,7 +412,6 @@ Last updated: ${new Date(data.updated_at).toLocaleString()}`;
           throw error;
         }
         
-        // Format the task information for the system message with more details
         const taskMessage = `Task linked: ${mission.title} (Status: ${mission.status}, Priority: ${mission.priority})
 Description: ${mission.description || 'No description provided'}
 Due date: ${mission.due_date ? new Date(mission.due_date).toLocaleDateString() : 'No due date'}
@@ -472,10 +468,8 @@ Last updated: ${new Date(mission.updated_at).toLocaleString()}`;
           setActiveConversationId(newConversationId);
         }
         
-        // Get messages for context
         const messagesForContext = await messageApi.getMessages(conversationId);
         
-        // Check if we need to refresh task context
         if (linkedTask && shouldRefreshTaskContext(messagesForContext, linkedTask.id)) {
           console.log('Refreshing task context due to message threshold');
           const taskContext = formatTaskContext(linkedTask, TaskContextDetailLevel.COMPREHENSIVE);
@@ -484,7 +478,7 @@ Last updated: ${new Date(mission.updated_at).toLocaleString()}`;
         }
         
         const userMessageId = uuidv4();
-        const userMessage = {
+        const userMessage: Message = {
           id: userMessageId,
           content,
           sender: 'user',
@@ -500,7 +494,7 @@ Last updated: ${new Date(mission.updated_at).toLocaleString()}`;
         const assistantMessageId = uuidv4();
         currentStreamingMessageId.current = assistantMessageId;
         
-        const assistantMessage = {
+        const assistantMessage: Message = {
           id: assistantMessageId,
           content: '',
           sender: 'assistant',
@@ -517,12 +511,10 @@ Last updated: ${new Date(mission.updated_at).toLocaleString()}`;
         let fullResponse = '';
         
         try {
-          // Create enhanced system message with task information
           let systemPrompt = activeAssistant?.name 
             ? `You are ${activeAssistant.name}. ${activeAssistant.description || ''}`
             : 'You are ActionBot, an engineering assistant designed to help with coding tasks and technical problems.';
           
-          // Add comprehensive task context to system prompt if a task is linked
           if (linkedTask) {
             const taskContext = formatTaskContext(linkedTask, TaskContextDetailLevel.COMPREHENSIVE);
             systemPrompt += `\n\n${taskContext}`;
@@ -538,7 +530,6 @@ Last updated: ${new Date(mission.updated_at).toLocaleString()}`;
             content: msg.content
           }));
           
-          // Insert system message at beginning of message history
           messageHistory.unshift({
             role: 'system',
             content: systemPrompt
@@ -656,7 +647,7 @@ Last updated: ${new Date(mission.updated_at).toLocaleString()}`;
         const message: Message = {
           id: messageId,
           content,
-          sender,
+          sender: sender,
           timestamp: new Date(),
           isSystem: sender === 'system',
           conversation_id: conversationId || '',

@@ -106,24 +106,29 @@ export const sendMessage = async (
     
     const historyForContext = chatHistoryService.formatHistoryForContext(messagesForContext);
     
+    // Prepare message history array for OpenAI
+    const openAIMessageHistory = [];
+    
+    // Add task context if available
+    let formattedTaskContext = '';
     if (task) {
-      const taskContext = formatTaskContext(task, TaskContextDetailLevel.COMPREHENSIVE);
+      formattedTaskContext = formatTaskContext(task, TaskContextDetailLevel.COMPREHENSIVE);
       
       const hasTaskContext = existingMessages.some(msg => 
         msg.isSystem && msg.content.includes(`Task #${task.id.substring(0,8)}`)
       );
       
       if (!hasTaskContext) {
-        messageHistory.unshift({
+        openAIMessageHistory.unshift({
           role: 'system',
-          content: taskContext
+          content: formattedTaskContext
         });
         
-        logTaskContext('api-call', conversation.id, task.id, true, taskContext.length);
+        logTaskContext('api-call', conversation.id, task.id, true, formattedTaskContext.length);
       }
       
       const taskReminder = formatTaskContext(task, TaskContextDetailLevel.MINIMAL);
-      messageHistory.push({
+      openAIMessageHistory.push({
         role: 'system',
         content: `Remember: This conversation is about ${taskReminder}`
       });
@@ -134,7 +139,7 @@ ${assistantConfig.prompt}
 
 ${assistantConfig.contextPrompt}
 
-${taskContext ? 'ASSOCIATED TASK INFORMATION:\n' + taskContext + '\n' : ''}
+${formattedTaskContext ? 'ASSOCIATED TASK INFORMATION:\n' + formattedTaskContext + '\n' : ''}
 
 Conversation History:
 ${historyForContext}
@@ -143,7 +148,7 @@ Current Query: ${content}
 `;
 
     console.log(`Using assistant ${assistantId} (${assistantConfig.name}) with customized prompt`);
-    console.log(`Task information included in prompt: ${!!taskContext}`);
+    console.log(`Task information included in prompt: ${!!formattedTaskContext}`);
     
     const messagesForOpenAI = [...existingMessages];
     
