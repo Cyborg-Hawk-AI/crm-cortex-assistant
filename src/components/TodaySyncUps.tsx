@@ -1,11 +1,10 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Clock, Video, Users, ArrowRight, Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar, Clock, Video, Users, ArrowRight, Calendar as CalendarIcon, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { upcomingMeetings } from '@/utils/mockData';
 import { format, isToday } from 'date-fns';
 import { MeetingCreateModal } from '@/components/modals/MeetingCreateModal';
 import { Meeting } from '@/utils/types';
@@ -13,18 +12,20 @@ import { useMeetings } from '@/hooks/useMeetings';
 
 export function TodaySyncUps() {
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const { createMeeting } = useMeetings();
+  const { meetings, createMeeting, isLoading } = useMeetings();
+
+  // Filter meetings to only show today's
+  const todaysMeetings = meetings.filter(meeting => {
+    const meetingDate = new Date(meeting.created_at || meeting.date);
+    return isToday(meetingDate);
+  });
 
   const handleCreateMeeting = (meetingData: Partial<Meeting>) => {
     createMeeting(meetingData);
   };
 
-  const todaysMeetings = upcomingMeetings.filter(meeting => {
-    return isToday(meeting.date);
-  });
-
-  const formatTime = (date: Date) => {
-    return format(date, 'h:mm a');
+  const formatTime = (date: Date | string) => {
+    return format(new Date(date), 'h:mm a');
   };
 
   return (
@@ -48,7 +49,11 @@ export function TodaySyncUps() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 pt-4">
-          {todaysMeetings.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-6 text-[#CBD5E1]">
+              <p>Loading SyncUps...</p>
+            </div>
+          ) : todaysMeetings.length === 0 ? (
             <div className="text-center py-6 text-[#CBD5E1]">
               <p>No SyncUps scheduled for today</p>
               <Button 
@@ -77,31 +82,43 @@ export function TodaySyncUps() {
                         <div className="flex items-center mt-1 text-xs text-[#CBD5E1]">
                           <Clock className="h-3 w-3 mr-1 text-neon-blue" />
                           <span>
-                            {formatTime(meeting.date)}
-                            {meeting.duration && ` · ${meeting.duration} min`}
+                            {formatTime(meeting.created_at || meeting.date)}
                           </span>
                         </div>
                         <div className="flex items-center mt-1 text-xs text-[#CBD5E1]">
                           <Users className="h-3 w-3 mr-1 text-neon-blue" />
-                          <span>{meeting.clientName}</span>
+                          <span>{meeting.client_name}</span>
                         </div>
                         
-                        {meeting.meetingLink ? (
-                          <a
-                            href={meeting.meetingLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-neon-blue underline flex items-center text-xs mt-2"
-                          >
-                            <Video className="h-3 w-3 mr-1" />
-                            Join SyncUp
-                          </a>
-                        ) : null}
+                        {meeting.meeting_link && (
+                          <div className="flex items-center mt-2 space-x-2">
+                            <a
+                              href={meeting.meeting_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-neon-blue underline flex items-center text-xs"
+                            >
+                              <Video className="h-3 w-3 mr-1" />
+                              Join SyncUp
+                            </a>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-6 text-xs border-neon-purple/30 hover:border-neon-purple/50"
+                              onClick={() => console.log('View summary clicked for:', meeting.id)}
+                            >
+                              <FileText className="h-3 w-3 mr-1" />
+                              View Summary
+                            </Button>
+                          </div>
+                        )}
                       </div>
                       
-                      <Badge variant="outline" className="text-xs bg-neon-blue/10 text-neon-blue border-neon-blue/20">
-                        {meeting.attendees.length} attendee{meeting.attendees.length !== 1 ? 's' : ''}
-                      </Badge>
+                      {meeting.attendees && (
+                        <Badge variant="outline" className="text-xs bg-neon-blue/10 text-neon-blue border-neon-blue/20">
+                          {meeting.attendees.length} attendee{meeting.attendees.length !== 1 ? 's' : ''}
+                        </Badge>
+                      )}
                     </div>
                     
                     {meeting.agenda && (

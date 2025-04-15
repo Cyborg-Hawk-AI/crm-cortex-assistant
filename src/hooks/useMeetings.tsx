@@ -23,7 +23,7 @@ export function useMeetings() {
         description: 'Meeting has been scheduled successfully'
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: 'Error',
         description: `Failed to schedule meeting: ${error.message}`,
@@ -41,7 +41,7 @@ export function useMeetings() {
         description: 'Meeting has been updated successfully'
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: 'Error',
         description: `Failed to update meeting: ${error.message}`,
@@ -59,7 +59,7 @@ export function useMeetings() {
         description: 'Meeting has been cancelled successfully'
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: 'Error',
         description: `Failed to cancel meeting: ${error.message}`,

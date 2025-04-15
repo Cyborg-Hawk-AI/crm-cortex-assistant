@@ -1,4 +1,3 @@
-
 import { supabase, getCurrentUserId } from '@/lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
 import { Meeting } from '@/utils/types';
@@ -13,7 +12,10 @@ export const getMeetings = async () => {
 
   const { data, error } = await supabase
     .from('meetings')
-    .select('*')
+    .select(`
+      *,
+      attendees:meeting_attendees(*)
+    `)
     .eq('created_by', userId)
     .order('date', { ascending: true });
   
