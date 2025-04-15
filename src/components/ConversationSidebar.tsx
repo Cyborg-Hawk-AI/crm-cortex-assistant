@@ -1,4 +1,3 @@
-
 import React, { forwardRef, useEffect, useState, useImperativeHandle } from 'react';
 import { ChevronLeft, Plus, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -8,7 +7,6 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { ConversationList } from '@/components/ConversationList';
 import { ProjectGroupedConversations } from '@/components/ProjectGroupedConversations';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { useChatMessages } from '@/hooks/useChatMessages';
 import { useQuery } from '@tanstack/react-query';
 import * as messageApi from '@/api/messages';
 
@@ -139,7 +137,7 @@ export const ConversationSidebar = forwardRef<
         <Button 
           variant="ghost" 
           size="icon" 
-          className="fixed top-3 left-3 z-10 bg-background/80 backdrop-blur-sm"
+          className="fixed top-3 left-3 z-10 bg-background/800 backdrop-blur-sm"
         >
           <ChevronLeft className="h-5 w-5" />
           <span className="sr-only">Open sidebar</span>
