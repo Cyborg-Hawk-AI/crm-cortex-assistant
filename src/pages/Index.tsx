@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut } from 'lucide-react';
@@ -44,6 +45,7 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
       openTaskId?: string;
       activeTab?: string;
       openCreateTask?: boolean;
+      forceReload?: number;
     } | null;
     
     console.log("Index: Location state changed:", state);
@@ -57,6 +59,8 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
     if (state?.activeTab) {
       console.log(`Index: Setting active tab to ${state.activeTab}`);
       setActiveTab(state.activeTab);
+      
+      // Only clear the activeTab param from state, preserve any other state properties
       const newState = { ...state };
       delete newState.activeTab;
       navigate(location.pathname, { replace: true, state: newState });

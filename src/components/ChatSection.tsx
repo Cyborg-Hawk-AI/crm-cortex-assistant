@@ -53,6 +53,7 @@ export function ChatSection({
     toast
   } = useToast();
   const [retryCount, setRetryCount] = useState(0);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({
@@ -98,31 +99,38 @@ export function ChatSection({
         setActiveConversationId(newConversationId);
         console.log(`ChatSection: Set ${newConversationId} as active conversation - navigation should trigger`);
         
-        // Force navigation to the main chat tab
-        console.log("ChatSection: Forcing navigation to chat tab");
-        navigate('/', { state: { activeTab: 'chat' } });
+        // Mark that we're about to navigate
+        setIsNavigating(true);
+        console.log("ChatSection: Setting isNavigating flag to true");
         
-        // Small delay to ensure navigation has occurred
-        setTimeout(async () => {
-          try {
-            // Trigger immediate refetch to update the conversations list
-            console.log("ChatSection: Refreshing conversations list...");
-            await refetchConversations();
-            
-            // Send the message after navigation is prepared
-            console.log(`ChatSection: Sending first message to new conversation ${newConversationId}`);
-            await sendMessage(userMessage, 'user', newConversationId);
-            
-            console.log(`ChatSection: Successfully initialized new chat ${newConversationId} with first message`);
-          } catch (delayedError) {
-            console.error("Error in delayed operations:", delayedError);
-            toast({
-              title: 'Error',
-              description: 'Failed to complete chat initialization',
-              variant: 'destructive'
-            });
-          }
-        }, 100);
+        // Force navigation to the main chat tab with a small delay
+        console.log("ChatSection: Will force navigation to chat tab after short delay");
+        setTimeout(() => {
+          console.log("ChatSection: Now executing delayed navigation to chat tab");
+          navigate('/', { state: { activeTab: 'chat', forceReload: new Date().getTime() } });
+          
+          // Small delay after navigation before sending message
+          setTimeout(async () => {
+            try {
+              console.log("ChatSection: Refreshing conversations list...");
+              await refetchConversations();
+              
+              console.log(`ChatSection: Sending first message to new conversation ${newConversationId}`);
+              await sendMessage(userMessage, 'user', newConversationId);
+              
+              console.log(`ChatSection: Successfully initialized new chat ${newConversationId} with first message`);
+              setIsNavigating(false);
+            } catch (delayedError) {
+              console.error("Error in delayed operations:", delayedError);
+              setIsNavigating(false);
+              toast({
+                title: 'Error',
+                description: 'Failed to complete chat initialization',
+                variant: 'destructive'
+              });
+            }
+          }, 300);
+        }, 300);
       } else {
         console.log(`ChatSection: Sending message to existing conversation: ${activeConversationId}`);
         await sendMessage(inputValue, 'user', activeConversationId);
@@ -130,6 +138,7 @@ export function ChatSection({
       }
     } catch (error: any) {
       console.error('Error in send message flow:', error);
+      setIsNavigating(false);
       
       if (error.message?.includes('API key') && selectedModel === 'deepseek') {
         setApiError('DeepSeek API key is missing or invalid. The service requires configuration.');
@@ -145,15 +154,21 @@ export function ChatSection({
 
   const handleNewChat = async () => {
     try {
+      console.log("ChatSection: handleNewChat - Creating new conversation");
       const newConversationId = await startConversation('New conversation', selectedProjectId);
+      
+      console.log(`ChatSection: handleNewChat - Setting active conversation to ${newConversationId}`);
       setActiveConversationId(newConversationId);
+      
+      console.log("ChatSection: handleNewChat - Refetching conversations");
       refetchConversations();
+      
       setInputValue('');
       setApiError(null);
       
       // Force navigation to ensure UI updates
-      console.log("ChatSection: Forcing navigation to chat tab after New Chat button click");
-      navigate('/', { state: { activeTab: 'chat' } });
+      console.log("ChatSection: handleNewChat - Forcing navigation to chat tab");
+      navigate('/', { state: { activeTab: 'chat', forceReload: new Date().getTime() } });
       
       toast({
         title: 'New chat started',
@@ -249,6 +264,15 @@ export function ChatSection({
     );
   }
 
+  if (isNavigating) {
+    return (
+      <div className="flex flex-col h-full justify-center items-center text-muted-foreground">
+        <Loader2 className="h-8 w-8 text-neon-purple animate-spin" />
+        <p className="mt-4 font-medium">Preparing your conversation...</p>
+      </div>
+    );
+  }
+
   if (activeConversationId && messages.length === 0 && retryCount > 0 && retryCount < 3) {
     return (
       <div className="flex flex-col h-full justify-center items-center text-muted-foreground">
@@ -317,7 +341,7 @@ export function ChatSection({
               size="icon" 
               className="absolute right-2 bottom-2 bg-gradient-to-r from-[#C084FC] to-[#D946EF] text-white hover:brightness-110 hover:shadow-[0_0_8px_rgba(168,85,247,0.4)]" 
               onClick={handleSendMessage} 
-              disabled={!inputValue.trim() || isSending}
+              disabled={!inputValue.trim() || isSending || isNavigating}
             >
               <Send className="h-4 w-4" />
             </Button>
@@ -397,14 +421,14 @@ export function ChatSection({
             onCompositionEnd={() => setIsComposing(false)} 
             placeholder="Type your engineering question here..." 
             className="min-h-[80px] resize-none pr-12 rounded-md border border-neon-purple/30 focus:border-neon-purple focus:shadow-[0_0_8px_rgba(168,85,247,0.2)] transition-all" 
-            disabled={isSending || isStreaming || !activeConversationId} 
+            disabled={isSending || isStreaming || !activeConversationId || isNavigating} 
           />
           
           <Button 
             size="icon" 
             className="absolute right-2 bottom-2 bg-gradient-to-r from-[#C084FC] to-[#D946EF] text-white hover:brightness-110 hover:shadow-[0_0_8px_rgba(168,85,247,0.4)]" 
             onClick={handleSendMessage} 
-            disabled={!inputValue.trim() || isSending || isStreaming || !activeConversationId}
+            disabled={!inputValue.trim() || isSending || isStreaming || !activeConversationId || isNavigating}
           >
             <Send className="h-4 w-4" />
           </Button>
