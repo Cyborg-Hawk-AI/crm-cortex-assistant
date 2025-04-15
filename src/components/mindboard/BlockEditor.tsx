@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { MindBlock } from '@/utils/types';
 import BlockRenderer from './BlockRenderer';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,7 @@ export function BlockEditor({
 }: BlockEditorProps) {
   const [orderedBlocks, setOrderedBlocks] = useState<MindBlock[]>([]);
   const [pendingUpdates, setPendingUpdates] = useState<Record<string, any>>({});
+  const editorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (blocks && blocks.length > 0) {
@@ -34,16 +35,9 @@ export function BlockEditor({
         return a.id.localeCompare(b.id);
       });
       
-      console.log('BlockEditor - Blocks sorted by position and id:', sorted.map(b => ({
-        id: b.id.substring(0, 8),
-        position: b.position,
-        updated_at: b.updated_at
-      })));
-      
       setOrderedBlocks(sorted);
     } else {
       setOrderedBlocks([]);
-      // Automatically create a text block for new pages
       handleAddTextBlock();
     }
   }, [blocks, pageId]);
@@ -51,12 +45,10 @@ export function BlockEditor({
   // Create a debounced save function
   const debouncedSave = useCallback(
     debounce(async (blockId: string, content: any) => {
-      console.log('BlockEditor - Debounced save triggered for block:', blockId.substring(0, 8));
       try {
         const block = orderedBlocks.find(b => b.id === blockId);
         if (block) {
           await onUpdateBlock(blockId, content, { position: block.position });
-          console.log('BlockEditor - Debounced save completed');
         }
       } catch (error) {
         console.error('BlockEditor - Debounced save error:', error);
@@ -65,7 +57,6 @@ export function BlockEditor({
     [orderedBlocks, onUpdateBlock]
   );
 
-  // Cleanup debounced function on unmount
   useEffect(() => {
     return () => {
       debouncedSave.cancel();
@@ -73,65 +64,75 @@ export function BlockEditor({
   }, [debouncedSave]);
 
   const handleUpdateBlock = useCallback(async (block: MindBlock, content: any, shouldSaveImmediately = false) => {
-    console.log('BlockEditor - Content update:', {
-      blockId: block.id.substring(0, 8),
-      immediate: shouldSaveImmediately,
-      content: typeof content === 'string' ? content.substring(0, 20) : '[complex content]'
-    });
-
-    // Update pending state immediately for UI
     setPendingUpdates(prev => ({
       ...prev,
       [block.id]: content
     }));
 
     if (shouldSaveImmediately) {
-      console.log('BlockEditor - Immediate save triggered');
       try {
         await onUpdateBlock(block.id, content, { position: block.position });
-        console.log('BlockEditor - Immediate save completed');
       } catch (error) {
         console.error('BlockEditor - Immediate save error:', error);
       }
     } else {
-      // Trigger debounced save
       debouncedSave(block.id, content);
     }
   }, [onUpdateBlock, debouncedSave]);
 
-  const handleAddTextBlock = async () => {
-    if (blocks.length === 0) {
-      console.log('Creating initial text block');
-      await onCreateBlock('text', { text: '' });
-    }
+  const handleAddTextBlock = async (position?: number) => {
+    console.log('Creating new text block at position:', position);
+    const newBlockPosition = position ?? (orderedBlocks.length > 0 
+      ? Math.max(...orderedBlocks.map(b => b.position || 0)) + 1 
+      : 0);
+    
+    await onCreateBlock('text', { text: '' }, newBlockPosition);
   };
 
-  const handleAddBlock = async (type: string) => {
-    console.log('Creating new block of type:', type);
-    const content = type === 'text' ? { text: '' } : {};
-    await onCreateBlock(type, content);
-  };
+  const handleEditorClick = async (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!editorRef.current || e.defaultPrevented) return;
 
-  const handleTypeChange = async (blockId: string, newType: string, content: any) => {
-    const block = orderedBlocks.find(b => b.id === blockId);
-    if (!block) return;
+    // Get click coordinates relative to the editor
+    const editorRect = editorRef.current.getBoundingClientRect();
+    const clickY = e.clientY - editorRect.top;
 
-    try {
-      await onUpdateBlock(blockId, content, {
-        content_type: newType,
-        position: block.position
-      });
-    } catch (error) {
-      console.error('Error changing block type:', error);
+    // Find the closest block to the click
+    let insertPosition = 0;
+    let clickedInBlock = false;
+
+    const blockElements = editorRef.current.querySelectorAll('[data-block-id]');
+    blockElements.forEach((blockEl) => {
+      const rect = blockEl.getBoundingClientRect();
+      const blockTop = rect.top - editorRect.top;
+      const blockBottom = blockTop + rect.height;
+
+      if (clickY >= blockTop && clickY <= blockBottom) {
+        clickedInBlock = true;
+      } else if (clickY > blockBottom) {
+        const block = orderedBlocks.find(b => b.id === blockEl.getAttribute('data-block-id'));
+        if (block) {
+          insertPosition = (block.position || 0) + 1;
+        }
+      }
+    });
+
+    // Only create a new block if we clicked in empty space
+    if (!clickedInBlock) {
+      await handleAddTextBlock(insertPosition);
     }
   };
 
   return (
     <div className="w-full h-full max-w-4xl mx-auto px-4 py-6 overflow-y-auto">
-      <div className="space-y-1 min-h-full">
+      <div 
+        ref={editorRef}
+        className="space-y-1 min-h-full"
+        onClick={handleEditorClick}
+      >
         {orderedBlocks.map((block) => (
           <div 
             key={block.id}
+            data-block-id={block.id}
             className={cn(
               "transition-all duration-200",
               "hover:bg-background/5 rounded-lg",
@@ -144,7 +145,12 @@ export function BlockEditor({
                 content: pendingUpdates[block.id] || block.content
               }}
               onUpdate={(content) => handleUpdateBlock(block, content)}
-              onTypeChange={handleTypeChange}
+              onTypeChange={(newType: string, content: any) => {
+                onUpdateBlock(block.id, content, { 
+                  content_type: newType,
+                  position: block.position 
+                });
+              }}
               onDelete={() => onDeleteBlock(block.id)}
               onEnterPress={(content) => handleUpdateBlock(block, content, true)}
             />
@@ -155,7 +161,7 @@ export function BlockEditor({
       <div className="mt-4 flex gap-2 opacity-50 hover:opacity-100 transition-opacity">
         <Button 
           variant="outline" 
-          onClick={() => handleAddBlock('text')}
+          onClick={() => handleAddTextBlock()}
           className="flex items-center gap-1 text-sm hover:bg-background/10"
         >
           <Type className="h-4 w-4" />
@@ -164,7 +170,7 @@ export function BlockEditor({
         
         <Button 
           variant="outline" 
-          onClick={() => handleAddBlock('todo')}
+          onClick={() => onCreateBlock('todo', { checked: false })}
           className="flex items-center gap-1 text-sm hover:bg-background/10"
         >
           <span>Add Todo</span>
