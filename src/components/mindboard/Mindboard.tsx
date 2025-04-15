@@ -18,6 +18,9 @@ export function Mindboard() {
     createMindboard,
     createSection,
     createPage,
+    createBlock,
+    updateBlock,
+    deleteBlock,
     isLoading
   } = useMindboard();
 
@@ -41,9 +44,18 @@ export function Mindboard() {
       setActiveMindboardId={setActiveMindboardId}
       setActiveSectionId={setActiveSectionId}
       setActivePageId={setActivePageId}
-      onCreateBoard={() => createMindboard("New Board")}
-      onCreateSection={() => activeMindboardId && createSection(activeMindboardId, "New Section")}
-      onCreatePage={() => activeSectionId && createPage(activeSectionId, "New Note")}
+      onCreateBoard={() => createMindboard({ title: "New Board" })}
+      onCreateSection={() => activeMindboardId && createSection({ mindboardId: activeMindboardId, title: "New Section" })}
+      onCreatePage={() => activeSectionId && createPage({ sectionId: activeSectionId, title: "New Note" })}
+      onCreateBlock={(type, content, position, parentId) => createBlock({ 
+        pageId: activePageId || '', 
+        contentType: type, 
+        content: content,
+        position: position,
+        properties: parentId ? { parent_block_id: parentId } : undefined
+      })}
+      onUpdateBlock={(id, content, properties) => updateBlock({ id, content, ...properties })}
+      onDeleteBlock={(id) => deleteBlock(id)}
     />
   );
 }

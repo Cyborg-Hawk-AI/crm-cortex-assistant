@@ -8,6 +8,7 @@ import { BoardList } from './navigation/BoardList';
 import { SectionTabs } from './navigation/SectionTabs';
 import { NoteList } from './navigation/NoteList';
 import { BlockEditor } from './BlockEditor';
+import { MindBlock } from '@/utils/types';
 
 interface MindboardLayoutProps {
   mindboards: any[];
@@ -23,6 +24,9 @@ interface MindboardLayoutProps {
   onCreateBoard: () => void;
   onCreateSection: () => void;
   onCreatePage: () => void;
+  onCreateBlock: (type: string, content: any, position?: number, parentId?: string) => Promise<string>;
+  onUpdateBlock: (id: string, content: any, properties?: Record<string, any>) => Promise<void>;
+  onDeleteBlock: (id: string) => Promise<void>;
 }
 
 export function MindboardLayout({
@@ -39,6 +43,9 @@ export function MindboardLayout({
   onCreateBoard,
   onCreateSection,
   onCreatePage,
+  onCreateBlock,
+  onUpdateBlock,
+  onDeleteBlock,
 }: MindboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [expandedBoards, setExpandedBoards] = useState<Record<string, boolean>>({});
@@ -122,9 +129,15 @@ export function MindboardLayout({
               <BlockEditor
                 pageId={activePageId}
                 blocks={blocks}
-                onCreateBlock={() => {}}
-                onUpdateBlock={() => {}}
-                onDeleteBlock={() => {}}
+                onCreateBlock={(type, content, position, parentId) => 
+                  onCreateBlock(type, content, position, parentId)
+                }
+                onUpdateBlock={(id, content, properties) => 
+                  onUpdateBlock(id, content, properties)
+                }
+                onDeleteBlock={(id) => 
+                  onDeleteBlock(id)
+                }
               />
             ) : (
               <div className="flex items-center justify-center h-full text-muted-foreground">
