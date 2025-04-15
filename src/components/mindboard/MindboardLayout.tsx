@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Menu, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -11,7 +10,6 @@ import { BlockEditor } from './BlockEditor';
 import { MindBlock } from '@/utils/types';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
-import { useSidebar } from '@/components/ui/sidebar';
 
 interface MindboardLayoutProps {
   mindboards: any[];
@@ -62,23 +60,16 @@ export function MindboardLayout({
   onRenameSection,
   onRenamePage
 }: MindboardLayoutProps) {
-  // Get sidebar state from sidebar context if available
-  const sidebarContext = useSidebar();
-  const isSidebarExtension = sidebarContext?.state === "collapsed";
-
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
   const [expandedBoards, setExpandedBoards] = useState<Record<string, boolean>>({});
   const isMobile = useMediaQuery('(max-width: 768px)');
-  const isNarrow = useMediaQuery('(max-width: 1024px)') || isSidebarExtension;
   const { toast } = useToast();
-  
-  // Toggle specific board expansion/collapse
+
   const toggleBoard = (id: string) => {
     setExpandedBoards(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  // Create functions
   const handleCreateBoard = async () => {
     try {
       const newBoard = await onCreateBoard({ title: "New Board" });
@@ -128,7 +119,6 @@ export function MindboardLayout({
     }
   };
 
-  // Delete functions
   const handleDeleteMindboard = async (id: string) => {
     try {
       await onDeleteMindboard(id);
@@ -179,139 +169,83 @@ export function MindboardLayout({
     }
   };
 
-  // Determine sidebar widths based on screen size and state
-  const leftSidebarWidth = isNarrow ? '14rem' : '16rem'; 
-  const rightSidebarWidth = isNarrow ? '14rem' : '16rem';
-  const collapsedWidth = isNarrow ? '2.5rem' : '3rem';
-
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Left Sidebar - Boards & Notes */}
       <motion.div
         initial={false}
         animate={{ 
-          width: leftSidebarOpen ? leftSidebarWidth : collapsedWidth,
-          x: 0
+          width: leftSidebarOpen ? (isMobile ? '100%' : '16rem') : '0rem',
+          x: leftSidebarOpen ? 0 : '-100%'
         }}
-        transition={{ duration: 0.2 }}
         className={cn(
-          "border-r border-border bg-background/95 backdrop-blur h-full relative",
-          "supports-[backdrop-filter]:bg-background/60"
+          "border-r border-border bg-background/95 backdrop-blur h-full",
+          "supports-[backdrop-filter]:bg-background/60",
+          isMobile && leftSidebarOpen ? "absolute inset-0 z-50" : "relative"
         )}
       >
         <div className="flex h-full flex-col">
-          <div className="flex items-center justify-between p-2">
-            {leftSidebarOpen && (
-              <h2 className={cn(
-                "text-lg font-semibold text-gradient-primary",
-                isNarrow && "text-base"
-              )}>
-                Boards
-              </h2>
-            )}
-            
-            <div className="flex items-center ml-auto">
-              {leftSidebarOpen && (
-                <Button variant="ghost" size="icon" onClick={handleCreateBoard} className="h-7 w-7 text-neon-blue hover:text-neon-aqua">
-                  <Plus className="h-4 w-4" />
-                </Button>
-              )}
-              
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setLeftSidebarOpen(!leftSidebarOpen)}
-                className="h-7 w-7 ml-0.5"
-              >
-                {leftSidebarOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-              </Button>
-            </div>
+          <div className="flex items-center justify-between p-4">
+            <h2 className="text-lg font-semibold text-gradient-primary">Boards</h2>
+            <Button variant="ghost" size="icon" onClick={handleCreateBoard}>
+              <Plus className="h-4 w-4" />
+            </Button>
           </div>
           
-          {leftSidebarOpen ? (
-            <BoardList
-              boards={mindboards}
-              activeBoardId={activeMindboardId}
-              onSelectBoard={setActiveMindboardId}
-              expandedBoards={expandedBoards}
-              onToggleExpand={toggleBoard}
-              onDeleteBoard={onDeleteMindboard}
-              onRenameBoard={onRenameMindboard}
-              isNarrow={isNarrow}
-            />
-          ) : (
-            <div className="flex flex-col items-center pt-2">
-              {mindboards.map((board) => (
-                <Button
-                  key={board.id}
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    "mb-1 h-8 w-8 rounded-md",
-                    activeMindboardId === board.id && "bg-accent shadow-[0_0_8px_rgba(0,247,239,0.3)]"
-                  )}
-                  title={board.title}
-                  onClick={() => setActiveMindboardId(board.id)}
-                >
-                  {board.title.charAt(0).toUpperCase()}
-                </Button>
-              ))}
-              
-              <Button
-                variant="ghost"
-                size="icon"
-                className="mt-2 h-8 w-8 text-neon-blue"
-                onClick={handleCreateBoard}
-                title="Create new board"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
+          <BoardList
+            boards={mindboards}
+            activeBoardId={activeMindboardId}
+            onSelectBoard={setActiveMindboardId}
+            expandedBoards={expandedBoards}
+            onToggleExpand={toggleBoard}
+            onDeleteBoard={onDeleteMindboard}
+            onRenameBoard={onRenameMindboard}
+          />
         </div>
       </motion.div>
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
-        <div className={cn(
-          "flex items-center border-b px-2 h-12 flex-shrink-0",
-          isNarrow && "px-1"
-        )}>
-          {/* Section tabs area */}
-          <div className="ml-1 flex-1 overflow-hidden">
+        <div className="flex items-center border-b px-4 h-14 flex-shrink-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setLeftSidebarOpen(!leftSidebarOpen)}
+            className="mr-2"
+          >
+            {leftSidebarOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          </Button>
+          
+          <div className="ml-4 flex-1">
             <SectionTabs
               sections={sections}
               activeSection={activeSectionId}
               onSelectSection={setActiveSectionId}
               onDeleteSection={handleDeleteSection}
               onRenameSection={onRenameSection}
-              isNarrow={isNarrow}
             />
           </div>
           
-          <div className="flex items-center">
-            {activeMindboardId && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={handleCreateSection}
-                className="h-7 w-7 mr-1"
-                title="Create new section"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            )}
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setRightSidebarOpen(!rightSidebarOpen)}
-              className="h-7 w-7"
-              title={rightSidebarOpen ? "Hide notes list" : "Show notes list"}
+          {activeMindboardId && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleCreateSection}
+              className="mr-2"
+              title="Create new section"
             >
-              {rightSidebarOpen ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+              <Plus className="h-4 w-4" />
             </Button>
-          </div>
+          )}
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setRightSidebarOpen(!rightSidebarOpen)}
+            className="ml-2"
+          >
+            {rightSidebarOpen ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </Button>
         </div>
 
         <div className="flex-1 flex overflow-hidden">
@@ -319,15 +253,10 @@ export function MindboardLayout({
           <motion.div
             initial={false}
             animate={{ 
-              width: rightSidebarOpen && activeSectionId ? rightSidebarWidth : '0rem',
-              x: 0,
-              opacity: rightSidebarOpen ? 1 : 0
+              width: !isMobile && rightSidebarOpen && activeSectionId ? '16rem' : '0rem',
+              x: rightSidebarOpen ? 0 : '100%'
             }}
-            transition={{ duration: 0.2 }}
-            className={cn(
-              "border-r border-border bg-card h-full overflow-y-auto",
-              !rightSidebarOpen && "overflow-hidden"
-            )}
+            className="border-r border-border bg-card h-full overflow-y-auto"
           >
             {activeSectionId && (
               <NoteList
@@ -337,7 +266,6 @@ export function MindboardLayout({
                 onCreateNote={handleCreatePage}
                 onDeleteNote={onDeletePage}
                 onRenameNote={onRenamePage}
-                isNarrow={isNarrow}
               />
             )}
           </motion.div>
@@ -354,7 +282,7 @@ export function MindboardLayout({
               />
             ) : (
               <div className="flex items-center justify-center h-full text-muted-foreground">
-                <p className="text-sm">Select a note to start editing</p>
+                <p>Select a note to start editing</p>
               </div>
             )}
           </div>

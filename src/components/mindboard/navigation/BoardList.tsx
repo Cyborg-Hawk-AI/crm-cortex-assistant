@@ -22,7 +22,6 @@ interface BoardListProps {
   onToggleExpand: (id: string) => void;
   onDeleteBoard?: (id: string) => void;
   onRenameBoard?: (id: string, newTitle: string) => void;
-  isNarrow?: boolean;
 }
 
 export function BoardList({
@@ -32,8 +31,7 @@ export function BoardList({
   expandedBoards,
   onToggleExpand,
   onDeleteBoard,
-  onRenameBoard,
-  isNarrow = false
+  onRenameBoard
 }: BoardListProps) {
   const [editingBoardId, setEditingBoardId] = React.useState<string | null>(null);
   const [editingTitle, setEditingTitle] = React.useState("");
@@ -97,8 +95,7 @@ export function BoardList({
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "flex-1 justify-start gap-1.5 py-1 px-1.5 transition-colors h-auto",
-                      isNarrow && "text-xs",
+                      "flex-1 justify-start gap-2 transition-colors",
                       isActive && "bg-accent text-accent-foreground shadow-[0_0_8px_rgba(0,247,239,0.3)]",
                       !isActive && "hover:bg-accent/50"
                     )}
@@ -116,12 +113,12 @@ export function BoardList({
                       }}
                     >
                       {isExpanded ? (
-                        <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+                        <ChevronDown className="h-4 w-4 shrink-0" />
                       ) : (
-                        <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+                        <ChevronRight className="h-4 w-4 shrink-0" />
                       )}
                     </Button>
-                    <Book className="h-3.5 w-3.5 shrink-0" />
+                    <Book className="h-4 w-4 shrink-0" />
                     <span className="truncate">{board.title}</span>
                   </Button>
 
@@ -131,15 +128,15 @@ export function BoardList({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+                          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
                         >
-                          <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                          <MoreVertical className="h-4 w-4 text-muted-foreground" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
                         {onRenameBoard && (
-                          <DropdownMenuItem onClick={() => handleRenameStart(board)} className="text-xs">
-                            <Edit className="h-3.5 w-3.5 mr-2" />
+                          <DropdownMenuItem onClick={() => handleRenameStart(board)}>
+                            <Edit className="h-4 w-4 mr-2" />
                             Rename
                           </DropdownMenuItem>
                         )}
@@ -149,13 +146,13 @@ export function BoardList({
                             <AlertDialogTrigger asChild>
                               <DropdownMenuItem 
                                 onSelect={(e) => e.preventDefault()}
-                                className="text-neon-red focus:text-neon-red text-xs"
+                                className="text-neon-red focus:text-neon-red"
                               >
-                                <Trash2 className="h-3.5 w-3.5 mr-2" />
+                                <Trash2 className="h-4 w-4 mr-2" />
                                 Delete
                               </DropdownMenuItem>
                             </AlertDialogTrigger>
-                            <AlertDialogContent className={isNarrow ? "max-w-[90vw] w-[270px]" : ""}>
+                            <AlertDialogContent>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Delete Mindboard</AlertDialogTitle>
                                 <AlertDialogDescription>
