@@ -380,6 +380,8 @@ export const assignConversationToProject = async (conversationId: string, projec
     throw new Error('User not authenticated');
   }
 
+  console.log(`API: Assigning conversation ${conversationId} to project: ${projectId || 'Open Chats'}`);
+
   const { data: conversation, error: convError } = await supabase
     .from('conversations')
     .select()
@@ -392,8 +394,10 @@ export const assignConversationToProject = async (conversationId: string, projec
     return false;
   }
 
+  // Convert empty string to null for the database
   const finalProjectId = projectId === '' ? null : projectId;
 
+  // Only validate project if we're actually setting it to something
   if (finalProjectId !== null) {
     const { data: project, error: projectError } = await supabase
       .from('action_projects')
@@ -408,21 +412,42 @@ export const assignConversationToProject = async (conversationId: string, projec
     }
   }
 
-  const { error } = await supabase
-    .from('conversations')
-    .update({ 
-      project_id: finalProjectId,
-      updated_at: new Date().toISOString() 
-    })
-    .eq('id', conversationId)
-    .eq('user_id', userId);
+  // Log the database update attempt
+  console.log(`API: Updating conversation ${conversationId} with project_id: ${finalProjectId === null ? 'NULL' : finalProjectId}`);
 
-  if (error) {
-    console.error('Error assigning conversation to project:', error);
-    return false;
+  // Perform the update with retry logic
+  let success = false;
+  let attempts = 0;
+  const maxAttempts = 3;
+
+  while (!success && attempts < maxAttempts) {
+    attempts++;
+    
+    try {
+      const { error, data } = await supabase
+        .from('conversations')
+        .update({ 
+          project_id: finalProjectId,
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', conversationId)
+        .eq('user_id', userId)
+        .select();
+
+      if (error) {
+        console.error(`API: Error assigning conversation to project (attempt ${attempts}):`, error);
+        await new Promise(resolve => setTimeout(resolve, 300)); // Short delay before retry
+      } else {
+        console.log(`API: Successfully updated conversation project_id to ${finalProjectId === null ? 'NULL' : finalProjectId} on attempt ${attempts}`, data);
+        success = true;
+      }
+    } catch (err) {
+      console.error(`API: Exception during project assignment (attempt ${attempts}):`, err);
+      await new Promise(resolve => setTimeout(resolve, 300)); // Short delay before retry
+    }
   }
 
-  return true;
+  return success;
 };
 
 // Add this new function to update conversation titles

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2, AlertTriangle, Folder, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,6 +15,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProjectSelect } from '@/components/ProjectSelect';
+import * as messageApi from '@/api/messages';
 
 interface ChatSectionProps {
   activeConversationId: string | null;
@@ -59,6 +59,20 @@ export function ChatSection({
   const [isOnChatTab, setIsOnChatTab] = useState(false);
   const navigationTimerRef = useRef<number | null>(null);
   const latestCreatedConversationRef = useRef<string | null>(null);
+  const persistentProjectIdRef = useRef<string>('');
+
+  useEffect(() => {
+    persistentProjectIdRef.current = selectedProjectId;
+    console.log(`🔒 ChatSection: Updated persistent project ID ref to: ${selectedProjectId}`);
+  }, [selectedProjectId]);
+
+  useEffect(() => {
+    const state = location.state as { selectedProjectId?: string } | undefined;
+    if (state?.selectedProjectId) {
+      console.log(`🔄 ChatSection: Setting selected project from location state: ${state.selectedProjectId}`);
+      setSelectedProjectId(state.selectedProjectId);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     const state = location.state as { activeTab?: string } | undefined;
@@ -103,6 +117,26 @@ export function ChatSection({
     }
   }, [activeConversationId, messages, isLoading, retryCount]);
 
+  const handleProjectAssignment = async (conversationId: string, projectId: string) => {
+    if (!conversationId) return;
+    
+    try {
+      console.log(`🔄 ChatSection: Assigning conversation ${conversationId} to project: ${projectId || 'Open Chats'}`);
+      const success = await messageApi.assignConversationToProject(conversationId, projectId);
+      
+      if (success) {
+        console.log(`✅ ChatSection: Successfully assigned conversation ${conversationId} to project: ${projectId || 'Open Chats'}`);
+        return true;
+      } else {
+        console.error(`❌ ChatSection: Failed to assign conversation ${conversationId} to project: ${projectId || 'Open Chats'}`);
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Error assigning conversation to project:', error);
+      return false;
+    }
+  };
+
   const forceNavigation = (path: string, state: any) => {
     console.log(`🚀 FORCE NAVIGATION to ${path} with state:`, state);
     
@@ -119,11 +153,13 @@ export function ChatSection({
       path
     });
     
+    const projectIdForNavigation = persistentProjectIdRef.current;
+    
     const finalState = {
       ...state,
       forceReload: timestamp,
       pendingConversationId: latestCreatedConversationRef.current,
-      selectedProjectId: selectedProjectId // Include the selected project ID in navigation state
+      selectedProjectId: projectIdForNavigation
     };
     
     console.log(`🔄 ChatSection: Navigation state will include pendingConversationId: ${finalState.pendingConversationId} and projectId: ${finalState.selectedProjectId}`);
@@ -162,18 +198,23 @@ export function ChatSection({
       if (!activeConversationId) {
         console.log("🔍 ChatSection: Starting new chat creation process...");
         
+        const projectId = persistentProjectIdRef.current;
+        console.log(`🔍 ChatSection: Using project ID for new chat: "${projectId || 'Open Chats'}"`);
+        
         const userMessage = inputValue;
         setInputValue('');
         setIsNavigating(true);
         
-        console.log(`🔍 ChatSection: Creating new conversation with project ID: ${selectedProjectId}`);
-        const newConversationId = await startConversation('New conversation', selectedProjectId);
-        console.log(`✅ ChatSection: New chat created with ID: ${newConversationId} in project: ${selectedProjectId}`);
+        console.log(`🔍 ChatSection: Creating new conversation with project ID: ${projectId}`);
+        const newConversationId = await startConversation('New conversation', projectId);
+        console.log(`✅ ChatSection: New chat created with ID: ${newConversationId} in project: ${projectId}`);
         
         latestCreatedConversationRef.current = newConversationId;
         
         console.log(`✅ ChatSection: Setting ${newConversationId} as active conversation`);
         setActiveConversationId(newConversationId);
+        
+        await handleProjectAssignment(newConversationId, projectId);
         
         console.log("🔄 ChatSection: Refreshing conversations list immediately");
         await refetchConversations();
@@ -183,7 +224,7 @@ export function ChatSection({
         forceNavigation('/', { 
           activeTab: 'chat',
           newConversationId: newConversationId,
-          selectedProjectId: selectedProjectId // Include project ID in navigation state
+          selectedProjectId: projectId
         });
         
         setTimeout(async () => {
@@ -231,15 +272,19 @@ export function ChatSection({
 
   const handleNewChat = async () => {
     try {
-      console.log(`🔍 ChatSection: handleNewChat - Creating new conversation with project ID: ${selectedProjectId}`);
+      const projectId = persistentProjectIdRef.current;
+      console.log(`🔍 ChatSection: handleNewChat - Creating new conversation with project ID: ${projectId}`);
+      
       setIsNavigating(true);
       
-      const newConversationId = await startConversation('New conversation', selectedProjectId);
+      const newConversationId = await startConversation('New conversation', projectId);
       
       latestCreatedConversationRef.current = newConversationId;
       
       console.log(`✅ ChatSection: handleNewChat - Setting active conversation to ${newConversationId}`);
       setActiveConversationId(newConversationId);
+      
+      await handleProjectAssignment(newConversationId, projectId);
       
       console.log("🔄 ChatSection: handleNewChat - Refetching conversations");
       await refetchConversations();
@@ -251,7 +296,7 @@ export function ChatSection({
       forceNavigation('/', { 
         activeTab: 'chat',
         newConversationId: newConversationId,
-        selectedProjectId: selectedProjectId
+        selectedProjectId: projectId
       });
       
       setTimeout(() => {
@@ -297,6 +342,12 @@ export function ChatSection({
         activeTab: 'main'
       }
     });
+  };
+
+  const handleProjectSelect = (projectId: string) => {
+    console.log(`🔄 ChatSection: Project selected: ${projectId || 'Open Chats'}`);
+    setSelectedProjectId(projectId);
+    persistentProjectIdRef.current = projectId;
   };
 
   const MoveToProjectDialog = ({ isOpen, onClose, onMove, selectedConversation, projects }: any) => {
@@ -347,7 +398,7 @@ export function ChatSection({
           <div>{`💬 Latest Conv: ${latestCreatedConversationRef.current || 'none'}`}</div>
           <div>{`🔄 Force Reload: ${(location.state as any)?.forceReload || 'none'}`}</div>
           <div>{`🔄 Pending Conv: ${(location.state as any)?.pendingConversationId || 'none'}`}</div>
-          <div>{`📁 Project ID: ${selectedProjectId || 'none'}`}</div>
+          <div>{`📁 Project ID: ${selectedProjectId || 'none'} (Ref: ${persistentProjectIdRef.current || 'none'})`}</div>
         </div>
       );
     }
@@ -433,8 +484,9 @@ export function ChatSection({
           
           <div className="mb-4">
             <ProjectSelect
-              onProjectSelect={setSelectedProjectId}
+              onProjectSelect={handleProjectSelect}
               className="w-full mb-4"
+              defaultValue={selectedProjectId || 'open-chats'}
             />
           </div>
           

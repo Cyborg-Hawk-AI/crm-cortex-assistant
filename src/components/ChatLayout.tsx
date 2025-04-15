@@ -39,10 +39,12 @@ export function ChatLayout() {
       selectedProjectId?: string
     } | undefined;
 
-    // Track selected project ID
+    // Track selected project ID - log its presence or absence
     if (state?.selectedProjectId) {
       console.log(`🔍 ChatLayout: Found selectedProjectId in state: ${state.selectedProjectId}`);
       selectedProjectIdRef.current = state.selectedProjectId;
+    } else {
+      console.log(`🔍 ChatLayout: No selectedProjectId found in state`);
     }
 
     // Handle pending conversation ID from navigation
