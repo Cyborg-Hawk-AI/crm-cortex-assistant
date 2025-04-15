@@ -4,6 +4,7 @@ import { MindBlock } from '@/utils/types';
 import BlockRenderer from './BlockRenderer';
 import { Button } from '@/components/ui/button';
 import { Plus, Type, Image, FileText, Code } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface BlockEditorProps {
   pageId: string;
@@ -13,7 +14,6 @@ interface BlockEditorProps {
   onDeleteBlock: (id: string) => Promise<void>;
 }
 
-// This is a simplified BlockEditor component. Actual implementation will vary.
 export function BlockEditor({ 
   pageId, 
   blocks, 
@@ -24,30 +24,42 @@ export function BlockEditor({
   const [newBlockType, setNewBlockType] = useState<string>('text');
 
   const handleAddBlock = async () => {
+    console.log('Creating new block of type:', newBlockType);
     const content = newBlockType === 'text' ? { text: '' } : {};
     await onCreateBlock(newBlockType, content);
   };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <div className="space-y-4 mb-8">
-        {blocks.map((block) => (
-          <BlockRenderer
+    <div className="w-full max-w-4xl mx-auto px-4 py-6">
+      <div className="space-y-1">
+        {blocks.map((block, index) => (
+          <div 
             key={block.id}
-            block={block}
-            onUpdate={(content) => onUpdateBlock(block.id, content)}
-          />
+            className={cn(
+              "transition-all duration-200",
+              "hover:bg-background/5 rounded-lg",
+              "focus-within:ring-1 focus-within:ring-neon-purple/30"
+            )}
+          >
+            <BlockRenderer
+              block={block}
+              onUpdate={(content) => {
+                console.log('Updating block:', block.id, content);
+                onUpdateBlock(block.id, content);
+              }}
+            />
+          </div>
         ))}
       </div>
       
-      <div className="flex gap-2">
+      <div className="mt-4 flex gap-2 opacity-50 hover:opacity-100 transition-opacity">
         <Button 
           variant="outline" 
           onClick={() => {
             setNewBlockType('text');
             handleAddBlock();
           }}
-          className="flex items-center gap-1"
+          className="flex items-center gap-1 text-sm hover:bg-background/10"
         >
           <Type className="h-4 w-4" />
           <span>Add Text</span>
@@ -59,7 +71,7 @@ export function BlockEditor({
             setNewBlockType('todo');
             handleAddBlock();
           }}
-          className="flex items-center gap-1"
+          className="flex items-center gap-1 text-sm hover:bg-background/10"
         >
           <span>Add Todo</span>
         </Button>

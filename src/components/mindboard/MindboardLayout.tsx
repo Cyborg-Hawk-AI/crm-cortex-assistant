@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Menu, Plus } from 'lucide-react';
+import { Menu, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { Button } from '@/components/ui/button';
 import { BoardList } from './navigation/BoardList';
@@ -9,6 +9,7 @@ import { SectionTabs } from './navigation/SectionTabs';
 import { NoteList } from './navigation/NoteList';
 import { BlockEditor } from './BlockEditor';
 import { MindBlock } from '@/utils/types';
+import { cn } from '@/lib/utils';
 
 interface MindboardLayoutProps {
   mindboards: any[];
@@ -21,9 +22,9 @@ interface MindboardLayoutProps {
   setActiveMindboardId: (id: string) => void;
   setActiveSectionId: (id: string) => void;
   setActivePageId: (id: string) => void;
-  onCreateBoard: () => void;
-  onCreateSection: () => void;
-  onCreatePage: () => void;
+  onCreateBoard: (data: { title: string }) => void;
+  onCreateSection: (data: { mindboardId: string; title: string }) => void;
+  onCreatePage: (data: { sectionId: string; title: string }) => void;
   onCreateBlock: (type: string, content: any, position?: number, parentId?: string) => Promise<MindBlock>;
   onUpdateBlock: (id: string, content: any, properties?: Record<string, any>) => Promise<MindBlock>;
   onDeleteBlock: (id: string) => Promise<void>;
@@ -47,7 +48,8 @@ export function MindboardLayout({
   onUpdateBlock,
   onDeleteBlock,
 }: MindboardLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
   const [expandedBoards, setExpandedBoards] = useState<Record<string, boolean>>({});
   const isMobile = useMediaQuery('(max-width: 768px)');
 
@@ -60,13 +62,20 @@ export function MindboardLayout({
       {/* Left Sidebar - Boards & Notes */}
       <motion.div
         initial={false}
-        animate={{ width: sidebarOpen ? '16rem' : '0rem' }}
-        className="border-r border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+        animate={{ 
+          width: leftSidebarOpen ? (isMobile ? '100%' : '16rem') : '0rem',
+          x: leftSidebarOpen ? 0 : '-100%'
+        }}
+        className={cn(
+          "border-r border-border bg-background/95 backdrop-blur",
+          "supports-[backdrop-filter]:bg-background/60",
+          isMobile && leftSidebarOpen ? "absolute inset-0 z-50" : "relative"
+        )}
       >
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between p-4">
             <h2 className="text-lg font-semibold text-gradient-primary">Boards</h2>
-            <Button variant="ghost" size="icon" onClick={onCreateBoard}>
+            <Button variant="ghost" size="icon" onClick={() => onCreateBoard({ title: "New Board" })}>
               <Plus className="h-4 w-4" />
             </Button>
           </div>
@@ -87,9 +96,10 @@ export function MindboardLayout({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
+            onClick={() => setLeftSidebarOpen(!leftSidebarOpen)}
+            className="mr-2"
           >
-            <Menu className="h-4 w-4" />
+            {leftSidebarOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           </Button>
           
           <div className="ml-4 flex-1">
@@ -101,17 +111,29 @@ export function MindboardLayout({
           </div>
           
           {activeSectionId && (
-            <Button variant="ghost" size="icon" onClick={onCreatePage}>
+            <Button variant="ghost" size="icon" onClick={() => onCreatePage({ sectionId: activeSectionId, title: "New Note" })}>
               <Plus className="h-4 w-4" />
             </Button>
           )}
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setRightSidebarOpen(!rightSidebarOpen)}
+            className="ml-2"
+          >
+            {rightSidebarOpen ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </Button>
         </div>
 
         <div className="flex-1 flex overflow-hidden">
           {/* Notes List */}
           <motion.div
             initial={false}
-            animate={{ width: !isMobile && activeSectionId ? '16rem' : '0rem' }}
+            animate={{ 
+              width: !isMobile && rightSidebarOpen && activeSectionId ? '16rem' : '0rem',
+              x: rightSidebarOpen ? 0 : '100%'
+            }}
             className="border-r border-border bg-card"
           >
             {activeSectionId && (
@@ -124,20 +146,14 @@ export function MindboardLayout({
           </motion.div>
 
           {/* Block Editor */}
-          <div className="flex-1 overflow-auto">
+          <div className="flex-1 overflow-auto bg-gradient-to-br from-background/95 to-background/90">
             {activePageId ? (
               <BlockEditor
                 pageId={activePageId}
                 blocks={blocks}
-                onCreateBlock={(type, content, position, parentId) => 
-                  onCreateBlock(type, content, position, parentId)
-                }
-                onUpdateBlock={(id, content, properties) => 
-                  onUpdateBlock(id, content, properties)
-                }
-                onDeleteBlock={(id) => 
-                  onDeleteBlock(id)
-                }
+                onCreateBlock={onCreateBlock}
+                onUpdateBlock={onUpdateBlock}
+                onDeleteBlock={onDeleteBlock}
               />
             ) : (
               <div className="flex items-center justify-center h-full text-muted-foreground">
