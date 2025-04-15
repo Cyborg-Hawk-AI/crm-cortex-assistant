@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, Plus, MoreVertical, Book } from 'lucide-react';
 import { Mindboard } from '@/utils/types';
@@ -12,13 +12,14 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { RenameDialog } from './RenameDialog';
 
 interface MindboardSidebarProps {
   mindboards: Mindboard[];
   activeMindboardId: string | null;
   setActiveMindboardId: (id: string) => void;
   onCreateMindboard: () => void;
-  onRenameMindboard: (id: string) => void;
+  onRenameMindboard: (id: string, title: string) => void;
   onDeleteMindboard: (id: string) => void;
   isLoading: boolean;
 }
@@ -32,6 +33,8 @@ export function MindboardSidebar({
   onDeleteMindboard,
   isLoading
 }: MindboardSidebarProps) {
+  const [renamingBoard, setRenamingBoard] = useState<{ id: string, title: string } | null>(null);
+
   if (isLoading) {
     return (
       <div className="p-2 space-y-2">
@@ -105,7 +108,7 @@ export function MindboardSidebar({
                       className="text-xs cursor-pointer"
                       onClick={(e) => {
                         e.stopPropagation();
-                        onRenameMindboard(mindboard.id);
+                        setRenamingBoard({ id: mindboard.id, title: mindboard.title });
                       }}
                     >
                       Rename
@@ -126,6 +129,18 @@ export function MindboardSidebar({
           )}
         </div>
       </ScrollArea>
+
+      {renamingBoard && (
+        <RenameDialog
+          isOpen={!!renamingBoard}
+          onClose={() => setRenamingBoard(null)}
+          onRename={(newTitle) => {
+            onRenameMindboard(renamingBoard.id, newTitle);
+            setRenamingBoard(null);
+          }}
+          currentTitle={renamingBoard.title}
+        />
+      )}
     </div>
   );
 }
