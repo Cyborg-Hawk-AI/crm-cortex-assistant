@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2, AlertTriangle, Folder, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -58,6 +57,7 @@ export function ChatSection({
   const navigationHistoryRef = useRef<{timestamp: number, action: string, path: string}[]>([]);
   const [isOnChatTab, setIsOnChatTab] = useState(false);
   const navigationTimerRef = useRef<number | null>(null);
+  const latestCreatedConversationRef = useRef<string | null>(null);
 
   useEffect(() => {
     const state = location.state as { activeTab?: string } | undefined;
@@ -74,7 +74,12 @@ export function ChatSection({
     if (navigationHistoryRef.current.length > 10) {
       navigationHistoryRef.current.shift();
     }
-  }, [location]);
+
+    if (onChatTab && latestCreatedConversationRef.current && !activeConversationId) {
+      console.log(`🔄 ChatSection: Setting active conversation to ${latestCreatedConversationRef.current} after navigation to chat tab`);
+      setActiveConversationId(latestCreatedConversationRef.current);
+    }
+  }, [location, setActiveConversationId, activeConversationId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({
@@ -100,12 +105,12 @@ export function ChatSection({
   const forceNavigation = (path: string, state: any) => {
     console.log(`🚀 FORCE NAVIGATION to ${path} with state:`, state);
     
-    // Clear any pending navigation timers
+    console.log(`📊 Navigation Debug - Current conversation: ${activeConversationId}, Latest created: ${latestCreatedConversationRef.current}`);
+    
     if (navigationTimerRef.current) {
       window.clearTimeout(navigationTimerRef.current);
     }
     
-    // Record this navigation attempt
     const timestamp = Date.now();
     navigationHistoryRef.current.push({
       timestamp,
@@ -113,24 +118,36 @@ export function ChatSection({
       path
     });
     
-    // Add a unique timestamp to force component re-rendering
     const finalState = {
       ...state,
-      forceReload: timestamp
+      forceReload: timestamp,
+      pendingConversationId: latestCreatedConversationRef.current
     };
     
-    // Execute navigation with a small delay
+    console.log(`🔄 ChatSection: Navigation state will include pendingConversationId: ${finalState.pendingConversationId}`);
+    
     navigationTimerRef.current = window.setTimeout(() => {
       console.log(`⏱️ Executing delayed navigation to ${path} with timestamp ${timestamp}`);
       navigate(path, { 
-        ...finalState,
+        state: finalState,
         replace: true 
       });
       
-      // Set a follow-up check to verify navigation succeeded
       setTimeout(() => {
-        const currentState = location.state as { activeTab?: string, forceReload?: number } | undefined;
-        console.log(`✅ Navigation verification check: currentTab=${currentState?.activeTab}, targetTab=${state.activeTab}, forceReload=${currentState?.forceReload}`);
+        const currentState = location.state as { activeTab?: string, forceReload?: number, pendingConversationId?: string } | undefined;
+        console.log(`✅ Navigation verification check: currentTab=${currentState?.activeTab}, targetTab=${state.activeTab}, forceReload=${currentState?.forceReload}, pendingConversationId=${currentState?.pendingConversationId}`);
+        
+        if (currentState?.activeTab !== 'chat' && state.activeTab === 'chat') {
+          console.log(`⚠️ Navigation failed! Trying emergency navigation to chat tab`);
+          navigate('/', { 
+            state: {
+              ...finalState,
+              forceReload: Date.now() + 1000,
+              emergency: true
+            },
+            replace: true
+          });
+        }
       }, 500);
     }, 300);
   };
@@ -151,28 +168,31 @@ export function ChatSection({
         const newConversationId = await startConversation('New conversation', selectedProjectId);
         console.log(`✅ ChatSection: New chat created with ID: ${newConversationId}`);
         
+        latestCreatedConversationRef.current = newConversationId;
+        
         console.log(`✅ ChatSection: Setting ${newConversationId} as active conversation`);
         setActiveConversationId(newConversationId);
         
-        // First, forcefully refetch conversations to ensure our new conversation is in the list
         console.log("🔄 ChatSection: Refreshing conversations list immediately");
         await refetchConversations();
         
-        // Then navigate to chat tab with a delay to allow state updates to complete
         console.log("⏱️ ChatSection: Scheduling navigation to chat tab after delay");
         
         forceNavigation('/', { 
-          state: { 
-            activeTab: 'chat'
-          } 
+          activeTab: 'chat',
+          newConversationId: newConversationId
         });
         
-        // Send the first message after another small delay
         setTimeout(async () => {
           try {
             console.log(`✉️ ChatSection: Sending first message to conversation ${newConversationId}`);
             await sendMessage(userMessage, 'user', newConversationId);
             console.log(`✅ ChatSection: Successfully sent first message to ${newConversationId}`);
+            
+            if (!activeConversationId) {
+              console.log(`🔄 ChatSection: Resetting active conversation to ${newConversationId} before ending navigation`);
+              setActiveConversationId(newConversationId);
+            }
             
             setIsNavigating(false);
           } catch (delayedError: any) {
@@ -213,6 +233,8 @@ export function ChatSection({
       
       const newConversationId = await startConversation('New conversation', selectedProjectId);
       
+      latestCreatedConversationRef.current = newConversationId;
+      
       console.log(`✅ ChatSection: handleNewChat - Setting active conversation to ${newConversationId}`);
       setActiveConversationId(newConversationId);
       
@@ -224,9 +246,8 @@ export function ChatSection({
       
       console.log("🚀 ChatSection: handleNewChat - Initiating navigation to chat tab");
       forceNavigation('/', { 
-        state: { 
-          activeTab: 'chat'
-        }
+        activeTab: 'chat',
+        newConversationId: newConversationId
       });
       
       setTimeout(() => {
@@ -319,7 +340,9 @@ export function ChatSection({
           <div>{`🧭 Path: ${location.pathname}`}</div>
           <div>{`🏷️ Active Tab: ${(location.state as any)?.activeTab || 'none'}`}</div>
           <div>{`💬 Active Conv: ${activeConversationId || 'none'}`}</div>
+          <div>{`💬 Latest Conv: ${latestCreatedConversationRef.current || 'none'}`}</div>
           <div>{`🔄 Force Reload: ${(location.state as any)?.forceReload || 'none'}`}</div>
+          <div>{`🔄 Pending Conv: ${(location.state as any)?.pendingConversationId || 'none'}`}</div>
         </div>
       );
     }

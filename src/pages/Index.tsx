@@ -55,6 +55,8 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
     state: any
   }[]>([]);
   
+  const pendingConversationIdRef = useRef<string | null>(null);
+  
   useEffect(() => {
     console.log(`🏗️ Index: Page loaded/rerendered with activeTab=${activeTab}`);
     console.log(`📊 Index: Location state:`, location.state);
@@ -78,9 +80,17 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
       activeTab?: string;
       openCreateTask?: boolean;
       forceReload?: number;
+      newConversationId?: string;
+      pendingConversationId?: string;
     } | null;
     
     console.log("📊 Index: Location state changed:", state);
+    
+    if (state?.pendingConversationId || state?.newConversationId) {
+      const conversationId = state.pendingConversationId || state.newConversationId;
+      console.log(`🔄 Index: Detected pending conversation ID: ${conversationId}`);
+      pendingConversationIdRef.current = conversationId;
+    }
     
     if (state?.activeTab && state?.activeTab !== activeTab) {
       console.log(`🔄 Index: Setting active tab to ${state.activeTab} from ${activeTab}`);
@@ -101,6 +111,12 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
       
       if (state?.activeTab === 'chat') {
         const newState = { ...state };
+        
+        if (pendingConversationIdRef.current) {
+          newState.pendingConversationId = pendingConversationIdRef.current;
+          console.log(`🔄 Index: Preserving conversation ID ${pendingConversationIdRef.current} in state during navigation`);
+        }
+        
         delete newState.activeTab;
         navigate(location.pathname, { replace: true, state: newState });
       } else {
@@ -126,6 +142,10 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
     if (previousTabRef.current !== activeTab) {
       console.log(`🔄 Index: Tab changed from ${previousTabRef.current || 'initial'} to ${activeTab}`);
       previousTabRef.current = activeTab;
+      
+      if (activeTab === 'chat' && pendingConversationIdRef.current) {
+        console.log(`🔄 Index: We're on chat tab with pending conversation ID: ${pendingConversationIdRef.current}`);
+      }
     }
   }, [activeTab]);
 
@@ -173,6 +193,7 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
           <div>Previous Tab: {previousTabRef.current}</div>
           <div>Location Path: {location.pathname}</div>
           <div>Location State: {JSON.stringify(location.state)}</div>
+          <div>Pending Conv ID: {pendingConversationIdRef.current || 'none'}</div>
           <div>Pending Nav: {pendingNavigationRef.current ? 
             `${pendingNavigationRef.current.target} (processed: ${pendingNavigationRef.current.processed}, attempts: ${pendingNavigationRef.current.attempts})` : 'none'}</div>
         </div>
@@ -230,7 +251,7 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
               className="h-[calc(100vh-120px)] flex flex-col bg-[#25384D]/90 backdrop-blur-sm border border-[#3A4D62] rounded-lg shadow-md overflow-hidden"
             >
               <HomeButton />
-              <ChatLayout />
+              <ChatLayout key={`chat-${pendingConversationIdRef.current || 'default'}-${(location.state as any)?.forceReload || 'default'}`} />
             </motion.div>
           )}
 

@@ -27,10 +27,29 @@ export function ChatLayout() {
   // Add tracking for attempted navigations
   const navigationAttemptRef = useRef(0);
   const lastNavigationTimeRef = useRef(0);
+  const restoredConversationIdRef = useRef<string | null>(null);
 
-  // Check for forceReload parameter in location state
+  // Check for forceReload parameter and pendingConversationId in location state
   useEffect(() => {
-    const state = location.state as { forceReload?: number } | undefined;
+    const state = location.state as { 
+      forceReload?: number,
+      pendingConversationId?: string,
+      newConversationId?: string
+    } | undefined;
+
+    // Handle pending conversation ID from navigation
+    if (state?.pendingConversationId || state?.newConversationId) {
+      const conversationId = state.pendingConversationId || state.newConversationId;
+      console.log(`🔍 ChatLayout: Found pendingConversationId in state: ${conversationId}`);
+      restoredConversationIdRef.current = conversationId;
+      
+      // If we don't have an active conversation set yet, use this one
+      if (!activeConversationId && conversationId) {
+        console.log(`🔄 ChatLayout: Setting active conversation to ${conversationId} from state`);
+        setActiveConversationId(conversationId);
+      }
+    }
+    
     if (state?.forceReload && state.forceReload > forceRefresh) {
       console.log(`🔍 ChatLayout: Detected forceReload flag: ${state.forceReload}`);
       setForceRefresh(state.forceReload);
@@ -40,12 +59,18 @@ export function ChatLayout() {
       console.log(`📊 ChatLayout: Navigation attempt #${navigationAttemptRef.current}`);
       lastNavigationTimeRef.current = Date.now();
     }
-  }, [location.state, forceRefresh]);
+  }, [location.state, forceRefresh, activeConversationId, setActiveConversationId]);
 
   // Set up debug effect to monitor relevant state
   useEffect(() => {
-    console.log(`🏗️ ChatLayout: Component rendered with activeConversationId=${activeConversationId}, forceRefresh=${forceRefresh}`);
-  }, [activeConversationId, forceRefresh]);
+    console.log(`🏗️ ChatLayout: Component rendered with activeConversationId=${activeConversationId}, forceRefresh=${forceRefresh}, restoredId=${restoredConversationIdRef.current}`);
+    
+    // If we have a restored ID but no active conversation, set it
+    if (restoredConversationIdRef.current && !activeConversationId) {
+      console.log(`🔄 ChatLayout: Setting active conversation from restored ID: ${restoredConversationIdRef.current}`);
+      setActiveConversationId(restoredConversationIdRef.current);
+    }
+  }, [activeConversationId, forceRefresh, setActiveConversationId]);
 
   // Respond immediately to conversation changes with enhanced logging
   useEffect(() => {
@@ -87,7 +112,8 @@ export function ChatLayout() {
               navigate('/', { 
                 state: { 
                   activeTab: 'chat', 
-                  forceReload: timestamp 
+                  forceReload: timestamp,
+                  pendingConversationId: activeConversationId // Pass the conversation ID
                 },
                 replace: true
               });
