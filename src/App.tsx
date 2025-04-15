@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
-import "./components/chat.css"; // Import our new CSS file
+import "./components/chat.css";
 
 import Index from "@/pages/Index";
 import NotFound from "@/pages/NotFound";
@@ -38,35 +39,37 @@ function App() {
     <Router>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <div className="min-h-screen bg-[#171C24]">
-            <Header activeTab={activeTab} setActiveTab={setActiveTab} />
-            <div className="pt-[60px] pb-[70px]">
-              <Routes>
-                <Route path="/login" element={<Login key="login" />} />
-                <Route path="/signup" element={<Signup key="signup" />} />
-                <Route path="/forgot-password" element={<ForgotPassword key="forgot-password" />} />
-                <Route path="/update-password" element={<UpdatePassword key="update-password" />} />
-                
-                <Route path="/" element={
-                  <ProtectedRoute>
-                    <Index activeTab={activeTab} setActiveTab={setActiveTab} key={`index-${activeTab}`} />
-                  </ProtectedRoute>
-                } />
-                
-                {/* Project Routes (formerly Missions) */}
-                <Route path="/projects" element={<ProtectedRoute><ProjectsPageWrapper key="projects" /></ProtectedRoute>} />
-                <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectsPageWrapper key="project-detail" /></ProtectedRoute>} />
-                <Route path="/projects/:projectId/tasks/:taskId" element={<ProtectedRoute><ProjectsPageWrapper key="project-task" /></ProtectedRoute>} />
-                
-                {/* Mindboard Route renamed to Notebooks */}
-                <Route path="/mindboard" element={<ProtectedRoute><Mindboard key="notebooks" /></ProtectedRoute>} />
-                
-                <Route path="*" element={<NotFound key="not-found" />} />
-              </Routes>
+          <ThemeProvider>
+            <div className="min-h-screen bg-[#171C24]">
+              <Header activeTab={activeTab} setActiveTab={setActiveTab} />
+              <div className="pt-[60px] pb-[70px]">
+                <Routes>
+                  <Route path="/login" element={<Login key="login" />} />
+                  <Route path="/signup" element={<Signup key="signup" />} />
+                  <Route path="/forgot-password" element={<ForgotPassword key="forgot-password" />} />
+                  <Route path="/update-password" element={<UpdatePassword key="update-password" />} />
+                  
+                  <Route path="/" element={
+                    <ProtectedRoute>
+                      <Index activeTab={activeTab} setActiveTab={setActiveTab} key={`index-${activeTab}`} />
+                    </ProtectedRoute>
+                  } />
+                  
+                  {/* Project Routes (formerly Missions) */}
+                  <Route path="/projects" element={<ProtectedRoute><ProjectsPageWrapper key="projects" /></ProtectedRoute>} />
+                  <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectsPageWrapper key="project-detail" /></ProtectedRoute>} />
+                  <Route path="/projects/:projectId/tasks/:taskId" element={<ProtectedRoute><ProjectsPageWrapper key="project-task" /></ProtectedRoute>} />
+                  
+                  {/* Mindboard Route renamed to Notebooks */}
+                  <Route path="/mindboard" element={<ProtectedRoute><Mindboard key="notebooks" /></ProtectedRoute>} />
+                  
+                  <Route path="*" element={<NotFound key="not-found" />} />
+                </Routes>
+              </div>
+              <FloatingActionBar />
+              <Toaster />
             </div>
-            <FloatingActionBar />
-            <Toaster />
-          </div>
+          </ThemeProvider>
         </AuthProvider>
       </QueryClientProvider>
     </Router>
