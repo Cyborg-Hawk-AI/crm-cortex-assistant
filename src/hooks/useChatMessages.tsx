@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as messageApi from '@/api/messages';
@@ -55,6 +56,73 @@ export const useChatMessages = () => {
   });
 
   const [linkedProject, setLinkedProject] = useState<any | null>(null);
+
+  // Define saveMessage early since it's used in other functions below
+  const saveMessage = useCallback(async (
+    content: string, 
+    sender: 'user' | 'assistant' | 'system',
+    messageId?: string,
+    specificConversationId?: string
+  ): Promise<Message | null> => {
+    const conversationId = specificConversationId || activeConversationId;
+    
+    if (!conversationId) return null;
+    
+    try {
+      if (messageId && processingMessageQueue.current.has(messageId)) {
+        console.log(`Message ${messageId} is already being processed, skipping duplicate save`);
+        return null;
+      }
+      
+      if (messageId && pendingMessages.current.has(messageId)) {
+        console.log(`Message ${messageId} is already pending, skipping duplicate save`);
+        return null;
+      }
+      
+      if (messageId) {
+        processingMessageQueue.current.add(messageId);
+        pendingMessages.current.add(messageId);
+      }
+      
+      console.log(`Saving ${sender} message to conversation ${conversationId}`);
+      
+      try {
+        const savedMessage = await messageApi.sendMessage(
+          conversationId,
+          content,
+          sender,
+          messageId
+        );
+        
+        if (messageId) {
+          pendingMessages.current.delete(messageId);
+          processingMessageQueue.current.delete(messageId);
+        }
+        
+        queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+        
+        return savedMessage;
+      } catch (error) {
+        console.error('Error saving message:', error);
+        
+        if (messageId) {
+          pendingMessages.current.delete(messageId);
+          processingMessageQueue.current.delete(messageId);
+        }
+        
+        return null;
+      }
+    } catch (error) {
+      console.error('Error in saveMessage:', error);
+      
+      if (messageId) {
+        pendingMessages.current.delete(messageId);
+        processingMessageQueue.current.delete(messageId);
+      }
+      
+      return null;
+    }
+  }, [activeConversationId, queryClient]);
 
   useEffect(() => {
     if (activeConversationId) {
@@ -117,7 +185,7 @@ export const useChatMessages = () => {
         console.log(`Switched to conversation: ${activeConversationId} with thread: ${activeConversation.open_ai_thread_id || 'none'}`);
       }
     }
-  }, [activeConversationId, conversations, refetchMessages, dbMessages]);
+  }, [activeConversationId, conversations, refetchMessages, dbMessages, saveMessage]);
 
   const messages = useCallback(() => {
     const result = [...dbMessages];
@@ -340,72 +408,6 @@ export const useChatMessages = () => {
     
     return mission;
   }, [activeConversationId, queryClient, refetchMessages, saveMessage]);
-
-  const saveMessage = useCallback(async (
-    content: string, 
-    sender: 'user' | 'assistant' | 'system',
-    messageId?: string,
-    specificConversationId?: string
-  ): Promise<Message | null> => {
-    const conversationId = specificConversationId || activeConversationId;
-    
-    if (!conversationId) return null;
-    
-    try {
-      if (messageId && processingMessageQueue.current.has(messageId)) {
-        console.log(`Message ${messageId} is already being processed, skipping duplicate save`);
-        return null;
-      }
-      
-      if (messageId && pendingMessages.current.has(messageId)) {
-        console.log(`Message ${messageId} is already pending, skipping duplicate save`);
-        return null;
-      }
-      
-      if (messageId) {
-        processingMessageQueue.current.add(messageId);
-        pendingMessages.current.add(messageId);
-      }
-      
-      console.log(`Saving ${sender} message to conversation ${conversationId}`);
-      
-      try {
-        const savedMessage = await messageApi.sendMessage(
-          conversationId,
-          content,
-          sender,
-          messageId
-        );
-        
-        if (messageId) {
-          pendingMessages.current.delete(messageId);
-          processingMessageQueue.current.delete(messageId);
-        }
-        
-        queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
-        
-        return savedMessage;
-      } catch (error) {
-        console.error('Error saving message:', error);
-        
-        if (messageId) {
-          pendingMessages.current.delete(messageId);
-          processingMessageQueue.current.delete(messageId);
-        }
-        
-        return null;
-      }
-    } catch (error) {
-      console.error('Error in saveMessage:', error);
-      
-      if (messageId) {
-        pendingMessages.current.delete(messageId);
-        processingMessageQueue.current.delete(messageId);
-      }
-      
-      return null;
-    }
-  }, [activeConversationId, queryClient]);
 
   const sendMessage = useCallback(async (
     content: string, 
