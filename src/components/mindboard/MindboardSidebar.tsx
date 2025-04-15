@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+
+import React from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, Plus, MoreVertical, Book } from 'lucide-react';
 import { Mindboard } from '@/utils/types';
@@ -11,22 +12,12 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 
 interface MindboardSidebarProps {
   mindboards: Mindboard[];
   activeMindboardId: string | null;
   setActiveMindboardId: (id: string) => void;
-  onCreateMindboard: (params: { title: string }) => Promise<Mindboard>;
+  onCreateMindboard: () => void;
   onRenameMindboard: (id: string) => void;
   onDeleteMindboard: (id: string) => void;
   isLoading: boolean;
@@ -41,47 +32,6 @@ export function MindboardSidebar({
   onDeleteMindboard,
   isLoading
 }: MindboardSidebarProps) {
-  const { toast } = useToast();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newMindboardTitle, setNewMindboardTitle] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleCreateMindboard = () => {
-    setNewMindboardTitle('');
-    setIsDialogOpen(true);
-  };
-
-  const handleSaveNewMindboard = async () => {
-    if (newMindboardTitle.trim()) {
-      try {
-        const newMindboard = await onCreateMindboard({ title: newMindboardTitle.trim() });
-        setActiveMindboardId(newMindboard.id);
-        toast({
-          title: "Mindboard Created",
-          description: `${newMindboardTitle} has been created successfully.`
-        });
-        setIsDialogOpen(false);
-      } catch (error) {
-        console.error('Error creating mindboard:', error);
-        toast({
-          title: "Error",
-          description: "Failed to create new mindboard",
-          variant: "destructive"
-        });
-      }
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleSaveNewMindboard();
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      setIsDialogOpen(false);
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="p-2 space-y-2">
@@ -100,7 +50,7 @@ export function MindboardSidebar({
       <div className="flex items-center justify-between p-3 border-b border-[#3A4D62]">
         <h2 className="text-lg font-semibold text-[#F1F5F9] bg-clip-text text-transparent bg-gradient-to-r from-neon-blue to-neon-aqua">Mindboards</h2>
         <Button 
-          onClick={handleCreateMindboard}
+          onClick={onCreateMindboard}
           variant="ghost" 
           size="sm" 
           className="h-8 w-8 p-0 text-neon-blue hover:text-neon-aqua hover:bg-[#3A4D62]/50"
@@ -176,40 +126,6 @@ export function MindboardSidebar({
           )}
         </div>
       </ScrollArea>
-
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New Mindboard</DialogTitle>
-            <DialogDescription>
-              Enter a name for your new mindboard.
-            </DialogDescription>
-          </DialogHeader>
-          <Input
-            ref={inputRef}
-            value={newMindboardTitle}
-            onChange={(e) => setNewMindboardTitle(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Mindboard name"
-            className="my-4"
-            autoFocus
-          />
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSaveNewMindboard}
-              disabled={!newMindboardTitle.trim()}
-            >
-              Create
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

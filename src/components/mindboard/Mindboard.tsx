@@ -40,9 +40,7 @@ export function Mindboard() {
 
   // Helper to create a board and return the created board
   const handleCreateBoard = async ({ title }: { title: string }) => {
-    console.log('Creating new mindboard with title:', title);
     const newBoard = await createMindboard({ title });
-    console.log('New mindboard created:', newBoard);
     return newBoard;
   };
 
