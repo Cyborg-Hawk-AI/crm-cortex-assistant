@@ -50,14 +50,23 @@ export function BoardList({
                   )}
                   onClick={() => {
                     onSelectBoard(board.id);
-                    onToggleExpand(board.id);
                   }}
                 >
-                  {isExpanded ? (
-                    <ChevronDown className="h-4 w-4 shrink-0" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4 shrink-0" />
-                  )}
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-4 w-4 p-0" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleExpand(board.id);
+                    }}
+                  >
+                    {isExpanded ? (
+                      <ChevronDown className="h-4 w-4 shrink-0" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 shrink-0" />
+                    )}
+                  </Button>
                   <Book className="h-4 w-4 shrink-0" />
                   <span className="truncate">{board.title}</span>
                 </Button>

@@ -34,6 +34,12 @@ export function Mindboard() {
     );
   }
 
+  // Helper to create a section and return the created section
+  const handleCreateSection = async ({ mindboardId, title }: { mindboardId: string, title: string }) => {
+    const newSection = await createSection({ mindboardId, title });
+    return newSection;
+  };
+
   return (
     <MindboardLayout
       mindboards={mindboards}
@@ -47,8 +53,8 @@ export function Mindboard() {
       setActiveSectionId={setActiveSectionId}
       setActivePageId={setActivePageId}
       onCreateBoard={() => createMindboard({ title: "New Board" })}
-      onCreateSection={() => activeMindboardId && createSection({ mindboardId: activeMindboardId, title: "New Section" })}
-      onCreatePage={() => activeSectionId && createPage({ sectionId: activeSectionId, title: "New Note" })}
+      onCreateSection={handleCreateSection}
+      onCreatePage={(data) => createPage({ sectionId: data.sectionId, title: data.title })}
       onCreateBlock={(type, content, position, parentId) => createBlock({ 
         pageId: activePageId || '', 
         contentType: type, 

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Menu, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -60,6 +61,25 @@ export function MindboardLayout({
 
   const toggleBoard = (id: string) => {
     setExpandedBoards(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleCreateSection = async () => {
+    if (activeMindboardId) {
+      try {
+        const newSection = await onCreateSection({ mindboardId: activeMindboardId, title: "New Section" });
+        // The onCreateSection should return the new section
+        // Then we can automatically create a page
+        if (newSection && newSection.id) {
+          onCreatePage({ sectionId: newSection.id, title: "New Page" });
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to create section",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   const handleDeleteMindboard = async (id: string) => {
@@ -149,8 +169,14 @@ export function MindboardLayout({
             />
           </div>
           
-          {activeSectionId && (
-            <Button variant="ghost" size="icon" onClick={() => onCreatePage({ sectionId: activeSectionId, title: "New Note" })}>
+          {activeMindboardId && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleCreateSection}
+              className="mr-2"
+              title="Create new section"
+            >
               <Plus className="h-4 w-4" />
             </Button>
           )}
