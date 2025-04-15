@@ -1,9 +1,8 @@
-
 # Task Context Integration in ActionIt Chat System
 
 ## Overview
 
-This document provides a comprehensive explanation of how task information is integrated into the AI chat system in ActionIt. It details the flow of task information from database to the conversation context, ensuring that when users link a task to a conversation, the AI assistant has complete knowledge of that task's details.
+This document provides a comprehensive explanation of how project and task information is integrated into the AI chat system in ActionIt. It details the flow of task information from database to the conversation context, ensuring that when users link a task to a conversation, the AI assistant has complete knowledge of that task's details.
 
 ## System Architecture
 
@@ -19,7 +18,7 @@ The task context integration follows this general architecture:
 
 ### 1. Task Linking Process
 
-When a user links a task to a conversation, the following occurs:
+When a user links a task to a conversation:
 
 1. The user selects a task to link via the UI
 2. The `linkTaskToConversation` or `linkMissionToConversation` function is called in `useChatMessages.tsx`
@@ -204,9 +203,9 @@ If the AI is not recognizing task information correctly, check the following:
 
 The task context integration is primarily implemented in these files:
 
-1. `src/hooks/useChatMessages.tsx` - Handles linking tasks, loading task data, and formatting system prompts
+1. `src/hooks/useChatMessages.tsx` - Handles linking tasks and projects, loading task data, and formatting system prompts
 2. `src/services/assistantService.ts` - Formats task details for OpenAI and includes them in API calls
-3. `src/api/tasks.ts` - Provides access to task data from the database
+3. `src/api/projects.ts` - Provides access to project and task data from the database
 
 ## Recent Enhancements
 

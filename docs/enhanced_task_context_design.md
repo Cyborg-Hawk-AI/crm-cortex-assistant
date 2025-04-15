@@ -17,7 +17,7 @@ After careful review of the existing task context integration, several areas for
 
 #### 1. Standardized Task Context Format
 
-Create a consistent format for task information across all integration points:
+Create a consistent format for project and task information across all integration points:
 
 ```typescript
 // Standardized format function to be used everywhere task context is needed
@@ -25,7 +25,7 @@ export const formatTaskContext = (task: Task): string => {
   if (!task) return '';
   
   return `
-TASK REFERENCE [#${task.id.substring(0, 8)}]:
+PROJECT/TASK REFERENCE [#${task.id.substring(0, 8)}]:
 • Title: ${task.title}
 • Status: ${task.status.toUpperCase()}
 • Priority: ${task.priority.toUpperCase()}${task.description ? `
