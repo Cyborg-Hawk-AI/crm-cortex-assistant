@@ -32,7 +32,8 @@ export function QuickActions() {
     linkTaskToConversation,
     linkedTask, 
     sendMessage,
-    isStreaming
+    isStreaming,
+    activeConversationId
   } = useChatMessages();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -112,6 +113,15 @@ export function QuickActions() {
       return;
     }
     
+    // Check if we have an active conversation
+    if (!activeConversationId) {
+      toast({
+        title: "No active conversation",
+        description: "Please select a conversation first"
+      });
+      return;
+    }
+    
     const messageToSend = inputValue.trim() || `Help me with ${label.toLowerCase()}`;
     
     // Set the assistant with all required properties
@@ -123,9 +133,9 @@ export function QuickActions() {
       capabilities: [], // Adding capabilities to match type
     });
     
-    // Clear the input and send the message
+    // Clear the input and send the message to the current conversation
     setInputValue('');
-    sendMessage(messageToSend, 'user');
+    sendMessage(messageToSend, 'user', activeConversationId);
     
     setExpanded(false);
     
@@ -142,12 +152,20 @@ export function QuickActions() {
       linkTaskToConversation(selectedTask);
       setIsLinkingTask(false);
       
-      addMessage(`TICKETCONTENTS-${JSON.stringify(selectedTask)}`, 'system');
+      // Only add system message if we have an active conversation
+      if (activeConversationId) {
+        addMessage(`TICKETCONTENTS-${JSON.stringify(selectedTask)}`, 'system');
       
-      toast({
-        title: "Task linked",
-        description: `Task "${selectedTask.title}" is now linked to this conversation`
-      });
+        toast({
+          title: "Task linked",
+          description: `Task "${selectedTask.title}" is now linked to this conversation`
+        });
+      } else {
+        toast({
+          title: "No active conversation",
+          description: "Please select a conversation before linking a task"
+        });
+      }
     }
   };
 
@@ -178,6 +196,11 @@ export function QuickActions() {
       default: return actions.slice(0, 3);         // Show 3 for larger screens by default
     }
   };
+
+  // Don't show quick actions if no conversation is selected
+  if (!activeConversationId) {
+    return null;
+  }
 
   return (
     <motion.div
