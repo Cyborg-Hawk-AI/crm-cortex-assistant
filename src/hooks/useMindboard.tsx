@@ -508,8 +508,6 @@ export function useMindboard() {
     setActivePageId,
     
     createMindboard: createMindboardMutation.mutateAsync,
-    updateMindboard: updateMindboardMutation.mutateAsync,
-    deleteMindboard: deleteMindboardMutation.mutateAsync,
     
     createSection: createSectionMutation.mutateAsync,
     updateSection: updateSectionMutation.mutateAsync,

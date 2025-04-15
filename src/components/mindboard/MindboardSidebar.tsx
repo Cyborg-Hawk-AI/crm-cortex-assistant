@@ -18,8 +18,8 @@ interface MindboardSidebarProps {
   mindboards: Mindboard[];
   activeMindboardId: string | null;
   setActiveMindboardId: (id: string) => void;
-  onCreateMindboard: (title: string) => Promise<void>; // Make sure this accepts a title and returns a Promise
-  onRenameMindboard: (id: string) => void;
+  onCreateMindboard: (title: string) => Promise<Mindboard>;
+  onRenameMindboard: (id: string, title: string) => void;
   onDeleteMindboard: (id: string) => void;
   isLoading: boolean;
 }
@@ -152,7 +152,7 @@ export function MindboardSidebar({
                     <DropdownMenuItem 
                       onClick={(e) => {
                         e.stopPropagation();
-                        onRenameMindboard(mindboard.id);
+                        onRenameMindboard(mindboard.id, "New Title");
                       }}
                     >
                       Rename
