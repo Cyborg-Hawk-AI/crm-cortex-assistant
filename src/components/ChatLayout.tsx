@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { ConversationSidebar } from './ConversationSidebar';
 import { ChatSection } from './ChatSection';
@@ -132,6 +133,7 @@ export function ChatLayout() {
   // Handle clicks in the chat area to collapse sidebar on mobile
   const handleChatAreaClick = () => {
     if (isMobile && sidebarRef.current) {
+      console.log('Chat area clicked, closing sidebar');
       sidebarRef.current.setIsOpen(false);
     }
   };
@@ -139,26 +141,33 @@ export function ChatLayout() {
   // Add a ref for the sidebar container
   const sidebarContainerRef = useRef<HTMLDivElement>(null);
 
-  // Handle clicks outside the sidebar
+  // Enhanced click detection to close sidebar
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (isMobile && 
-          sidebarContainerRef.current && 
-          !sidebarContainerRef.current.contains(event.target as Node)) {
+      // Only proceed if we're on mobile
+      if (!isMobile) return;
+      
+      // Check if click was outside sidebar
+      const isClickInsideSidebar = sidebarContainerRef.current?.contains(event.target as Node);
+      
+      if (!isClickInsideSidebar) {
+        console.log('Click outside sidebar detected, closing sidebar');
         sidebarRef.current?.setIsOpen(false);
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside);
+    // Use capture phase to ensure we get the click before other handlers
+    document.addEventListener('mousedown', handleClickOutside, true);
+    
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside, true);
     };
   }, [isMobile]);
 
   return (
     <TooltipProvider>
       <div className="flex h-full w-full overflow-hidden">
-        <div ref={sidebarContainerRef}>
+        <div ref={sidebarContainerRef} data-sidebar="container">
           <ConversationSidebar 
             ref={sidebarRef}
             activeConversationId={activeConversationId}
@@ -172,6 +181,7 @@ export function ChatLayout() {
           onClick={handleChatAreaClick}
           ref={chatSectionRef}
           key={`chat-section-${activeConversationId || 'new'}-${forceRefresh}`}
+          data-sidebar-content="true"
         >
           <ChatSection
             activeConversationId={activeConversationId}
