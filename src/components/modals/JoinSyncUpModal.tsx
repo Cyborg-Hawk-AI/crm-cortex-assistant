@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface JoinSyncUpModalProps {
   open: boolean;
@@ -16,6 +17,7 @@ export interface JoinSyncUpModalProps {
 export function JoinSyncUpModal({ open, onOpenChange }: JoinSyncUpModalProps) {
   const [meetingLink, setMeetingLink] = useState('');
   const [meetingName, setMeetingName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -32,6 +34,7 @@ export function JoinSyncUpModal({ open, onOpenChange }: JoinSyncUpModalProps) {
     }
 
     try {
+      setIsSubmitting(true);
       const userId = user?.id;
       
       if (!userId) {
@@ -56,9 +59,31 @@ export function JoinSyncUpModal({ open, onOpenChange }: JoinSyncUpModalProps) {
         throw new Error(botResponse.error.message);
       }
 
+      // Save the meeting data to our database
+      const meetingId = uuidv4();
+      const now = new Date().toISOString();
+      const { error: meetingError } = await supabase
+        .from('meetings')
+        .insert({
+          id: meetingId,
+          title: meetingName,
+          date: now,
+          duration: 60, // Default duration in minutes
+          client_name: 'External Meeting',
+          created_by: userId,
+          meeting_link: meetingLink,
+          bot_id: botResponse.data.id, // Store the bot ID from Recall API
+          created_at: now,
+          updated_at: now
+        });
+      
+      if (meetingError) {
+        throw new Error(meetingError.message);
+      }
+
       toast({
         title: "Success",
-        description: "SyncUp bot created successfully"
+        description: "SyncUp joined successfully"
       });
       
       // Reset form and close modal
@@ -72,6 +97,8 @@ export function JoinSyncUpModal({ open, onOpenChange }: JoinSyncUpModalProps) {
         description: "Failed to join SyncUp. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -108,8 +135,8 @@ export function JoinSyncUpModal({ open, onOpenChange }: JoinSyncUpModalProps) {
             <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">
-              Join SyncUp
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Joining..." : "Join SyncUp"}
             </Button>
           </div>
         </form>
@@ -117,4 +144,3 @@ export function JoinSyncUpModal({ open, onOpenChange }: JoinSyncUpModalProps) {
     </Dialog>
   );
 }
-

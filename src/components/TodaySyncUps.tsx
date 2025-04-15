@@ -7,18 +7,22 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { format, isToday } from 'date-fns';
 import { MeetingCreateModal } from '@/components/modals/MeetingCreateModal';
+import { JoinSyncUpModal } from '@/components/modals/JoinSyncUpModal';
 import { Meeting } from '@/utils/types';
 import { useMeetings } from '@/hooks/useMeetings';
 
 export function TodaySyncUps() {
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
   const { meetings, createMeeting, isLoading } = useMeetings();
 
   // Filter meetings to only show today's
   const todaysMeetings = meetings.filter(meeting => {
-    const meetingDate = new Date(meeting.created_at || meeting.date);
+    const meetingDate = new Date(meeting.date);
     return isToday(meetingDate);
   });
+
+  console.log('Today\'s meetings:', todaysMeetings);
 
   const handleCreateMeeting = (meetingData: Partial<Meeting>) => {
     createMeeting(meetingData);
@@ -37,15 +41,26 @@ export function TodaySyncUps() {
               <Calendar className="mr-2 h-6 w-6 text-neon-blue glow-text" />
               Today's SyncUps
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-8 px-2 text-neon-blue hover:text-neon-blue/80 hover:bg-[#3A4D62]/50"
-              onClick={() => setShowCreateModal(true)}
-            >
-              <CalendarIcon className="h-4 w-4 mr-1" />
-              <span className="text-xs">Schedule</span>
-            </Button>
+            <div className="flex space-x-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-8 px-2 text-neon-blue hover:text-neon-blue/80 hover:bg-[#3A4D62]/50"
+                onClick={() => setShowJoinModal(true)}
+              >
+                <Video className="h-4 w-4 mr-1" />
+                <span className="text-xs">Join</span>
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-8 px-2 text-neon-blue hover:text-neon-blue/80 hover:bg-[#3A4D62]/50"
+                onClick={() => setShowCreateModal(true)}
+              >
+                <CalendarIcon className="h-4 w-4 mr-1" />
+                <span className="text-xs">Schedule</span>
+              </Button>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 pt-4">
@@ -56,14 +71,24 @@ export function TodaySyncUps() {
           ) : todaysMeetings.length === 0 ? (
             <div className="text-center py-6 text-[#CBD5E1]">
               <p>No SyncUps scheduled for today</p>
-              <Button 
-                variant="link" 
-                size="sm" 
-                className="mt-2 text-neon-blue"
-                onClick={() => setShowCreateModal(true)}
-              >
-                Schedule a SyncUp
-              </Button>
+              <div className="flex justify-center mt-2 space-x-2">
+                <Button 
+                  variant="link" 
+                  size="sm" 
+                  className="text-neon-blue"
+                  onClick={() => setShowJoinModal(true)}
+                >
+                  Join a SyncUp
+                </Button>
+                <Button 
+                  variant="link" 
+                  size="sm" 
+                  className="text-neon-blue"
+                  onClick={() => setShowCreateModal(true)}
+                >
+                  Schedule a SyncUp
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="space-y-3">
@@ -82,7 +107,7 @@ export function TodaySyncUps() {
                         <div className="flex items-center mt-1 text-xs text-[#CBD5E1]">
                           <Clock className="h-3 w-3 mr-1 text-neon-blue" />
                           <span>
-                            {formatTime(meeting.created_at || meeting.date)}
+                            {formatTime(meeting.date)}
                           </span>
                         </div>
                         <div className="flex items-center mt-1 text-xs text-[#CBD5E1]">
@@ -146,6 +171,11 @@ export function TodaySyncUps() {
         open={showCreateModal} 
         onOpenChange={setShowCreateModal}
         onSubmit={handleCreateMeeting}
+      />
+      
+      <JoinSyncUpModal
+        open={showJoinModal}
+        onOpenChange={setShowJoinModal}
       />
     </>
   );

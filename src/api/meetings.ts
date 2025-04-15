@@ -1,3 +1,4 @@
+
 import { supabase, getCurrentUserId } from '@/lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
 import { Meeting } from '@/utils/types';
@@ -9,6 +10,8 @@ export const getMeetings = async () => {
   if (!userId) {
     throw new Error('User not authenticated');
   }
+
+  console.log('Fetching meetings for user:', userId);
 
   const { data, error } = await supabase
     .from('meetings')
@@ -24,6 +27,7 @@ export const getMeetings = async () => {
     throw new Error(error.message);
   }
   
+  console.log('Fetched meetings:', data);
   return data || [];
 };
 
