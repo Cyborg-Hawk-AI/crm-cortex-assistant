@@ -23,11 +23,24 @@ export function ChatLayout() {
   const chatSectionRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<{ setIsOpen: (open: boolean) => void }>({ setIsOpen: () => {} });
   const [forceRefresh, setForceRefresh] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   
   // Add tracking for attempted navigations
   const navigationAttemptRef = useRef(0);
   const lastNavigationTimeRef = useRef(0);
   const restoredConversationIdRef = useRef<string | null>(null);
+
+  // Pass the state to the sidebar component
+  useEffect(() => {
+    if (sidebarRef.current) {
+      sidebarRef.current.setIsOpen(sidebarOpen);
+    }
+  }, [sidebarOpen]);
+
+  // Reset sidebar state on mobile/desktop switch
+  useEffect(() => {
+    setSidebarOpen(!isMobile);
+  }, [isMobile]);
 
   // Check for forceReload parameter and pendingConversationId in location state
   useEffect(() => {
@@ -124,17 +137,17 @@ export function ChatLayout() {
       });
       
       // When on mobile, collapse the sidebar when a conversation is selected
-      if (isMobile && sidebarRef.current) {
-        sidebarRef.current.setIsOpen(false);
+      if (isMobile) {
+        setSidebarOpen(false);
       }
     }
   }, [activeConversationId, refetchMessages, isMobile, forceRefresh, navigate, location.state]);
 
   // Handle clicks in the chat area to collapse sidebar on mobile
   const handleChatAreaClick = () => {
-    if (isMobile && sidebarRef.current) {
+    if (isMobile && sidebarOpen) {
       console.log('Chat area clicked, closing sidebar');
-      sidebarRef.current.setIsOpen(false);
+      setSidebarOpen(false);
     }
   };
 
@@ -144,35 +157,57 @@ export function ChatLayout() {
   // Enhanced click detection to close sidebar
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      // Only proceed if we're on mobile
-      if (!isMobile) return;
+      // Skip if not on mobile or sidebar is already closed
+      if (!isMobile || !sidebarOpen) return;
       
       // Check if click was outside sidebar
-      const isClickInsideSidebar = sidebarContainerRef.current?.contains(event.target as Node);
+      const target = event.target as HTMLElement;
+      const isClickInsideSidebar = sidebarContainerRef.current?.contains(target);
+      
+      // Debug info
+      console.log('Click detected:', {
+        isMobile,
+        sidebarOpen,
+        isClickInsideSidebar,
+        targetElement: target.tagName,
+        targetClass: target.className,
+      });
       
       if (!isClickInsideSidebar) {
         console.log('Click outside sidebar detected, closing sidebar');
-        sidebarRef.current?.setIsOpen(false);
+        setSidebarOpen(false);
       }
     }
 
     // Use capture phase to ensure we get the click before other handlers
-    document.addEventListener('mousedown', handleClickOutside, true);
+    document.addEventListener('click', handleClickOutside, true);
     
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside, true);
+      document.removeEventListener('click', handleClickOutside, true);
     };
-  }, [isMobile]);
+  }, [isMobile, sidebarOpen]);
+
+  // Toggle sidebar function
+  const toggleSidebar = () => {
+    console.log(`Toggling sidebar from ${sidebarOpen} to ${!sidebarOpen}`);
+    setSidebarOpen(!sidebarOpen);
+  };
 
   return (
     <TooltipProvider>
       <div className="flex h-full w-full overflow-hidden">
-        <div ref={sidebarContainerRef} data-sidebar="container">
+        <div 
+          ref={sidebarContainerRef} 
+          data-sidebar="container"
+          className={`${!sidebarOpen ? 'w-0' : ''} transition-all duration-300`}
+        >
           <ConversationSidebar 
             ref={sidebarRef}
             activeConversationId={activeConversationId}
             setActiveConversationId={setActiveConversationId}
             startNewConversation={startConversation}
+            isOpen={sidebarOpen}
+            toggleSidebar={toggleSidebar}
           />
         </div>
         

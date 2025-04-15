@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { MessageSquarePlus, Plus, Trash, ChevronRight, ChevronLeft, FolderPlus, Folder, Edit, MoreVertical, MoveRight } from 'lucide-react';
@@ -20,6 +19,8 @@ interface ConversationSidebarProps {
   activeConversationId: string | null;
   setActiveConversationId: (id: string) => void;
   startNewConversation: (title?: string) => Promise<string>;
+  isOpen: boolean;
+  toggleSidebar: () => void;
 }
 
 export const ConversationSidebar = forwardRef<{
@@ -27,11 +28,12 @@ export const ConversationSidebar = forwardRef<{
 }, ConversationSidebarProps>(({
   activeConversationId,
   setActiveConversationId,
-  startNewConversation
+  startNewConversation,
+  isOpen,
+  toggleSidebar
 }, ref) => {
   const isMobile = useIsMobile();
   const { toast } = useToast();
-  const [isOpen, setIsOpen] = useState(!isMobile); // Open by default on desktop
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
   const [editProjectId, setEditProjectId] = useState<string | null>(null);
@@ -47,6 +49,12 @@ export const ConversationSidebar = forwardRef<{
   const [isDeleteProjectDialogOpen, setIsDeleteProjectDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
 
+  useImperativeHandle(ref, () => ({
+    setIsOpen: (open: boolean) => {
+      console.log(`ConversationSidebar: setIsOpen called with ${open}`);
+    }
+  }));
+
   const {
     projects,
     isLoadingProjects,
@@ -59,10 +67,6 @@ export const ConversationSidebar = forwardRef<{
     isCreatingProject,
     isUpdatingProject
   } = useProjects();
-
-  useImperativeHandle(ref, () => ({
-    setIsOpen
-  }));
 
   const {
     data: conversations = [],
@@ -97,7 +101,9 @@ export const ConversationSidebar = forwardRef<{
       const newId = await startNewConversation();
       setActiveConversationId(newId);
       refetchConversations();
-      if (isMobile) setIsOpen(false);
+      if (isMobile) {
+        toggleSidebar();
+      }
     } catch (error) {
       console.error("Error creating new conversation:", error);
     }
@@ -108,7 +114,9 @@ export const ConversationSidebar = forwardRef<{
       console.log(`Switching to conversation: ${conversationId}`);
       setActiveConversationId(conversationId);
     }
-    if (isMobile) setIsOpen(false);
+    if (isMobile) {
+      toggleSidebar();
+    }
   };
 
   const handleDeleteConversation = async (conversationId: string, event: React.MouseEvent) => {
@@ -177,7 +185,6 @@ export const ConversationSidebar = forwardRef<{
     if (selectedConversationForMove) {
       console.log(`Moving conversation ${selectedConversationForMove} to project ${projectId || 'Open Chats'}`);
       try {
-        // Call the direct API function instead of going through the hook
         const success = await assignConversationToProject(selectedConversationForMove, projectId);
         
         if (success) {
@@ -231,10 +238,6 @@ export const ConversationSidebar = forwardRef<{
       hour: '2-digit',
       minute: '2-digit'
     });
-  };
-
-  const toggleSidebar = () => {
-    setIsOpen(!isOpen);
   };
 
   const filteredConversations = conversations.filter(conversation => 
