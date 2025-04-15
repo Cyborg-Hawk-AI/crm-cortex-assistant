@@ -36,6 +36,7 @@ export async function createDeepSeekStream(
     }));
     
     console.log(`Sending ${cleanMessages.length} messages to DeepSeek API using model: ${options.model || DEFAULT_MODEL}`);
+    console.log(`DeepSeek API request being initiated for conversation`);
     
     const response = await fetch(`${DEEPSEEK_API_URL}/v1/chat/completions`, {
       method: 'POST',
@@ -57,6 +58,8 @@ export async function createDeepSeekStream(
       console.error(`DeepSeek API error (${response.status}): ${errorText}`);
       throw new Error(`DeepSeek API error: ${response.status} ${errorText}`);
     }
+    
+    console.log('DeepSeek API connection established, streaming response...');
     
     // Streaming setup
     const reader = response.body?.getReader();

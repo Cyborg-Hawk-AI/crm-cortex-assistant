@@ -485,7 +485,7 @@ Last updated: ${new Date(mission.updated_at).toLocaleString()}`;
           sender: 'user',
           timestamp: new Date(),
           isSystem: false,
-          conversation_id: conversationId,
+          conversation_id: conversationId || '',
           user_id: 'current-user'
         };
         
@@ -536,18 +536,18 @@ Last updated: ${new Date(mission.updated_at).toLocaleString()}`;
             content: systemPrompt
           });
           
-          // Select the appropriate chat function based on model
+          // Get the current model from modelSelection
           const currentModel = modelSelection.id;
-          console.log(`Using ${currentModel} model (${modelSelection.name}) for chat`);
+          console.log(`Using ${currentModel} model (${modelSelection.name}) for message sending`);
           
-          // Get the correct stream function based on selected model
+          // Determine which chat function to use based on the model
           let chatFunction;
           if (currentModel === 'deepseek') {
             chatFunction = deepSeekChat;
-            console.log('Using DeepSeek API for this message');
+            console.log('Using DeepSeek API for this message - confirmed selection');
           } else {
             chatFunction = openAIChat;
-            console.log('Using OpenAI API for this message');
+            console.log('Using OpenAI API for this message - confirmed selection');
           }
           
           await chatFunction(

@@ -33,6 +33,7 @@ export const useModelSelection = () => {
   const getSavedModel = (): ModelType => {
     try {
       const saved = localStorage.getItem(MODEL_SELECTION_KEY);
+      console.log(`Retrieved model selection from storage: ${saved}`);
       if (saved && (saved === 'openai' || saved === 'deepseek')) {
         return saved;
       }
@@ -49,7 +50,7 @@ export const useModelSelection = () => {
   useEffect(() => {
     try {
       localStorage.setItem(MODEL_SELECTION_KEY, selectedModel);
-      console.log(`Model selection saved: ${selectedModel}`);
+      console.log(`Model selection saved to localStorage: ${selectedModel}`);
     } catch (e) {
       console.warn('Could not save model selection to localStorage');
     }
@@ -57,8 +58,8 @@ export const useModelSelection = () => {
 
   const toggleModel = () => {
     const newModel = selectedModel === 'openai' ? 'deepseek' : 'openai';
+    console.log(`Model toggled from ${selectedModel} to ${newModel}`);
     setSelectedModel(newModel);
-    console.log(`Model toggled to: ${newModel}`);
   };
 
   // Ensure we always return a valid model option
