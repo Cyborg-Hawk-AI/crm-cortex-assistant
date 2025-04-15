@@ -445,13 +445,6 @@ export function ChatSection({
           </div>
           
           <div className="flex justify-between items-center mt-4">
-            <Button 
-              variant="outline" 
-              onClick={handleNewChat}
-              className="text-neon-purple border-neon-purple/40 hover:bg-neon-purple/10"
-            >
-              Start New Chat
-            </Button>
             <ModelToggle currentModel={selectedModel} onToggle={toggleModel} />
           </div>
         </div>
