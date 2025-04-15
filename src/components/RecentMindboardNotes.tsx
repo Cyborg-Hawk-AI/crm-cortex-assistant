@@ -1,4 +1,3 @@
-
 import { motion } from 'framer-motion';
 import { BookOpen, Clock, Plus, ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -40,7 +39,7 @@ export function RecentMindboardNotes() {
           <CardTitle className="text-xl text-white flex items-center justify-between">
             <div className="flex items-center">
               <BookOpen className="mr-2 h-6 w-6 text-neon-purple glow-text" />
-              Recent Mindboard Notes
+              Recent Notes
             </div>
             <Button 
               variant="ghost" 

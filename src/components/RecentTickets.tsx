@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardTitle, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -121,7 +120,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
       <CardHeader className="pb-2 flex flex-row justify-between items-center">
         <div className="flex items-center">
           <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-neon-red to-neon-purple mr-2"></div>
-          <CardTitle className="text-lg font-bold">Recent Missions</CardTitle>
+          <CardTitle className="text-lg font-bold">Recent Tasks</CardTitle>
         </div>
         <div className="flex items-center space-x-2">
           {!fullView && (
