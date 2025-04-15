@@ -3,7 +3,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { 
   Code, FileText, ShieldAlert, MessageCircleReply, 
-  Search, HelpCircle, LinkIcon, ArrowRight
+  Search, HelpCircle, LinkIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useChatMessages } from '@/hooks/useChatMessages';
@@ -26,11 +26,11 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
     linkTaskToConversation,
     linkedTask, 
     sendMessage,
-    isStreaming
+    isStreaming,
+    messages
   } = useChatMessages();
   const { toast } = useToast();
 
-  // Log the active conversation ID for debugging
   React.useEffect(() => {
     console.log(`QuickActions: Active conversation ID is ${activeConversationId || 'null'} (from props)`);
   }, [activeConversationId]);
@@ -43,6 +43,7 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
       color: 'bg-primary text-primary-foreground',
       assistantId: ASSISTANTS.CODE_REVIEW.id,
       assistantName: ASSISTANTS.CODE_REVIEW.name,
+      prompt: 'Please review all code discussed in this conversation and provide a comprehensive code review.'
     },
     {
       id: 'documentation',
@@ -51,6 +52,7 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
       color: 'bg-accent text-accent-foreground',
       assistantId: ASSISTANTS.DOCUMENTATION.id,
       assistantName: ASSISTANTS.DOCUMENTATION.name,
+      prompt: 'Based on the entire conversation history, please generate comprehensive technical documentation.'
     },
     {
       id: 'risk-assessment',
@@ -59,6 +61,7 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
       color: 'bg-primary text-primary-foreground',
       assistantId: ASSISTANTS.RISK_ASSESSMENT.id,
       assistantName: ASSISTANTS.RISK_ASSESSMENT.name,
+      prompt: 'Please analyze all discussed topics in this conversation and provide a thorough risk assessment.'
     },
     {
       id: 'summarize',
@@ -67,6 +70,7 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
       color: 'bg-secondary text-secondary-foreground',
       assistantId: ASSISTANTS.SUMMARIZER.id,
       assistantName: ASSISTANTS.SUMMARIZER.name,
+      prompt: 'Please provide a detailed summary of the entire conversation history.'
     },
     {
       id: 'search',
@@ -75,6 +79,7 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
       color: 'bg-secondary text-secondary-foreground',
       assistantId: ASSISTANTS.SEARCH.id,
       assistantName: ASSISTANTS.SEARCH.name,
+      prompt: 'Based on the conversation history, what would you like me to search for?'
     },
     {
       id: 'help',
@@ -83,6 +88,7 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
       color: 'bg-muted text-muted-foreground',
       assistantId: ASSISTANTS.HELP.id,
       assistantName: ASSISTANTS.HELP.name,
+      prompt: 'How can I help you with the topics discussed in this conversation?'
     },
     {
       id: 'link-task',
@@ -93,7 +99,7 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
     }
   ];
 
-  const handleAction = async (assistantId: string, assistantName: string, icon: React.ReactNode, label: string) => {
+  const handleAction = async (assistantId: string, assistantName: string, icon: React.ReactNode, label: string, prompt: string) => {
     if (isStreaming) {
       toast({
         title: "Please wait",
@@ -102,7 +108,6 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
       return;
     }
     
-    // Double-check if activeConversationId exists before proceeding
     if (!activeConversationId) {
       console.error("No active conversation ID found when attempting to use quick action");
       toast({
@@ -111,9 +116,7 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
       });
       return;
     }
-    
-    const messageToSend = inputValue.trim() || `Help me with ${label.toLowerCase()}`;
-    
+
     try {
       await setActiveAssistant({
         id: assistantId,
@@ -123,8 +126,8 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
         capabilities: [],
       });
       
-      setInputValue('');
-      await sendMessage(messageToSend, 'user', activeConversationId);
+      // Use the predefined prompt for the action instead of user input
+      await sendMessage(prompt, 'user', activeConversationId);
       
       toast({
         title: "Assistant activated",
@@ -194,7 +197,13 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
                     if (action.action) {
                       action.action();
                     } else if (action.assistantId && action.assistantName) {
-                      handleAction(action.assistantId, action.assistantName, action.icon, action.label);
+                      handleAction(
+                        action.assistantId, 
+                        action.assistantName, 
+                        action.icon, 
+                        action.label,
+                        action.prompt
+                      );
                     }
                   }}
                   className={`w-10 h-10 p-0 rounded-full flex items-center justify-center ${action.color}`}
