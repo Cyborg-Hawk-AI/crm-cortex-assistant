@@ -1,7 +1,8 @@
+
 # Action.it - Internal Documentation
 
 ## Overview
-Action.it is a comprehensive productivity platform that combines task management, knowledge organization, and AI assistance into a unified workspace. Built with modern web technologies, it provides a seamless experience for managing tasks, notes, meetings, and team collaboration.
+Action.it is a comprehensive productivity platform that combines task management, knowledge organization, and AI assistance into a unified workspace. Built with modern web technologies, it provides a seamless experience for managing projects, notes, meetings, and team collaboration.
 
 ## Tech Stack
 - **Frontend**: React 18, TypeScript, Tailwind CSS, Shadcn/UI
@@ -18,7 +19,7 @@ Action.it is a comprehensive productivity platform that combines task management
 
 ## Core Features
 
-### Mindboards Knowledge Management
+### Notebooks (formerly Mindboard)
 A powerful knowledge management system that provides a flexible and intuitive way to organize and work with information.
 
 #### Key Components
@@ -37,7 +38,7 @@ A powerful knowledge management system that provides a flexible and intuitive wa
    - Media blocks (images, files, embeds)
 
 3. **Navigation & Organization**
-   - Hierarchical structure (Mindboards > Sections > Pages)
+   - Hierarchical structure (Notebooks > Sections > Pages)
    - Collapsible sidebar
    - Section tabs
    - Page list with search
@@ -51,67 +52,60 @@ A powerful knowledge management system that provides a flexible and intuitive wa
    - Property inheritance
    - Focus management
 
-5. **UI/UX Features**
-   - Responsive design
-   - Visual feedback
-   - Smooth transitions
-   - Touch support
-   - Loading states
+### Project Management
+- Task and project organization
+- Subtask support
+- Priority levels and status tracking
+- Due dates and assignments
+- Project timeline views
+- Task board (Kanban) view
+- Team collaboration features
 
-#### Technical Implementation
-- **Components**:
-  - `Mindboard.tsx`: Main container
-  - `BlockEditor.tsx`: Rich text editor
-  - `BlockRenderer.tsx`: Block rendering
-  - `PageList.tsx`: Page management
-  - `SectionTabs.tsx`: Section navigation
-  - `MindboardSidebar.tsx`: Sidebar
-  - `NoteCanvas.tsx`: Note canvas
-  - `NotebookSidebar.tsx`: Notebook navigation
+### AI Assistant (ActionBot)
+- Context-aware AI conversations
+- Project and task integration
+- Markdown formatting support
+- Conversation history
+- Multiple specialized assistants
+- Real-time responses
 
-- **State Management**:
-  - React Query for data
-  - Context for UI state
-  - Local state for editing
-  - Optimistic updates
+### Command View (Dashboard)
+- Status overview
+- Recent tasks and notes
+- Upcoming meetings
+- Activity feed
+- Quick actions
+- Alerts panel
 
-- **Performance**:
-  - Virtual scrolling
-  - Lazy loading
-  - Caching strategies
-  - Debounced updates
+### Control Deck (Settings)
+- User preferences
+- Workspace configuration
+- Integration settings
+- Team management
+- Security settings
 
-- **Security**:
-  - Content sanitization
-  - Access control
-  - Data validation
-  - Error handling
+### Meeting Management
+- Schedule creation
+- Attendee management
+- Meeting notes
+- Calendar integration
+- Quick actions
 
-#### Recent Enhancements
-- Shift+Enter support for lists
-- Improved block creation
-- Enhanced keyboard navigation
-- Rich text paste support
-- UI/UX polish
+## Database Architecture
+- PostgreSQL with Supabase
+- Row-level security
+- Comprehensive data model
+- Real-time subscriptions
+- Automated backups
+- Performance optimized
 
-#### Planned Features
-- Real-time collaboration
-- Block templates
-- Advanced formatting
-- Version history
-- Custom block types
-- Block comments
-- Block linking
-- Search and filtering
-
-### Other Core Features
-- **Authentication & User Management**: Secure user authentication and profile management
-- **Dashboard & Navigation**: Real-time status overview and quick access to features
-- **Task & Project Management**: Hierarchical task organization with subtasks
-- **Meeting Management**: Calendar integration and attendee management
-- **Contact Management**: Customer/contact profiles and interaction history
-- **Chat Assistant**: AI-powered conversations with specialized assistants
-- **Scratchpad Notes**: Quick note-taking with rich text support
+## Security Features
+- JWT-based authentication
+- Role-based access control
+- Row-level security policies
+- Secure password handling
+- Email verification
+- Session management
 
 ## Development Guidelines
 
@@ -126,8 +120,6 @@ src/
 ├── hooks/        # Custom React hooks
 ├── lib/          # Utility functions
 ├── pages/        # Page components
-├── services/     # Business logic
-├── types/        # TypeScript types
 └── utils/        # Helper functions
 ```
 
@@ -137,70 +129,25 @@ src/
 - Custom hooks for feature logic
 - Local state for UI components
 
-### Database Schema
-Key tables include:
-- `conversations` & `chat_messages`
-- `tasks` & `subtasks`
-- `contacts`
-- `meetings` & `meeting_attendees`
-- `notes`
-- `activities` (audit log)
-- `assistants` (OpenAI configurations)
-- `user_settings`
-- `app_configuration`
-
 ### Component Guidelines
 1. **Structure**:
-   - Use functional components
-   - Implement proper TypeScript types
-   - Follow single responsibility principle
+   - Functional components with TypeScript
+   - Single responsibility principle
+   - Modular design
+   - Clean architecture
 
 2. **Styling**:
-   - Use Tailwind CSS classes
-   - Follow Shadcn/UI patterns
-   - Maintain consistent spacing and colors
+   - Tailwind CSS classes
+   - Shadcn/UI patterns
+   - Consistent theming
+   - Mobile-first design
 
-3. **State Management**:
-   - Use appropriate state management solution
-   - Implement proper error handling
-   - Follow React best practices
-
-### Testing
-- Unit tests for utilities and hooks
-- Integration tests for features
-- E2E tests for critical paths
-- Regular code reviews
-
-## Recent Updates
-
-### Mindboard Enhancements
-- Added Shift+Enter support for lists
-- Improved block creation and focus
-- Enhanced keyboard navigation
-- Added rich text paste support
-- Improved UI/UX polish
-
-### Performance Improvements
+### Performance Optimization
 - Optimized database queries
-- Enhanced state management
-- Improved component rendering
-- Added caching strategies
-
-### Security Updates
-- Enhanced authentication
-- Improved data validation
-- Added input sanitization
-- Updated dependencies
-
-## Planned Features
-- [ ] Real-time collaboration
-- [ ] Block templates
-- [ ] Advanced formatting
-- [ ] Version history
-- [ ] Custom block types
-- [ ] Block comments
-- [ ] Block linking
-- [ ] Search and filtering
+- Efficient state management
+- Code splitting
+- Lazy loading
+- Caching strategies
 
 ## Getting Started
 
@@ -225,25 +172,11 @@ Key tables include:
 5. Code review
 6. Merge to main
 
-## Troubleshooting
-
-### Common Issues
-- Authentication problems
-- Database connection issues
-- API rate limits
-- Performance bottlenecks
-
-### Solutions
-- Check environment variables
-- Verify database connections
-- Monitor API usage
-- Profile performance
-
 ## Support
 For internal support:
-- Slack channel: #action-it-dev
-- Email: dev-support@action.it
 - Documentation: Confluence
+- Issue tracking: GitHub Issues
+- Team chat: Slack
 
 ## License
 Internal use only. All rights reserved.
