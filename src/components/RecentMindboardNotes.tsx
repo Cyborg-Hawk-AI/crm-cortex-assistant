@@ -1,33 +1,36 @@
-import { useState } from 'react';
+
 import { motion } from 'framer-motion';
-import { File, BookOpen, Clock, Plus, ArrowRight } from 'lucide-react';
+import { BookOpen, Clock, Plus, ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { recentActivities } from '@/utils/mockData';
 import { format } from 'date-fns';
 import { NotebookCreateModal } from './modals/NotebookCreateModal';
+import { useRecentMindboardNotes } from '@/hooks/useRecentMindboardNotes';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export function RecentMindboardNotes() {
   const [showCreateModal, setShowCreateModal] = useState(false);
-
-  // Convert activities to mindboard notes for this demo
-  const recentNotes = recentActivities.map((activity, index) => ({
-    id: `note-${index}`,
-    title: activity.description,
-    content: `This is a mindboard note about ${activity.description?.toLowerCase()}`,
-    createdAt: activity.timestamp,
-    notebookName: ["Work", "Personal", "Ideas", "Projects"][Math.floor(Math.random() * 4)]
-  }));
+  const navigate = useNavigate();
+  
+  const {
+    data: recentNotes = [],
+    isLoading,
+    error
+  } = useRecentMindboardNotes(5);
 
   const formatTime = (date: Date | string) => {
     return format(date instanceof Date ? date : new Date(date), 'MMM d, h:mm a');
   };
 
   const handleCreateNotebook = (title: string) => {
-    // In a real app, this would create a new notebook
     console.log("Creating new notebook:", title);
     setShowCreateModal(false);
+  };
+
+  const handleViewMindboard = () => {
+    navigate('/mindboard');
   };
 
   return (
@@ -51,7 +54,15 @@ export function RecentMindboardNotes() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 pt-4">
-          {recentNotes.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-6 text-[#CBD5E1]">
+              <p>Loading recent notes...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-6 text-[#CBD5E1]">
+              <p>Error loading notes. Please try again.</p>
+            </div>
+          ) : recentNotes.length === 0 ? (
             <div className="text-center py-6 text-[#CBD5E1]">
               <p>No recent notes found</p>
               <Button 
@@ -65,7 +76,7 @@ export function RecentMindboardNotes() {
             </div>
           ) : (
             <div className="space-y-3">
-              {recentNotes.slice(0, 5).map((note, index) => (
+              {recentNotes.map((note, index) => (
                 <motion.div
                   key={note.id}
                   initial={{ opacity: 0, y: 5 }}
@@ -78,16 +89,20 @@ export function RecentMindboardNotes() {
                       <div>
                         <h4 className="text-sm font-medium text-[#F1F5F9]">{note.title}</h4>
                         <div className="mt-1 text-xs text-[#CBD5E1] line-clamp-2">
-                          {note.content}
+                          {note.snippet || 'No content'}
                         </div>
                         <div className="flex items-center mt-2 text-xs text-[#CBD5E1]">
                           <Clock className="h-3 w-3 mr-1 text-neon-purple" />
-                          <span>{formatTime(note.createdAt)}</span>
+                          <span>{formatTime(note.updatedAt)}</span>
                         </div>
                       </div>
                       
-                      <Badge variant="outline" className="text-xs bg-neon-purple/10 text-neon-purple border-neon-purple/20">
-                        {note.notebookName}
+                      <Badge 
+                        variant="outline" 
+                        className="text-xs bg-neon-purple/10 text-neon-purple border-neon-purple/20"
+                        title={`${note.boardName} → ${note.sectionName}`}
+                      >
+                        {note.sectionName}
                       </Badge>
                     </div>
                   </div>
@@ -97,7 +112,12 @@ export function RecentMindboardNotes() {
           )}
         </CardContent>
         <CardFooter className="pt-1 pb-2 border-t border-purple-500/50">
-          <Button variant="ghost" size="sm" className="text-neon-purple hover:text-neon-purple/80 w-full justify-center text-xs">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-neon-purple hover:text-neon-purple/80 w-full justify-center text-xs"
+            onClick={handleViewMindboard}
+          >
             Open Mindboard <ArrowRight className="ml-1 h-3 w-3" />
           </Button>
         </CardFooter>
