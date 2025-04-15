@@ -28,9 +28,6 @@ export function ChatLayout() {
   const navigationAttemptRef = useRef(0);
   const lastNavigationTimeRef = useRef(0);
   const restoredConversationIdRef = useRef<string | null>(null);
-  
-  // Add ref to track if sidebar is open
-  const isSidebarOpenRef = useRef(false);
 
   // Check for forceReload parameter and pendingConversationId in location state
   useEffect(() => {
@@ -133,41 +130,10 @@ export function ChatLayout() {
     }
   }, [activeConversationId, refetchMessages, isMobile, forceRefresh, navigate, location.state]);
 
-  // Set up document-wide click handler to close sidebar when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      // Only close sidebar on mobile, and if it's open
-      if (isMobile && isSidebarOpenRef.current && sidebarRef.current) {
-        // Check if click is outside the sidebar element
-        const sidebarElement = document.querySelector('[data-sidebar="sidebar"]');
-        
-        if (sidebarElement && !sidebarElement.contains(event.target as Node)) {
-          console.log('🔍 ChatLayout: Click outside sidebar detected, closing sidebar');
-          sidebarRef.current.setIsOpen(false);
-          isSidebarOpenRef.current = false;
-        }
-      }
-    };
-    
-    document.addEventListener('mousedown', handleClickOutside);
-    
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isMobile]);
-
-  // Update sidebar open state reference
-  const updateSidebarOpenState = (isOpen: boolean) => {
-    console.log(`🔍 ChatLayout: Sidebar state changed to ${isOpen ? 'open' : 'closed'}`);
-    isSidebarOpenRef.current = isOpen;
-  };
-
   // Handle clicks in the chat area to collapse sidebar on mobile
   const handleChatAreaClick = () => {
-    if (isMobile && sidebarRef.current && isSidebarOpenRef.current) {
-      console.log('🔍 ChatLayout: Chat area clicked, closing sidebar');
+    if (isMobile && sidebarRef.current) {
       sidebarRef.current.setIsOpen(false);
-      isSidebarOpenRef.current = false;
     }
   };
 
@@ -179,7 +145,6 @@ export function ChatLayout() {
           activeConversationId={activeConversationId}
           setActiveConversationId={setActiveConversationId}
           startNewConversation={startConversation}
-          onOpenChange={updateSidebarOpenState}
         />
         
         <div 

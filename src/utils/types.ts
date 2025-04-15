@@ -1,20 +1,6 @@
-
 // Define task priority and status types based on what's in the database
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type TaskStatus = 'open' | 'in-progress' | 'resolved' | 'closed' | 'completed';
-
-// Conversation type for chat functionality
-export interface Conversation {
-  id: string;
-  title: string;
-  user_id: string;
-  created_at: string | Date;
-  updated_at: string | Date;
-  project_id?: string | null;
-  project_name?: string | null;
-  assistant_id?: string | null;
-  task_id?: string | null;
-}
 
 // Task interface
 export interface Task {
