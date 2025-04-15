@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ChevronRight, ChevronDown, Book, Trash2, MoreVertical, Edit } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -95,7 +94,7 @@ export function BoardList({
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "flex-1 justify-start gap-2 transition-colors",
+                      "flex-1 justify-start gap-2 transition-colors pl-8", // Added pl-8 to create space for expand icon
                       isActive && "bg-accent text-accent-foreground shadow-[0_0_8px_rgba(0,247,239,0.3)]",
                       !isActive && "hover:bg-accent/50"
                     )}
@@ -106,7 +105,7 @@ export function BoardList({
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-4 w-4 p-0"
+                      className="absolute left-2 h-4 w-4 p-0" // Positioned absolutely to the left with specific positioning
                       onClick={(e) => {
                         e.stopPropagation();
                         onToggleExpand(board.id);
