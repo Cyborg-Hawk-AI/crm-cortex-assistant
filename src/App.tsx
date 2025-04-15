@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from "react-router-dom";
@@ -41,7 +40,7 @@ function App() {
         <AuthProvider>
           <div className="min-h-screen bg-[#171C24]">
             <Header activeTab={activeTab} setActiveTab={setActiveTab} />
-            <div className="pt-[60px] pb-[70px]"> {/* Added bottom padding for floating action bar */}
+            <div className="pt-[60px] pb-[70px]">
               <Routes>
                 <Route path="/login" element={<Login key="login" />} />
                 <Route path="/signup" element={<Signup key="signup" />} />
@@ -59,13 +58,12 @@ function App() {
                 <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectsPageWrapper key="project-detail" /></ProtectedRoute>} />
                 <Route path="/projects/:projectId/tasks/:taskId" element={<ProtectedRoute><ProjectsPageWrapper key="project-task" /></ProtectedRoute>} />
                 
-                {/* Mindboard Route */}
-                <Route path="/mindboard" element={<ProtectedRoute><Mindboard key="mindboard" /></ProtectedRoute>} />
+                {/* Mindboard Route renamed to Notebooks */}
+                <Route path="/mindboard" element={<ProtectedRoute><Mindboard key="notebooks" /></ProtectedRoute>} />
                 
                 <Route path="*" element={<NotFound key="not-found" />} />
               </Routes>
             </div>
-            {/* Floating Action Bar - visible on all pages */}
             <FloatingActionBar />
             <Toaster />
           </div>

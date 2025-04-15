@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -26,7 +25,6 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
   const isMobile = useIsMobile();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  // Track window resize
   useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
@@ -36,30 +34,28 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   
-  // Determine if we should show labels or icons only
   const showLabels = windowWidth > 768;
   
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     setIsMobileMenuOpen(false);
     
-    // Update route based on the tab
-    if (tab === 'projects' || tab === 'missions') {
+    if (tab === 'projects') {
       navigate('/projects');
-    } else if (tab === 'mindboard') {
+    } else if (tab === 'notebooks') {
       navigate('/mindboard');
     } else if (tab === 'main' || tab === 'dashboard') {
-      navigate('/');  // Navigate to home for dashboard/main
+      navigate('/');
       setTimeout(() => {
         setActiveTab('main');
       }, 100);
     } else if (tab === 'settings') {
-      navigate('/');  // Navigate to home with settings tab active
+      navigate('/');
       setTimeout(() => {
         setActiveTab('settings');
       }, 100);
     } else if (tab === 'chat') {
-      navigate('/');  // Navigate to home with chat tab active
+      navigate('/');
       setTimeout(() => {
         setActiveTab('chat');
       }, 100);
@@ -81,13 +77,13 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
     },
     {
       id: 'projects',
-      label: 'Missions',
+      label: 'Projects',
       icon: <ClipboardCheck className="h-5 w-5" />,
       activeColor: 'text-green-400'
     },
     {
-      id: 'mindboard',
-      label: 'Mindboard',
+      id: 'notebooks',
+      label: 'Notebooks',
       icon: <BookOpen className="h-5 w-5" />,
       activeColor: 'text-blue-400'
     },
@@ -110,7 +106,6 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
           </div>
         </div>
         
-        {/* Desktop Navigation */}
         {!isMobile && (
           <nav className="hidden md:flex space-x-2 transition-all">
             {navItems.map(item => (
@@ -128,7 +123,6 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
           </nav>
         )}
         
-        {/* Mobile Navigation */}
         {isMobile && (
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>

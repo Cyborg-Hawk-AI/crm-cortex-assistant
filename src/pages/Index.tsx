@@ -233,7 +233,7 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
                 <TodaySyncUps />
                 
                 <RecentTickets onTaskClick={(taskId) => {
-                  navigate('/missions', { state: { openTaskId: taskId } });
+                  navigate('/projects', { state: { openTaskId: taskId } });
                 }} />
                 
                 <RecentMindboardNotes />
@@ -290,9 +290,9 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
             </motion.div>
           )}
 
-          {activeTab === 'mindboard' && (
+          {activeTab === 'notebooks' && (
             <motion.div
-              key="mindboard"
+              key="notebooks"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
