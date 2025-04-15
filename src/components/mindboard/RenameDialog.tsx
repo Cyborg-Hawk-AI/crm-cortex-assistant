@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useState } from 'react';
 import {
   Dialog,
@@ -27,21 +27,31 @@ export function RenameDialog({
   entityType = "mindboard"
 }: RenameDialogProps) {
   const [title, setTitle] = useState(currentTitle);
+  const dialogMounted = useRef(false);
 
-  // Debug logs for component lifecycle and props
+  // Enhanced debugging for component lifecycle and props
   useEffect(() => {
     console.log(`[RenameDialog] Component rendered with props:`, { 
       isOpen, 
       currentTitle, 
-      entityType 
+      entityType,
+      dialogMounted: dialogMounted.current
     });
+    
+    // Mark component as mounted
+    if (!dialogMounted.current) {
+      dialogMounted.current = true;
+      console.log('[RenameDialog] Component mounted for the first time');
+    }
   }, [isOpen, currentTitle, entityType]);
 
-  // Reset title when dialog opens with new props
+  // Enhanced debugging for dialog state changes
   useEffect(() => {
     if (isOpen) {
       console.log(`[RenameDialog] Dialog opened, setting title to: "${currentTitle}"`);
       setTitle(currentTitle);
+    } else {
+      console.log('[RenameDialog] Dialog is closed');
     }
   }, [isOpen, currentTitle]);
 
@@ -58,22 +68,28 @@ export function RenameDialog({
   };
 
   const handleClose = () => {
-    console.log(`[RenameDialog] Dialog closing`);
+    console.log(`[RenameDialog] Dialog closing manually via handleClose()`);
     onClose();
   };
+
+  const handleOpenChange = (open: boolean) => {
+    console.log(`[RenameDialog] Dialog state changed to: ${open ? 'open' : 'closed'} via RadixUI`);
+    if (!open) handleClose();
+  };
+
+  console.log(`[RenameDialog] Rendering dialog with isOpen=${isOpen}, entityType="${entityType}"`);
 
   return (
     <Dialog 
       open={isOpen} 
-      onOpenChange={(open) => {
-        console.log(`[RenameDialog] Dialog state changed to: ${open ? 'open' : 'closed'}`);
-        if (!open) handleClose();
-      }}
+      onOpenChange={handleOpenChange}
     >
       <DialogContent className="bg-background">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Rename {entityType}</DialogTitle>
+            <DialogTitle>
+              {entityType.startsWith('new') ? `Create ${entityType.replace('new ', '')}` : `Rename ${entityType}`}
+            </DialogTitle>
           </DialogHeader>
           <div className="py-4">
             <Input
@@ -83,7 +99,7 @@ export function RenameDialog({
                 console.log(`[RenameDialog] Input changed to: "${newValue}"`);
                 setTitle(newValue);
               }}
-              placeholder="Enter new title"
+              placeholder={entityType.startsWith('new') ? `Enter ${entityType.replace('new ', '')} name` : "Enter new title"}
               className="w-full"
               autoFocus
             />

@@ -36,17 +36,19 @@ export function MindboardSidebar({
   const [renamingBoard, setRenamingBoard] = useState<{ id: string, title: string } | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
-  // Debug logging
+  // Debug logging for component lifecycle
   useEffect(() => {
-    console.log('[MindboardSidebar] Component mounted');
-    return () => console.log('[MindboardSidebar] Component unmounted');
+    console.log('[MindboardSidebar] Component mounted with isCreating:', isCreating);
+    return () => console.log('[MindboardSidebar] Component unmounted with isCreating:', isCreating);
   }, []);
 
   useEffect(() => {
     console.log('[MindboardSidebar] isCreating state changed:', isCreating);
   }, [isCreating]);
 
-  const handleCreateClick = () => {
+  const handleCreateClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     console.log('[MindboardSidebar] Create button clicked, setting isCreating to true');
     setIsCreating(true);
   };
@@ -74,6 +76,10 @@ export function MindboardSidebar({
       </div>
     );
   }
+
+  // Debug rendering
+  console.log('[MindboardSidebar] Rendering with isCreating:', isCreating);
+  console.log('[MindboardSidebar] Rendering with renamingBoard:', renamingBoard);
 
   return (
     <div className="flex flex-col h-full">
@@ -159,6 +165,7 @@ export function MindboardSidebar({
         </div>
       </ScrollArea>
 
+      {/* Rename dialog */}
       {renamingBoard && (
         <RenameDialog
           isOpen={!!renamingBoard}
@@ -172,9 +179,11 @@ export function MindboardSidebar({
             setRenamingBoard(null);
           }}
           currentTitle={renamingBoard.title}
+          entityType="mindboard"
         />
       )}
 
+      {/* Create dialog - Separate from the rename dialog to fix the visibility issue */}
       <RenameDialog
         isOpen={isCreating}
         onClose={handleCreateDialogClose}

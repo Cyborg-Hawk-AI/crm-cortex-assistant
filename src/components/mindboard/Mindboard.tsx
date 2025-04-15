@@ -48,8 +48,8 @@ export function Mindboard() {
     );
   }
 
-  // Helper functions that handle the return values properly
-  const handleCreateBoard = async (params: { title: string }) => {
+  // Helper functions that handle the return values properly and return void to match the expected types
+  const handleCreateBoard = async (params: { title: string }): Promise<void> => {
     console.log('[Mindboard] handleCreateBoard called with:', params);
     try {
       const result = await createMindboard(params);
@@ -59,7 +59,7 @@ export function Mindboard() {
     }
   };
 
-  const handleCreateSection = async (params: { mindboardId: string, title: string }) => {
+  const handleCreateSection = async (params: { mindboardId: string, title: string }): Promise<void> => {
     console.log('[Mindboard] handleCreateSection called with:', params);
     try {
       const result = await createSection(params);
@@ -69,7 +69,7 @@ export function Mindboard() {
     }
   };
 
-  const handleCreatePage = async (params: { sectionId: string, title: string }) => {
+  const handleCreatePage = async (params: { sectionId: string, title: string }): Promise<void> => {
     console.log('[Mindboard] handleCreatePage called with:', params);
     try {
       const result = await createPage(params);
@@ -79,7 +79,7 @@ export function Mindboard() {
     }
   };
 
-  const handleRenameMindboard = async (id: string, title: string) => {
+  const handleRenameMindboard = async (id: string, title: string): Promise<void> => {
     console.log(`[Mindboard] handleRenameMindboard called with id: ${id}, title: ${title}`);
     try {
       const result = await updateMindboard({ id, title });
@@ -89,7 +89,7 @@ export function Mindboard() {
     }
   };
 
-  const handleRenameSection = async (id: string, title: string) => {
+  const handleRenameSection = async (id: string, title: string): Promise<void> => {
     console.log(`[Mindboard] handleRenameSection called with id: ${id}, title: ${title}`);
     try {
       const result = await updateSection({ id, title });
@@ -99,7 +99,7 @@ export function Mindboard() {
     }
   };
 
-  const handleRenamePage = async (id: string, title: string) => {
+  const handleRenamePage = async (id: string, title: string): Promise<void> => {
     console.log(`[Mindboard] handleRenamePage called with id: ${id}, title: ${title}`);
     try {
       const result = await updatePage({ id, title });
