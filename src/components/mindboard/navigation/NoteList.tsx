@@ -31,6 +31,7 @@ interface NoteListProps {
   onCreateNote?: (title: string) => void;
   onDeleteNote?: (id: string) => void;
   onRenameNote?: (id: string, newTitle: string) => void;
+  isNarrow?: boolean; // Add the isNarrow prop
 }
 
 export function NoteList({
@@ -39,7 +40,8 @@ export function NoteList({
   onSelectNote,
   onCreateNote,
   onDeleteNote,
-  onRenameNote
+  onRenameNote,
+  isNarrow = false // Set a default value
 }: NoteListProps) {
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
@@ -107,7 +109,10 @@ export function NoteList({
   return (
     <div className="h-full flex flex-col p-2">
       <div className="flex items-center justify-between mb-3 px-2">
-        <h3 className="text-lg font-semibold">Notes</h3>
+        <h3 className={cn(
+          "font-semibold",
+          isNarrow ? "text-base" : "text-lg" // Adjust text size based on isNarrow
+        )}>Notes</h3>
         {onCreateNote && (
           <Button variant="ghost" size="icon" onClick={handleCreateNoteStart}>
             <Plus className="h-4 w-4" />
@@ -185,6 +190,7 @@ export function NoteList({
                     }}
                     className={cn(
                       "flex-1 justify-start h-9",
+                      isNarrow && "text-sm py-1", // Apply smaller text and padding when narrow
                       note.id === activeNoteId && "bg-accent text-accent-foreground font-medium shadow-[0_0_8px_rgba(0,247,239,0.2)]"
                     )}
                   >
@@ -197,9 +203,15 @@ export function NoteList({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className={cn(
+                            "opacity-0 group-hover:opacity-100 transition-opacity",
+                            isNarrow ? "h-7 w-7" : "h-8 w-8" // Make buttons smaller when narrow
+                          )}
                         >
-                          <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                          <MoreVertical className={cn(
+                            "text-muted-foreground",
+                            isNarrow ? "h-3.5 w-3.5" : "h-4 w-4" // Make icons smaller when narrow
+                          )} />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -221,7 +233,7 @@ export function NoteList({
                                 Delete
                               </DropdownMenuItem>
                             </AlertDialogTrigger>
-                            <AlertDialogContent>
+                            <AlertDialogContent className={isNarrow ? "max-w-[90vw] w-[270px]" : ""}>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Delete Note</AlertDialogTitle>
                                 <AlertDialogDescription>
