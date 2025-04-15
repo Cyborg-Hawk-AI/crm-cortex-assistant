@@ -21,6 +21,8 @@ export function Mindboard() {
     createBlock,
     updateBlock,
     deleteBlock,
+    deleteMindboard,
+    deleteSection,
     isLoading
   } = useMindboard();
 
@@ -56,6 +58,8 @@ export function Mindboard() {
       })}
       onUpdateBlock={(id, content, properties) => updateBlock({ id, content, ...properties })}
       onDeleteBlock={(id) => deleteBlock(id)}
+      onDeleteMindboard={(id) => deleteMindboard(id)}
+      onDeleteSection={(id) => deleteSection(id)}
     />
   );
 }
