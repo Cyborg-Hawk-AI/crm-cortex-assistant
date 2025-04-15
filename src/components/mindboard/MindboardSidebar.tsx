@@ -72,18 +72,18 @@ export function MindboardSidebar({
               <motion.div
                 key={mindboard.id}
                 whileHover={{ scale: 1.02 }}
-                className={`flex items-center p-2 rounded-md mb-1 cursor-pointer text-sm ${
+                className={`group flex items-center p-2 rounded-md mb-1 cursor-pointer text-sm relative ${
                   activeMindboardId === mindboard.id 
                     ? 'bg-[#3A4D62]/70 shadow-[0_0_8px_rgba(0,247,239,0.3)]' 
                     : 'hover:bg-[#3A4D62]/40'
                 }`}
                 onClick={() => setActiveMindboardId(mindboard.id)}
               >
-                <Book className={`h-4 w-4 mr-2 ${
+                <Book className={`h-4 w-4 min-w-[16px] mr-2 ${
                   activeMindboardId === mindboard.id ? 'text-neon-aqua' : 'text-[#CBD5E1]'
                 }`} />
                 
-                <span className={`flex-1 truncate ${
+                <span className={`flex-1 truncate pr-6 ${
                   activeMindboardId === mindboard.id ? 'text-[#F1F5F9]' : 'text-[#CBD5E1]'
                 }`}>
                   {mindboard.title}
@@ -94,7 +94,7 @@ export function MindboardSidebar({
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="h-6 w-6 p-0 opacity-50 hover:opacity-100"
+                      className="h-6 w-6 p-0 opacity-50 hover:opacity-100 absolute right-2 top-1/2 -translate-y-1/2"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <MoreVertical className="h-3 w-3" />
