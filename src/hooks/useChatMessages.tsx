@@ -9,6 +9,7 @@ import { openAIChat } from '@/utils/openAIStream';
 import { deepSeekChat } from '@/utils/deepSeekStream';
 import { useModelSelection } from './useModelSelection';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/utils/supabase';
 
 export const useChatMessages = () => {
   const { toast } = useToast();
@@ -76,6 +77,32 @@ export const useChatMessages = () => {
           setActiveAssistant(assistantConfig);
         }
         
+        if (activeConversation.task_id) {
+          const fetchTask = async () => {
+            try {
+              const { data, error } = await supabase
+                .from('tasks')
+                .select('id, title, description')
+                .eq('id', activeConversation.task_id)
+                .single();
+                
+              if (!error && data) {
+                setLinkedTask({
+                  id: data.id,
+                  title: data.title,
+                  description: data.description || '',
+                });
+              }
+            } catch (error) {
+              console.error('Error fetching linked task:', error);
+            }
+          };
+          
+          fetchTask();
+        } else {
+          setLinkedTask(null);
+        }
+        
         console.log(`Switched to conversation: ${activeConversationId} with thread: ${activeConversation.open_ai_thread_id || 'none'}`);
       }
     }
@@ -107,7 +134,6 @@ export const useChatMessages = () => {
       setActiveConversationId(conversation.id);
       setLocalMessages([]);
       
-      // Immediate UI updates
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
       refetchConversations();
       
@@ -267,6 +293,30 @@ export const useChatMessages = () => {
     
     return task;
   }, [activeConversationId]);
+
+  const linkMissionToConversation = useCallback(async (mission: Task | null) => {
+    setLinkedTask(mission);
+    
+    if (activeConversationId && mission) {
+      try {
+        const { error } = await supabase
+          .from('conversations')
+          .update({ task_id: mission.id })
+          .eq('id', activeConversationId);
+          
+        if (error) {
+          throw error;
+        }
+        
+        queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      } catch (error) {
+        console.error('Error linking mission:', error);
+        throw error;
+      }
+    }
+    
+    return mission;
+  }, [activeConversationId, queryClient]);
 
   const saveMessage = useCallback(async (
     content: string, 
@@ -621,6 +671,7 @@ export const useChatMessages = () => {
     isStreaming,
     linkedTask,
     linkTaskToConversation: handleLinkTaskToConversation,
+    linkMissionToConversation,
     activeConversationId,
     startConversation,
     setActiveConversationId,

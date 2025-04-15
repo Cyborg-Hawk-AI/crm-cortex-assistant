@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { 
   Code, FileText, ShieldAlert, MessageCircleReply, 
-  Search, HelpCircle, LinkIcon, Folder
+  Search, HelpCircle, LinkIcon, Folder, Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useChatMessages } from '@/hooks/useChatMessages';
@@ -12,6 +13,9 @@ import { NotionTaskSearch } from './NotionTaskSearch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ASSISTANTS } from '@/utils/assistantConfig';
 import { useProjects } from '@/hooks/useProjects';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { getCurrentUserId } from '@/lib/supabase';
 
 interface QuickActionsProps {
   activeConversationId: string | null;
@@ -19,8 +23,7 @@ interface QuickActionsProps {
 
 export function QuickActions({ activeConversationId }: QuickActionsProps) {
   const [isLinkingTask, setIsLinkingTask] = React.useState(false);
-  const [isLinkingProject, setIsLinkingProject] = React.useState(false);
-  const { projects, moveConversationToProject } = useProjects();
+  const [isLinkingMission, setIsLinkingMission] = React.useState(false);
   
   const { 
     inputValue, 
@@ -31,9 +34,70 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
     linkedProject,
     sendMessage,
     isStreaming,
-    messages
+    messages,
+    linkMissionToConversation
   } = useChatMessages();
   const { toast } = useToast();
+
+  // Fetch missions from the database
+  const { data: missions = [], isLoading: loadingMissions } = useQuery({
+    queryKey: ['missions'],
+    queryFn: async () => {
+      const userId = await getCurrentUserId();
+      if (!userId) return [];
+      
+      try {
+        // We'll consider top-level tasks (without parent_task_id) as missions
+        const { data, error } = await supabase
+          .from('tasks')
+          .select('id, title')
+          .is('parent_task_id', null)
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          console.error('Error fetching missions:', error);
+          return [];
+        }
+        
+        return (data || []).map(mission => ({
+          id: mission.id,
+          name: mission.title || 'Untitled Mission'
+        }));
+      } catch (err) {
+        console.error('Error in mission fetch:', err);
+        return [];
+      }
+    }
+  });
+
+  // Fetch subtasks for a mission when selected
+  const [selectedMissionId, setSelectedMissionId] = React.useState<string | null>(null);
+  const [missionTasks, setMissionTasks] = React.useState<any[]>([]);
+  
+  React.useEffect(() => {
+    const fetchMissionTasks = async () => {
+      if (!selectedMissionId) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('tasks')
+          .select('id, title')
+          .eq('parent_task_id', selectedMissionId)
+          .order('created_at', { ascending: true });
+          
+        if (error) {
+          console.error('Error fetching mission tasks:', error);
+          return;
+        }
+        
+        setMissionTasks(data || []);
+      } catch (err) {
+        console.error('Error fetching mission tasks:', err);
+      }
+    };
+    
+    fetchMissionTasks();
+  }, [selectedMissionId]);
 
   React.useEffect(() => {
     console.log(`QuickActions: Active conversation ID is ${activeConversationId || 'null'} (from props)`);
@@ -95,11 +159,11 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
       prompt: 'How can I help you with the topics discussed in this conversation?'
     },
     {
-      id: 'link-project',
-      icon: <Folder className="h-4 w-4" />,
-      label: 'Link Project',
+      id: 'link-mission',
+      icon: <Zap className="h-4 w-4" />,
+      label: 'Link Mission',
       color: 'bg-cool-mist text-forest-green',
-      action: () => setIsLinkingProject(true)
+      action: () => setIsLinkingMission(true)
     }
   ];
 
@@ -163,7 +227,7 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
     }
   };
 
-  const handleProjectSelect = async (projectId: string) => {
+  const handleMissionSelect = async (missionId: string, isTask: boolean = false) => {
     if (!activeConversationId) {
       toast({
         title: "No active conversation",
@@ -173,20 +237,50 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
     }
 
     try {
-      await moveConversationToProject(activeConversationId, projectId);
-      setIsLinkingProject(false);
+      if (!isTask) {
+        // If it's a mission (parent task), set it as the selected mission
+        setSelectedMissionId(missionId);
+        return;
+      }
+      
+      // Get the task details
+      const { data: taskData, error: taskError } = await supabase
+        .from('tasks')
+        .select('id, title, description')
+        .eq('id', missionId)
+        .single();
+      
+      if (taskError || !taskData) {
+        throw new Error(taskError?.message || 'Failed to fetch task data');
+      }
+      
+      const missionDetails = {
+        id: taskData.id,
+        title: taskData.title,
+        description: taskData.description || '',
+      };
+      
+      // Link the mission/task to the conversation
+      await linkMissionToConversation(missionDetails);
+      setIsLinkingMission(false);
+      setSelectedMissionId(null);
       
       toast({
-        title: "Project linked",
-        description: projectId ? "Conversation linked to project" : "Conversation moved to Open Chats"
+        title: "Mission linked",
+        description: `"${taskData.title}" is now linked to this conversation`
       });
-    } catch (error) {
-      console.error('Error linking project:', error);
+    } catch (error: any) {
+      console.error('Error linking mission:', error);
       toast({
         title: "Error",
-        description: "Failed to link project to conversation"
+        description: "Failed to link mission to conversation"
       });
     }
+  };
+
+  const handleCloseMissionDialog = () => {
+    setIsLinkingMission(false);
+    setSelectedMissionId(null);
   };
 
   return (
@@ -210,8 +304,9 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
       {linkedTask && (
         <div className="mb-3 p-2 bg-secondary/50 rounded border border-primary/20 text-xs text-primary">
           <div className="flex items-center justify-between">
-            <div>
-              <span className="font-medium">Linked Task:</span> {linkedTask.title}
+            <div className="flex items-center gap-2">
+              <Zap className="h-3 w-3" />
+              <span className="font-medium">Linked Mission:</span> {linkedTask.title}
             </div>
           </div>
         </div>
@@ -259,32 +354,77 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
         ))}
       </div>
 
-      <Dialog open={isLinkingProject} onOpenChange={setIsLinkingProject}>
+      <Dialog open={isLinkingMission} onOpenChange={handleCloseMissionDialog}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Link Project to Conversation</DialogTitle>
+            <DialogTitle>
+              {!selectedMissionId ? "Link Mission to Conversation" : "Select Task from Mission"}
+            </DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <div className="space-y-2">
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={() => handleProjectSelect('')}
-              >
-                <span className="flex-1 text-left">Open Chats</span>
-              </Button>
-              {projects?.map((project) => (
+            {!selectedMissionId ? (
+              <div className="space-y-2">
+                {missions && missions.length > 0 ? (
+                  missions.map((mission) => (
+                    <Button 
+                      key={mission.id} 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={() => handleMissionSelect(mission.id)}
+                    >
+                      <Zap className="mr-2 h-4 w-4" />
+                      <span className="flex-1 text-left">{mission.name}</span>
+                    </Button>
+                  ))
+                ) : (
+                  <div className="text-center p-4">
+                    <p className="text-sm text-muted-foreground">No missions found</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {/* Option to select the parent mission itself */}
                 <Button 
-                  key={project.id} 
                   variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => handleProjectSelect(project.id)}
+                  className="w-full justify-start bg-primary/10"
+                  onClick={() => handleMissionSelect(selectedMissionId, true)}
                 >
                   <Folder className="mr-2 h-4 w-4" />
-                  <span className="flex-1 text-left">{project.name}</span>
+                  <span className="flex-1 text-left">
+                    {missions.find(m => m.id === selectedMissionId)?.name || 'This Mission (Parent)'}
+                  </span>
                 </Button>
-              ))}
-            </div>
+                
+                <div className="py-1 px-2 bg-secondary/30 text-xs rounded-sm mb-2">Tasks in this mission:</div>
+                
+                {missionTasks && missionTasks.length > 0 ? (
+                  missionTasks.map((task) => (
+                    <Button 
+                      key={task.id} 
+                      variant="ghost" 
+                      className="w-full justify-start"
+                      onClick={() => handleMissionSelect(task.id, true)}
+                    >
+                      <LinkIcon className="mr-2 h-3.5 w-3.5" />
+                      <span className="flex-1 text-left">{task.title}</span>
+                    </Button>
+                  ))
+                ) : (
+                  <div className="text-center p-4">
+                    <p className="text-sm text-muted-foreground">No tasks found in this mission</p>
+                  </div>
+                )}
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full mt-4"
+                  onClick={() => setSelectedMissionId(null)}
+                >
+                  Back to Missions List
+                </Button>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>

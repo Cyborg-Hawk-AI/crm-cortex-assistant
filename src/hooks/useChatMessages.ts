@@ -16,6 +16,7 @@ export interface ChatMessagesHook {
   isStreaming: boolean;
   linkedTask: Task | null;
   linkTaskToConversation: (task: Task | null) => Promise<Task | null>;
+  linkMissionToConversation: (mission: Task | null) => Promise<Task | null>;
   activeConversationId: string | null;
   startConversation: (title?: string) => Promise<string>;
   setActiveConversationId: (id: string | null) => void;
