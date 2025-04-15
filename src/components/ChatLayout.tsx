@@ -28,24 +28,14 @@ export function ChatLayout() {
   const navigationAttemptRef = useRef(0);
   const lastNavigationTimeRef = useRef(0);
   const restoredConversationIdRef = useRef<string | null>(null);
-  const selectedProjectIdRef = useRef<string | null>(null);
 
-  // Check for forceReload parameter, pendingConversationId and selectedProjectId in location state
+  // Check for forceReload parameter and pendingConversationId in location state
   useEffect(() => {
     const state = location.state as { 
       forceReload?: number,
       pendingConversationId?: string,
-      newConversationId?: string,
-      selectedProjectId?: string
+      newConversationId?: string
     } | undefined;
-
-    // Track selected project ID - log its presence or absence
-    if (state?.selectedProjectId) {
-      console.log(`🔍 ChatLayout: Found selectedProjectId in state: ${state.selectedProjectId}`);
-      selectedProjectIdRef.current = state.selectedProjectId;
-    } else {
-      console.log(`🔍 ChatLayout: No selectedProjectId found in state`);
-    }
 
     // Handle pending conversation ID from navigation
     if (state?.pendingConversationId || state?.newConversationId) {
@@ -73,7 +63,7 @@ export function ChatLayout() {
 
   // Set up debug effect to monitor relevant state
   useEffect(() => {
-    console.log(`🏗️ ChatLayout: Component rendered with activeConversationId=${activeConversationId}, forceRefresh=${forceRefresh}, restoredId=${restoredConversationIdRef.current}, projectId=${selectedProjectIdRef.current}`);
+    console.log(`🏗️ ChatLayout: Component rendered with activeConversationId=${activeConversationId}, forceRefresh=${forceRefresh}, restoredId=${restoredConversationIdRef.current}`);
     
     // If we have a restored ID but no active conversation, set it
     if (restoredConversationIdRef.current && !activeConversationId) {
@@ -85,7 +75,7 @@ export function ChatLayout() {
   // Respond immediately to conversation changes with enhanced logging
   useEffect(() => {
     if (activeConversationId) {
-      console.log(`🔍 ChatLayout: Activating conversation: ${activeConversationId}, with project: ${selectedProjectIdRef.current || 'none'}`);
+      console.log(`🔍 ChatLayout: Activating conversation: ${activeConversationId}`);
       
       // First set a flag to show we're handling this particular conversation
       const currentConversation = activeConversationId;
@@ -113,7 +103,7 @@ export function ChatLayout() {
           });
           
           // Attempt to force navigation to chat tab if needed
-          const state = location.state as { activeTab?: string, selectedProjectId?: string } | undefined;
+          const state = location.state as { activeTab?: string } | undefined;
           if (state?.activeTab !== 'chat') {
             console.log('🔄 ChatLayout: Current tab is not chat, attempting to navigate');
             
@@ -123,8 +113,7 @@ export function ChatLayout() {
                 state: { 
                   activeTab: 'chat', 
                   forceReload: timestamp,
-                  pendingConversationId: activeConversationId, // Pass the conversation ID
-                  selectedProjectId: selectedProjectIdRef.current // Pass the project ID
+                  pendingConversationId: activeConversationId // Pass the conversation ID
                 },
                 replace: true
               });
@@ -162,13 +151,12 @@ export function ChatLayout() {
           className="flex-1 overflow-hidden flex flex-col"
           onClick={handleChatAreaClick}
           ref={chatSectionRef}
-          key={`chat-section-${activeConversationId || 'new'}-${selectedProjectIdRef.current || 'default'}-${forceRefresh}`}
+          key={`chat-section-${activeConversationId || 'new'}-${forceRefresh}`}
         >
           <ChatSection
             activeConversationId={activeConversationId}
             messages={messages}
             isLoading={isLoading}
-            initialProjectId={selectedProjectIdRef.current || ''}
           />
         </div>
       </div>

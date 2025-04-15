@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2, AlertTriangle, Folder, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,26 +15,23 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProjectSelect } from '@/components/ProjectSelect';
-import * as messageApi from '@/api/messages';
 
 interface ChatSectionProps {
   activeConversationId: string | null;
   messages: Message[];
   isLoading: boolean;
-  initialProjectId?: string;
 }
 
 export function ChatSection({
   activeConversationId,
   messages,
-  isLoading,
-  initialProjectId = ''
+  isLoading
 }: ChatSectionProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const location = useLocation();
-  const [selectedProjectId, setSelectedProjectId] = useState<string>(initialProjectId);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const {
     selectedModel,
     toggleModel
@@ -62,62 +58,6 @@ export function ChatSection({
   const [isOnChatTab, setIsOnChatTab] = useState(false);
   const navigationTimerRef = useRef<number | null>(null);
   const latestCreatedConversationRef = useRef<string | null>(null);
-  const persistentProjectIdRef = useRef<string>(initialProjectId);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
-  // Add the missing handleClearChat function
-  const handleClearChat = async () => {
-    if (!activeConversationId) return;
-    
-    try {
-      setIsDeleteDialogOpen(false);
-      await clearMessages(activeConversationId);
-      toast({
-        title: 'Conversation cleared',
-        description: 'All messages have been removed from this conversation'
-      });
-    } catch (error) {
-      console.error('Error clearing conversation:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to clear conversation. Please try again.',
-        variant: 'destructive'
-      });
-    }
-  };
-
-  // Add the missing handleKeyDown function
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // Allow Enter to submit, but Shift+Enter for new line
-    if (e.key === 'Enter' && !e.shiftKey && !isComposing && !isMobile) {
-      e.preventDefault();
-      if (inputValue.trim() && !isSending && !isStreaming && activeConversationId && !isNavigating) {
-        handleSendMessage();
-      }
-    }
-  };
-
-  useEffect(() => {
-    if (initialProjectId && initialProjectId !== persistentProjectIdRef.current) {
-      console.log(`🔄 ChatSection: Initializing project ID from prop: ${initialProjectId}`);
-      persistentProjectIdRef.current = initialProjectId;
-      setSelectedProjectId(initialProjectId);
-    }
-  }, [initialProjectId]);
-
-  useEffect(() => {
-    persistentProjectIdRef.current = selectedProjectId;
-    console.log(`🔒 ChatSection: Updated persistent project ID ref to: ${selectedProjectId}`);
-  }, [selectedProjectId]);
-
-  useEffect(() => {
-    const state = location.state as { selectedProjectId?: string } | undefined;
-    if (state?.selectedProjectId) {
-      console.log(`🔄 ChatSection: Setting selected project from location state: ${state.selectedProjectId}`);
-      setSelectedProjectId(state.selectedProjectId);
-      persistentProjectIdRef.current = state.selectedProjectId;
-    }
-  }, [location.state]);
 
   useEffect(() => {
     const state = location.state as { activeTab?: string } | undefined;
@@ -162,26 +102,6 @@ export function ChatSection({
     }
   }, [activeConversationId, messages, isLoading, retryCount]);
 
-  const handleProjectAssignment = async (conversationId: string, projectId: string) => {
-    if (!conversationId) return;
-    
-    try {
-      console.log(`🔄 ChatSection: Assigning conversation ${conversationId} to project: ${projectId || 'Open Chats'}`);
-      const success = await messageApi.assignConversationToProject(conversationId, projectId);
-      
-      if (success) {
-        console.log(`✅ ChatSection: Successfully assigned conversation ${conversationId} to project: ${projectId || 'Open Chats'}`);
-        return true;
-      } else {
-        console.error(`❌ ChatSection: Failed to assign conversation ${conversationId} to project: ${projectId || 'Open Chats'}`);
-        return false;
-      }
-    } catch (error) {
-      console.error('❌ Error assigning conversation to project:', error);
-      return false;
-    }
-  };
-
   const forceNavigation = (path: string, state: any) => {
     console.log(`🚀 FORCE NAVIGATION to ${path} with state:`, state);
     
@@ -198,17 +118,13 @@ export function ChatSection({
       path
     });
     
-    const projectIdForNavigation = persistentProjectIdRef.current;
-    console.log(`🔄 Using project ID for navigation: ${projectIdForNavigation || 'Open Chats'}`);
-    
     const finalState = {
       ...state,
       forceReload: timestamp,
-      pendingConversationId: latestCreatedConversationRef.current,
-      selectedProjectId: projectIdForNavigation
+      pendingConversationId: latestCreatedConversationRef.current
     };
     
-    console.log(`🔄 ChatSection: Navigation state will include pendingConversationId: ${finalState.pendingConversationId} and projectId: ${finalState.selectedProjectId}`);
+    console.log(`🔄 ChatSection: Navigation state will include pendingConversationId: ${finalState.pendingConversationId}`);
     
     navigationTimerRef.current = window.setTimeout(() => {
       console.log(`⏱️ Executing delayed navigation to ${path} with timestamp ${timestamp}`);
@@ -244,23 +160,18 @@ export function ChatSection({
       if (!activeConversationId) {
         console.log("🔍 ChatSection: Starting new chat creation process...");
         
-        const projectId = persistentProjectIdRef.current;
-        console.log(`🔍 ChatSection: Using project ID for new chat: "${projectId || 'Open Chats'}"`);
-        
         const userMessage = inputValue;
         setInputValue('');
         setIsNavigating(true);
         
-        console.log(`🔍 ChatSection: Creating new conversation with project ID: ${projectId}`);
-        const newConversationId = await startConversation('New conversation', projectId);
-        console.log(`✅ ChatSection: New chat created with ID: ${newConversationId} in project: ${projectId}`);
+        console.log("🔍 ChatSection: Creating new conversation...");
+        const newConversationId = await startConversation('New conversation', selectedProjectId);
+        console.log(`✅ ChatSection: New chat created with ID: ${newConversationId}`);
         
         latestCreatedConversationRef.current = newConversationId;
         
         console.log(`✅ ChatSection: Setting ${newConversationId} as active conversation`);
         setActiveConversationId(newConversationId);
-        
-        await handleProjectAssignment(newConversationId, projectId);
         
         console.log("🔄 ChatSection: Refreshing conversations list immediately");
         await refetchConversations();
@@ -269,8 +180,7 @@ export function ChatSection({
         
         forceNavigation('/', { 
           activeTab: 'chat',
-          newConversationId: newConversationId,
-          selectedProjectId: projectId
+          newConversationId: newConversationId
         });
         
         setTimeout(async () => {
@@ -318,19 +228,15 @@ export function ChatSection({
 
   const handleNewChat = async () => {
     try {
-      const projectId = persistentProjectIdRef.current;
-      console.log(`🔍 ChatSection: handleNewChat - Creating new conversation with project ID: ${projectId}`);
-      
+      console.log("🔍 ChatSection: handleNewChat - Creating new conversation");
       setIsNavigating(true);
       
-      const newConversationId = await startConversation('New conversation', projectId);
+      const newConversationId = await startConversation('New conversation', selectedProjectId);
       
       latestCreatedConversationRef.current = newConversationId;
       
       console.log(`✅ ChatSection: handleNewChat - Setting active conversation to ${newConversationId}`);
       setActiveConversationId(newConversationId);
-      
-      await handleProjectAssignment(newConversationId, projectId);
       
       console.log("🔄 ChatSection: handleNewChat - Refetching conversations");
       await refetchConversations();
@@ -341,8 +247,7 @@ export function ChatSection({
       console.log("🚀 ChatSection: handleNewChat - Initiating navigation to chat tab");
       forceNavigation('/', { 
         activeTab: 'chat',
-        newConversationId: newConversationId,
-        selectedProjectId: projectId
+        newConversationId: newConversationId
       });
       
       setTimeout(() => {
@@ -365,14 +270,29 @@ export function ChatSection({
     }
   };
 
-  const handleProjectSelect = (projectId: string) => {
-    console.log(`🔄 ChatSection: Project selected: ${projectId || 'Open Chats'}`);
-    setSelectedProjectId(projectId);
-    persistentProjectIdRef.current = projectId;
-    
-    if (activeConversationId) {
-      console.log(`ℹ️ ChatSection: Note - Not moving existing conversation to new project automatically`);
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey && !isComposing) {
+      e.preventDefault();
+      handleSendMessage();
     }
+  };
+
+  const handleClearChat = async () => {
+    if (window.confirm('Are you sure you want to clear this conversation?')) {
+      await clearMessages(activeConversationId);
+      toast({
+        title: 'Chat cleared',
+        description: 'All messages have been cleared from this conversation'
+      });
+    }
+  };
+
+  const navigateToDashboard = () => {
+    navigate('/', {
+      state: {
+        activeTab: 'main'
+      }
+    });
   };
 
   const MoveToProjectDialog = ({ isOpen, onClose, onMove, selectedConversation, projects }: any) => {
@@ -423,7 +343,6 @@ export function ChatSection({
           <div>{`💬 Latest Conv: ${latestCreatedConversationRef.current || 'none'}`}</div>
           <div>{`🔄 Force Reload: ${(location.state as any)?.forceReload || 'none'}`}</div>
           <div>{`🔄 Pending Conv: ${(location.state as any)?.pendingConversationId || 'none'}`}</div>
-          <div>{`📁 Project ID: ${selectedProjectId || 'none'} (Ref: ${persistentProjectIdRef.current || 'none'})`}</div>
         </div>
       );
     }
@@ -509,9 +428,8 @@ export function ChatSection({
           
           <div className="mb-4">
             <ProjectSelect
-              onProjectSelect={handleProjectSelect}
+              onProjectSelect={setSelectedProjectId}
               className="w-full mb-4"
-              defaultValue={selectedProjectId || 'open-chats'}
             />
           </div>
           
@@ -586,7 +504,7 @@ export function ChatSection({
               variant="outline" 
               size="sm" 
               className="text-muted-foreground hover:text-neon-red hover:border-neon-red/30 hover:shadow-[0_0_8px_rgba(244,63,94,0.2)]" 
-              onClick={() => setIsDeleteDialogOpen(true)} 
+              onClick={handleClearChat} 
               disabled={!activeConversationId}
             >
               <Trash2 className="h-4 w-4 mr-1" />
@@ -637,25 +555,6 @@ export function ChatSection({
           )}
         </div>
       </div>
-      
-      {/* Add confirmation dialog for clearing messages */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Clear conversation</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to clear all messages in this conversation?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={handleClearChat}>
-              <Trash2 className="h-4 w-4 mr-1" />
-              Clear
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

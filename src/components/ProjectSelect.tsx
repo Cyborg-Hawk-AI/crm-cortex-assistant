@@ -13,39 +13,17 @@ import { useProjects } from '@/hooks/useProjects';
 interface ProjectSelectProps {
   onProjectSelect: (projectId: string) => void;
   className?: string;
-  defaultValue?: string;
 }
 
-export function ProjectSelect({ onProjectSelect, className = "", defaultValue = 'open-chats' }: ProjectSelectProps) {
+export function ProjectSelect({ onProjectSelect, className = "" }: ProjectSelectProps) {
   const { projects, isLoadingProjects } = useProjects();
-  const [selectedProject, setSelectedProject] = useState<string>(defaultValue);
-  
-  // Initialize with the default value
-  useEffect(() => {
-    // Make sure we're setting the internal state with the received default value
-    if (defaultValue) {
-      console.log(`🔍 ProjectSelect: Initializing with default value: ${defaultValue}`);
-      setSelectedProject(defaultValue);
-    }
-  }, [defaultValue]);
+  const [selectedProject, setSelectedProject] = useState<string>('open-chats');
   
   const handleProjectChange = (value: string) => {
-    console.log(`🔍 ProjectSelect: Selected project changed to: ${value}`);
     setSelectedProject(value);
-    
     // Convert 'open-chats' back to '' for the API
-    const apiProjectId = value === 'open-chats' ? '' : value;
-    console.log(`🔍 ProjectSelect: Notifying parent with project ID: ${apiProjectId}`);
-    onProjectSelect(apiProjectId);
+    onProjectSelect(value === 'open-chats' ? '' : value);
   };
-  
-  // Initialize with default value if provided
-  useEffect(() => {
-    if (defaultValue !== 'open-chats') {
-      console.log(`🔍 ProjectSelect: Sending initial project selection: ${defaultValue}`);
-      onProjectSelect(defaultValue === 'open-chats' ? '' : defaultValue);
-    }
-  }, [defaultValue, onProjectSelect]);
   
   return (
     <Select value={selectedProject} onValueChange={handleProjectChange}>
