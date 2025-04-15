@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { MessageSquarePlus, Plus, Trash, ChevronRight, ChevronLeft, FolderPlus, Folder, Edit, MoreVertical, MoveRight } from 'lucide-react';
@@ -35,6 +36,7 @@ export const ConversationSidebar = forwardRef<{
   useImperativeHandle(ref, () => ({
     setIsOpen: (open: boolean) => {
       console.log(`ConversationSidebar: setIsOpen called with ${open}`);
+      // Only toggle if the desired state is different from current state
       if (open !== isOpen) {
         toggleSidebar();
       }
@@ -706,3 +708,4 @@ export const ConversationSidebar = forwardRef<{
       </div>
     </>;
 });
+
