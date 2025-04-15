@@ -254,16 +254,20 @@ export function useMindboard() {
       description?: string, 
       parentPageId?: string,
       isPinned?: boolean
-    }) => mindboardApi.createMindPage(
-      params.sectionId, 
-      params.title, 
-      { 
-        description: params.description, 
-        parentPageId: params.parentPageId,
-        isPinned: params.isPinned
-      }
-    ),
+    }) => {
+      console.log("useMindboard - Creating page with params:", params);
+      return mindboardApi.createMindPage(
+        params.sectionId, 
+        params.title, 
+        { 
+          description: params.description, 
+          parentPageId: params.parentPageId,
+          isPinned: params.isPinned
+        }
+      );
+    },
     onSuccess: (newPage) => {
+      console.log("useMindboard - Page creation success:", newPage);
       queryClient.invalidateQueries({ queryKey: ['mind_pages', activeSectionId] });
       setActivePageId(newPage.id);
       toast({
@@ -272,6 +276,7 @@ export function useMindboard() {
       });
     },
     onError: (error: Error) => {
+      console.error("useMindboard - Page creation error:", error);
       toast({
         title: 'Error',
         description: `Failed to create page: ${error.message}`,
@@ -505,9 +510,18 @@ export function useMindboard() {
     updateSection: updateSectionMutation.mutateAsync,
     deleteSection: deleteSectionMutation.mutateAsync,
     
-    createPage: createPageMutation.mutateAsync,
-    updatePage: updatePageMutation.mutateAsync,
-    deletePage: deletePageMutation.mutateAsync,
+    createPage: async (params: { 
+      sectionId: string, 
+      title: string, 
+      description?: string, 
+      parentPageId?: string,
+      isPinned?: boolean
+    }) => {
+      console.log("useMindboard - createPage called with:", params);
+      const result = await createPageMutation.mutateAsync(params);
+      console.log("useMindboard - createPage result:", result);
+      return result;
+    },
     
     createBlock: createBlockMutation.mutateAsync,
     updateBlock: async (block: Partial<MindBlock> & { id: string }) => {

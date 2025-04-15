@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/card';
@@ -72,6 +73,7 @@ export const PageList: React.FC<PageListProps> = ({
 
   const handleCreatePage = () => {
     if (newPageTitle.trim()) {
+      console.log("Creating new page with title:", newPageTitle.trim());
       const newPage: Partial<MindPage> = {
         id: uuidv4(),
         section_id: sectionId,

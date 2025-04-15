@@ -52,7 +52,9 @@ export function Mindboard() {
 
   // Helper to create a page and return the created page
   const handleCreatePage = async ({ sectionId, title }: { sectionId: string, title: string }) => {
+    console.log("Mindboard - Creating page with title:", title);
     const newPage = await createPage({ sectionId, title });
+    console.log("Mindboard - Created page:", newPage);
     // Immediately set this as the active page to ensure it appears selected in the UI
     setActivePageId(newPage.id);
     return newPage;
@@ -70,6 +72,7 @@ export function Mindboard() {
 
   // Helper to rename a page
   const handleRenamePage = async (id: string, title: string) => {
+    console.log("Mindboard - Renaming page:", id, "to:", title);
     await updatePage({ id, title });
   };
 
