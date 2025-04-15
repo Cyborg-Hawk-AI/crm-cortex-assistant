@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useSidebar } from '@/components/ui/sidebar'; // Assuming this exists in the Shadcn sidebar implementation
+import { useSidebar } from '@/components/ui/sidebar';
 
 interface MindboardSidebarProps {
   mindboards: Mindboard[];
@@ -33,7 +33,8 @@ export function MindboardSidebar({
   onDeleteMindboard,
   isLoading
 }: MindboardSidebarProps) {
-  const { isCollapsed } = useSidebar(); // Use the sidebar context to check if sidebar is collapsed
+  const { state } = useSidebar(); // Use the sidebar context to check if sidebar is collapsed
+  const isCollapsed = state === "collapsed";
 
   if (isLoading) {
     return (
