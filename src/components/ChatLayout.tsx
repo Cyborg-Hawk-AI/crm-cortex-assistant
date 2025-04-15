@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { ConversationSidebar } from './ConversationSidebar';
 import { ChatSection } from './ChatSection';
@@ -137,15 +136,36 @@ export function ChatLayout() {
     }
   };
 
+  // Add a ref for the sidebar container
+  const sidebarContainerRef = useRef<HTMLDivElement>(null);
+
+  // Handle clicks outside the sidebar
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (isMobile && 
+          sidebarContainerRef.current && 
+          !sidebarContainerRef.current.contains(event.target as Node)) {
+        sidebarRef.current?.setIsOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMobile]);
+
   return (
     <TooltipProvider>
       <div className="flex h-full w-full overflow-hidden">
-        <ConversationSidebar 
-          ref={sidebarRef}
-          activeConversationId={activeConversationId}
-          setActiveConversationId={setActiveConversationId}
-          startNewConversation={startConversation}
-        />
+        <div ref={sidebarContainerRef}>
+          <ConversationSidebar 
+            ref={sidebarRef}
+            activeConversationId={activeConversationId}
+            setActiveConversationId={setActiveConversationId}
+            startNewConversation={startConversation}
+          />
+        </div>
         
         <div 
           className="flex-1 overflow-hidden flex flex-col"
