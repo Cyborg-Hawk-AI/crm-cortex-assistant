@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Menu, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Menu, Plus, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { Button } from '@/components/ui/button';
 import { BoardList } from './navigation/BoardList';
@@ -60,7 +60,7 @@ export function MindboardLayout({
   onRenameSection,
   onRenamePage
 }: MindboardLayoutProps) {
-  const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
   const [expandedBoards, setExpandedBoards] = useState<Record<string, boolean>>({});
   const isMobile = useMediaQuery('(max-width: 768px)');
@@ -179,7 +179,7 @@ export function MindboardLayout({
           x: leftSidebarOpen ? 0 : '-100%'
         }}
         className={cn(
-          "border-r border-border bg-background/95 backdrop-blur h-full",
+          "border-r border-border bg-background/95 backdrop-blur h-full relative",
           "supports-[backdrop-filter]:bg-background/60",
           isMobile && leftSidebarOpen ? "absolute inset-0 z-50" : "relative"
         )}
@@ -187,9 +187,19 @@ export function MindboardLayout({
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between p-4">
             <h2 className="text-lg font-semibold text-gradient-primary">Boards</h2>
-            <Button variant="ghost" size="icon" onClick={handleCreateBoard}>
-              <Plus className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" onClick={handleCreateBoard}>
+                <Plus className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setLeftSidebarOpen(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
           
           <BoardList
