@@ -19,8 +19,8 @@ export const MODEL_OPTIONS: Record<ModelType, ModelOption> = {
   },
   deepseek: {
     id: 'deepseek',
-    name: 'Jaxira MYK',
-    description: 'DeepCognition Protocol',
+    name: 'Jaxira MetaYield Kernel',
+    description: 'Advanced AI Cognition Protocol',
     apiModel: 'deepseek-chat'
   }
 };

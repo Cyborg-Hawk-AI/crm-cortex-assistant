@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Trash2, AlertTriangle, Folder, Loader2 } from 'lucide-react';
+import { Send, Trash2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useChatMessages } from '@/hooks/useChatMessages';
@@ -12,9 +12,6 @@ import { ModelToggle } from '@/components/ModelToggle';
 import { useModelSelection } from '@/hooks/useModelSelection';
 import { Alert } from '@/components/ui/alert';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Skeleton } from '@/components/ui/skeleton';
-import { ProjectSelect } from '@/components/ProjectSelect';
 
 interface ChatSectionProps {
   activeConversationId: string | null;
@@ -390,7 +387,6 @@ export function ChatSection({
   if (messages.length === 0) {
     return (
       <div className="flex flex-col h-full justify-center items-center p-4 text-center">
-        {renderNavigationDebug()}
         <div className="max-w-md actionbot-card p-4 sm:p-8 rounded-xl border border-gray-100 shadow-lg bg-cyan-950">
           <div className="w-12 sm:w-16 h-12 sm:h-16 mx-auto mb-4 bg-gradient-to-r from-[#C084FC] to-[#D946EF] rounded-full flex items-center justify-center text-white shadow-[0_0_15px_rgba(168,85,247,0.3)]">
             <Send className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -425,13 +421,6 @@ export function ChatSection({
               <span>DeepSeek API key is missing or invalid. The service requires configuration.</span>
             </Alert>
           )}
-          
-          <div className="mb-4">
-            <ProjectSelect
-              onProjectSelect={setSelectedProjectId}
-              className="w-full mb-4"
-            />
-          </div>
           
           <div className="relative">
             <Textarea 

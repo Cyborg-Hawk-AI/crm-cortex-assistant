@@ -38,7 +38,7 @@ export const ModelToggle = ({ currentModel, onToggle }: ModelToggleProps) => {
               <ToggleGroupItem 
                 value="deepseek" 
                 className={`model-toggle-button ${currentModel === 'deepseek' ? 'selected bg-purple-950/60 text-neon-purple shadow-[0_0_10px_rgba(168,85,247,0.3)]' : ''}`}
-                aria-label="Select Jaxira MYK (DeepSeek)"
+                aria-label="Select Jaxira MetaYield Kernel (DeepSeek)"
                 onClick={() => {
                   if (currentModel !== 'deepseek') onToggle();
                 }}
