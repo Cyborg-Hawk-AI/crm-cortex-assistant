@@ -374,55 +374,69 @@ export const deleteConversationMessages = async (conversationId: string): Promis
 
 // Update the assignConversationToProject function to handle "Open Chats" case (null project_id)
 export const assignConversationToProject = async (conversationId: string, projectId: string): Promise<boolean> => {
-  const userId = await getCurrentUserId();
-  
-  if (!userId) {
-    throw new Error('User not authenticated');
-  }
+  try {
+    const userId = await getCurrentUserId();
+    
+    if (!userId) {
+      console.error('Cannot assign conversation: User not authenticated');
+      throw new Error('User not authenticated');
+    }
 
-  const { data: conversation, error: convError } = await supabase
-    .from('conversations')
-    .select()
-    .eq('id', conversationId)
-    .eq('user_id', userId)
-    .single();
+    console.log(`API call: Assigning conversation ${conversationId} to project ${projectId || 'Open Chats'}`);
 
-  if (convError) {
-    console.error('Error fetching conversation:', convError);
-    return false;
-  }
-
-  const finalProjectId = projectId === '' ? null : projectId;
-
-  if (finalProjectId !== null) {
-    const { data: project, error: projectError } = await supabase
-      .from('action_projects')
+    const { data: conversation, error: convError } = await supabase
+      .from('conversations')
       .select()
-      .eq('id', finalProjectId)
+      .eq('id', conversationId)
       .eq('user_id', userId)
       .single();
 
-    if (projectError) {
-      console.error('Error fetching project:', projectError);
+    if (convError) {
+      console.error('Error fetching conversation:', convError);
       return false;
     }
-  }
 
-  const { error } = await supabase
-    .from('conversations')
-    .update({ 
-      project_id: finalProjectId,
-      updated_at: new Date().toISOString() 
-    })
-    .eq('id', conversationId)
-    .eq('user_id', userId);
+    // Convert empty string to null for the database
+    const finalProjectId = projectId === '' ? null : projectId;
+    console.log(`Using project ID for database: ${finalProjectId === null ? 'null (Open Chats)' : finalProjectId}`);
 
-  if (error) {
-    console.error('Error assigning conversation to project:', error);
+    if (finalProjectId !== null) {
+      const { data: project, error: projectError } = await supabase
+        .from('action_projects')
+        .select()
+        .eq('id', finalProjectId)
+        .eq('user_id', userId)
+        .single();
+
+      if (projectError) {
+        console.error('Error fetching project:', projectError);
+        return false;
+      }
+      
+      console.log(`Verified project exists: ${project.name}`);
+    }
+
+    const { error, data } = await supabase
+      .from('conversations')
+      .update({ 
+        project_id: finalProjectId,
+        updated_at: new Date().toISOString() 
+      })
+      .eq('id', conversationId)
+      .eq('user_id', userId)
+      .select();
+
+    if (error) {
+      console.error('Error assigning conversation to project:', error);
+      return false;
+    }
+
+    console.log(`Successfully assigned conversation to ${finalProjectId ? `project: ${finalProjectId}` : 'Open Chats'}`);
+    return true;
+  } catch (error) {
+    console.error('Exception in assignConversationToProject:', error);
     return false;
   }
-
-  return true;
 };
 
 // Add this new function to update conversation titles

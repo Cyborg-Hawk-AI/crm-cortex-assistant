@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { MessageSquarePlus, Plus, Trash, ChevronRight, ChevronLeft, FolderPlus, Folder, Edit, MoreVertical, MoveRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { getConversations, deleteConversation } from '@/api/messages';
+import { getConversations, deleteConversation, assignConversationToProject } from '@/api/messages';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useProjects } from '@/hooks/useProjects';
@@ -13,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { updateConversationTitle } from '@/api/messages';
+import { useToast } from '@/hooks/use-toast';
 
 interface ConversationSidebarProps {
   activeConversationId: string | null;
@@ -28,6 +30,7 @@ export const ConversationSidebar = forwardRef<{
   startNewConversation
 }, ref) => {
   const isMobile = useIsMobile();
+  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(!isMobile); // Open by default on desktop
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
@@ -165,13 +168,40 @@ export const ConversationSidebar = forwardRef<{
   };
 
   const handleMoveConversation = (conversationId: string) => {
+    console.log(`Preparing to move conversation: ${conversationId}`);
     setSelectedConversationForMove(conversationId);
     setIsMoveDialogOpen(true);
   };
 
-  const handleMoveToProject = (projectId: string) => {
+  const handleMoveToProject = async (projectId: string) => {
     if (selectedConversationForMove) {
-      moveConversationToProject(selectedConversationForMove, projectId);
+      console.log(`Moving conversation ${selectedConversationForMove} to project ${projectId || 'Open Chats'}`);
+      try {
+        // Call the direct API function instead of going through the hook
+        const success = await assignConversationToProject(selectedConversationForMove, projectId);
+        
+        if (success) {
+          toast({
+            title: "Conversation moved",
+            description: `The conversation has been moved to ${projectId ? 'the selected project' : 'Open Chats'}`,
+          });
+          await refetchConversations();
+        } else {
+          toast({
+            title: "Error moving conversation",
+            description: "Failed to move the conversation",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error moving conversation:", error);
+        toast({
+          title: "Error moving conversation",
+          description: "An unexpected error occurred",
+          variant: "destructive",
+        });
+      }
+      
       setSelectedConversationForMove(null);
       setIsMoveDialogOpen(false);
     }
@@ -332,7 +362,7 @@ export const ConversationSidebar = forwardRef<{
                   >
                     <span className="flex-1 text-left">Open Chats</span>
                   </Button>
-                  {projects.map(project => (
+                  {projects && projects.map((project) => (
                     <Button 
                       key={project.id} 
                       variant="outline" 
@@ -670,5 +700,3 @@ export const ConversationSidebar = forwardRef<{
       </div>
     </>;
 });
-
-ConversationSidebar.displayName = 'ConversationSidebar';

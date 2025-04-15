@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as projectsApi from '@/api/projects';
 import { ActionProject } from '@/utils/types';
 import { useToast } from './use-toast';
 import { getCurrentUserId } from '@/lib/supabase';
+import { assignConversationToProject } from '@/api/messages';
 
 export function useProjects() {
   const queryClient = useQueryClient();
@@ -12,7 +12,6 @@ export function useProjects() {
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [userAuthenticated, setUserAuthenticated] = useState<boolean | null>(null);
   
-  // Check if user is authenticated before fetching data
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -27,7 +26,6 @@ export function useProjects() {
     checkAuth();
   }, []);
   
-  // Fetch projects
   const { 
     data: projects = [],
     isLoading: isLoadingProjects,
@@ -36,7 +34,6 @@ export function useProjects() {
   } = useQuery({
     queryKey: ['projects'],
     queryFn: projectsApi.getProjects,
-    // Only run query if user is authenticated
     enabled: userAuthenticated === true,
     retry: 2,
     meta: {
@@ -46,7 +43,6 @@ export function useProjects() {
     }
   });
 
-  // Create project mutation
   const createProjectMutation = useMutation({
     mutationFn: ({ name, description }: { name: string; description?: string }) => 
       projectsApi.createProject(name, description),
@@ -66,7 +62,6 @@ export function useProjects() {
     }
   });
 
-  // Update project mutation
   const updateProjectMutation = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: { name?: string; description?: string } }) => 
       projectsApi.updateProject(id, updates),
@@ -86,12 +81,11 @@ export function useProjects() {
     }
   });
 
-  // Delete project mutation
   const deleteProjectMutation = useMutation({
     mutationFn: (id: string) => projectsApi.deleteProject(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
-      setActiveProjectId(null); // Reset active project if it was deleted
+      setActiveProjectId(null);
       toast({
         title: "Project deleted",
         description: "The project and its conversations have been updated",
@@ -106,7 +100,6 @@ export function useProjects() {
     }
   });
 
-  // Fetch conversations for active project
   const { 
     data: activeProjectConversations = [],
     isLoading: isLoadingActiveProjectConversations,
@@ -123,30 +116,26 @@ export function useProjects() {
     }
   });
 
-  // Create a new project
   const createProject = (name: string, description?: string) => {
     return createProjectMutation.mutate({ name, description });
   };
 
-  // Update a project
   const updateProject = (id: string, updates: { name?: string; description?: string }) => {
     return updateProjectMutation.mutate({ id, updates });
   };
 
-  // Delete a project
   const deleteProject = (id: string) => {
     return deleteProjectMutation.mutate(id);
   };
 
-  // Move a conversation to another project
-  const moveConversationToProject = (conversationId: string, projectId: string) => {
+  const moveConversationToProject = async (conversationId: string, projectId: string) => {
+    console.log(`useProjects: Moving conversation ${conversationId} to project ${projectId || 'Open Chats'}`);
     return assignConversationMutation.mutate({ conversationId, projectId });
   };
 
-  // Assign conversation to project mutation
   const assignConversationMutation = useMutation({
     mutationFn: ({ conversationId, projectId }: { conversationId: string; projectId: string }) => 
-      projectsApi.assignConversationToProject(conversationId, projectId),
+      assignConversationToProject(conversationId, projectId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
       queryClient.invalidateQueries({ queryKey: ['activeProject'] });
@@ -156,6 +145,7 @@ export function useProjects() {
       });
     },
     onError: (error: Error) => {
+      console.error("Error in assignConversationMutation:", error);
       toast({
         title: "Error moving conversation",
         description: error.message,
