@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useMindboard } from '@/hooks/useMindboard';
 import { MindboardLayout } from './MindboardLayout';
 
@@ -30,16 +30,6 @@ export function Mindboard() {
     isLoading
   } = useMindboard();
 
-  // Add debug logs for component state
-  useEffect(() => {
-    console.log('[Mindboard] Component mounted with:', {
-      mindboardCount: mindboards.length,
-      activeMindboardId,
-      activeSectionId,
-      activePageId
-    });
-  }, [mindboards.length, activeMindboardId, activeSectionId, activePageId]);
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -48,65 +38,54 @@ export function Mindboard() {
     );
   }
 
-  // Helper functions that handle the return values properly and return void to match the expected types
-  const handleCreateBoard = async (params: { title: string }): Promise<void> => {
-    console.log('[Mindboard] handleCreateBoard called with:', params);
+  // Helper to create a board and return the created board
+  const handleCreateBoard = async ({ title }: { title: string }) => {
+    const newBoard = await createMindboard({ title });
+    return newBoard;
+  };
+
+  // Helper to create a section and return the created section
+  const handleCreateSection = async ({ mindboardId, title }: { mindboardId: string, title: string }) => {
+    const newSection = await createSection({ mindboardId, title });
+    return newSection;
+  };
+
+  // Helper to create a page and return the created page
+  const handleCreatePage = async ({ sectionId, title }: { sectionId: string, title: string }) => {
+    console.log("[Mindboard] Creating page with title:", title);
+    console.log("[Mindboard] Current title value in createPage handler:", title); 
+    
+    if (!title || title === "New Page") {
+      console.warn("[Mindboard] WARNING: Creating page with default title 'New Page' or empty title!");
+    }
+    
     try {
-      const result = await createMindboard(params);
-      console.log('[Mindboard] Mindboard created successfully:', result);
+      const newPage = await createPage({ sectionId, title });
+      console.log("[Mindboard] Created page response:", newPage);
+      
+      // Immediately set this as the active page to ensure it appears selected in the UI
+      setActivePageId(newPage.id);
+      return newPage;
     } catch (error) {
-      console.error('[Mindboard] Error creating mindboard:', error);
+      console.error("[Mindboard] Error creating page:", error);
+      throw error;
     }
   };
 
-  const handleCreateSection = async (params: { mindboardId: string, title: string }): Promise<void> => {
-    console.log('[Mindboard] handleCreateSection called with:', params);
-    try {
-      const result = await createSection(params);
-      console.log('[Mindboard] Section created successfully:', result);
-    } catch (error) {
-      console.error('[Mindboard] Error creating section:', error);
-    }
+  // Helper to rename a mindboard
+  const handleRenameMindboard = async (id: string, title: string) => {
+    await updateMindboard({ id, title });
   };
 
-  const handleCreatePage = async (params: { sectionId: string, title: string }): Promise<void> => {
-    console.log('[Mindboard] handleCreatePage called with:', params);
-    try {
-      const result = await createPage(params);
-      console.log('[Mindboard] Page created successfully:', result);
-    } catch (error) {
-      console.error('[Mindboard] Error creating page:', error);
-    }
+  // Helper to rename a section
+  const handleRenameSection = async (id: string, title: string) => {
+    await updateSection({ id, title });
   };
 
-  const handleRenameMindboard = async (id: string, title: string): Promise<void> => {
-    console.log(`[Mindboard] handleRenameMindboard called with id: ${id}, title: ${title}`);
-    try {
-      const result = await updateMindboard({ id, title });
-      console.log('[Mindboard] Mindboard renamed successfully:', result);
-    } catch (error) {
-      console.error('[Mindboard] Error renaming mindboard:', error);
-    }
-  };
-
-  const handleRenameSection = async (id: string, title: string): Promise<void> => {
-    console.log(`[Mindboard] handleRenameSection called with id: ${id}, title: ${title}`);
-    try {
-      const result = await updateSection({ id, title });
-      console.log('[Mindboard] Section renamed successfully:', result);
-    } catch (error) {
-      console.error('[Mindboard] Error renaming section:', error);
-    }
-  };
-
-  const handleRenamePage = async (id: string, title: string): Promise<void> => {
-    console.log(`[Mindboard] handleRenamePage called with id: ${id}, title: ${title}`);
-    try {
-      const result = await updatePage({ id, title });
-      console.log('[Mindboard] Page renamed successfully:', result);
-    } catch (error) {
-      console.error('[Mindboard] Error renaming page:', error);
-    }
+  // Helper to rename a page
+  const handleRenamePage = async (id: string, title: string) => {
+    console.log("[Mindboard] Renaming page:", id, "to:", title);
+    await updatePage({ id, title });
   };
 
   return (
