@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+
+import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Plus, MoreVertical, Book, Check } from 'lucide-react';
+import { BookOpen, Plus, MoreVertical, Book, Check, X } from 'lucide-react';
 import { Mindboard } from '@/utils/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 
 interface MindboardSidebarProps {
   mindboards: Mindboard[];
@@ -32,47 +34,66 @@ export function MindboardSidebar({
   onDeleteMindboard,
   isLoading
 }: MindboardSidebarProps) {
+  const { toast } = useToast();
   const [editingMindboardId, setEditingMindboardId] = useState<string | null>(null);
   const [newMindboardTitle, setNewMindboardTitle] = useState('');
   const [isCreatingNew, setIsCreatingNew] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleCreateMindboard = async () => {
-    setIsCreatingNew(true);
-    setNewMindboardTitle('New Mindboard');
-  };
-
-  const handleSaveNewMindboard = async () => {
-    if (newMindboardTitle.trim()) {
-      try {
-        const newMindboard = await onCreateMindboard({ title: newMindboardTitle.trim() });
-        console.log('New mindboard created:', newMindboard);
-        setActiveMindboardId(newMindboard.id);
-      } catch (error) {
-        console.error('Error creating mindboard:', error);
-      }
-    }
-    setIsCreatingNew(false);
-  };
-
-  const handleCancelNewMindboard = () => {
-    setIsCreatingNew(false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSaveNewMindboard();
-    } else if (e.key === 'Escape') {
-      handleCancelNewMindboard();
-    }
-  };
-  
-  const inputRef = React.useRef<HTMLInputElement>(null);
-  React.useEffect(() => {
+  useEffect(() => {
     if (isCreatingNew && inputRef.current) {
       inputRef.current.focus();
       inputRef.current.select();
     }
   }, [isCreatingNew]);
+
+  const handleCreateMindboard = () => {
+    console.log('Starting new mindboard creation...');
+    setIsCreatingNew(true);
+    setNewMindboardTitle('New Mindboard');
+  };
+
+  const handleSaveNewMindboard = async () => {
+    console.log('Attempting to save new mindboard with title:', newMindboardTitle);
+    if (newMindboardTitle.trim()) {
+      try {
+        const newMindboard = await onCreateMindboard({ title: newMindboardTitle.trim() });
+        console.log('New mindboard created successfully:', newMindboard);
+        setActiveMindboardId(newMindboard.id);
+        toast({
+          title: "Mindboard Created",
+          description: `${newMindboardTitle} has been created successfully.`
+        });
+      } catch (error) {
+        console.error('Error creating mindboard:', error);
+        toast({
+          title: "Error",
+          description: "Failed to create new mindboard",
+          variant: "destructive"
+        });
+      }
+    }
+    setIsCreatingNew(false);
+    setNewMindboardTitle('');
+  };
+
+  const handleCancelNewMindboard = () => {
+    console.log('Canceling mindboard creation');
+    setIsCreatingNew(false);
+    setNewMindboardTitle('');
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      console.log('Enter key pressed, saving mindboard');
+      handleSaveNewMindboard();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      console.log('Escape key pressed, canceling mindboard creation');
+      handleCancelNewMindboard();
+    }
+  };
 
   if (isLoading) {
     return (
@@ -96,6 +117,7 @@ export function MindboardSidebar({
           variant="ghost" 
           size="sm" 
           className="h-8 w-8 p-0 text-neon-blue hover:text-neon-aqua hover:bg-[#3A4D62]/50"
+          disabled={isCreatingNew}
         >
           <Plus className="h-4 w-4" />
         </Button>
@@ -128,6 +150,15 @@ export function MindboardSidebar({
                 className="h-6 w-6 p-0 ml-1 opacity-80 hover:opacity-100"
               >
                 <Check className="h-3 w-3" />
+              </Button>
+              
+              <Button 
+                onClick={handleCancelNewMindboard} 
+                variant="ghost" 
+                size="sm" 
+                className="h-6 w-6 p-0 ml-1 opacity-80 hover:opacity-100 text-red-400"
+              >
+                <X className="h-3 w-3" />
               </Button>
             </motion.div>
           )}
