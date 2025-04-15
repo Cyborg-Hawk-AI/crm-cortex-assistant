@@ -4,6 +4,8 @@ import { MindBlock } from '@/utils/types';
 import BlockRenderer from './BlockRenderer';
 import { cn } from '@/lib/utils';
 import debounce from 'lodash.debounce';
+import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface BlockEditorProps {
   pageId: string;
@@ -24,6 +26,7 @@ export function BlockEditor({
   const [pendingUpdates, setPendingUpdates] = useState<Record<string, any>>({});
   const editorRef = useRef<HTMLDivElement>(null);
 
+  // If there are no blocks, create an initial one
   useEffect(() => {
     if (blocks && blocks.length > 0) {
       const sorted = [...blocks].sort((a, b) => {
@@ -34,7 +37,6 @@ export function BlockEditor({
       });
       setOrderedBlocks(sorted);
     } else {
-      setOrderedBlocks([]);
       handleAddTextBlock();
     }
   }, [blocks, pageId]);
@@ -78,7 +80,6 @@ export function BlockEditor({
   }, [onUpdateBlock, debouncedSave]);
 
   const handleAddTextBlock = async (position?: number) => {
-    console.log('Creating new text block at position:', position);
     const newBlockPosition = position ?? (orderedBlocks.length > 0 
       ? Math.max(...orderedBlocks.map(b => b.position || 0)) + 1 
       : 0);
@@ -92,31 +93,45 @@ export function BlockEditor({
         ref={editorRef}
         className="space-y-1 min-h-[calc(100vh-8rem)]"
       >
-        {orderedBlocks.map((block) => (
+        {orderedBlocks.map((block, index) => (
           <div 
             key={block.id}
-            data-block-id={block.id}
-            className={cn(
-              "transition-all duration-200",
-              "hover:bg-background/5 rounded-lg",
-              "focus-within:ring-1 focus-within:ring-neon-purple/30"
-            )}
+            className="relative group"
           >
-            <BlockRenderer
-              block={{
-                ...block,
-                content: pendingUpdates[block.id] || block.content
-              }}
-              onUpdate={(content) => handleUpdateBlock(block, content)}
-              onTypeChange={(newType: string, content: any) => {
-                onUpdateBlock(block.id, content, { 
-                  content_type: newType,
-                  position: block.position 
-                });
-              }}
-              onDelete={() => onDeleteBlock(block.id)}
-              onEnterPress={(content) => handleUpdateBlock(block, content, true)}
-            />
+            <div 
+              data-block-id={block.id}
+              className={cn(
+                "transition-all duration-200",
+                "hover:bg-background/5 rounded-lg",
+                "focus-within:ring-1 focus-within:ring-neon-purple/30"
+              )}
+            >
+              <BlockRenderer
+                block={{
+                  ...block,
+                  content: pendingUpdates[block.id] || block.content
+                }}
+                onUpdate={(content) => handleUpdateBlock(block, content)}
+                onTypeChange={(newType: string, content: any) => {
+                  onUpdateBlock(block.id, content, { 
+                    content_type: newType,
+                    position: block.position 
+                  });
+                }}
+                onDelete={() => onDeleteBlock(block.id)}
+                onEnterPress={(content) => handleUpdateBlock(block, content, true)}
+              />
+            </div>
+            <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 rounded-full bg-background border border-border hover:bg-muted"
+                onClick={() => handleAddTextBlock(block.position + 1)}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         ))}
         {(!orderedBlocks || orderedBlocks.length === 0) && (
@@ -130,7 +145,7 @@ export function BlockEditor({
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
                 page_id: pageId,
-                user_id: 'current-user' // Adding the required user_id property
+                user_id: 'current-user'
               }}
               onUpdate={(content) => handleAddTextBlock()}
               onTypeChange={(newType: string, content: any) => handleAddTextBlock()}
