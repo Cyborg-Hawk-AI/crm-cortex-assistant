@@ -1,19 +1,24 @@
 import { useState, useEffect, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { CommandSidebar } from '@/components/command/CommandSidebar';
 import { ChatLayout } from '@/components/ChatLayout';
 import { ScratchpadNotes } from '@/components/ScratchpadNotes';
+import { Button } from '@/components/ui/button';
+import { NotionSync } from '@/components/NotionSync';
 import { HomeButton } from '@/components/HomeButton';
+import { StatusOverview } from '@/components/StatusOverview';
+import { TodaySyncUps } from '@/components/TodaySyncUps';
+import { UpcomingMeetings } from '@/components/UpcomingMeetings';
+import { RecentTickets } from '@/components/RecentTickets';
+import { RecentMindboardNotes } from '@/components/RecentMindboardNotes';
+import { FloatingActionBar } from '@/components/FloatingActionBar';
+import { Mindboard } from '@/components/mindboard/Mindboard';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { MissionTaskEditor } from '@/components/mission/MissionTaskEditor';
 import { TasksPage } from '@/components/TasksPage';
-import { Mindboard } from '@/components/mindboard/Mindboard';
-import { FloatingActionBar } from '@/components/FloatingActionBar';
 
 interface IndexProps {
   activeTab?: string;
@@ -51,7 +56,7 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
   }[]>([]);
   
   const pendingConversationIdRef = useRef<string | null>(null);
-
+  
   useEffect(() => {
     console.log(`🏗️ Index: Page loaded/rerendered with activeTab=${activeTab}`);
     console.log(`📊 Index: Location state:`, location.state);
@@ -198,11 +203,44 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
   };
 
   return (
-    <div className="min-h-screen flex bg-background">
-      {activeTab === 'main' && <CommandSidebar />}
-      
-      <main className="flex-1">
+    <div className="min-h-screen flex flex-col bg-[#1C2A3A] text-[#F1F5F9]">
+      {renderStateDebugger()}
+      <main className="flex-1 container py-4 max-w-6xl">
         <AnimatePresence mode="wait">
+          {activeTab === 'main' && (
+            <motion.div
+              key="main"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-6"
+            >
+              <div className="flex items-center justify-between mb-1">
+                <h1 className="text-2xl font-bold text-[#F1F5F9] bg-clip-text text-transparent bg-gradient-to-r from-neon-aqua to-neon-purple">Command View</h1>
+                <Button
+                  variant="outline"
+                  className="border-neon-aqua/30 hover:border-neon-aqua/50 hover:shadow-[0_0_15px_rgba(0,247,239,0.2)]"
+                  onClick={() => window.open('https://notion.so', '_blank')}
+                >
+                  Open in Notion
+                </Button>
+              </div>
+
+              <StatusOverview />
+
+              <div className="space-y-4">
+                <TodaySyncUps />
+                
+                <RecentTickets onTaskClick={(taskId) => {
+                  navigate('/projects', { state: { openTaskId: taskId } });
+                }} />
+                
+                <RecentMindboardNotes />
+              </div>
+            </motion.div>
+          )}
+
           {activeTab === 'chat' && (
             <motion.div
               key="chat"
