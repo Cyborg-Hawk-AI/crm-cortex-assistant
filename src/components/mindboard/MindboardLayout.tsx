@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Menu, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -24,7 +23,7 @@ interface MindboardLayoutProps {
   setActiveSectionId: (id: string) => void;
   setActivePageId: (id: string) => void;
   onCreateBoard: (data: { title: string }) => void;
-  onCreateSection: (data: { mindboardId: string; title: string }) => void;
+  onCreateSection: (data: { mindboardId: string; title: string }) => Promise<any>;
   onCreatePage: (data: { sectionId: string; title: string }) => void;
   onCreateBlock: (type: string, content: any, position?: number, parentId?: string) => Promise<MindBlock>;
   onUpdateBlock: (id: string, content: any, properties?: Record<string, any>) => Promise<MindBlock>;
@@ -67,8 +66,6 @@ export function MindboardLayout({
     if (activeMindboardId) {
       try {
         const newSection = await onCreateSection({ mindboardId: activeMindboardId, title: "New Section" });
-        // The onCreateSection should return the new section
-        // Then we can automatically create a page
         if (newSection && newSection.id) {
           onCreatePage({ sectionId: newSection.id, title: "New Page" });
         }
