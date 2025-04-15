@@ -241,7 +241,7 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
       
       const { data: taskData, error: taskError } = await supabase
         .from('tasks')
-        .select('id, title, description')
+        .select('*')
         .eq('id', missionId)
         .single();
       
@@ -249,23 +249,7 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
         throw new Error(taskError?.message || 'Failed to fetch task data');
       }
       
-      const missionDetails: Task = {
-        id: taskData.id,
-        title: taskData.title,
-        description: taskData.description || null,
-        status: 'open' as TaskStatus,
-        priority: 'medium' as TaskPriority,
-        due_date: null,
-        assignee_id: null,
-        reporter_id: '',
-        user_id: '',
-        parent_task_id: null,
-        created_at: new Date(),
-        updated_at: new Date(),
-        tags: []
-      };
-      
-      await linkMissionToConversation(missionDetails);
+      await linkMissionToConversation(taskData as Task);
       setIsLinkingMission(false);
       setSelectedMissionId(null);
       

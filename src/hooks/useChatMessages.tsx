@@ -82,16 +82,12 @@ export const useChatMessages = () => {
             try {
               const { data, error } = await supabase
                 .from('tasks')
-                .select('id, title, description')
+                .select('*')
                 .eq('id', activeConversation.task_id)
                 .single();
                 
               if (!error && data) {
-                setLinkedTask({
-                  id: data.id,
-                  title: data.title,
-                  description: data.description || '',
-                });
+                setLinkedTask(data as Task);
               }
             } catch (error) {
               console.error('Error fetching linked task:', error);
@@ -296,23 +292,7 @@ export const useChatMessages = () => {
 
   const linkMissionToConversation = useCallback(async (mission: Task | null) => {
     if (mission) {
-      const completeTaskObject: Task = {
-        id: mission.id,
-        title: mission.title,
-        description: mission.description || null,
-        status: 'open',
-        priority: 'medium',
-        due_date: null,
-        assignee_id: null,
-        reporter_id: '',
-        user_id: '',
-        parent_task_id: null,
-        created_at: new Date(),
-        updated_at: new Date(),
-        tags: []
-      };
-      
-      setLinkedTask(completeTaskObject);
+      setLinkedTask(mission);
     } else {
       setLinkedTask(null);
     }
