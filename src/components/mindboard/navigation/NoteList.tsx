@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Plus, MoreVertical, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -47,19 +46,15 @@ export function NoteList({
   const [newNoteTitle, setNewNoteTitle] = useState("");
 
   useEffect(() => {
-    // Log whenever notes are updated
     console.log("[NoteList] Notes received:", notes.map(n => ({ id: n.id.substring(0, 8), title: n.title })));
   }, [notes]);
 
-  // Update the editing state when activeNoteId changes
   useEffect(() => {
-    // If we have an active note, make sure we're not in editing mode for a different note
     if (activeNoteId && editingNoteId && activeNoteId !== editingNoteId) {
       setEditingNoteId(null);
       setEditingTitle("");
     }
     
-    // If we're creating a note and a new active note is set, exit creation mode
     if (activeNoteId && isCreatingNote) {
       setIsCreatingNote(false);
       setNewNoteTitle("");
@@ -175,20 +170,17 @@ export function NoteList({
                   </Button>
                 </div>
               ) : (
-                <div className="flex items-center">
+                <div className="flex items-center relative">
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => {
-                      console.log("[NoteList] Selected note:", note.id, note.title);
-                      onSelectNote(note.id);
-                    }}
+                    onClick={() => onSelectNote(note.id)}
                     className={cn(
-                      "flex-1 justify-start h-9",
+                      "flex-1 justify-start h-9 relative pr-10",
                       note.id === activeNoteId && "bg-accent text-accent-foreground font-medium shadow-[0_0_8px_rgba(0,247,239,0.2)]"
                     )}
                   >
-                    {note.title}
+                    <span className="truncate">{note.title}</span>
                   </Button>
                   
                   {(onRenameNote || onDeleteNote) && (
@@ -197,7 +189,7 @@ export function NoteList({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="h-8 w-8 absolute right-1 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           <MoreVertical className="h-4 w-4 text-muted-foreground" />
                         </Button>
