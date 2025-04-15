@@ -474,7 +474,6 @@ export function ChatSection({
         
         <div className="flex justify-between items-center mb-2">
           <div className="flex space-x-2">
-            
             <Button 
               variant="outline" 
               size="sm" 

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { 
   Code, FileText, ShieldAlert, MessageCircleReply, 
@@ -12,16 +12,9 @@ import { useToast } from '@/hooks/use-toast';
 import { NotionTaskSearch } from './NotionTaskSearch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ASSISTANTS } from '@/utils/assistantConfig';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem,
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
 
 export function QuickActions() {
-  const [expanded, setExpanded] = useState(false);
-  const [isLinkingTask, setIsLinkingTask] = useState(false);
+  const [isLinkingTask, setIsLinkingTask] = React.useState(false);
   const { 
     activeConversationId,
     inputValue, 
@@ -101,6 +94,14 @@ export function QuickActions() {
       return;
     }
     
+    if (!activeConversationId) {
+      toast({
+        title: "No active conversation",
+        description: "Please select a conversation first"
+      });
+      return;
+    }
+    
     const messageToSend = inputValue.trim() || `Help me with ${label.toLowerCase()}`;
     
     await setActiveAssistant({
@@ -114,8 +115,6 @@ export function QuickActions() {
     setInputValue('');
     sendMessage(messageToSend, 'user', activeConversationId);
     
-    setExpanded(false);
-    
     toast({
       title: "Assistant activated",
       description: `Using the ${assistantName} assistant`
@@ -123,6 +122,9 @@ export function QuickActions() {
   };
 
   const handleTaskSelect = (taskId: string) => {
+    // Mock tasks for this example
+    const tasks = [];
+    
     const selectedTask = tasks.find(task => task.id === taskId);
     
     if (selectedTask) {
@@ -138,9 +140,7 @@ export function QuickActions() {
     }
   };
 
-  // Mock tasks for this example
-  const tasks = [];
-
+  // Always render the quick actions when there's an active conversation
   if (!activeConversationId) {
     return null;
   }
@@ -162,7 +162,7 @@ export function QuickActions() {
         </div>
       )}
 
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-7 gap-2">
         {actions.map((action) => (
           <motion.div
             key={action.id}
@@ -211,3 +211,4 @@ export function QuickActions() {
     </motion.div>
   );
 }
+
