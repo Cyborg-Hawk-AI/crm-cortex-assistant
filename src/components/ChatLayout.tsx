@@ -26,29 +26,31 @@ export function ChatLayout() {
   
   // Add tracking for attempted navigations
   const navigationAttemptRef = useRef(0);
+  const lastNavigationTimeRef = useRef(0);
 
   // Check for forceReload parameter in location state
   useEffect(() => {
     const state = location.state as { forceReload?: number } | undefined;
     if (state?.forceReload && state.forceReload > forceRefresh) {
-      console.log(`ChatLayout: Detected forceReload flag: ${state.forceReload}`);
+      console.log(`🔍 ChatLayout: Detected forceReload flag: ${state.forceReload}`);
       setForceRefresh(state.forceReload);
       
       // Increment navigation attempt count for debugging
       navigationAttemptRef.current++;
-      console.log(`ChatLayout: Navigation attempt #${navigationAttemptRef.current}`);
+      console.log(`📊 ChatLayout: Navigation attempt #${navigationAttemptRef.current}`);
+      lastNavigationTimeRef.current = Date.now();
     }
   }, [location.state, forceRefresh]);
 
   // Set up debug effect to monitor relevant state
   useEffect(() => {
-    console.log(`ChatLayout: Component rendered with activeConversationId=${activeConversationId}, forceRefresh=${forceRefresh}`);
+    console.log(`🏗️ ChatLayout: Component rendered with activeConversationId=${activeConversationId}, forceRefresh=${forceRefresh}`);
   }, [activeConversationId, forceRefresh]);
 
-  // Immediately respond to conversation changes with enhanced logging
+  // Respond immediately to conversation changes with enhanced logging
   useEffect(() => {
     if (activeConversationId) {
-      console.log(`ChatLayout: Activating conversation: ${activeConversationId}`);
+      console.log(`🔍 ChatLayout: Activating conversation: ${activeConversationId}`);
       
       // First set a flag to show we're handling this particular conversation
       const currentConversation = activeConversationId;
@@ -58,19 +60,19 @@ export function ChatLayout() {
         // Only proceed if this is still the active conversation 
         // (prevents race conditions if user switched conversations)
         if (currentConversation === activeConversationId) {
-          console.log(`ChatLayout: Messages refetched for conversation: ${activeConversationId}`);
+          console.log(`✅ ChatLayout: Messages refetched for conversation: ${activeConversationId}`);
           
           // Add more detailed logging
-          console.log(`ChatLayout: Chat section ref exists: ${!!chatSectionRef.current}`);
+          console.log(`📊 ChatLayout: Chat section ref exists: ${!!chatSectionRef.current}`);
           
           // Schedule multiple scroll attempts with increasing delays
-          [100, 300, 500].forEach(delay => {
+          [100, 300, 500, 1000].forEach(delay => {
             setTimeout(() => {
               if (chatSectionRef.current) {
                 chatSectionRef.current.scrollIntoView({ behavior: 'smooth' });
-                console.log(`ChatLayout: Scrolling chat section into view (delay: ${delay}ms)`);
+                console.log(`📜 ChatLayout: Scrolling chat section into view (delay: ${delay}ms)`);
               } else {
-                console.log(`ChatLayout: Chat section ref not available at ${delay}ms delay`);
+                console.log(`⚠️ ChatLayout: Chat section ref not available at ${delay}ms delay`);
               }
             }, delay);
           });
@@ -78,13 +80,19 @@ export function ChatLayout() {
           // Attempt to force navigation to chat tab if needed
           const state = location.state as { activeTab?: string } | undefined;
           if (state?.activeTab !== 'chat') {
-            console.log('ChatLayout: Current tab is not chat, attempting to navigate');
-            navigate('/', { 
-              state: { 
-                activeTab: 'chat', 
-                forceReload: Date.now() 
-              }
-            });
+            console.log('🔄 ChatLayout: Current tab is not chat, attempting to navigate');
+            
+            const timestamp = Date.now();
+            if (timestamp - lastNavigationTimeRef.current > 1000) { // Prevent navigation spam
+              navigate('/', { 
+                state: { 
+                  activeTab: 'chat', 
+                  forceReload: timestamp 
+                },
+                replace: true
+              });
+              lastNavigationTimeRef.current = timestamp;
+            }
           }
         }
       });

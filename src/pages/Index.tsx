@@ -43,12 +43,33 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
   const pendingNavigationRef = useRef<{
     timestamp: number, 
     target: string, 
-    processed: boolean
+    processed: boolean,
+    attempts: number
   } | null>(null);
   
+  const navigationHistoryRef = useRef<{
+    timestamp: number,
+    action: string,
+    from: string,
+    to: string,
+    state: any
+  }[]>([]);
+  
   useEffect(() => {
-    console.log(`Index: Page loaded/rerendered with activeTab=${activeTab}`);
-    console.log(`Index: Location state:`, location.state);
+    console.log(`🏗️ Index: Page loaded/rerendered with activeTab=${activeTab}`);
+    console.log(`📊 Index: Location state:`, location.state);
+    
+    navigationHistoryRef.current.push({
+      timestamp: Date.now(),
+      action: 'render',
+      from: previousTabRef.current || 'initial',
+      to: activeTab,
+      state: location.state
+    });
+    
+    if (navigationHistoryRef.current.length > 10) {
+      navigationHistoryRef.current.shift();
+    }
   }, [activeTab, location]);
 
   useEffect(() => {
@@ -59,17 +80,24 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
       forceReload?: number;
     } | null;
     
-    console.log("Index: Location state changed:", state);
+    console.log("📊 Index: Location state changed:", state);
     
     if (state?.activeTab && state?.activeTab !== activeTab) {
-      console.log(`Index: Setting active tab to ${state.activeTab} from ${activeTab}`);
-      setActiveTab(state.activeTab);
+      console.log(`🔄 Index: Setting active tab to ${state.activeTab} from ${activeTab}`);
       
       pendingNavigationRef.current = {
         timestamp: Date.now(),
         target: state.activeTab,
-        processed: true
+        processed: false,
+        attempts: (pendingNavigationRef.current?.target === state.activeTab ? 
+                  (pendingNavigationRef.current.attempts + 1) : 1)
       };
+      
+      setActiveTab(state.activeTab);
+      
+      if (pendingNavigationRef.current) {
+        pendingNavigationRef.current.processed = true;
+      }
       
       if (state?.activeTab === 'chat') {
         const newState = { ...state };
@@ -78,6 +106,8 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
       } else {
         navigate(location.pathname, { replace: true });
       }
+      
+      console.log(`✅ Index: Tab change to ${state.activeTab} completed`);
     }
     
     if (state?.openTaskId) {
@@ -94,12 +124,13 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
   
   useEffect(() => {
     if (previousTabRef.current !== activeTab) {
-      console.log(`Index: Tab changed from ${previousTabRef.current || 'initial'} to ${activeTab}`);
+      console.log(`🔄 Index: Tab changed from ${previousTabRef.current || 'initial'} to ${activeTab}`);
       previousTabRef.current = activeTab;
     }
   }, [activeTab]);
 
   const handleOpenChat = () => {
+    console.log("🔍 Index: handleOpenChat called - setting tab to chat");
     setActiveTab('chat');
   };
 
@@ -137,11 +168,13 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
   const renderStateDebugger = () => {
     if (process.env.NODE_ENV !== 'production') {
       return (
-        <div className="hidden">
+        <div className="bg-slate-900 text-xs p-2 rounded-md text-slate-300 mb-2">
           <div>Current Tab: {activeTab}</div>
           <div>Previous Tab: {previousTabRef.current}</div>
           <div>Location Path: {location.pathname}</div>
           <div>Location State: {JSON.stringify(location.state)}</div>
+          <div>Pending Nav: {pendingNavigationRef.current ? 
+            `${pendingNavigationRef.current.target} (processed: ${pendingNavigationRef.current.processed}, attempts: ${pendingNavigationRef.current.attempts})` : 'none'}</div>
         </div>
       );
     }
