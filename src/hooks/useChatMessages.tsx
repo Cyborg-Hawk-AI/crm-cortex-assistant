@@ -9,7 +9,7 @@ import { openAIChat } from '@/utils/openAIStream';
 import { deepSeekChat } from '@/utils/deepSeekStream';
 import { useModelSelection } from './useModelSelection';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/utils/supabase';
+import { supabase } from '@/lib/supabase';
 
 export const useChatMessages = () => {
   const { toast } = useToast();
@@ -295,7 +295,27 @@ export const useChatMessages = () => {
   }, [activeConversationId]);
 
   const linkMissionToConversation = useCallback(async (mission: Task | null) => {
-    setLinkedTask(mission);
+    if (mission) {
+      const completeTaskObject: Task = {
+        id: mission.id,
+        title: mission.title,
+        description: mission.description || null,
+        status: 'open',
+        priority: 'medium',
+        due_date: null,
+        assignee_id: null,
+        reporter_id: '',
+        user_id: '',
+        parent_task_id: null,
+        created_at: new Date(),
+        updated_at: new Date(),
+        tags: []
+      };
+      
+      setLinkedTask(completeTaskObject);
+    } else {
+      setLinkedTask(null);
+    }
     
     if (activeConversationId && mission) {
       try {

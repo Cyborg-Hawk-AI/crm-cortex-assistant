@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { 
@@ -16,6 +15,7 @@ import { useProjects } from '@/hooks/useProjects';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { getCurrentUserId } from '@/lib/supabase';
+import { Task, TaskStatus, TaskPriority } from '@/utils/types';
 
 interface QuickActionsProps {
   activeConversationId: string | null;
@@ -39,7 +39,6 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
   } = useChatMessages();
   const { toast } = useToast();
 
-  // Fetch missions from the database
   const { data: missions = [], isLoading: loadingMissions } = useQuery({
     queryKey: ['missions'],
     queryFn: async () => {
@@ -47,7 +46,6 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
       if (!userId) return [];
       
       try {
-        // We'll consider top-level tasks (without parent_task_id) as missions
         const { data, error } = await supabase
           .from('tasks')
           .select('id, title')
@@ -70,7 +68,6 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
     }
   });
 
-  // Fetch subtasks for a mission when selected
   const [selectedMissionId, setSelectedMissionId] = React.useState<string | null>(null);
   const [missionTasks, setMissionTasks] = React.useState<any[]>([]);
   
@@ -238,12 +235,10 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
 
     try {
       if (!isTask) {
-        // If it's a mission (parent task), set it as the selected mission
         setSelectedMissionId(missionId);
         return;
       }
       
-      // Get the task details
       const { data: taskData, error: taskError } = await supabase
         .from('tasks')
         .select('id, title, description')
@@ -254,13 +249,22 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
         throw new Error(taskError?.message || 'Failed to fetch task data');
       }
       
-      const missionDetails = {
+      const missionDetails: Task = {
         id: taskData.id,
         title: taskData.title,
-        description: taskData.description || '',
+        description: taskData.description || null,
+        status: 'open' as TaskStatus,
+        priority: 'medium' as TaskPriority,
+        due_date: null,
+        assignee_id: null,
+        reporter_id: '',
+        user_id: '',
+        parent_task_id: null,
+        created_at: new Date(),
+        updated_at: new Date(),
+        tags: []
       };
       
-      // Link the mission/task to the conversation
       await linkMissionToConversation(missionDetails);
       setIsLinkingMission(false);
       setSelectedMissionId(null);
@@ -384,7 +388,6 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
               </div>
             ) : (
               <div className="space-y-2">
-                {/* Option to select the parent mission itself */}
                 <Button 
                   variant="outline" 
                   className="w-full justify-start bg-primary/10"
