@@ -46,6 +46,11 @@ export function NoteList({
   const [isCreatingNote, setIsCreatingNote] = useState(false);
   const [newNoteTitle, setNewNoteTitle] = useState("");
 
+  useEffect(() => {
+    // Log whenever notes are updated
+    console.log("[NoteList] Notes received:", notes.map(n => ({ id: n.id.substring(0, 8), title: n.title })));
+  }, [notes]);
+
   // Update the editing state when activeNoteId changes
   useEffect(() => {
     // If we have an active note, make sure we're not in editing mode for a different note
@@ -68,6 +73,7 @@ export function NoteList({
 
   const handleRenameConfirm = () => {
     if (editingNoteId && editingTitle.trim() && onRenameNote) {
+      console.log("[NoteList] Renaming note:", editingNoteId, "to:", editingTitle.trim());
       onRenameNote(editingNoteId, editingTitle.trim());
       setEditingNoteId(null);
       setEditingTitle("");
@@ -86,6 +92,7 @@ export function NoteList({
 
   const handleCreateNoteConfirm = () => {
     if (newNoteTitle.trim() && onCreateNote) {
+      console.log("[NoteList] Creating note with title:", newNoteTitle.trim());
       onCreateNote(newNoteTitle.trim());
       setIsCreatingNote(false);
       setNewNoteTitle("");
@@ -172,7 +179,10 @@ export function NoteList({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => onSelectNote(note.id)}
+                    onClick={() => {
+                      console.log("[NoteList] Selected note:", note.id, note.title);
+                      onSelectNote(note.id);
+                    }}
                     className={cn(
                       "flex-1 justify-start h-9",
                       note.id === activeNoteId && "bg-accent text-accent-foreground font-medium shadow-[0_0_8px_rgba(0,247,239,0.2)]"

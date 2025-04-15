@@ -10,6 +10,7 @@ import { MindPage, MindBlock } from '@/utils/types';
 import { cn } from '@/lib/utils';
 import { v4 as uuidv4 } from 'uuid';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { toast } from '@/hooks/use-toast';
 
 interface PageListProps {
   sectionId: string;
@@ -73,7 +74,7 @@ export const PageList: React.FC<PageListProps> = ({
 
   const handleCreatePage = () => {
     if (newPageTitle.trim()) {
-      console.log("Creating new page with title:", newPageTitle.trim());
+      console.log("[PageList] Creating new page with title:", newPageTitle.trim());
       const newPage: Partial<MindPage> = {
         id: uuidv4(),
         section_id: sectionId,
@@ -82,6 +83,14 @@ export const PageList: React.FC<PageListProps> = ({
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
+
+      console.log("[PageList] New page object before sending to parent:", newPage);
+      
+      // Show toast for debugging
+      toast({
+        title: "Creating page",
+        description: `Creating page with title: "${newPageTitle.trim()}"`,
+      });
 
       onCreatePage(newPage);
       setNewPageTitle('');

@@ -255,7 +255,12 @@ export function useMindboard() {
       parentPageId?: string,
       isPinned?: boolean
     }) => {
-      console.log("useMindboard - Creating page with params:", params);
+      console.log("[useMindboard] createPage mutation with params:", JSON.stringify(params));
+      if (!params.title || params.title === "New Page") {
+        console.warn("[useMindboard] WARNING: Attempting to create page with default title or empty title!");
+        console.trace("[useMindboard] Stack trace for page creation with default title"); 
+      }
+      
       return mindboardApi.createMindPage(
         params.sectionId, 
         params.title, 
@@ -267,16 +272,16 @@ export function useMindboard() {
       );
     },
     onSuccess: (newPage) => {
-      console.log("useMindboard - Page creation success:", newPage);
+      console.log("[useMindboard] Page creation success:", newPage);
       queryClient.invalidateQueries({ queryKey: ['mind_pages', activeSectionId] });
       setActivePageId(newPage.id);
       toast({
         title: 'Page created',
-        description: `${newPage.title} has been created successfully`
+        description: `"${newPage.title}" has been created successfully`
       });
     },
     onError: (error: Error) => {
-      console.error("useMindboard - Page creation error:", error);
+      console.error("[useMindboard] Page creation error:", error);
       toast({
         title: 'Error',
         description: `Failed to create page: ${error.message}`,
@@ -517,10 +522,22 @@ export function useMindboard() {
       parentPageId?: string,
       isPinned?: boolean
     }) => {
-      console.log("useMindboard - createPage called with:", params);
-      const result = await createPageMutation.mutateAsync(params);
-      console.log("useMindboard - createPage result:", result);
-      return result;
+      console.log("[useMindboard - createPage] Creating page with title:", params.title);
+      
+      // Check if title appears to be using default value
+      if (!params.title || params.title === "New Page") {
+        console.error("[useMindboard - createPage] ERROR: Attempting to create page with default title:", params.title);
+        console.trace("[useMindboard - createPage] Stack trace for default title");
+      }
+      
+      try {
+        const result = await createPageMutation.mutateAsync(params);
+        console.log("[useMindboard - createPage] Created page result:", result);
+        return result;
+      } catch (error) {
+        console.error("[useMindboard - createPage] Error creating page:", error);
+        throw error;
+      }
     },
     
     updatePage: updatePageMutation.mutateAsync,

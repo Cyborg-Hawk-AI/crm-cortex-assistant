@@ -339,6 +339,13 @@ export const createMindPage = async (
     throw new Error('User not authenticated');
   }
   
+  // Debug logging
+  console.log("[API - createMindPage] Creating page with title:", title);
+  if (!title || title === "New Page") {
+    console.warn("[API - createMindPage] WARNING: Creating page with default title!");
+    console.trace("[API - createMindPage] Stack trace for default title creation");
+  }
+  
   // Get highest position to place new page at the end
   const { data: existing } = await supabase
     .from('mind_pages')
@@ -355,7 +362,7 @@ export const createMindPage = async (
     id: uuidv4(),
     section_id: sectionId,
     user_id: userId,
-    title,
+    title: title,  // Use the provided title directly
     description: options?.description,
     position,
     is_pinned: options?.isPinned || false,
@@ -364,6 +371,12 @@ export const createMindPage = async (
     updated_at: new Date().toISOString()
   };
   
+  console.log("[API - createMindPage] New page object being sent to DB:", {
+    id: newPage.id,
+    title: newPage.title,
+    section_id: newPage.section_id
+  });
+  
   const { data, error } = await supabase
     .from('mind_pages')
     .insert(newPage)
@@ -371,9 +384,14 @@ export const createMindPage = async (
     .single();
   
   if (error) {
-    console.error('Error creating mind page:', error);
+    console.error('[API - createMindPage] Error creating mind page:', error);
     throw new Error(error.message);
   }
+  
+  console.log("[API - createMindPage] Received response from DB:", {
+    id: data.id,
+    title: data.title
+  });
   
   return data as MindPage;
 };

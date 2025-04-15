@@ -105,10 +105,10 @@ export function MindboardLayout({
     }
   };
 
-  const handleCreatePage = async () => {
+  const handleCreatePage = async (title: string) => {
     if (activeSectionId) {
       try {
-        await onCreatePage({ sectionId: activeSectionId, title: "New Page" });
+        await onCreatePage({ sectionId: activeSectionId, title });
       } catch (error) {
         toast({
           title: "Error",
