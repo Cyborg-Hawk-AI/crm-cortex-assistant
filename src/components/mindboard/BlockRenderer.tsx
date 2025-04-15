@@ -119,7 +119,6 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
               onChange={handleTextChange}
               onKeyDown={handleKeyDown}
               className="w-full bg-transparent resize-none outline-none min-h-[24px] text-foreground placeholder-muted-foreground"
-              placeholder="Type something..."
               rows={1}
               style={{
                 overflow: 'hidden',
@@ -145,7 +144,6 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
                 "flex-1 bg-transparent resize-none outline-none min-h-[24px]",
                 localContent.checked && "line-through text-muted-foreground"
               )}
-              placeholder="To-do item..."
               rows={1}
               style={{
                 overflow: 'hidden',
