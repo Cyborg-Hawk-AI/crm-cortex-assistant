@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -32,7 +33,7 @@ export function MeetingCreateModal({ open, onOpenChange, onSubmit }: MeetingCrea
   const [agenda, setAgenda] = useState('');
   const { toast } = useToast();
   const { createMeeting } = useMeetings();
-  const { getCurrentUserId } = useAuth();
+  const { user } = useAuth();
 
   const resetForm = () => {
     setTitle('');
@@ -57,7 +58,16 @@ export function MeetingCreateModal({ open, onOpenChange, onSubmit }: MeetingCrea
     }
 
     try {
-      const userId = await getCurrentUserId();
+      const userId = user?.id;
+      
+      if (!userId) {
+        toast({
+          title: "Authentication error",
+          description: "Please log in to create a meeting",
+          variant: "destructive"
+        });
+        return;
+      }
       
       // Create meeting bot via Edge Function
       const botResponse = await supabase.functions.invoke('create-meeting-bot', {
