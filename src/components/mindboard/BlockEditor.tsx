@@ -6,6 +6,8 @@ import { cn } from '@/lib/utils';
 import debounce from 'lodash.debounce';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useMediaQuery } from '@/hooks/use-media-query';
+import { useSidebar } from '@/components/ui/sidebar';
 
 interface BlockEditorProps {
   pageId: string;
@@ -25,6 +27,18 @@ export function BlockEditor({
   const [orderedBlocks, setOrderedBlocks] = useState<MindBlock[]>([]);
   const [pendingUpdates, setPendingUpdates] = useState<Record<string, any>>({});
   const editorRef = useRef<HTMLDivElement>(null);
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  
+  // Check if we're in a sidebar extension
+  const sidebarContext = useSidebar();
+  const isSidebarExtension = sidebarContext?.state === "collapsed";
+  
+  // Adapt container width based on viewport
+  const containerClasses = cn(
+    "w-full h-full",
+    "mx-auto px-4 py-6 overflow-y-auto",
+    isMobile || isSidebarExtension ? "max-w-full" : "max-w-4xl"
+  );
 
   // If there are no blocks, create an initial one
   useEffect(() => {
@@ -87,8 +101,12 @@ export function BlockEditor({
     await onCreateBlock('text', { text: '' }, newBlockPosition);
   };
 
+  // Adjust the add button size for mobile
+  const buttonSize = isMobile || isSidebarExtension ? "h-5 w-5" : "h-6 w-6";
+  const iconSize = isMobile || isSidebarExtension ? "h-3 w-3" : "h-4 w-4";
+
   return (
-    <div className="w-full h-full max-w-4xl mx-auto px-4 py-6 overflow-y-auto">
+    <div className={containerClasses}>
       <div 
         ref={editorRef}
         className="space-y-1 min-h-[calc(100vh-8rem)]"
@@ -122,14 +140,17 @@ export function BlockEditor({
                 onEnterPress={(content) => handleUpdateBlock(block, content, true)}
               />
             </div>
-            <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-6 w-6 rounded-full bg-background border border-border hover:bg-muted"
+                className={cn(
+                  "rounded-full bg-background border border-border hover:bg-muted",
+                  buttonSize
+                )}
                 onClick={() => handleAddTextBlock(block.position + 1)}
               >
-                <Plus className="h-4 w-4" />
+                <Plus className={iconSize} />
               </Button>
             </div>
           </div>
