@@ -27,6 +27,11 @@ export function QuickActions() {
   } = useChatMessages();
   const { toast } = useToast();
 
+  // Log the active conversation ID for debugging
+  React.useEffect(() => {
+    console.log(`QuickActions: Active conversation ID is ${activeConversationId || 'null'}`);
+  }, [activeConversationId]);
+
   const actions = [
     {
       id: 'code-review',
@@ -94,7 +99,9 @@ export function QuickActions() {
       return;
     }
     
+    // Double-check if activeConversationId exists before proceeding
     if (!activeConversationId) {
+      console.error("No active conversation ID found when attempting to use quick action");
       toast({
         title: "No active conversation",
         description: "Please select a conversation first"
@@ -104,21 +111,29 @@ export function QuickActions() {
     
     const messageToSend = inputValue.trim() || `Help me with ${label.toLowerCase()}`;
     
-    await setActiveAssistant({
-      id: assistantId,
-      name: assistantName,
-      description: `Specialized in ${label.toLowerCase()} tasks`,
-      icon: icon as string,
-      capabilities: [],
-    });
-    
-    setInputValue('');
-    sendMessage(messageToSend, 'user', activeConversationId);
-    
-    toast({
-      title: "Assistant activated",
-      description: `Using the ${assistantName} assistant`
-    });
+    try {
+      await setActiveAssistant({
+        id: assistantId,
+        name: assistantName,
+        description: `Specialized in ${label.toLowerCase()} tasks`,
+        icon: icon as string,
+        capabilities: [],
+      });
+      
+      setInputValue('');
+      await sendMessage(messageToSend, 'user', activeConversationId);
+      
+      toast({
+        title: "Assistant activated",
+        description: `Using the ${assistantName} assistant`
+      });
+    } catch (error) {
+      console.error("Error in quick action:", error);
+      toast({
+        title: "Error",
+        description: "Failed to activate assistant. Please try again."
+      });
+    }
   };
 
   const handleTaskSelect = (taskId: string) => {
