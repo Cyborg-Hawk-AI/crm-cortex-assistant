@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Mindboard, MindSection, MindPage, MindBlock } from '@/utils/types';
@@ -114,8 +113,8 @@ export function useMindboard() {
   }, [blocks, activePageId]);
   
   const createMindboardMutation = useMutation({
-    mutationFn: (title: string) => 
-      mindboardApi.createMindboard(title),
+    mutationFn: (params: { title: string, description?: string, color?: string, icon?: string }) => 
+      mindboardApi.createMindboard(params.title, params),
     onSuccess: (newMindboard) => {
       queryClient.invalidateQueries({ queryKey: ['mindboards'] });
       setActiveMindboardId(newMindboard.id);
