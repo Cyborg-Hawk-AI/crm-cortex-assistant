@@ -18,7 +18,7 @@ interface MindboardSidebarProps {
   mindboards: Mindboard[];
   activeMindboardId: string | null;
   setActiveMindboardId: (id: string) => void;
-  onCreateMindboard: () => void;
+  onCreateMindboard: (params: { title: string }) => void;
   onRenameMindboard: (id: string, title: string) => void;
   onDeleteMindboard: (id: string) => void;
   isLoading: boolean;
@@ -34,6 +34,7 @@ export function MindboardSidebar({
   isLoading
 }: MindboardSidebarProps) {
   const [renamingBoard, setRenamingBoard] = useState<{ id: string, title: string } | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
   if (isLoading) {
     return (
@@ -53,7 +54,7 @@ export function MindboardSidebar({
       <div className="flex items-center justify-between p-3 border-b border-[#3A4D62]">
         <h2 className="text-lg font-semibold text-[#F1F5F9] bg-clip-text text-transparent bg-gradient-to-r from-neon-blue to-neon-aqua">Mindboards</h2>
         <Button 
-          onClick={onCreateMindboard}
+          onClick={() => setIsCreating(true)}
           variant="ghost" 
           size="sm" 
           className="h-8 w-8 p-0 text-neon-blue hover:text-neon-aqua hover:bg-[#3A4D62]/50"
@@ -141,6 +142,18 @@ export function MindboardSidebar({
           currentTitle={renamingBoard.title}
         />
       )}
+
+      <RenameDialog
+        isOpen={isCreating}
+        onClose={() => setIsCreating(false)}
+        onRename={(title) => {
+          onCreateMindboard({ title });
+          setIsCreating(false);
+        }}
+        currentTitle=""
+        entityType="new mindboard"
+      />
     </div>
   );
 }
+

@@ -38,56 +38,6 @@ export function Mindboard() {
     );
   }
 
-  // Helper to create a board and return the created board
-  const handleCreateBoard = async ({ title }: { title: string }) => {
-    const newBoard = await createMindboard({ title });
-    return newBoard;
-  };
-
-  // Helper to create a section and return the created section
-  const handleCreateSection = async ({ mindboardId, title }: { mindboardId: string, title: string }) => {
-    const newSection = await createSection({ mindboardId, title });
-    return newSection;
-  };
-
-  // Helper to create a page and return the created page
-  const handleCreatePage = async ({ sectionId, title }: { sectionId: string, title: string }) => {
-    console.log("[Mindboard] Creating page with title:", title);
-    console.log("[Mindboard] Current title value in createPage handler:", title); 
-    
-    if (!title || title === "New Page") {
-      console.warn("[Mindboard] WARNING: Creating page with default title 'New Page' or empty title!");
-    }
-    
-    try {
-      const newPage = await createPage({ sectionId, title });
-      console.log("[Mindboard] Created page response:", newPage);
-      
-      // Immediately set this as the active page to ensure it appears selected in the UI
-      setActivePageId(newPage.id);
-      return newPage;
-    } catch (error) {
-      console.error("[Mindboard] Error creating page:", error);
-      throw error;
-    }
-  };
-
-  // Helper to rename a mindboard
-  const handleRenameMindboard = async (id: string, title: string) => {
-    await updateMindboard({ id, title });
-  };
-
-  // Helper to rename a section
-  const handleRenameSection = async (id: string, title: string) => {
-    await updateSection({ id, title });
-  };
-
-  // Helper to rename a page
-  const handleRenamePage = async (id: string, title: string) => {
-    console.log("[Mindboard] Renaming page:", id, "to:", title);
-    await updatePage({ id, title });
-  };
-
   return (
     <MindboardLayout
       mindboards={mindboards}
@@ -100,9 +50,9 @@ export function Mindboard() {
       setActiveMindboardId={setActiveMindboardId}
       setActiveSectionId={setActiveSectionId}
       setActivePageId={setActivePageId}
-      onCreateBoard={handleCreateBoard}
-      onCreateSection={handleCreateSection}
-      onCreatePage={handleCreatePage}
+      onCreateBoard={createMindboard}
+      onCreateSection={createSection}
+      onCreatePage={createPage}
       onCreateBlock={(type, content, position, parentId) => createBlock({ 
         pageId: activePageId || '', 
         contentType: type, 
@@ -115,9 +65,9 @@ export function Mindboard() {
       onDeleteMindboard={(id) => deleteMindboard(id)}
       onDeleteSection={(id) => deleteSection(id)}
       onDeletePage={(id) => deletePage(id)}
-      onRenameMindboard={handleRenameMindboard}
-      onRenameSection={handleRenameSection}
-      onRenamePage={handleRenamePage}
+      onRenameMindboard={(id, title) => updateMindboard({ id, title })}
+      onRenameSection={(id, title) => updateSection({ id, title })}
+      onRenamePage={(id, title) => updatePage({ id, title })}
     />
   );
 }
