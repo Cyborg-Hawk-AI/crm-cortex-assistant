@@ -170,17 +170,19 @@ export function NoteList({
                   </Button>
                 </div>
               ) : (
-                <div className="flex items-center relative">
+                <div className="flex items-center w-full">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => onSelectNote(note.id)}
                     className={cn(
-                      "flex-1 justify-start h-9 relative pr-10",
+                      "flex-1 justify-start h-9 w-full",
                       note.id === activeNoteId && "bg-accent text-accent-foreground font-medium shadow-[0_0_8px_rgba(0,247,239,0.2)]"
                     )}
                   >
-                    <span className="truncate">{note.title}</span>
+                    <div className="flex-1 min-w-0 mr-8">
+                      <span className="block truncate">{note.title}</span>
+                    </div>
                   </Button>
                   
                   {(onRenameNote || onDeleteNote) && (
@@ -189,7 +191,7 @@ export function NoteList({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 absolute right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="h-8 w-8 absolute right-3 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           <MoreVertical className="h-4 w-4 text-muted-foreground" />
                         </Button>
