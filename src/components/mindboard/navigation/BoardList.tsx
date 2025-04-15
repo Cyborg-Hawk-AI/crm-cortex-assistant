@@ -1,12 +1,11 @@
 
 import React from 'react';
-import { ChevronRight, ChevronDown, Book, Trash2, MoreVertical, Edit, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { ChevronRight, ChevronDown, Book, Trash2, MoreVertical, Edit } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Mindboard } from '@/utils/types';
 import { Input } from '@/components/ui/input';
-import { useSidebar } from '@/components/ui/sidebar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,8 +35,6 @@ export function BoardList({
 }: BoardListProps) {
   const [editingBoardId, setEditingBoardId] = React.useState<string | null>(null);
   const [editingTitle, setEditingTitle] = React.useState("");
-  const { state } = useSidebar();
-  const isCollapsed = state === "collapsed";
 
   const handleRenameStart = (board: Mindboard) => {
     setEditingBoardId(board.id);
@@ -60,12 +57,6 @@ export function BoardList({
   return (
     <ScrollArea className="h-full">
       <div className="space-y-1 p-2">
-        <div className="flex items-center justify-between mb-2 px-2">
-          {!isCollapsed && (
-            <h3 className="text-sm font-medium text-foreground">Boards</h3>
-          )}
-        </div>
-        
         {boards.map((board) => {
           const isActive = board.id === activeBoardId;
           const isExpanded = expandedBoards[board.id];
@@ -104,8 +95,7 @@ export function BoardList({
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "flex-1 justify-start gap-2 transition-colors relative",
-                      isCollapsed ? "justify-center p-2" : "pl-8", // Added pl-8 to create space for expand icon
+                      "flex-1 justify-start gap-2 transition-colors",
                       isActive && "bg-accent text-accent-foreground shadow-[0_0_8px_rgba(0,247,239,0.3)]",
                       !isActive && "hover:bg-accent/50"
                     )}
@@ -116,10 +106,7 @@ export function BoardList({
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className={cn(
-                        "absolute h-4 w-4 p-0",
-                        isCollapsed ? "right-0 top-1/2 -translate-y-1/2" : "left-2" // Position based on collapsed state
-                      )}
+                      className="h-4 w-4 p-0"
                       onClick={(e) => {
                         e.stopPropagation();
                         onToggleExpand(board.id);
@@ -131,15 +118,11 @@ export function BoardList({
                         <ChevronRight className="h-4 w-4 shrink-0" />
                       )}
                     </Button>
-                    
                     <Book className="h-4 w-4 shrink-0" />
-                    
-                    {!isCollapsed && (
-                      <span className="truncate">{board.title}</span>
-                    )}
+                    <span className="truncate">{board.title}</span>
                   </Button>
 
-                  {(onDeleteBoard || onRenameBoard) && !isCollapsed && (
+                  {(onDeleteBoard || onRenameBoard) && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
