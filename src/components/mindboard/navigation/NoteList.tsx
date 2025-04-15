@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, MoreVertical, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -45,6 +45,21 @@ export function NoteList({
   const [editingTitle, setEditingTitle] = useState("");
   const [isCreatingNote, setIsCreatingNote] = useState(false);
   const [newNoteTitle, setNewNoteTitle] = useState("");
+
+  // Update the editing state when activeNoteId changes
+  useEffect(() => {
+    // If we have an active note, make sure we're not in editing mode for a different note
+    if (activeNoteId && editingNoteId && activeNoteId !== editingNoteId) {
+      setEditingNoteId(null);
+      setEditingTitle("");
+    }
+    
+    // If we're creating a note and a new active note is set, exit creation mode
+    if (activeNoteId && isCreatingNote) {
+      setIsCreatingNote(false);
+      setNewNoteTitle("");
+    }
+  }, [activeNoteId]);
 
   const handleRenameStart = (note: MindPage) => {
     setEditingNoteId(note.id);

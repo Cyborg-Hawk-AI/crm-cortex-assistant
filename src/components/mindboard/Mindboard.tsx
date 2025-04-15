@@ -53,6 +53,8 @@ export function Mindboard() {
   // Helper to create a page and return the created page
   const handleCreatePage = async ({ sectionId, title }: { sectionId: string, title: string }) => {
     const newPage = await createPage({ sectionId, title });
+    // Immediately set this as the active page to ensure it appears selected in the UI
+    setActivePageId(newPage.id);
     return newPage;
   };
 
