@@ -24,8 +24,8 @@ interface MindboardLayoutProps {
   onCreateBoard: () => void;
   onCreateSection: () => void;
   onCreatePage: () => void;
-  onCreateBlock: (type: string, content: any, position?: number, parentId?: string) => Promise<string>;
-  onUpdateBlock: (id: string, content: any, properties?: Record<string, any>) => Promise<void>;
+  onCreateBlock: (type: string, content: any, position?: number, parentId?: string) => Promise<MindBlock>;
+  onUpdateBlock: (id: string, content: any, properties?: Record<string, any>) => Promise<MindBlock>;
   onDeleteBlock: (id: string) => Promise<void>;
 }
 
