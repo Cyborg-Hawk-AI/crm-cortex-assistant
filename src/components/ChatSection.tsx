@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2, AlertTriangle, Folder, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,7 +11,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { ModelToggle } from '@/components/ModelToggle';
 import { useModelSelection } from '@/hooks/useModelSelection';
 import { Alert } from '@/components/ui/alert';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProjectSelect } from '@/components/ProjectSelect';
@@ -31,6 +30,7 @@ export function ChatSection({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const location = useLocation();
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const {
     selectedModel,
@@ -54,6 +54,25 @@ export function ChatSection({
   } = useToast();
   const [retryCount, setRetryCount] = useState(0);
   const [isNavigating, setIsNavigating] = useState(false);
+  const navigationHistoryRef = useRef<{timestamp: number, action: string, path: string}[]>([]);
+  const [isOnChatTab, setIsOnChatTab] = useState(false);
+
+  useEffect(() => {
+    const state = location.state as { activeTab?: string } | undefined;
+    const onChatTab = state?.activeTab === 'chat';
+    console.log(`Navigation state check: isOnChatTab=${onChatTab}, path=${location.pathname}, state=`, state);
+    setIsOnChatTab(onChatTab);
+    
+    navigationHistoryRef.current.push({
+      timestamp: Date.now(),
+      action: 'location_change',
+      path: location.pathname + (state ? `(activeTab: ${state.activeTab})` : '')
+    });
+    
+    if (navigationHistoryRef.current.length > 10) {
+      navigationHistoryRef.current.shift();
+    }
+  }, [location]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({
@@ -76,6 +95,38 @@ export function ChatSection({
     }
   }, [activeConversationId, messages, isLoading, retryCount]);
 
+  const safeNavigate = (path: string, state: any) => {
+    console.log(`🚀 Attempting navigation to ${path} with state:`, state);
+    
+    navigationHistoryRef.current.push({
+      timestamp: Date.now(),
+      action: 'navigate_attempt',
+      path: path + JSON.stringify(state)
+    });
+    
+    navigate(path, state);
+    
+    setTimeout(() => {
+      const currentState = location.state as { activeTab?: string } | undefined;
+      const navigatedSuccessfully = currentState?.activeTab === state.activeTab;
+      console.log(`✅ Navigation check: success=${navigatedSuccessfully}, currentTab=${currentState?.activeTab}, targetTab=${state.activeTab}`);
+      
+      if (!navigatedSuccessfully && state.activeTab === 'chat') {
+        console.log(`⚠️ Navigation retry needed - first attempt failed`);
+        
+        const timestamp = new Date().getTime();
+        setTimeout(() => {
+          console.log(`🔄 Executing retry navigation with timestamp ${timestamp}`);
+          navigate(path, { 
+            ...state,
+            forceReload: timestamp,
+            replace: true
+          });
+        }, 500);
+      }
+    }, 300);
+  };
+
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
     setApiError(null);
@@ -84,35 +135,32 @@ export function ChatSection({
       if (!activeConversationId) {
         console.log("ChatSection: Starting new chat creation process...");
         
-        // Store the user message temporarily
         const userMessage = inputValue;
-        
-        // Clear input immediately for better UX
         setInputValue('');
+        setIsNavigating(true);
         
-        // Create new conversation first - critical step
+        console.log("ChatSection: Creating new conversation...");
         const newConversationId = await startConversation('New conversation', selectedProjectId);
         console.log(`ChatSection: New chat created with ID: ${newConversationId}`);
         
-        // CRITICAL - Set as active conversation immediately to trigger navigation
-        // This should activate the useEffect in ChatLayout
+        console.log(`ChatSection: Setting ${newConversationId} as active conversation`);
         setActiveConversationId(newConversationId);
-        console.log(`ChatSection: Set ${newConversationId} as active conversation - navigation should trigger`);
         
-        // Mark that we're about to navigate
-        setIsNavigating(true);
-        console.log("ChatSection: Setting isNavigating flag to true");
+        console.log("ChatSection: Scheduling navigation to chat tab after delay");
         
-        // Force navigation to the main chat tab with a small delay
-        console.log("ChatSection: Will force navigation to chat tab after short delay");
         setTimeout(() => {
-          console.log("ChatSection: Now executing delayed navigation to chat tab");
-          navigate('/', { state: { activeTab: 'chat', forceReload: new Date().getTime() } });
+          console.log("ChatSection: Now executing navigation to chat tab");
           
-          // Small delay after navigation before sending message
+          safeNavigate('/', { 
+            state: { 
+              activeTab: 'chat', 
+              forceReload: new Date().getTime()
+            } 
+          });
+          
           setTimeout(async () => {
             try {
-              console.log("ChatSection: Refreshing conversations list...");
+              console.log(`ChatSection: Refreshing conversations list...`);
               await refetchConversations();
               
               console.log(`ChatSection: Sending first message to new conversation ${newConversationId}`);
@@ -129,8 +177,8 @@ export function ChatSection({
                 variant: 'destructive'
               });
             }
-          }, 300);
-        }, 300);
+          }, 500);
+        }, 400);
       } else {
         console.log(`ChatSection: Sending message to existing conversation: ${activeConversationId}`);
         await sendMessage(inputValue, 'user', activeConversationId);
@@ -155,6 +203,8 @@ export function ChatSection({
   const handleNewChat = async () => {
     try {
       console.log("ChatSection: handleNewChat - Creating new conversation");
+      setIsNavigating(true);
+      
       const newConversationId = await startConversation('New conversation', selectedProjectId);
       
       console.log(`ChatSection: handleNewChat - Setting active conversation to ${newConversationId}`);
@@ -166,16 +216,26 @@ export function ChatSection({
       setInputValue('');
       setApiError(null);
       
-      // Force navigation to ensure UI updates
-      console.log("ChatSection: handleNewChat - Forcing navigation to chat tab");
-      navigate('/', { state: { activeTab: 'chat', forceReload: new Date().getTime() } });
-      
-      toast({
-        title: 'New chat started',
-        description: 'You can now start a new conversation'
+      console.log("ChatSection: handleNewChat - Initiating navigation to chat tab");
+      safeNavigate('/', { 
+        state: { 
+          activeTab: 'chat', 
+          forceReload: new Date().getTime()
+        }
       });
+      
+      setTimeout(() => {
+        setIsNavigating(false);
+        
+        toast({
+          title: 'New chat started',
+          description: 'You can now start a new conversation'
+        });
+      }, 500);
     } catch (error) {
       console.error('Error creating new chat:', error);
+      setIsNavigating(false);
+      
       toast({
         title: 'Error',
         description: 'Failed to create a new chat',
@@ -247,6 +307,19 @@ export function ChatSection({
     );
   };
 
+  const renderNavigationDebug = () => {
+    if (process.env.NODE_ENV !== 'production') {
+      return (
+        <div className="hidden">
+          <div>{`Location: ${location.pathname}`}</div>
+          <div>{`Active Tab: ${(location.state as any)?.activeTab || 'none'}`}</div>
+          <div>{`Active Conv: ${activeConversationId || 'none'}`}</div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   if (isLoading) {
     return (
       <div className="flex flex-col h-full justify-center items-center text-muted-foreground">
@@ -269,6 +342,7 @@ export function ChatSection({
       <div className="flex flex-col h-full justify-center items-center text-muted-foreground">
         <Loader2 className="h-8 w-8 text-neon-purple animate-spin" />
         <p className="mt-4 font-medium">Preparing your conversation...</p>
+        {renderNavigationDebug()}
       </div>
     );
   }
@@ -278,6 +352,7 @@ export function ChatSection({
       <div className="flex flex-col h-full justify-center items-center text-muted-foreground">
         <Loader2 className="h-8 w-8 text-neon-purple animate-spin" />
         <p className="mt-4 font-medium">Loading conversation...</p>
+        {renderNavigationDebug()}
       </div>
     );
   }
@@ -285,6 +360,7 @@ export function ChatSection({
   if (messages.length === 0) {
     return (
       <div className="flex flex-col h-full justify-center items-center p-4 text-center">
+        {renderNavigationDebug()}
         <div className="max-w-md actionbot-card p-4 sm:p-8 rounded-xl border border-gray-100 shadow-lg bg-cyan-950">
           <div className="w-12 sm:w-16 h-12 sm:h-16 mx-auto mb-4 bg-gradient-to-r from-[#C084FC] to-[#D946EF] rounded-full flex items-center justify-center text-white shadow-[0_0_15px_rgba(168,85,247,0.3)]">
             <Send className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -364,6 +440,7 @@ export function ChatSection({
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
+      {renderNavigationDebug()}
       <div className="flex-1 overflow-y-auto p-4 space-y-5 bg-gradient-to-br from-[#1C2A3A] to-[#25384D]">
         {messages.map((message: Message) => (
           <MessageComponent key={message.id} message={message} />

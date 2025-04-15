@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut } from 'lucide-react';
 import { ChatLayout } from '@/components/ChatLayout';
@@ -35,10 +34,22 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
   
   const activeTab = propActiveTab || localActiveTab;
   const setActiveTab = propSetActiveTab || setLocalActiveTab;
+  const previousTabRef = useRef<string | null>(null);
   
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isTaskEditorOpen, setIsTaskEditorOpen] = useState(false);
   const [openCreateTask, setOpenCreateTask] = useState(false);
+  
+  const pendingNavigationRef = useRef<{
+    timestamp: number, 
+    target: string, 
+    processed: boolean
+  } | null>(null);
+  
+  useEffect(() => {
+    console.log(`Index: Page loaded/rerendered with activeTab=${activeTab}`);
+    console.log(`Index: Location state:`, location.state);
+  }, [activeTab, location]);
 
   useEffect(() => {
     const state = location.state as { 
@@ -50,27 +61,43 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
     
     console.log("Index: Location state changed:", state);
     
+    if (state?.activeTab && state?.activeTab !== activeTab) {
+      console.log(`Index: Setting active tab to ${state.activeTab} from ${activeTab}`);
+      setActiveTab(state.activeTab);
+      
+      pendingNavigationRef.current = {
+        timestamp: Date.now(),
+        target: state.activeTab,
+        processed: true
+      };
+      
+      if (state?.activeTab === 'chat') {
+        const newState = { ...state };
+        delete newState.activeTab;
+        navigate(location.pathname, { replace: true, state: newState });
+      } else {
+        navigate(location.pathname, { replace: true });
+      }
+    }
+    
     if (state?.openTaskId) {
       setSelectedTaskId(state.openTaskId);
       setIsTaskEditorOpen(true);
       navigate(location.pathname, { replace: true, state: {} });
     }
     
-    if (state?.activeTab) {
-      console.log(`Index: Setting active tab to ${state.activeTab}`);
-      setActiveTab(state.activeTab);
-      
-      // Only clear the activeTab param from state, preserve any other state properties
-      const newState = { ...state };
-      delete newState.activeTab;
-      navigate(location.pathname, { replace: true, state: newState });
-    }
-    
     if (state?.openCreateTask) {
       setOpenCreateTask(true);
       navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [location, navigate, setActiveTab]);
+  }, [location, navigate, setActiveTab, activeTab]);
+  
+  useEffect(() => {
+    if (previousTabRef.current !== activeTab) {
+      console.log(`Index: Tab changed from ${previousTabRef.current || 'initial'} to ${activeTab}`);
+      previousTabRef.current = activeTab;
+    }
+  }, [activeTab]);
 
   const handleOpenChat = () => {
     setActiveTab('chat');
@@ -107,8 +134,23 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
     setIsTaskEditorOpen(false);
   };
 
+  const renderStateDebugger = () => {
+    if (process.env.NODE_ENV !== 'production') {
+      return (
+        <div className="hidden">
+          <div>Current Tab: {activeTab}</div>
+          <div>Previous Tab: {previousTabRef.current}</div>
+          <div>Location Path: {location.pathname}</div>
+          <div>Location State: {JSON.stringify(location.state)}</div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#1C2A3A] text-[#F1F5F9]">
+      {renderStateDebugger()}
       <main className="flex-1 container py-4 max-w-6xl">
         <AnimatePresence mode="wait">
           {activeTab === 'main' && (
@@ -131,20 +173,15 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
                 </Button>
               </div>
 
-              {/* Status Overview */}
               <StatusOverview />
 
-              {/* Main Dashboard Content - Reorganized layout */}
               <div className="space-y-4">
-                {/* Today's SyncUps (replacing AlertsPanel) */}
                 <TodaySyncUps />
                 
-                {/* Recent Missions */}
                 <RecentTickets onTaskClick={(taskId) => {
                   navigate('/missions', { state: { openTaskId: taskId } });
                 }} />
                 
-                {/* Recent Mindboard Notes (was Activity Feed) */}
                 <RecentMindboardNotes />
               </div>
             </motion.div>

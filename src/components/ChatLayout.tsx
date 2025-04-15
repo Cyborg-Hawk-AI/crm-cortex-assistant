@@ -5,7 +5,7 @@ import { ChatSection } from './ChatSection';
 import { useChatMessages } from '@/hooks/useChatMessages';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export function ChatLayout() {
   const { 
@@ -18,10 +18,14 @@ export function ChatLayout() {
   } = useChatMessages();
   
   const location = useLocation();
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const chatSectionRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<{ setIsOpen: (open: boolean) => void }>({ setIsOpen: () => {} });
   const [forceRefresh, setForceRefresh] = useState(0);
+  
+  // Add tracking for attempted navigations
+  const navigationAttemptRef = useRef(0);
 
   // Check for forceReload parameter in location state
   useEffect(() => {
@@ -29,32 +33,59 @@ export function ChatLayout() {
     if (state?.forceReload && state.forceReload > forceRefresh) {
       console.log(`ChatLayout: Detected forceReload flag: ${state.forceReload}`);
       setForceRefresh(state.forceReload);
+      
+      // Increment navigation attempt count for debugging
+      navigationAttemptRef.current++;
+      console.log(`ChatLayout: Navigation attempt #${navigationAttemptRef.current}`);
     }
   }, [location.state, forceRefresh]);
 
-  // Immediately respond to conversation changes
+  // Set up debug effect to monitor relevant state
+  useEffect(() => {
+    console.log(`ChatLayout: Component rendered with activeConversationId=${activeConversationId}, forceRefresh=${forceRefresh}`);
+  }, [activeConversationId, forceRefresh]);
+
+  // Immediately respond to conversation changes with enhanced logging
   useEffect(() => {
     if (activeConversationId) {
       console.log(`ChatLayout: Activating conversation: ${activeConversationId}`);
       
+      // First set a flag to show we're handling this particular conversation
+      const currentConversation = activeConversationId;
+      
       // Force immediate refetch of messages for this conversation
       refetchMessages().then(() => {
-        console.log(`ChatLayout: Messages refetched for conversation: ${activeConversationId}`);
-        
-        // Ensure chat section is visible after messages are loaded
-        if (chatSectionRef.current) {
-          console.log('ChatLayout: Scrolling chat section into view');
-          setTimeout(() => {
-            chatSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
-            
-            // Force another scroll to ensure visibility
+        // Only proceed if this is still the active conversation 
+        // (prevents race conditions if user switched conversations)
+        if (currentConversation === activeConversationId) {
+          console.log(`ChatLayout: Messages refetched for conversation: ${activeConversationId}`);
+          
+          // Add more detailed logging
+          console.log(`ChatLayout: Chat section ref exists: ${!!chatSectionRef.current}`);
+          
+          // Schedule multiple scroll attempts with increasing delays
+          [100, 300, 500].forEach(delay => {
             setTimeout(() => {
               if (chatSectionRef.current) {
                 chatSectionRef.current.scrollIntoView({ behavior: 'smooth' });
-                console.log('ChatLayout: Second scroll to ensure visibility');
+                console.log(`ChatLayout: Scrolling chat section into view (delay: ${delay}ms)`);
+              } else {
+                console.log(`ChatLayout: Chat section ref not available at ${delay}ms delay`);
               }
-            }, 200);
-          }, 100); // Small delay to ensure DOM has updated
+            }, delay);
+          });
+          
+          // Attempt to force navigation to chat tab if needed
+          const state = location.state as { activeTab?: string } | undefined;
+          if (state?.activeTab !== 'chat') {
+            console.log('ChatLayout: Current tab is not chat, attempting to navigate');
+            navigate('/', { 
+              state: { 
+                activeTab: 'chat', 
+                forceReload: Date.now() 
+              }
+            });
+          }
         }
       });
       
@@ -63,7 +94,7 @@ export function ChatLayout() {
         sidebarRef.current.setIsOpen(false);
       }
     }
-  }, [activeConversationId, refetchMessages, isMobile, forceRefresh]);
+  }, [activeConversationId, refetchMessages, isMobile, forceRefresh, navigate, location.state]);
 
   // Handle clicks in the chat area to collapse sidebar on mobile
   const handleChatAreaClick = () => {
