@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as messageApi from '@/api/messages';
+import * as assistantService from '@/services/assistantService';
 import { Message, Task, Assistant } from '@/utils/types';
 import { v4 as uuidv4 } from 'uuid';
 import { useToast } from './use-toast';
@@ -155,7 +156,30 @@ export const useChatMessages = () => {
                 .single();
                 
               if (!error && data) {
-                setLinkedTask(data as Task);
+                // Create a complete Task object with all required properties
+                const fullTask: Task = {
+                  id: data.id,
+                  title: data.title,
+                  description: data.description || '',
+                  status: data.status || 'open',
+                  priority: data.priority || 'medium',
+                  due_date: data.due_date,
+                  assignee_id: data.assignee_id,
+                  reporter_id: data.reporter_id || user?.id || '',
+                  created_at: new Date(data.created_at),
+                  updated_at: new Date(data.updated_at),
+                  tags: data.tags || [],
+                  parent_task_id: data.parent_task_id,
+                  user_id: data.user_id || user?.id
+                };
+                
+                setLinkedTask(fullTask);
+                
+                // Format the task information for the system message
+                const taskMessage = `Task linked: ${data.title} (Status: ${data.status}, Priority: ${data.priority})
+Description: ${data.description || 'No description provided'}
+Due date: ${data.due_date ? new Date(data.due_date).toLocaleDateString() : 'No due date'}
+Last updated: ${new Date(data.updated_at).toLocaleString()}`;
                 
                 const systemMessageExists = dbMessages.some(msg => 
                   msg.isSystem && msg.content.includes(`Task linked: ${data.title}`)
@@ -163,7 +187,7 @@ export const useChatMessages = () => {
                 
                 if (!systemMessageExists) {
                   await saveMessage(
-                    `Task linked: ${data.title} (${data.status}, ${data.priority})`,
+                    taskMessage,
                     'system',
                     uuidv4(),
                     activeConversationId
@@ -185,7 +209,7 @@ export const useChatMessages = () => {
         console.log(`Switched to conversation: ${activeConversationId} with thread: ${activeConversation.open_ai_thread_id || 'none'}`);
       }
     }
-  }, [activeConversationId, conversations, refetchMessages, dbMessages, saveMessage]);
+  }, [activeConversationId, conversations, refetchMessages, dbMessages, saveMessage, user]);
 
   const messages = useCallback(() => {
     const result = [...dbMessages];
@@ -391,8 +415,14 @@ export const useChatMessages = () => {
           throw error;
         }
         
+        // Format the task information for the system message with more details
+        const taskMessage = `Task linked: ${mission.title} (Status: ${mission.status}, Priority: ${mission.priority})
+Description: ${mission.description || 'No description provided'}
+Due date: ${mission.due_date ? new Date(mission.due_date).toLocaleDateString() : 'No due date'}
+Last updated: ${new Date(mission.updated_at).toLocaleString()}`;
+        
         await saveMessage(
-          `Task linked: ${mission.title} (${mission.status}, ${mission.priority})`,
+          taskMessage,
           'system',
           uuidv4(),
           activeConversationId
@@ -490,21 +520,36 @@ export const useChatMessages = () => {
           console.log(`Sending ${messagesForContext.length} messages for context to maintain conversation history`);
           
           const messageHistory = messagesForContext.map(msg => ({
-            role: msg.sender === 'user' ? 'user' : 'assistant',
+            role: msg.sender === 'user' ? 'user' : msg.sender === 'system' ? 'system' : 'assistant',
             content: msg.content
           }));
           
+          // Create enhanced system message with task information if available
+          let systemPrompt = '';
+          
           if (activeAssistant) {
-            messageHistory.unshift({
-              role: 'system',
-              content: `You are ${activeAssistant.name || 'an AI assistant'}. ${activeAssistant.description || ''}`
-            });
+            systemPrompt = `You are ${activeAssistant.name || 'an AI assistant'}. ${activeAssistant.description || ''}`;
           } else {
-            messageHistory.unshift({
-              role: 'system',
-              content: 'You are ActionBot, an engineering assistant designed to help with coding tasks and technical problems.'
-            });
+            systemPrompt = 'You are ActionBot, an engineering assistant designed to help with coding tasks and technical problems.';
           }
+          
+          // Add detailed task information to the system prompt if a task is linked
+          if (linkedTask) {
+            systemPrompt += `\n\nIMPORTANT: This conversation is related to the following task:\n`+
+              `- Title: ${linkedTask.title}\n`+
+              `- Status: ${linkedTask.status}\n`+
+              `- Priority: ${linkedTask.priority}\n`+
+              `- Description: ${linkedTask.description || 'No description provided'}\n`+
+              `- Due Date: ${linkedTask.due_date ? new Date(linkedTask.due_date).toLocaleDateString() : 'No due date'}\n`+
+              `- Last Updated: ${new Date(linkedTask.updated_at).toLocaleString()}\n\n`+
+              `When asked about this task, provide complete information. You should remember these details for the entire conversation.`;
+          }
+          
+          // Insert system message at beginning of message history
+          messageHistory.unshift({
+            role: 'system',
+            content: systemPrompt
+          });
           
           await openAIChat(
             { messages: messageHistory },
@@ -656,7 +701,8 @@ export const useChatMessages = () => {
     addLocalMessage,
     startConversation,
     toast,
-    refetchConversations
+    refetchConversations,
+    generateConversationTitle
   ]);
 
   useEffect(() => {

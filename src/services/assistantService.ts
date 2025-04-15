@@ -1,3 +1,4 @@
+
 import { v4 as uuidv4 } from 'uuid';
 import * as openaiClient from './openaiClient';
 import * as chatHistoryService from './chatHistoryService';
@@ -51,6 +52,8 @@ TASK DETAILS:
   if (task.parent_task_id) {
     taskDetails += `- Part of Mission: ${task.parent_task_id}\n`;
   }
+
+  taskDetails += `- Last Updated: ${new Date(task.updated_at).toLocaleString()}\n`;
   
   return taskDetails;
 };
@@ -118,8 +121,22 @@ export const sendMessage = async (
     // Format the history for context
     const historyForContext = chatHistoryService.formatHistoryForContext(messagesForContext);
     
-    // Include task information in the prompt when available
-    const taskContext = task ? formatTaskDetails(task) : '';
+    // Include comprehensive task information in the prompt when available
+    let taskContext = '';
+    if (task) {
+      taskContext = `
+COMPREHENSIVE TASK INFORMATION:
+- Title: ${task.title}
+- Status: ${task.status}
+- Priority: ${task.priority}
+- Description: ${task.description || 'No description provided'}
+- Due Date: ${task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}
+- Last Updated: ${new Date(task.updated_at).toLocaleString()}
+
+When asked about this task, provide complete information based on the above details.
+Please always remember these details for the entire conversation.
+`;
+    }
     
     // Create a properly formatted prompt with the assistant's prompt, context and task information
     const formattedPrompt = `
@@ -148,7 +165,7 @@ Current Query: ${content}
       // Add task details as a system message at the start for context
       messagesForOpenAI.unshift({
         id: uuidv4(),
-        content: `This conversation is about the following task: ${formatTaskDetails(task)}`,
+        content: `This conversation is about the following task:\n${formatTaskDetails(task)}`,
         sender: 'system',
         timestamp: new Date(),
         isSystem: true,
@@ -222,6 +239,7 @@ Current Query: ${content}
       if (task.description) {
         instructions += ` Description: ${task.description}`;
       }
+      instructions += ` Last updated: ${new Date(task.updated_at).toLocaleString()}`;
     }
 
     // Add additional context instructions
@@ -445,10 +463,15 @@ export const linkTaskToConversation = async (
       // Get the assistant ID from the conversation
       const assistantId = updated.assistant_id || await openaiClient.ensureDefaultAssistantExists();
       
-      // Add a system message about the task being linked
+      // Add a system message about the task being linked with comprehensive details
+      const taskMessage = `Task linked: ${task.title} (Status: ${task.status}, Priority: ${task.priority})
+Description: ${task.description || 'No description provided'}
+Due date: ${task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}
+Last updated: ${new Date(task.updated_at).toLocaleString()}`;
+
       await chatHistoryService.addMessageToConversation(
         conversationId,
-        `Task linked: ${task.title} (${task.status}, ${task.priority})`,
+        taskMessage,
         'system',
         assistantId // Use the assistant ID from the conversation
       );
