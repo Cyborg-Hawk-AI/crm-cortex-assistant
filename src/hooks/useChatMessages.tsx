@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as messageApi from '@/api/messages';
@@ -18,7 +17,7 @@ export const useChatMessages = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { assistantConfig } = useAssistantConfig();
-  const { modelOption, modelSelection } = useModelSelection();
+  const { selectedModel, modelSelection } = useModelSelection();
   const { user } = useAuth();
 
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
@@ -536,17 +535,14 @@ Last updated: ${new Date(mission.updated_at).toLocaleString()}`;
             content: systemPrompt
           });
           
-          // Get the current model from modelSelection
-          const currentModel = modelSelection.id;
-          console.log(`Using ${currentModel} model (${modelSelection.name}) for message sending`);
+          const currentModel = selectedModel;
+          console.log(`Using ${currentModel} model (${modelSelection.name}) for this message`);
           
-          // Determine which chat function to use based on the model
-          let chatFunction;
+          const chatFunction = currentModel === 'deepseek' ? deepSeekChat : openAIChat;
+          
           if (currentModel === 'deepseek') {
-            chatFunction = deepSeekChat;
             console.log('Using DeepSeek API for this message - confirmed selection');
           } else {
-            chatFunction = openAIChat;
             console.log('Using OpenAI API for this message - confirmed selection');
           }
           
@@ -705,7 +701,8 @@ Last updated: ${new Date(mission.updated_at).toLocaleString()}`;
     toast,
     refetchConversations,
     generateConversationTitle,
-    modelSelection // Added modelSelection dependency
+    selectedModel,
+    modelSelection
   ]);
 
   useEffect(() => {
