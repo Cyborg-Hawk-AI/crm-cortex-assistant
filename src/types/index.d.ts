@@ -14,7 +14,7 @@ export interface MindBlock {
     number?: number;
     expanded?: boolean;
     indent?: number;
-  };
+  } | string;
   position: number;
   created_at: string;
   updated_at: string;

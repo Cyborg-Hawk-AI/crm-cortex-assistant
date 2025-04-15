@@ -68,11 +68,18 @@ export function useRecentMindboardNotes(limit: number = 5) {
 
           let snippet = '';
           if (blocks) {
-            if (blocks.content_type === 'text' && blocks.content?.text) {
-              snippet = blocks.content.text;
-            } else if (blocks.content_type === 'heading' && blocks.content?.text) {
-              snippet = blocks.content.text;
+            // Handle the content based on its type
+            if (blocks.content_type === 'text' || blocks.content_type === 'heading') {
+              // Handle content as an object with a text property
+              if (typeof blocks.content === 'object' && blocks.content !== null) {
+                snippet = (blocks.content as any).text || '';
+              } 
+              // Handle content as a string
+              else if (typeof blocks.content === 'string') {
+                snippet = blocks.content;
+              }
             }
+            
             // Truncate snippet to 100 characters
             snippet = snippet.length > 100 ? `${snippet.substring(0, 100)}...` : snippet;
           }
