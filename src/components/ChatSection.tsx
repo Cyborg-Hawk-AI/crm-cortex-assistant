@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2, AlertTriangle, Folder, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -62,6 +63,39 @@ export function ChatSection({
   const navigationTimerRef = useRef<number | null>(null);
   const latestCreatedConversationRef = useRef<string | null>(null);
   const persistentProjectIdRef = useRef<string>(initialProjectId);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  // Add the missing handleClearChat function
+  const handleClearChat = async () => {
+    if (!activeConversationId) return;
+    
+    try {
+      setIsDeleteDialogOpen(false);
+      await clearMessages(activeConversationId);
+      toast({
+        title: 'Conversation cleared',
+        description: 'All messages have been removed from this conversation'
+      });
+    } catch (error) {
+      console.error('Error clearing conversation:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to clear conversation. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  // Add the missing handleKeyDown function
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Allow Enter to submit, but Shift+Enter for new line
+    if (e.key === 'Enter' && !e.shiftKey && !isComposing && !isMobile) {
+      e.preventDefault();
+      if (inputValue.trim() && !isSending && !isStreaming && activeConversationId && !isNavigating) {
+        handleSendMessage();
+      }
+    }
+  };
 
   useEffect(() => {
     if (initialProjectId && initialProjectId !== persistentProjectIdRef.current) {
@@ -552,7 +586,7 @@ export function ChatSection({
               variant="outline" 
               size="sm" 
               className="text-muted-foreground hover:text-neon-red hover:border-neon-red/30 hover:shadow-[0_0_8px_rgba(244,63,94,0.2)]" 
-              onClick={handleClearChat} 
+              onClick={() => setIsDeleteDialogOpen(true)} 
               disabled={!activeConversationId}
             >
               <Trash2 className="h-4 w-4 mr-1" />
@@ -603,6 +637,25 @@ export function ChatSection({
           )}
         </div>
       </div>
+      
+      {/* Add confirmation dialog for clearing messages */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Clear conversation</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to clear all messages in this conversation?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleClearChat}>
+              <Trash2 className="h-4 w-4 mr-1" />
+              Clear
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
