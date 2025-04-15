@@ -523,6 +523,9 @@ export function useMindboard() {
       return result;
     },
     
+    updatePage: updatePageMutation.mutateAsync,
+    deletePage: deletePageMutation.mutateAsync,
+    
     createBlock: createBlockMutation.mutateAsync,
     updateBlock: async (block: Partial<MindBlock> & { id: string }) => {
       console.log('useMindboard - updateBlock called:', {
