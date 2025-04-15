@@ -32,6 +32,15 @@ export const ConversationSidebar = forwardRef<{
   isOpen,
   toggleSidebar
 }, ref) => {
+  useImperativeHandle(ref, () => ({
+    setIsOpen: (open: boolean) => {
+      console.log(`ConversationSidebar: setIsOpen called with ${open}`);
+      if (open !== isOpen) {
+        toggleSidebar();
+      }
+    }
+  }));
+
   const isMobile = useIsMobile();
   const { toast } = useToast();
   const [newProjectName, setNewProjectName] = useState('');
@@ -48,12 +57,6 @@ export const ConversationSidebar = forwardRef<{
   const [newConversationTitle, setNewConversationTitle] = useState('');
   const [isDeleteProjectDialogOpen, setIsDeleteProjectDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
-
-  useImperativeHandle(ref, () => ({
-    setIsOpen: (open: boolean) => {
-      console.log(`ConversationSidebar: setIsOpen called with ${open}`);
-    }
-  }));
 
   const {
     projects,
@@ -75,7 +78,7 @@ export const ConversationSidebar = forwardRef<{
   } = useQuery({
     queryKey: ['conversations'],
     queryFn: getConversations,
-    refetchInterval: 5000, // Poll every 5 seconds to ensure we get new conversations
+    refetchInterval: 5000,
   });
 
   useEffect(() => {
