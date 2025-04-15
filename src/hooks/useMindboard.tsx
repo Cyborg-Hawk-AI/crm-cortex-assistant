@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Mindboard, MindSection, MindPage, MindBlock } from '@/utils/types';
@@ -508,6 +509,8 @@ export function useMindboard() {
     setActivePageId,
     
     createMindboard: createMindboardMutation.mutateAsync,
+    updateMindboard: updateMindboardMutation.mutateAsync,
+    deleteMindboard: deleteMindboardMutation.mutateAsync,
     
     createSection: createSectionMutation.mutateAsync,
     updateSection: updateSectionMutation.mutateAsync,

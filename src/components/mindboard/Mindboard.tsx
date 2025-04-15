@@ -21,10 +21,10 @@ export function Mindboard() {
     createBlock,
     updateBlock,
     deleteBlock,
-    deleteMindboard,
+    deleteMindboard: deleteBoard,
     deleteSection,
     deletePage,
-    updateMindboard,
+    updateMindboard: updateBoard,
     updateSection,
     updatePage,
     isLoading
@@ -74,7 +74,7 @@ export function Mindboard() {
 
   // Helper to rename a mindboard
   const handleRenameMindboard = async (id: string, title: string) => {
-    await updateMindboard({ id, title });
+    await updateBoard({ id, title });
   };
 
   // Helper to rename a section
@@ -112,7 +112,7 @@ export function Mindboard() {
       })}
       onUpdateBlock={(id, content, properties) => updateBlock({ id, content, ...properties })}
       onDeleteBlock={(id) => deleteBlock(id)}
-      onDeleteMindboard={(id) => deleteMindboard(id)}
+      onDeleteMindboard={(id) => deleteBoard(id)}
       onDeleteSection={(id) => deleteSection(id)}
       onDeletePage={(id) => deletePage(id)}
       onRenameMindboard={handleRenameMindboard}
