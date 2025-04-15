@@ -1,5 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { LogOut } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
 import { CommandSidebar } from '@/components/command/CommandSidebar';
 import { ChatLayout } from '@/components/ChatLayout';
 import { ScratchpadNotes } from '@/components/ScratchpadNotes';
@@ -8,6 +13,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { MissionTaskEditor } from '@/components/mission/MissionTaskEditor';
 import { TasksPage } from '@/components/TasksPage';
 import { Mindboard } from '@/components/mindboard/Mindboard';
+import { FloatingActionBar } from '@/components/FloatingActionBar';
 
 interface IndexProps {
   activeTab?: string;
@@ -45,7 +51,7 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
   }[]>([]);
   
   const pendingConversationIdRef = useRef<string | null>(null);
-  
+
   useEffect(() => {
     console.log(`🏗️ Index: Page loaded/rerendered with activeTab=${activeTab}`);
     console.log(`📊 Index: Location state:`, location.state);
