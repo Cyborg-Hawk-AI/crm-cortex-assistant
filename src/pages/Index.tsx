@@ -46,6 +46,8 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
       openCreateTask?: boolean;
     } | null;
     
+    console.log("Index: Location state changed:", state);
+    
     if (state?.openTaskId) {
       setSelectedTaskId(state.openTaskId);
       setIsTaskEditorOpen(true);
@@ -53,8 +55,11 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
     }
     
     if (state?.activeTab) {
+      console.log(`Index: Setting active tab to ${state.activeTab}`);
       setActiveTab(state.activeTab);
-      navigate(location.pathname, { replace: true, state: {} });
+      const newState = { ...state };
+      delete newState.activeTab;
+      navigate(location.pathname, { replace: true, state: newState });
     }
     
     if (state?.openCreateTask) {

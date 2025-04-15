@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2, AlertTriangle, Folder, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -80,30 +81,50 @@ export function ChatSection({
     
     try {
       if (!activeConversationId) {
-        console.log("Starting new chat creation process...");
+        console.log("ChatSection: Starting new chat creation process...");
         
-        // Create new conversation first
-        const newConversationId = await startConversation('New conversation', selectedProjectId);
-        console.log(`New chat created successfully with ID: ${newConversationId}`);
+        // Store the user message temporarily
+        const userMessage = inputValue;
         
-        // First, set as active conversation to trigger UI updates
-        setActiveConversationId(newConversationId);
-        console.log(`Set ${newConversationId} as active conversation`);
-        
-        // Trigger immediate refetch to update the conversations list
-        console.log("Refreshing conversations list...");
-        await refetchConversations();
-        
-        // Send the message after navigation is prepared
-        console.log(`Sending first message to new conversation ${newConversationId}`);
-        await sendMessage(inputValue, 'user', newConversationId);
-        
-        // Clear input after successful send
+        // Clear input immediately for better UX
         setInputValue('');
         
-        console.log(`Successfully initialized new chat ${newConversationId} with first message`);
+        // Create new conversation first - critical step
+        const newConversationId = await startConversation('New conversation', selectedProjectId);
+        console.log(`ChatSection: New chat created with ID: ${newConversationId}`);
+        
+        // CRITICAL - Set as active conversation immediately to trigger navigation
+        // This should activate the useEffect in ChatLayout
+        setActiveConversationId(newConversationId);
+        console.log(`ChatSection: Set ${newConversationId} as active conversation - navigation should trigger`);
+        
+        // Force navigation to the main chat tab
+        console.log("ChatSection: Forcing navigation to chat tab");
+        navigate('/', { state: { activeTab: 'chat' } });
+        
+        // Small delay to ensure navigation has occurred
+        setTimeout(async () => {
+          try {
+            // Trigger immediate refetch to update the conversations list
+            console.log("ChatSection: Refreshing conversations list...");
+            await refetchConversations();
+            
+            // Send the message after navigation is prepared
+            console.log(`ChatSection: Sending first message to new conversation ${newConversationId}`);
+            await sendMessage(userMessage, 'user', newConversationId);
+            
+            console.log(`ChatSection: Successfully initialized new chat ${newConversationId} with first message`);
+          } catch (delayedError) {
+            console.error("Error in delayed operations:", delayedError);
+            toast({
+              title: 'Error',
+              description: 'Failed to complete chat initialization',
+              variant: 'destructive'
+            });
+          }
+        }, 100);
       } else {
-        console.log(`Sending message to existing conversation: ${activeConversationId}`);
+        console.log(`ChatSection: Sending message to existing conversation: ${activeConversationId}`);
         await sendMessage(inputValue, 'user', activeConversationId);
         setInputValue('');
       }
@@ -129,6 +150,10 @@ export function ChatSection({
       refetchConversations();
       setInputValue('');
       setApiError(null);
+      
+      // Force navigation to ensure UI updates
+      console.log("ChatSection: Forcing navigation to chat tab after New Chat button click");
+      navigate('/', { state: { activeTab: 'chat' } });
       
       toast({
         title: 'New chat started',

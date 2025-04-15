@@ -23,17 +23,24 @@ export function ChatLayout() {
   // Immediately respond to conversation changes
   useEffect(() => {
     if (activeConversationId) {
-      console.log(`Activating conversation in layout: ${activeConversationId}`);
-      refetchMessages();
+      console.log(`ChatLayout: Activating conversation: ${activeConversationId}`);
+      
+      // Force immediate refetch of messages for this conversation
+      refetchMessages().then(() => {
+        console.log(`ChatLayout: Messages refetched for conversation: ${activeConversationId}`);
+        
+        // Ensure chat section is visible after messages are loaded
+        if (chatSectionRef.current) {
+          console.log('ChatLayout: Scrolling chat section into view');
+          setTimeout(() => {
+            chatSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+          }, 100); // Small delay to ensure DOM has updated
+        }
+      });
       
       // When on mobile, collapse the sidebar when a conversation is selected
       if (isMobile && sidebarRef.current) {
         sidebarRef.current.setIsOpen(false);
-      }
-      
-      // Ensure chat section is visible
-      if (chatSectionRef.current) {
-        chatSectionRef.current.scrollIntoView({ behavior: 'smooth' });
       }
     }
   }, [activeConversationId, refetchMessages, isMobile]);
