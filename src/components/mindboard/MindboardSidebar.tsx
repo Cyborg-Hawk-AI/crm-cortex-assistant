@@ -18,7 +18,7 @@ interface MindboardSidebarProps {
   mindboards: Mindboard[];
   activeMindboardId: string | null;
   setActiveMindboardId: (id: string) => void;
-  onCreateMindboard: () => void;
+  onCreateMindboard: (title: string) => void; // Update this line
   onRenameMindboard: (id: string) => void;
   onDeleteMindboard: (id: string) => void;
   isLoading: boolean;
@@ -36,9 +36,9 @@ export function MindboardSidebar({
   const [isCreating, setIsCreating] = useState(false);
   const [newBoardTitle, setNewBoardTitle] = useState('');
 
-  const handleCreateBoard = async () => {
+  const handleCreateBoard = () => {
     if (newBoardTitle.trim()) {
-      await onCreateMindboard(newBoardTitle.trim());
+      onCreateMindboard(newBoardTitle.trim());
       setNewBoardTitle('');
       setIsCreating(false);
     }
