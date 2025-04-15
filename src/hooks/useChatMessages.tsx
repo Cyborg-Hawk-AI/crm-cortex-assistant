@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as messageApi from '@/api/messages';
@@ -12,6 +11,7 @@ import { deepSeekChat } from '@/utils/deepSeekStream';
 import { useModelSelection } from './useModelSelection';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
+import { formatTaskContext, TaskContextDetailLevel, shouldRefreshTaskContext, logTaskContext } from '@/utils/taskContextFormatter';
 
 export const useChatMessages = () => {
   const { toast } = useToast();
@@ -440,7 +440,7 @@ Last updated: ${new Date(mission.updated_at).toLocaleString()}`;
   }, [activeConversationId, queryClient, refetchMessages, saveMessage]);
 
   const sendMessage = useCallback(async (
-    content: string, 
+    content: string,
     sender: 'user' | 'assistant' | 'system' = 'user',
     specificConversationId?: string | null
   ) => {
@@ -470,51 +470,65 @@ Last updated: ${new Date(mission.updated_at).toLocaleString()}`;
           );
           conversationId = newConversationId;
           setActiveConversationId(newConversationId);
-          console.log(`Created and activated new conversation: ${newConversationId}`);
-          
-          queryClient.invalidateQueries({ queryKey: ['conversations'] });
-          refetchConversations();
         }
         
-        const conversation = conversations.find(c => c.id === conversationId);
-        const threadId = conversation?.open_ai_thread_id || null;
+        // Get messages for context
+        const messagesForContext = await messageApi.getMessages(conversationId);
+        
+        // Check if we need to refresh task context
+        if (linkedTask && shouldRefreshTaskContext(messagesForContext, linkedTask.id)) {
+          console.log('Refreshing task context due to message threshold');
+          const taskContext = formatTaskContext(linkedTask, TaskContextDetailLevel.COMPREHENSIVE);
+          await saveMessage(taskContext, 'system', uuidv4(), conversationId);
+          logTaskContext('system-message', conversationId, linkedTask.id, true, taskContext.length);
+        }
         
         const userMessageId = uuidv4();
-        const userMessage: Message = {
+        const userMessage = {
           id: userMessageId,
           content,
           sender: 'user',
           timestamp: new Date(),
           isSystem: false,
-          conversation_id: conversationId || '',
+          conversation_id: conversationId,
           user_id: 'current-user'
         };
         
         addLocalMessage(userMessage);
-        
         await saveMessage(content, 'user', userMessageId, conversationId);
         
         const assistantMessageId = uuidv4();
         currentStreamingMessageId.current = assistantMessageId;
         
-        const assistantMessage: Message = {
+        const assistantMessage = {
           id: assistantMessageId,
           content: '',
           sender: 'assistant',
           timestamp: new Date(),
           isSystem: false,
           isStreaming: true,
-          conversation_id: conversationId || '',
+          conversation_id: conversationId,
           user_id: 'current-user'
         };
         
         addLocalMessage(assistantMessage);
-        
         setIsStreaming(true);
         
         let fullResponse = '';
         
         try {
+          // Create enhanced system message with task information
+          let systemPrompt = activeAssistant?.name 
+            ? `You are ${activeAssistant.name}. ${activeAssistant.description || ''}`
+            : 'You are ActionBot, an engineering assistant designed to help with coding tasks and technical problems.';
+          
+          // Add comprehensive task context to system prompt if a task is linked
+          if (linkedTask) {
+            const taskContext = formatTaskContext(linkedTask, TaskContextDetailLevel.COMPREHENSIVE);
+            systemPrompt += `\n\n${taskContext}`;
+            logTaskContext('prompt-inclusion', conversationId, linkedTask.id, true, taskContext.length);
+          }
+
           const messagesForContext = await messageApi.getMessages(conversationId);
           
           console.log(`Sending ${messagesForContext.length} messages for context to maintain conversation history`);
@@ -523,27 +537,6 @@ Last updated: ${new Date(mission.updated_at).toLocaleString()}`;
             role: msg.sender === 'user' ? 'user' : msg.sender === 'system' ? 'system' : 'assistant',
             content: msg.content
           }));
-          
-          // Create enhanced system message with task information if available
-          let systemPrompt = '';
-          
-          if (activeAssistant) {
-            systemPrompt = `You are ${activeAssistant.name || 'an AI assistant'}. ${activeAssistant.description || ''}`;
-          } else {
-            systemPrompt = 'You are ActionBot, an engineering assistant designed to help with coding tasks and technical problems.';
-          }
-          
-          // Add detailed task information to the system prompt if a task is linked
-          if (linkedTask) {
-            systemPrompt += `\n\nIMPORTANT: This conversation is related to the following task:\n`+
-              `- Title: ${linkedTask.title}\n`+
-              `- Status: ${linkedTask.status}\n`+
-              `- Priority: ${linkedTask.priority}\n`+
-              `- Description: ${linkedTask.description || 'No description provided'}\n`+
-              `- Due Date: ${linkedTask.due_date ? new Date(linkedTask.due_date).toLocaleDateString() : 'No due date'}\n`+
-              `- Last Updated: ${new Date(linkedTask.updated_at).toLocaleString()}\n\n`+
-              `When asked about this task, provide complete information. You should remember these details for the entire conversation.`;
-          }
           
           // Insert system message at beginning of message history
           messageHistory.unshift({
