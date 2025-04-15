@@ -95,22 +95,23 @@ export const useChatMessages = () => {
 
   const startConversation = async (title?: string, projectId: string = ''): Promise<string> => {
     try {
+      console.log("Starting new conversation creation process...");
       const conversationTitle = title?.trim() || 'New conversation';
+      
+      console.log(`Creating conversation with title "${conversationTitle}" in ${projectId ? `project ${projectId}` : 'Open Chats'}`);
       const conversation = await messageApi.createConversation(conversationTitle, projectId || undefined);
       
-      console.log(`Auto-activating new conversation: ${conversation.id}`);
+      console.log(`Successfully created new conversation with ID: ${conversation.id}`);
       setActiveConversationId(conversation.id);
       setLocalMessages([]);
       
+      // Immediate UI updates
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      
       refetchConversations();
-      
-      console.log(`Created conversation ${conversation.id} with title "${conversationTitle}" in Open Chats group`);
       
       return conversation.id;
     } catch (error) {
-      console.error('Error starting conversation:', error);
+      console.error('Error creating new conversation:', error);
       toast({
         title: 'Error',
         description: 'Failed to start a new conversation',

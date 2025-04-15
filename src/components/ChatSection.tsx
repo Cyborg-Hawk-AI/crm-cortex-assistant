@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2, AlertTriangle, Folder, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -78,20 +79,39 @@ export function ChatSection({
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
     setApiError(null);
+    
     try {
       if (!activeConversationId) {
-        console.log("Creating a new conversation as part of sending the first message");
+        console.log("Starting new chat creation process...");
+        
+        // Create new conversation first
         const newConversationId = await startConversation('New conversation', selectedProjectId);
+        console.log(`New chat created successfully with ID: ${newConversationId}`);
+        
+        // Immediately set as active and update UI
         setActiveConversationId(newConversationId);
+        console.log(`Set ${newConversationId} as active conversation`);
+        
+        // Trigger immediate refetch to update the conversations list
+        console.log("Refreshing conversations list...");
         refetchConversations();
+        
+        // Send the actual message
+        console.log(`Sending first message to new conversation ${newConversationId}`);
         await sendMessage(inputValue, 'user', newConversationId);
+        
+        // Clear input after successful send
+        setInputValue('');
+        
+        console.log(`Successfully initialized new chat ${newConversationId} with first message`);
       } else {
-        console.log(`Sending message to active conversation: ${activeConversationId}`);
+        console.log(`Sending message to existing conversation: ${activeConversationId}`);
         await sendMessage(inputValue, 'user', activeConversationId);
+        setInputValue('');
       }
-      setInputValue('');
     } catch (error: any) {
-      console.error('Error sending message:', error);
+      console.error('Error in send message flow:', error);
+      
       if (error.message?.includes('API key') && selectedModel === 'deepseek') {
         setApiError('DeepSeek API key is missing or invalid. The service requires configuration.');
       } else {
