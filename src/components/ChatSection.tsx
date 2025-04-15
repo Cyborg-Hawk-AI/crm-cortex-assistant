@@ -218,24 +218,30 @@ export function ChatSection({
   if (messages.length === 0) {
     return (
       <div className="flex flex-col h-full justify-center items-center p-4 text-center">
-        <div className="max-w-md actionbot-card p-8 rounded-xl border border-gray-100 shadow-lg bg-cyan-950">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-[#C084FC] to-[#D946EF] rounded-full flex items-center justify-center text-white shadow-[0_0_15px_rgba(168,85,247,0.3)]">
-            <Send className="h-6 w-6" />
+        <div className="max-w-md actionbot-card p-4 sm:p-8 rounded-xl border border-gray-100 shadow-lg bg-cyan-950">
+          <div className="w-12 sm:w-16 h-12 sm:h-16 mx-auto mb-4 bg-gradient-to-r from-[#C084FC] to-[#D946EF] rounded-full flex items-center justify-center text-white shadow-[0_0_15px_rgba(168,85,247,0.3)]">
+            <Send className="h-5 w-5 sm:h-6 sm:w-6" />
           </div>
-          <h2 className="text-2xl font-bold mb-2 text-foreground">ActionBot Ready</h2>
-          <p className="text-muted-foreground mb-8">
+          <h2 className="text-xl sm:text-2xl font-bold mb-2 text-foreground">ActionBot Ready</h2>
+          <p className="text-sm sm:text-base text-muted-foreground mb-6 sm:mb-8">
             Your engineering assistant is ready to help. What would you like to accomplish today?
           </p>
           
-          <div className="grid gap-2 mb-8">
-            {["Debug this error: TypeError: Cannot read property 'map' of undefined", "Review my API endpoint for security issues", "Optimize this database query for better performance", "Help me set up Kubernetes monitoring for our cluster"].map((question, i) => (
+          <div className="grid gap-2 mb-6 sm:mb-8">
+            {[
+              "Debug this error: TypeError: Cannot read property 'map' of undefined",
+              "Review my API endpoint for security issues",
+              "Optimize this database query for better performance",
+              "Help me set up Kubernetes monitoring for our cluster"
+            ].map((question, i) => (
               <Button 
                 key={i} 
                 variant="outline" 
                 onClick={() => setInputValue(question)} 
-                className="justify-start h-auto border border-neon-purple/20 hover:border-neon-purple/40 hover:shadow-[0_0_8px_rgba(168,85,247,0.3)] transition-all py-[8px] text-left mx-0 my-0 font-thin"
+                className="justify-start h-auto text-xs sm:text-sm border border-neon-purple/20 hover:border-neon-purple/40 hover:shadow-[0_0_8px_rgba(168,85,247,0.3)] transition-all py-2 px-3 sm:py-[8px] sm:px-4 text-left mx-0 my-0 font-light break-words whitespace-normal"
+                style={{ minHeight: '2.5rem' }}
               >
-                {question}
+                <span className="line-clamp-2">{question}</span>
               </Button>
             ))}
           </div>

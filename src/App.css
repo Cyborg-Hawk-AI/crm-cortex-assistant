@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -288,5 +287,14 @@
     border: 2px solid transparent;
     background: linear-gradient(white, white) padding-box,
                 linear-gradient(to right, hsl(var(--neon-aqua)), hsl(var(--neon-purple))) border-box;
+  }
+
+  .mobile-text-balance {
+    text-wrap: balance;
+  }
+
+  .mobile-button-text {
+    @apply text-xs sm:text-sm md:text-base;
+    line-height: 1.3;
   }
 }
