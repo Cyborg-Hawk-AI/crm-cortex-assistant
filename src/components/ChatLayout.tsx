@@ -20,15 +20,20 @@ export function ChatLayout() {
   const chatSectionRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<{ setIsOpen: (open: boolean) => void }>({ setIsOpen: () => {} });
 
-  // When activeConversationId changes, refetch messages
+  // Immediately respond to conversation changes
   useEffect(() => {
     if (activeConversationId) {
-      console.log(`Loading messages for conversation in layout: ${activeConversationId}`);
+      console.log(`Activating conversation in layout: ${activeConversationId}`);
       refetchMessages();
       
       // When on mobile, collapse the sidebar when a conversation is selected
       if (isMobile && sidebarRef.current) {
         sidebarRef.current.setIsOpen(false);
+      }
+      
+      // Ensure chat section is visible
+      if (chatSectionRef.current) {
+        chatSectionRef.current.scrollIntoView({ behavior: 'smooth' });
       }
     }
   }, [activeConversationId, refetchMessages, isMobile]);
@@ -43,7 +48,6 @@ export function ChatLayout() {
   return (
     <TooltipProvider>
       <div className="flex h-full w-full overflow-hidden">
-        {/* Conversation Sidebar with ref for controlling from outside */}
         <ConversationSidebar 
           ref={sidebarRef}
           activeConversationId={activeConversationId}
@@ -51,7 +55,6 @@ export function ChatLayout() {
           startNewConversation={startConversation}
         />
         
-        {/* Main Chat Area */}
         <div 
           className="flex-1 overflow-hidden flex flex-col"
           onClick={handleChatAreaClick}

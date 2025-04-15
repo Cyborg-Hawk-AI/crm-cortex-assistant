@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2, AlertTriangle, Folder, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,7 +15,6 @@ import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProjectSelect } from '@/components/ProjectSelect';
-import { useProjects } from '@/hooks/useProjects';
 
 interface ChatSectionProps {
   activeConversationId: string | null;
@@ -88,15 +86,15 @@ export function ChatSection({
         const newConversationId = await startConversation('New conversation', selectedProjectId);
         console.log(`New chat created successfully with ID: ${newConversationId}`);
         
-        // Immediately set as active and update UI
+        // First, set as active conversation to trigger UI updates
         setActiveConversationId(newConversationId);
         console.log(`Set ${newConversationId} as active conversation`);
         
         // Trigger immediate refetch to update the conversations list
         console.log("Refreshing conversations list...");
-        refetchConversations();
+        await refetchConversations();
         
-        // Send the actual message
+        // Send the message after navigation is prepared
         console.log(`Sending first message to new conversation ${newConversationId}`);
         await sendMessage(inputValue, 'user', newConversationId);
         
