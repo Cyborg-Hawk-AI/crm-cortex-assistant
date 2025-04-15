@@ -1,7 +1,6 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Plus, MoreVertical, Book, Check, X } from 'lucide-react';
+import { BookOpen, Plus, MoreVertical, Book } from 'lucide-react';
 import { Mindboard } from '@/utils/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -14,6 +13,14 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface MindboardSidebarProps {
   mindboards: Mindboard[];
@@ -35,35 +42,25 @@ export function MindboardSidebar({
   isLoading
 }: MindboardSidebarProps) {
   const { toast } = useToast();
-  const [editingMindboardId, setEditingMindboardId] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newMindboardTitle, setNewMindboardTitle] = useState('');
-  const [isCreatingNew, setIsCreatingNew] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (isCreatingNew && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, [isCreatingNew]);
-
   const handleCreateMindboard = () => {
-    console.log('Starting new mindboard creation...');
-    setIsCreatingNew(true);
-    setNewMindboardTitle('New Mindboard');
+    setNewMindboardTitle('');
+    setIsDialogOpen(true);
   };
 
   const handleSaveNewMindboard = async () => {
-    console.log('Attempting to save new mindboard with title:', newMindboardTitle);
     if (newMindboardTitle.trim()) {
       try {
         const newMindboard = await onCreateMindboard({ title: newMindboardTitle.trim() });
-        console.log('New mindboard created successfully:', newMindboard);
         setActiveMindboardId(newMindboard.id);
         toast({
           title: "Mindboard Created",
           description: `${newMindboardTitle} has been created successfully.`
         });
+        setIsDialogOpen(false);
       } catch (error) {
         console.error('Error creating mindboard:', error);
         toast({
@@ -73,25 +70,15 @@ export function MindboardSidebar({
         });
       }
     }
-    setIsCreatingNew(false);
-    setNewMindboardTitle('');
-  };
-
-  const handleCancelNewMindboard = () => {
-    console.log('Canceling mindboard creation');
-    setIsCreatingNew(false);
-    setNewMindboardTitle('');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      console.log('Enter key pressed, saving mindboard');
       handleSaveNewMindboard();
     } else if (e.key === 'Escape') {
       e.preventDefault();
-      console.log('Escape key pressed, canceling mindboard creation');
-      handleCancelNewMindboard();
+      setIsDialogOpen(false);
     }
   };
 
@@ -117,7 +104,6 @@ export function MindboardSidebar({
           variant="ghost" 
           size="sm" 
           className="h-8 w-8 p-0 text-neon-blue hover:text-neon-aqua hover:bg-[#3A4D62]/50"
-          disabled={isCreatingNew}
         >
           <Plus className="h-4 w-4" />
         </Button>
@@ -125,45 +111,7 @@ export function MindboardSidebar({
       
       <ScrollArea className="flex-1">
         <div className="p-2">
-          {isCreatingNew && (
-            <motion.div
-              initial={{ opacity: 0.6, y: -5 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center p-2 rounded-md mb-1 bg-[#3A4D62]/70 shadow-[0_0_8px_rgba(0,247,239,0.3)]"
-            >
-              <Book className="h-4 w-4 mr-2 text-neon-aqua" />
-              
-              <Input 
-                ref={inputRef}
-                value={newMindboardTitle}
-                onChange={(e) => setNewMindboardTitle(e.target.value)}
-                onKeyDown={handleKeyDown}
-                className="flex-1 bg-transparent border-none focus-visible:ring-0 text-[#F1F5F9] h-7 px-0 py-0"
-                placeholder="Mindboard name"
-                autoFocus
-              />
-
-              <Button 
-                onClick={handleSaveNewMindboard} 
-                variant="ghost" 
-                size="sm" 
-                className="h-6 w-6 p-0 ml-1 opacity-80 hover:opacity-100"
-              >
-                <Check className="h-3 w-3" />
-              </Button>
-              
-              <Button 
-                onClick={handleCancelNewMindboard} 
-                variant="ghost" 
-                size="sm" 
-                className="h-6 w-6 p-0 ml-1 opacity-80 hover:opacity-100 text-red-400"
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </motion.div>
-          )}
-
-          {mindboards.length === 0 && !isCreatingNew ? (
+          {mindboards.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-40 text-center p-4">
               <BookOpen className="h-12 w-12 text-[#3A4D62] mb-2" />
               <p className="text-sm text-[#CBD5E1]">No mindboards yet</p>
@@ -228,6 +176,40 @@ export function MindboardSidebar({
           )}
         </div>
       </ScrollArea>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Mindboard</DialogTitle>
+            <DialogDescription>
+              Enter a name for your new mindboard.
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            ref={inputRef}
+            value={newMindboardTitle}
+            onChange={(e) => setNewMindboardTitle(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Mindboard name"
+            className="my-4"
+            autoFocus
+          />
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveNewMindboard}
+              disabled={!newMindboardTitle.trim()}
+            >
+              Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
