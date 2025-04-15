@@ -7,27 +7,13 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 
 import "./components/chat.css";
 
-import Index from "@/pages/Index";
-import NotFound from "@/pages/NotFound";
-import Login from "@/pages/auth/Login";
-import Signup from "@/pages/auth/Signup";
-import ForgotPassword from "@/pages/auth/ForgotPassword";
-import UpdatePassword from "@/pages/auth/UpdatePassword";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { ProjectsPage } from "@/components/projects/ProjectsPage";
-import { ProjectsPageWrapper } from "@/components/projects/ProjectsPageWrapper";
-import { Header } from "@/components/Header";
-import { Mindboard } from "@/components/mindboard/Mindboard";
-import { FloatingActionBar } from "@/components/FloatingActionBar";
-
-function App() {
+const App = () => {
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
         retry: 1,
         staleTime: 1000 * 60 * 5, // 5 minutes
         refetchOnWindowFocus: false,
-        // Remove onError property and use better error handling in individual queries
       },
     },
   }));
@@ -40,7 +26,7 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <ThemeProvider>
-            <div className="min-h-screen bg-[#171C24]">
+            <div className="min-h-screen bg-background">
               <Header activeTab={activeTab} setActiveTab={setActiveTab} />
               <div className="pt-[60px] pb-[70px]">
                 <Routes>
@@ -55,12 +41,10 @@ function App() {
                     </ProtectedRoute>
                   } />
                   
-                  {/* Project Routes (formerly Missions) */}
                   <Route path="/projects" element={<ProtectedRoute><ProjectsPageWrapper key="projects" /></ProtectedRoute>} />
                   <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectsPageWrapper key="project-detail" /></ProtectedRoute>} />
                   <Route path="/projects/:projectId/tasks/:taskId" element={<ProtectedRoute><ProjectsPageWrapper key="project-task" /></ProtectedRoute>} />
                   
-                  {/* Mindboard Route renamed to Notebooks */}
                   <Route path="/mindboard" element={<ProtectedRoute><Mindboard key="notebooks" /></ProtectedRoute>} />
                   
                   <Route path="*" element={<NotFound key="not-found" />} />

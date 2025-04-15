@@ -1,3 +1,4 @@
+
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { Button } from '@/components/ui/button';
@@ -30,7 +31,11 @@ export function UserMenu() {
   const { toast } = useToast();
 
   const handleThemeChange = (newTheme: 'steel' | 'midnight' | 'vibrant') => {
+    if (theme === newTheme) return; // Skip if theme is already selected
+    
+    console.log(`Changing theme from ${theme} to ${newTheme}`);
     setTheme(newTheme);
+    
     toast({
       title: "Theme Updated",
       description: `Switched to ${themes.find(t => t.id === newTheme)?.name}`,

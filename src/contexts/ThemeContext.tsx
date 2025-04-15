@@ -14,7 +14,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<ThemeType>(() => {
     // Try to get the saved theme from localStorage
     const savedTheme = localStorage.getItem('theme') as ThemeType;
-    return savedTheme || 'steel'; // Default to 'steel' if no theme is saved
+    // Validate the saved theme is one of our allowed options
+    const validThemes: ThemeType[] = ['steel', 'midnight', 'vibrant'];
+    return validThemes.includes(savedTheme as ThemeType) ? savedTheme : 'steel';
   });
 
   useEffect(() => {

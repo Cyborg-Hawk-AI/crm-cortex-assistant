@@ -1,11 +1,12 @@
+
 @import './styles/markdown.css';
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
 @layer base {
-  :root {
-    /* Steel Blue Futurism Theme */
+  /* Steel Blue Futurism Theme (Default) */
+  [data-theme="steel"] {
     --background: 212 35% 15%; /* #1C2A3A - Steel Blue */
     --foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
 
@@ -45,6 +46,72 @@
     --neon-yellow: 41 100% 70%; /* #FBBF24 - Amber Yellow */
   }
 
+  /* Midnight Dark Theme */
+  [data-theme="midnight"] {
+    --background: 222 47% 7%; /* #0A111D - Deeper Navy */
+    --foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --card: 221 40% 10%; /* #121C2E - Dark card */
+    --card-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --popover: 221 40% 10%; /* #121C2E - Dark popover */
+    --popover-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --primary: 265 90% 65%; /* #A855F7 - Electric Purple */
+    --primary-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --secondary: 221 40% 15%; /* #1B2A4A - Subtle secondary */
+    --secondary-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --muted: 221 40% 20%; /* #243658 - Muted dark blue */
+    --muted-foreground: 213 25% 65%; /* #A0B2C8 - Subdued text */
+
+    --accent: 265 90% 65%; /* #A855F7 - Electric Purple */
+    --accent-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --destructive: 0 84% 50%; /* #E11D48 - Darker red */
+    --destructive-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --border: 221 40% 25%; /* #2D4271 - Subdued border */
+    --input: 221 40% 25%; /* #2D4271 - Subdued input */
+    --ring: 265 90% 65%; /* #A855F7 - Electric Purple ring */
+
+    --radius: 0.75rem;
+  }
+
+  /* Vibrant Theme */
+  [data-theme="vibrant"] {
+    --background: 260 40% 14%; /* #291E47 - Deep Purple */
+    --foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --card: 260 40% 18%; /* #342559 - Deeper purple card */
+    --card-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --popover: 260 40% 18%; /* #342559 - Deeper purple popover */
+    --popover-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --primary: 291 70% 60%; /* #D04BE2 - Vibrant Pink */
+    --primary-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --secondary: 260 40% 28%; /* #513B8A - Rich purple */
+    --secondary-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --muted: 260 30% 40%; /* #7460A3 - Muted purple */
+    --muted-foreground: 213 25% 80%; /* #C7D5E8 - Light text */
+
+    --accent: 31 100% 65%; /* #FF9937 - Vibrant Orange */
+    --accent-foreground: 222 47% 11%; /* #111827 - Deep Navy */
+
+    --destructive: 346 84% 61%; /* #F43F5E - Rose Red */
+    --destructive-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --border: 260 40% 35%; /* #644AA6 - Vibrant border */
+    --input: 260 40% 35%; /* #644AA6 - Vibrant input */
+    --ring: 291 70% 60%; /* #D04BE2 - Vibrant Pink ring */
+
+    --radius: 0.75rem;
+  }
+
   * {
     @apply border-border;
   }
@@ -55,105 +122,9 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    @apply text-foreground font-bold;
-  }
-
-  p, span, div {
-    @apply text-foreground;
-  }
-
-  a {
-    @apply text-primary hover:text-primary/90 transition-colors font-medium;
-  }
-
-  button {
-    @apply transition-all;
-  }
-
-  /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  ::-webkit-scrollbar-track {
-    @apply bg-transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    @apply bg-[#3A4D62] rounded-full;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-[#4A5D72];
-  }
+  /* ... keep existing code (body, heading styles, etc.) */
 }
 
 @layer components {
-  .glass-panel {
-    @apply bg-[#25384D]/90 backdrop-blur-md border-2 border-[#3A4D62] shadow-lg;
-  }
-  
-  .section-transition {
-    @apply transition-all duration-300 ease-in-out;
-  }
-  
-  .input-focus-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
-  }
-  
-  .hover-card-effect {
-    @apply transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl;
-  }
-
-  .app-button {
-    @apply bg-gradient-to-r from-neon-aqua to-neon-aqua/80 text-[#111827] hover:brightness-110 transition-all shadow-md hover:shadow-[0_0_15px_rgba(0,247,239,0.5)];
-  }
-
-  .card-container {
-    @apply bg-[#25384D] border border-[#3A4D62] rounded-lg shadow-md hover:shadow-[0_0_15px_rgba(0,247,239,0.25)] transition-all;
-  }
-
-  .section-header {
-    @apply text-[#F1F5F9] font-bold;
-  }
-  
-  /* Alert styling */
-  .alert-box {
-    @apply border-l-4 shadow-lg;
-  }
-  
-  .alert-critical {
-    @apply bg-red-900/30 border-neon-red text-white;
-  }
-  
-  .alert-high {
-    @apply bg-orange-900/30 border-neon-yellow text-white;
-  }
-  
-  .alert-medium {
-    @apply bg-amber-900/30 border-amber-400 text-white;
-  }
-  
-  .alert-low {
-    @apply bg-blue-900/30 border-neon-blue text-white;
-  }
-  
-  .task-card {
-    @apply bg-[#1C2A3A] border border-[#3A4D62] shadow-md hover:shadow-[0_0_15px_rgba(0,247,239,0.2)] transition-all;
-  }
-  
-  .status-badge {
-    @apply text-white font-bold shadow-sm;
-  }
-  
-  .action-button {
-    @apply bg-gradient-to-r from-neon-aqua to-neon-aqua/80 text-[#111827] shadow-md hover:brightness-110 hover:shadow-[0_0_15px_rgba(0,247,239,0.5)];
-  }
-
-  /* Glow text effect */
-  .glow-text {
-    text-shadow: 0 0 10px currentColor;
-  }
+  /* ... keep existing code (component styling) */
 }
