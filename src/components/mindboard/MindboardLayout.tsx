@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Menu, Plus, ChevronLeft, ChevronRight, X } from 'lucide-react';
@@ -185,9 +186,17 @@ export function MindboardLayout({
         )}
       >
         <div className="flex h-full flex-col">
-          <div className="flex items-center justify-between p-4">
-            <h2 className="text-lg font-semibold text-gradient-primary">Boards</h2>
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between p-4 relative">
+            <h2 className="text-lg font-semibold text-gradient-primary pl-8 md:pl-0">Boards</h2>
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 md:static flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setLeftSidebarOpen(!leftSidebarOpen)}
+                className="mr-2"
+              >
+                {leftSidebarOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </Button>
               <Button variant="ghost" size="icon" onClick={handleCreateBoard}>
                 <Plus className="h-4 w-4" />
               </Button>
