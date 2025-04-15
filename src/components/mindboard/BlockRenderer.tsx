@@ -1,20 +1,29 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { MindBlock } from '@/utils/types';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { FileIcon, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { CommandMenu } from './CommandMenu';
+import { BlockCommand } from '@/types/commands';
 
 interface BlockRendererProps {
   block: MindBlock;
   onUpdate?: (content: any) => void;
+  onTypeChange?: (blockId: string, newType: string, content: any) => void;
 }
 
-export const BlockRenderer: React.FC<BlockRendererProps> = ({ block, onUpdate }) => {
+export const BlockRenderer: React.FC<BlockRendererProps> = ({ 
+  block, 
+  onUpdate,
+  onTypeChange
+}) => {
   const [localContent, setLocalContent] = useState(block.content);
+  const [showCommands, setShowCommands] = useState(false);
+  const [commandQuery, setCommandQuery] = useState('');
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  
+
   useEffect(() => {
     console.log('BlockRenderer - Block updated from props:', {
       blockId: block.id.substring(0, 8),
@@ -30,6 +39,27 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({ block, onUpdate })
       textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
     }
   }, [localContent.text]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === '/' && !showCommands) {
+      e.preventDefault();
+      const rect = e.currentTarget.getBoundingClientRect();
+      setMenuPosition({
+        x: rect.left,
+        y: rect.bottom + window.scrollY
+      });
+      setShowCommands(true);
+      setCommandQuery('/');
+    }
+  };
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    if (showCommands) {
+      setCommandQuery(value);
+    }
+    handleContentChange(value);
+  };
 
   const handleContentChange = (value: string) => {
     const newContent = { ...localContent, text: value };
@@ -60,7 +90,18 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({ block, onUpdate })
     }
   };
 
-  // Get indentation level from block properties
+  const handleCommandSelect = (command: BlockCommand) => {
+    setShowCommands(false);
+    setCommandQuery('');
+    if (onTypeChange) {
+      const newContent = { text: '' };
+      if (command.type === 'todo') {
+        newContent.checked = false;
+      }
+      onTypeChange(block.id, command.type, newContent);
+    }
+  };
+
   const indentLevel = block.content?.indent || 0;
   const indentPadding = indentLevel * 24; // 24px per indent level
 
@@ -72,7 +113,8 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({ block, onUpdate })
             <textarea
               ref={textareaRef}
               value={localContent.text || ''}
-              onChange={(e) => handleContentChange(e.target.value)}
+              onChange={handleTextChange}
+              onKeyDown={handleKeyDown}
               className="w-full bg-transparent resize-none outline-none min-h-[24px] text-foreground placeholder-muted-foreground"
               placeholder="Type something..."
               rows={1}
@@ -94,7 +136,8 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({ block, onUpdate })
             <textarea
               ref={textareaRef}
               value={localContent.text || ''}
-              onChange={(e) => handleContentChange(e.target.value)}
+              onChange={handleTextChange}
+              onKeyDown={handleKeyDown}
               className={cn(
                 "flex-1 bg-transparent resize-none outline-none min-h-[24px]",
                 localContent.checked && "line-through text-muted-foreground"
@@ -230,9 +273,21 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({ block, onUpdate })
     }
   };
 
+  const renderedContent = renderContent();
+  const isEditable = block.content_type === 'text' || block.content_type === 'todo';
+
   return (
     <div className="w-full overflow-hidden transition-all duration-200 hover:bg-muted/5 rounded-lg">
-      {renderContent()}
+      {renderedContent}
+      {showCommands && (
+        <CommandMenu
+          isOpen={showCommands}
+          searchQuery={commandQuery}
+          onSelect={handleCommandSelect}
+          onClose={() => setShowCommands(false)}
+          anchorPosition={menuPosition}
+        />
+      )}
     </div>
   );
 };

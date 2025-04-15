@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { MindBlock } from '@/utils/types';
 import BlockRenderer from './BlockRenderer';
@@ -22,18 +21,14 @@ export function BlockEditor({
   onDeleteBlock 
 }: BlockEditorProps) {
   const [newBlockType, setNewBlockType] = useState<string>('text');
-  // Add a state to track blocks by id for consistent ordering
   const [orderedBlocks, setOrderedBlocks] = useState<MindBlock[]>([]);
 
-  // Use a stable block ordering based on position and id
   useEffect(() => {
     if (blocks && blocks.length > 0) {
-      // Sort blocks by position first, then by id for stability
       const sorted = [...blocks].sort((a, b) => {
         if (a.position !== b.position) {
           return a.position - b.position;
         }
-        // If positions are equal, use id for stable ordering
         return a.id.localeCompare(b.id);
       });
       
@@ -49,7 +44,6 @@ export function BlockEditor({
     }
   }, [blocks]);
 
-  // Memoized update handler to prevent unnecessary re-renders
   const handleUpdateBlock = useCallback(async (block: MindBlock, content: any) => {
     console.log('BlockEditor - Before update:', {
       blockId: block.id.substring(0, 8),
@@ -58,7 +52,6 @@ export function BlockEditor({
     });
     
     try {
-      // Explicitly preserve position to prevent reordering
       const updatedBlock = await onUpdateBlock(block.id, content, { position: block.position });
       console.log('BlockEditor - After update:', {
         blockId: updatedBlock.id.substring(0, 8),
@@ -76,6 +69,20 @@ export function BlockEditor({
     await onCreateBlock(newBlockType, content);
   };
 
+  const handleTypeChange = async (blockId: string, newType: string, content: any) => {
+    const block = orderedBlocks.find(b => b.id === blockId);
+    if (!block) return;
+
+    try {
+      await onUpdateBlock(blockId, content, {
+        content_type: newType,
+        position: block.position
+      });
+    } catch (error) {
+      console.error('Error changing block type:', error);
+    }
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto px-4 py-6">
       <div className="space-y-1">
@@ -90,10 +97,8 @@ export function BlockEditor({
           >
             <BlockRenderer
               block={block}
-              onUpdate={(content) => {
-                console.log(`BlockEditor - Updating block ${block.id.substring(0, 8)} at position ${block.position}`);
-                handleUpdateBlock(block, content);
-              }}
+              onUpdate={(content) => handleUpdateBlock(block, content)}
+              onTypeChange={handleTypeChange}
             />
           </div>
         ))}
