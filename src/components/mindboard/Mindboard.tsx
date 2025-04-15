@@ -23,6 +23,10 @@ export function Mindboard() {
     deleteBlock,
     deleteMindboard,
     deleteSection,
+    deletePage,
+    updateMindboard,
+    updateSection,
+    updatePage,
     isLoading
   } = useMindboard();
 
@@ -34,10 +38,37 @@ export function Mindboard() {
     );
   }
 
+  // Helper to create a board and return the created board
+  const handleCreateBoard = async ({ title }: { title: string }) => {
+    const newBoard = await createMindboard({ title });
+    return newBoard;
+  };
+
   // Helper to create a section and return the created section
   const handleCreateSection = async ({ mindboardId, title }: { mindboardId: string, title: string }) => {
     const newSection = await createSection({ mindboardId, title });
     return newSection;
+  };
+
+  // Helper to create a page and return the created page
+  const handleCreatePage = async ({ sectionId, title }: { sectionId: string, title: string }) => {
+    const newPage = await createPage({ sectionId, title });
+    return newPage;
+  };
+
+  // Helper to rename a mindboard
+  const handleRenameMindboard = async (id: string, title: string) => {
+    await updateMindboard({ id, title });
+  };
+
+  // Helper to rename a section
+  const handleRenameSection = async (id: string, title: string) => {
+    await updateSection({ id, title });
+  };
+
+  // Helper to rename a page
+  const handleRenamePage = async (id: string, title: string) => {
+    await updatePage({ id, title });
   };
 
   return (
@@ -52,9 +83,9 @@ export function Mindboard() {
       setActiveMindboardId={setActiveMindboardId}
       setActiveSectionId={setActiveSectionId}
       setActivePageId={setActivePageId}
-      onCreateBoard={() => createMindboard({ title: "New Board" })}
+      onCreateBoard={handleCreateBoard}
       onCreateSection={handleCreateSection}
-      onCreatePage={(data) => createPage({ sectionId: data.sectionId, title: data.title })}
+      onCreatePage={handleCreatePage}
       onCreateBlock={(type, content, position, parentId) => createBlock({ 
         pageId: activePageId || '', 
         contentType: type, 
@@ -66,6 +97,10 @@ export function Mindboard() {
       onDeleteBlock={(id) => deleteBlock(id)}
       onDeleteMindboard={(id) => deleteMindboard(id)}
       onDeleteSection={(id) => deleteSection(id)}
+      onDeletePage={(id) => deletePage(id)}
+      onRenameMindboard={handleRenameMindboard}
+      onRenameSection={handleRenameSection}
+      onRenamePage={handleRenamePage}
     />
   );
 }

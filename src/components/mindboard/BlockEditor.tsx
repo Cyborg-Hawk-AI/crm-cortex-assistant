@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { MindBlock } from '@/utils/types';
 import BlockRenderer from './BlockRenderer';
@@ -20,7 +21,6 @@ export function BlockEditor({
   onUpdateBlock, 
   onDeleteBlock 
 }: BlockEditorProps) {
-  const [newBlockType, setNewBlockType] = useState<string>('text');
   const [orderedBlocks, setOrderedBlocks] = useState<MindBlock[]>([]);
 
   useEffect(() => {
@@ -41,8 +41,10 @@ export function BlockEditor({
       setOrderedBlocks(sorted);
     } else {
       setOrderedBlocks([]);
+      // Automatically create a text block for new pages
+      handleAddTextBlock();
     }
-  }, [blocks]);
+  }, [blocks, pageId]);
 
   const handleUpdateBlock = useCallback(async (block: MindBlock, content: any) => {
     console.log('BlockEditor - Before update:', {
@@ -63,10 +65,17 @@ export function BlockEditor({
     }
   }, [onUpdateBlock]);
 
-  const handleAddBlock = async () => {
-    console.log('Creating new block of type:', newBlockType);
-    const content = newBlockType === 'text' ? { text: '' } : {};
-    await onCreateBlock(newBlockType, content);
+  const handleAddTextBlock = async () => {
+    if (blocks.length === 0) {
+      console.log('Creating initial text block');
+      await onCreateBlock('text', { text: '' });
+    }
+  };
+
+  const handleAddBlock = async (type: string) => {
+    console.log('Creating new block of type:', type);
+    const content = type === 'text' ? { text: '' } : {};
+    await onCreateBlock(type, content);
   };
 
   const handleTypeChange = async (blockId: string, newType: string, content: any) => {
@@ -99,6 +108,7 @@ export function BlockEditor({
               block={block}
               onUpdate={(content) => handleUpdateBlock(block, content)}
               onTypeChange={handleTypeChange}
+              onDelete={() => onDeleteBlock(block.id)}
             />
           </div>
         ))}
@@ -107,10 +117,7 @@ export function BlockEditor({
       <div className="mt-4 flex gap-2 opacity-50 hover:opacity-100 transition-opacity">
         <Button 
           variant="outline" 
-          onClick={() => {
-            setNewBlockType('text');
-            handleAddBlock();
-          }}
+          onClick={() => handleAddBlock('text')}
           className="flex items-center gap-1 text-sm hover:bg-background/10"
         >
           <Type className="h-4 w-4" />
@@ -119,10 +126,7 @@ export function BlockEditor({
         
         <Button 
           variant="outline" 
-          onClick={() => {
-            setNewBlockType('todo');
-            handleAddBlock();
-          }}
+          onClick={() => handleAddBlock('todo')}
           className="flex items-center gap-1 text-sm hover:bg-background/10"
         >
           <span>Add Todo</span>

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Menu, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -22,14 +23,18 @@ interface MindboardLayoutProps {
   setActiveMindboardId: (id: string) => void;
   setActiveSectionId: (id: string) => void;
   setActivePageId: (id: string) => void;
-  onCreateBoard: (data: { title: string }) => void;
+  onCreateBoard: (data: { title: string }) => Promise<any>;
   onCreateSection: (data: { mindboardId: string; title: string }) => Promise<any>;
-  onCreatePage: (data: { sectionId: string; title: string }) => void;
+  onCreatePage: (data: { sectionId: string; title: string }) => Promise<any>;
   onCreateBlock: (type: string, content: any, position?: number, parentId?: string) => Promise<MindBlock>;
   onUpdateBlock: (id: string, content: any, properties?: Record<string, any>) => Promise<MindBlock>;
   onDeleteBlock: (id: string) => Promise<void>;
   onDeleteMindboard: (id: string) => Promise<void>;
   onDeleteSection: (id: string) => Promise<void>;
+  onDeletePage?: (id: string) => Promise<void>;
+  onRenameMindboard?: (id: string, title: string) => Promise<void>;
+  onRenameSection?: (id: string, title: string) => Promise<void>;
+  onRenamePage?: (id: string, title: string) => Promise<void>;
 }
 
 export function MindboardLayout({
@@ -51,6 +56,10 @@ export function MindboardLayout({
   onDeleteBlock,
   onDeleteMindboard,
   onDeleteSection,
+  onDeletePage,
+  onRenameMindboard,
+  onRenameSection,
+  onRenamePage
 }: MindboardLayoutProps) {
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
@@ -62,17 +71,51 @@ export function MindboardLayout({
     setExpandedBoards(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const handleCreateBoard = async () => {
+    try {
+      const newBoard = await onCreateBoard({ title: "New Board" });
+      if (newBoard && newBoard.id) {
+        // After creating a board, create a section
+        const newSection = await onCreateSection({ mindboardId: newBoard.id, title: "New Section" });
+        if (newSection && newSection.id) {
+          // After creating a section, create a page
+          await onCreatePage({ sectionId: newSection.id, title: "New Page" });
+        }
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create board",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleCreateSection = async () => {
     if (activeMindboardId) {
       try {
         const newSection = await onCreateSection({ mindboardId: activeMindboardId, title: "New Section" });
         if (newSection && newSection.id) {
-          onCreatePage({ sectionId: newSection.id, title: "New Page" });
+          await onCreatePage({ sectionId: newSection.id, title: "New Page" });
         }
       } catch (error) {
         toast({
           title: "Error",
           description: "Failed to create section",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleCreatePage = async () => {
+    if (activeSectionId) {
+      try {
+        await onCreatePage({ sectionId: activeSectionId, title: "New Page" });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to create page",
           variant: "destructive",
         });
       }
@@ -111,6 +154,24 @@ export function MindboardLayout({
     }
   };
 
+  const handleDeletePage = async (id: string) => {
+    if (onDeletePage) {
+      try {
+        await onDeletePage(id);
+        toast({
+          title: "Success",
+          description: "Page deleted successfully",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to delete page",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   return (
     <div className="flex h-full overflow-hidden">
       {/* Left Sidebar - Boards & Notes */}
@@ -129,7 +190,7 @@ export function MindboardLayout({
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between p-4">
             <h2 className="text-lg font-semibold text-gradient-primary">Boards</h2>
-            <Button variant="ghost" size="icon" onClick={() => onCreateBoard({ title: "New Board" })}>
+            <Button variant="ghost" size="icon" onClick={handleCreateBoard}>
               <Plus className="h-4 w-4" />
             </Button>
           </div>
@@ -140,7 +201,8 @@ export function MindboardLayout({
             onSelectBoard={setActiveMindboardId}
             expandedBoards={expandedBoards}
             onToggleExpand={toggleBoard}
-            onDeleteBoard={handleDeleteMindboard}
+            onDeleteBoard={onDeleteMindboard}
+            onRenameBoard={onRenameMindboard}
           />
         </div>
       </motion.div>
@@ -163,6 +225,7 @@ export function MindboardLayout({
               activeSection={activeSectionId}
               onSelectSection={setActiveSectionId}
               onDeleteSection={handleDeleteSection}
+              onRenameSection={onRenameSection}
             />
           </div>
           
@@ -203,6 +266,9 @@ export function MindboardLayout({
                 notes={pages}
                 activeNoteId={activePageId}
                 onSelectNote={setActivePageId}
+                onCreateNote={(title) => onCreatePage({ sectionId: activeSectionId, title })}
+                onDeleteNote={onDeletePage}
+                onRenameNote={onRenamePage}
               />
             )}
           </motion.div>
