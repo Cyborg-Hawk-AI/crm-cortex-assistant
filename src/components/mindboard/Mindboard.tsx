@@ -38,6 +38,31 @@ export function Mindboard() {
     );
   }
 
+  // Helper functions that handle the return values properly
+  const handleCreateBoard = async (params: { title: string }) => {
+    await createMindboard(params);
+  };
+
+  const handleCreateSection = async (params: { mindboardId: string, title: string }) => {
+    await createSection(params);
+  };
+
+  const handleCreatePage = async (params: { sectionId: string, title: string }) => {
+    await createPage(params);
+  };
+
+  const handleRenameMindboard = async (id: string, title: string) => {
+    await updateMindboard({ id, title });
+  };
+
+  const handleRenameSection = async (id: string, title: string) => {
+    await updateSection({ id, title });
+  };
+
+  const handleRenamePage = async (id: string, title: string) => {
+    await updatePage({ id, title });
+  };
+
   return (
     <MindboardLayout
       mindboards={mindboards}
@@ -50,9 +75,9 @@ export function Mindboard() {
       setActiveMindboardId={setActiveMindboardId}
       setActiveSectionId={setActiveSectionId}
       setActivePageId={setActivePageId}
-      onCreateBoard={createMindboard}
-      onCreateSection={createSection}
-      onCreatePage={createPage}
+      onCreateBoard={handleCreateBoard}
+      onCreateSection={handleCreateSection}
+      onCreatePage={handleCreatePage}
       onCreateBlock={(type, content, position, parentId) => createBlock({ 
         pageId: activePageId || '', 
         contentType: type, 
@@ -65,9 +90,9 @@ export function Mindboard() {
       onDeleteMindboard={(id) => deleteMindboard(id)}
       onDeleteSection={(id) => deleteSection(id)}
       onDeletePage={(id) => deletePage(id)}
-      onRenameMindboard={(id, title) => updateMindboard({ id, title })}
-      onRenameSection={(id, title) => updateSection({ id, title })}
-      onRenamePage={(id, title) => updatePage({ id, title })}
+      onRenameMindboard={handleRenameMindboard}
+      onRenameSection={handleRenameSection}
+      onRenamePage={handleRenamePage}
     />
   );
 }
