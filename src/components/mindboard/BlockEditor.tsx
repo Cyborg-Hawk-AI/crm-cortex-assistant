@@ -1,9 +1,9 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { MindBlock } from '@/utils/types';
 import BlockRenderer from './BlockRenderer';
 import { Button } from '@/components/ui/button';
-import { Plus, Type, Image, FileText, Code } from 'lucide-react';
+import { Plus, Type } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface BlockEditorProps {
@@ -22,17 +22,53 @@ export function BlockEditor({
   onDeleteBlock 
 }: BlockEditorProps) {
   const [newBlockType, setNewBlockType] = useState<string>('text');
+  // Add a state to track blocks by id for consistent ordering
+  const [orderedBlocks, setOrderedBlocks] = useState<MindBlock[]>([]);
 
-  // Diagnostic logging: Log blocks whenever they change
+  // Use a stable block ordering based on position and id
   useEffect(() => {
-    console.log('BlockEditor - Blocks updated:', blocks.map(b => ({
-      id: b.id.substring(0, 8),
-      type: b.content_type,
-      position: b.position,
-      updated_at: b.updated_at,
-      text: b.content_type === 'text' ? b.content.text?.substring(0, 20) : '[non-text]'
-    })));
+    if (blocks && blocks.length > 0) {
+      // Sort blocks by position first, then by id for stability
+      const sorted = [...blocks].sort((a, b) => {
+        if (a.position !== b.position) {
+          return a.position - b.position;
+        }
+        // If positions are equal, use id for stable ordering
+        return a.id.localeCompare(b.id);
+      });
+      
+      console.log('BlockEditor - Blocks sorted by position and id:', sorted.map(b => ({
+        id: b.id.substring(0, 8),
+        position: b.position,
+        updated_at: b.updated_at
+      })));
+      
+      setOrderedBlocks(sorted);
+    } else {
+      setOrderedBlocks([]);
+    }
   }, [blocks]);
+
+  // Memoized update handler to prevent unnecessary re-renders
+  const handleUpdateBlock = useCallback(async (block: MindBlock, content: any) => {
+    console.log('BlockEditor - Before update:', {
+      blockId: block.id.substring(0, 8),
+      position: block.position,
+      updated_at: block.updated_at
+    });
+    
+    try {
+      // Explicitly preserve position to prevent reordering
+      const updatedBlock = await onUpdateBlock(block.id, content, { position: block.position });
+      console.log('BlockEditor - After update:', {
+        blockId: updatedBlock.id.substring(0, 8),
+        position: updatedBlock.position,
+        updated_at: updatedBlock.updated_at
+      });
+    } catch (error) {
+      console.error('BlockEditor - Update error:', error);
+    }
+  }, [onUpdateBlock]);
 
   const handleAddBlock = async () => {
     console.log('Creating new block of type:', newBlockType);
@@ -40,31 +76,10 @@ export function BlockEditor({
     await onCreateBlock(newBlockType, content);
   };
 
-  const handleUpdateBlock = async (block: MindBlock, content: any) => {
-    console.log('BlockEditor - Before update:', {
-      blockId: block.id.substring(0, 8),
-      position: block.position,
-      updated_at: block.updated_at,
-      content: JSON.stringify(content).substring(0, 50)
-    });
-    
-    try {
-      const updatedBlock = await onUpdateBlock(block.id, content);
-      console.log('BlockEditor - After update:', {
-        blockId: updatedBlock.id.substring(0, 8),
-        position: updatedBlock.position,
-        updated_at: updatedBlock.updated_at,
-        content: JSON.stringify(updatedBlock.content).substring(0, 50)
-      });
-    } catch (error) {
-      console.error('BlockEditor - Update error:', error);
-    }
-  };
-
   return (
     <div className="w-full max-w-4xl mx-auto px-4 py-6">
       <div className="space-y-1">
-        {blocks.map((block, index) => (
+        {orderedBlocks.map((block) => (
           <div 
             key={block.id}
             className={cn(
@@ -76,7 +91,7 @@ export function BlockEditor({
             <BlockRenderer
               block={block}
               onUpdate={(content) => {
-                console.log(`BlockEditor - Updating block ${block.id.substring(0, 8)} at index ${index}, position ${block.position}`);
+                console.log(`BlockEditor - Updating block ${block.id.substring(0, 8)} at position ${block.position}`);
                 handleUpdateBlock(block, content);
               }}
             />

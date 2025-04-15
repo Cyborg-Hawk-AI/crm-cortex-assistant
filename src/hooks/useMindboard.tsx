@@ -71,7 +71,8 @@ export function useMindboard() {
   const {
     data: blocks = [],
     isLoading: isLoadingBlocks,
-    error: blocksError
+    error: blocksError,
+    refetch: refetchBlocks
   } = useQuery({
     queryKey: ['mind_blocks', activePageId],
     queryFn: async () => {
@@ -92,6 +93,7 @@ export function useMindboard() {
       }
     },
     enabled: !!activePageId,
+    staleTime: 10000
   });
   
   useEffect(() => {
@@ -369,28 +371,34 @@ export function useMindboard() {
       return result;
     },
     onMutate: async (updatedBlock) => {
-      console.log('useMindboard - Optimistic update start:', {
-        blockId: updatedBlock.id.substring(0, 8)
+      await queryClient.cancelQueries({ queryKey: ['mind_blocks', activePageId] });
+      const previousBlocks = queryClient.getQueryData(['mind_blocks', activePageId]) as MindBlock[];
+      queryClient.setQueryData(['mind_blocks', activePageId], (old: MindBlock[] | undefined) => {
+        if (!old) return [];
+        return old.map(block => 
+          block.id === updatedBlock.id 
+            ? { ...block, ...updatedBlock } 
+            : block
+        );
       });
-      // We could implement optimistic updates here
+      return { previousBlocks };
     },
-    onSuccess: (result, variables) => {
-      console.log('useMindboard - Update success, invalidating query for:', activePageId);
-      queryClient.invalidateQueries({ queryKey: ['mind_blocks', activePageId] });
-      if (shouldShowToast('block')) {
-        toast({
-          title: 'Block updated',
-          description: 'Content block has been updated successfully'
-        });
-      }
-    },
-    onError: (error: Error) => {
+    onError: (error, _variables, context) => {
       console.error('useMindboard - Update error:', error);
+      if (context?.previousBlocks) {
+        queryClient.setQueryData(['mind_blocks', activePageId], context.previousBlocks);
+      }
       toast({
         title: 'Error',
         description: `Failed to update block: ${error.message}`,
         variant: 'destructive'
       });
+    },
+    onSettled: () => {
+      const timeoutId = setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['mind_blocks', activePageId] });
+      }, 2000);
+      return () => clearTimeout(timeoutId);
     },
   });
   

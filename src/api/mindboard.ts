@@ -466,7 +466,8 @@ export const getMindBlocks = async (pageId: string): Promise<MindBlock[]> => {
     .select('*')
     .eq('page_id', pageId)
     .eq('user_id', userId)
-    .order('position', { ascending: true });
+    .order('position', { ascending: true })
+    .order('id', { ascending: true }); // Add secondary sorting by id for stable ordering
   
   if (error) {
     console.error('Error fetching mind blocks:', error);
@@ -567,7 +568,7 @@ export const updateMindBlock = async (block: Partial<MindBlock> & { id: string }
     updated_at: new Date().toISOString()
   };
   
-  // Preserve position if not explicitly changing it
+  // Always preserve position if not explicitly changing it
   if (block.position === undefined && existing.position !== undefined) {
     console.log('API - updateMindBlock - Preserving position:', existing.position);
     updates.position = existing.position;
