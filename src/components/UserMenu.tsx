@@ -13,14 +13,14 @@ import {
   DropdownMenuSubContent,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, LogOut, Settings, Palette } from 'lucide-react';
+import { User, LogOut, Settings, Palette, Check } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/use-toast';
 
 const themes = [
   { id: 'steel', name: 'Steel Blue (Default)', description: 'Our signature futuristic look' },
   { id: 'midnight', name: 'Midnight', description: 'Deep, dark, and focused' },
-  { id: 'vibrant', name: 'Vibrant', description: 'Bold and energetic' },
+  { id: 'vibrant', name: 'Vibrant', description: 'Bold and energetic' }
 ] as const;
 
 export function UserMenu() {
