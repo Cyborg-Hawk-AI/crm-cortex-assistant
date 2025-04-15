@@ -53,6 +53,8 @@ export const useChatMessages = () => {
     enabled: !!activeConversationId,
   });
 
+  const [linkedProject, setLinkedProject] = useState<any | null>(null);
+
   useEffect(() => {
     if (activeConversationId) {
       console.log(`Loading messages for conversation: ${activeConversationId}`);
@@ -582,6 +584,18 @@ export const useChatMessages = () => {
     refetchConversations
   ]);
 
+  useEffect(() => {
+    if (activeConversationId) {
+      const conversation = conversations.find(c => c.id === activeConversationId);
+      if (conversation?.project_id) {
+        const project = conversations?.find(p => p.id === conversation.project_id);
+        setLinkedProject(project || null);
+      } else {
+        setLinkedProject(null);
+      }
+    }
+  }, [activeConversationId, conversations]);
+
   return {
     messages: messages(),
     inputValue,
@@ -613,7 +627,8 @@ export const useChatMessages = () => {
     refetchMessages,
     saveMessage,
     generateConversationTitle,
-    refetchConversations
+    refetchConversations,
+    linkedProject,
   };
 };
 

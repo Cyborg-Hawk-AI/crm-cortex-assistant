@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { 
   Code, FileText, ShieldAlert, MessageCircleReply, 
-  Search, HelpCircle, LinkIcon
+  Search, HelpCircle, LinkIcon, Folder
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useChatMessages } from '@/hooks/useChatMessages';
@@ -12,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { NotionTaskSearch } from './NotionTaskSearch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ASSISTANTS } from '@/utils/assistantConfig';
+import { useProjects } from '@/hooks/useProjects';
 
 interface QuickActionsProps {
   activeConversationId: string | null;
@@ -19,12 +19,16 @@ interface QuickActionsProps {
 
 export function QuickActions({ activeConversationId }: QuickActionsProps) {
   const [isLinkingTask, setIsLinkingTask] = React.useState(false);
+  const [isLinkingProject, setIsLinkingProject] = React.useState(false);
+  const { projects, moveConversationToProject } = useProjects();
+  
   const { 
     inputValue, 
     setInputValue, 
     setActiveAssistant, 
     linkTaskToConversation,
-    linkedTask, 
+    linkedTask,
+    linkedProject,
     sendMessage,
     isStreaming,
     messages
@@ -91,11 +95,11 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
       prompt: 'How can I help you with the topics discussed in this conversation?'
     },
     {
-      id: 'link-task',
-      icon: <LinkIcon className="h-4 w-4" />,
-      label: 'Link Task',
+      id: 'link-project',
+      icon: <Folder className="h-4 w-4" />,
+      label: 'Link Project',
       color: 'bg-cool-mist text-forest-green',
-      action: () => setIsLinkingTask(true)
+      action: () => setIsLinkingProject(true)
     }
   ];
 
@@ -126,7 +130,6 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
         capabilities: [],
       });
       
-      // Use the predefined prompt for the action instead of user input
       await sendMessage(prompt, 'user', activeConversationId);
       
       toast({
@@ -143,7 +146,6 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
   };
 
   const handleTaskSelect = (taskId: string) => {
-    // Mock tasks for this example
     const tasks = [];
     
     const selectedTask = tasks.find(task => task.id === taskId);
@@ -161,6 +163,32 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
     }
   };
 
+  const handleProjectSelect = async (projectId: string) => {
+    if (!activeConversationId) {
+      toast({
+        title: "No active conversation",
+        description: "Please select a conversation first"
+      });
+      return;
+    }
+
+    try {
+      await moveConversationToProject(activeConversationId, projectId);
+      setIsLinkingProject(false);
+      
+      toast({
+        title: "Project linked",
+        description: projectId ? "Conversation linked to project" : "Conversation moved to Open Chats"
+      });
+    } catch (error) {
+      console.error('Error linking project:', error);
+      toast({
+        title: "Error",
+        description: "Failed to link project to conversation"
+      });
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -168,6 +196,17 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
       transition={{ duration: 0.3, delay: 0.1 }}
       className="mb-4"
     >
+      {linkedProject && (
+        <div className="mb-3 p-2 bg-secondary/50 rounded border border-primary/20 text-xs text-primary">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Folder className="h-3 w-3" />
+              <span className="font-medium">Project:</span> {linkedProject?.name || 'Open Chats'}
+            </div>
+          </div>
+        </div>
+      )}
+
       {linkedTask && (
         <div className="mb-3 p-2 bg-secondary/50 rounded border border-primary/20 text-xs text-primary">
           <div className="flex items-center justify-between">
@@ -219,6 +258,36 @@ export function QuickActions({ activeConversationId }: QuickActionsProps) {
           </motion.div>
         ))}
       </div>
+
+      <Dialog open={isLinkingProject} onOpenChange={setIsLinkingProject}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Link Project to Conversation</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="space-y-2">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => handleProjectSelect('')}
+              >
+                <span className="flex-1 text-left">Open Chats</span>
+              </Button>
+              {projects?.map((project) => (
+                <Button 
+                  key={project.id} 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => handleProjectSelect(project.id)}
+                >
+                  <Folder className="mr-2 h-4 w-4" />
+                  <span className="flex-1 text-left">{project.name}</span>
+                </Button>
+              ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isLinkingTask} onOpenChange={setIsLinkingTask}>
         <DialogContent className="sm:max-w-[425px]">
