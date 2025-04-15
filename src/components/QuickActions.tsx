@@ -13,10 +13,13 @@ import { NotionTaskSearch } from './NotionTaskSearch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ASSISTANTS } from '@/utils/assistantConfig';
 
-export function QuickActions() {
+interface QuickActionsProps {
+  activeConversationId: string | null;
+}
+
+export function QuickActions({ activeConversationId }: QuickActionsProps) {
   const [isLinkingTask, setIsLinkingTask] = React.useState(false);
   const { 
-    activeConversationId,
     inputValue, 
     setInputValue, 
     setActiveAssistant, 
@@ -29,7 +32,7 @@ export function QuickActions() {
 
   // Log the active conversation ID for debugging
   React.useEffect(() => {
-    console.log(`QuickActions: Active conversation ID is ${activeConversationId || 'null'}`);
+    console.log(`QuickActions: Active conversation ID is ${activeConversationId || 'null'} (from props)`);
   }, [activeConversationId]);
 
   const actions = [

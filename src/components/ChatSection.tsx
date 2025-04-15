@@ -463,7 +463,7 @@ export function ChatSection({
       </div>
       
       <div className="border-t border-gray-200 p-4 bg-slate-700">
-        {activeConversationId && <QuickActions />}
+        <QuickActions activeConversationId={activeConversationId} />
         
         {apiError && (
           <Alert className="mb-4 bg-amber-900/30 text-amber-200 border-amber-600/50">
