@@ -140,11 +140,6 @@ export function QuickActions() {
     }
   };
 
-  // Always render the quick actions when there's an active conversation
-  if (!activeConversationId) {
-    return null;
-  }
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -211,4 +206,3 @@ export function QuickActions() {
     </motion.div>
   );
 }
-
