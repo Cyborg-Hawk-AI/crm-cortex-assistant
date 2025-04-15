@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Plus, MoreVertical, Book } from 'lucide-react';
+import { Book, Plus, MoreVertical } from 'lucide-react';
 import { Mindboard } from '@/utils/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -32,6 +33,26 @@ export function MindboardSidebar({
   onDeleteMindboard,
   isLoading
 }: MindboardSidebarProps) {
+  const [isCreating, setIsCreating] = useState(false);
+  const [newBoardTitle, setNewBoardTitle] = useState('');
+
+  const handleCreateBoard = async () => {
+    if (newBoardTitle.trim()) {
+      await onCreateMindboard(newBoardTitle.trim());
+      setNewBoardTitle('');
+      setIsCreating(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleCreateBoard();
+    } else if (e.key === 'Escape') {
+      setIsCreating(false);
+      setNewBoardTitle('');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="p-2 space-y-2">
@@ -48,9 +69,11 @@ export function MindboardSidebar({
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between p-3 border-b border-[#3A4D62]">
-        <h2 className="text-lg font-semibold text-[#F1F5F9] bg-clip-text text-transparent bg-gradient-to-r from-neon-blue to-neon-aqua">Mindboards</h2>
+        <h2 className="text-lg font-semibold text-[#F1F5F9] bg-clip-text text-transparent bg-gradient-to-r from-neon-blue to-neon-aqua">
+          Mindboards
+        </h2>
         <Button 
-          onClick={onCreateMindboard}
+          onClick={() => setIsCreating(true)}
           variant="ghost" 
           size="sm" 
           className="h-8 w-8 p-0 text-neon-blue hover:text-neon-aqua hover:bg-[#3A4D62]/50"
@@ -61,9 +84,32 @@ export function MindboardSidebar({
       
       <ScrollArea className="flex-1">
         <div className="p-2">
-          {mindboards.length === 0 ? (
+          {isCreating && (
+            <div className="flex items-center gap-2 p-2 bg-[#3A4D62]/30 rounded-md mb-2">
+              <Input
+                value={newBoardTitle}
+                onChange={(e) => setNewBoardTitle(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Board name..."
+                className="h-7 bg-transparent"
+                autoFocus
+              />
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7"
+                onClick={handleCreateBoard}
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </Button>
+            </div>
+          )}
+
+          {mindboards.length === 0 && !isCreating ? (
             <div className="flex flex-col items-center justify-center h-40 text-center p-4">
-              <BookOpen className="h-12 w-12 text-[#3A4D62] mb-2" />
+              <Book className="h-12 w-12 text-[#3A4D62] mb-2" />
               <p className="text-sm text-[#CBD5E1]">No mindboards yet</p>
               <p className="text-xs text-[#64748B] mt-1">Create your first mindboard to get started</p>
             </div>
@@ -100,9 +146,8 @@ export function MindboardSidebar({
                       <MoreVertical className="h-3 w-3" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-[#1C2A3A] border-[#3A4D62] text-[#F1F5F9]">
+                  <DropdownMenuContent align="end" className="w-36">
                     <DropdownMenuItem 
-                      className="text-xs cursor-pointer"
                       onClick={(e) => {
                         e.stopPropagation();
                         onRenameMindboard(mindboard.id);
@@ -111,7 +156,7 @@ export function MindboardSidebar({
                       Rename
                     </DropdownMenuItem>
                     <DropdownMenuItem 
-                      className="text-xs cursor-pointer text-neon-red"
+                      className="text-neon-red"
                       onClick={(e) => {
                         e.stopPropagation();
                         onDeleteMindboard(mindboard.id);
