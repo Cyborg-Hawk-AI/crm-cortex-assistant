@@ -11,7 +11,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const themes = [
-  { id: 'steel', name: 'Steel Blue (Default)', description: 'Our signature futuristic look' },
+  { id: 'natural', name: 'Natural Light', description: 'Soft, nature-inspired tones' },
+  { id: 'steel', name: 'Steel Blue', description: 'Our signature futuristic look' },
   { id: 'midnight', name: 'Midnight', description: 'Deep, dark, and focused' },
   { id: 'vibrant', name: 'Vibrant', description: 'Bold and energetic' },
 ] as const;

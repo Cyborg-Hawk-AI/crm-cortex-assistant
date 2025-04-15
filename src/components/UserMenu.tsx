@@ -19,6 +19,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/use-toast';
 
 const themes = [
+  { id: 'natural', name: 'Natural Light', description: 'Soft, nature-inspired tones' },
   { id: 'steel', name: 'Steel Blue (Default)', description: 'Our signature futuristic look' },
   { id: 'midnight', name: 'Midnight', description: 'Deep, dark, and focused' },
   { id: 'vibrant', name: 'Vibrant', description: 'Bold and energetic' }
