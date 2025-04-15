@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { Plus, ChevronRight, Edit, Trash2 } from 'lucide-react';
+import { Plus, MoreVertical, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MindPage } from '@/utils/types';
@@ -46,15 +47,19 @@ export function NoteList({
   const [newNoteTitle, setNewNoteTitle] = useState("");
 
   useEffect(() => {
+    // Log whenever notes are updated
     console.log("[NoteList] Notes received:", notes.map(n => ({ id: n.id.substring(0, 8), title: n.title })));
   }, [notes]);
 
+  // Update the editing state when activeNoteId changes
   useEffect(() => {
+    // If we have an active note, make sure we're not in editing mode for a different note
     if (activeNoteId && editingNoteId && activeNoteId !== editingNoteId) {
       setEditingNoteId(null);
       setEditingTitle("");
     }
     
+    // If we're creating a note and a new active note is set, exit creation mode
     if (activeNoteId && isCreatingNote) {
       setIsCreatingNote(false);
       setNewNoteTitle("");
@@ -142,7 +147,7 @@ export function NoteList({
       <ScrollArea className="flex-1">
         <div className="space-y-1">
           {notes.map((note) => (
-            <div key={note.id} className="group relative">
+            <div key={note.id} className="group">
               {editingNoteId === note.id ? (
                 <div className="flex items-center gap-1 p-1 bg-background/80 border rounded-md m-1">
                   <Input
@@ -170,71 +175,75 @@ export function NoteList({
                   </Button>
                 </div>
               ) : (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild className="w-full">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        console.log("[NoteList] Selected note:", note.id, note.title);
-                        onSelectNote(note.id);
-                      }}
-                      className={cn(
-                        "flex-1 justify-start h-9 w-full pr-10 relative",
-                        note.id === activeNoteId && "bg-accent text-accent-foreground font-medium shadow-[0_0_8px_rgba(0,247,239,0.2)]"
-                      )}
-                    >
-                      <span className="flex-1 truncate">{note.title}</span>
-                      {(onRenameNote || onDeleteNote) && (
-                        <div 
-                          className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={(e) => e.stopPropagation()}
+                <div className="flex items-center">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      console.log("[NoteList] Selected note:", note.id, note.title);
+                      onSelectNote(note.id);
+                    }}
+                    className={cn(
+                      "flex-1 justify-start h-9",
+                      note.id === activeNoteId && "bg-accent text-accent-foreground font-medium shadow-[0_0_8px_rgba(0,247,239,0.2)]"
+                    )}
+                  >
+                    {note.title}
+                  </Button>
+                  
+                  {(onRenameNote || onDeleteNote) && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
-                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                      )}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {onRenameNote && (
-                      <DropdownMenuItem onClick={() => handleRenameStart(note)}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Rename
-                      </DropdownMenuItem>
-                    )}
-                    
-                    {onDeleteNote && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <DropdownMenuItem 
-                            onSelect={(e) => e.preventDefault()}
-                            className="text-neon-red focus:text-neon-red"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
+                          <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {onRenameNote && (
+                          <DropdownMenuItem onClick={() => handleRenameStart(note)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Rename
                           </DropdownMenuItem>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Note</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete "{note.title}"? This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => onDeleteNote(note.id)}
-                              className="bg-neon-red hover:bg-neon-red/90"
-                            >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                        )}
+                        
+                        {onDeleteNote && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <DropdownMenuItem 
+                                onSelect={(e) => e.preventDefault()}
+                                className="text-neon-red focus:text-neon-red"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Note</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete "{note.title}"? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => onDeleteNote(note.id)}
+                                  className="bg-neon-red hover:bg-neon-red/90"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                </div>
               )}
             </div>
           ))}
