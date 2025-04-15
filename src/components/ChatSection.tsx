@@ -474,15 +474,6 @@ export function ChatSection({
         
         <div className="flex justify-between items-center mb-2">
           <div className="flex space-x-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="text-neon-purple border-neon-purple/30 hover:border-neon-purple/60 hover:bg-neon-purple/10" 
-              onClick={handleNewChat}
-            >
-              <Send className="h-4 w-4 mr-1" />
-              New chat
-            </Button>
             
             <Button 
               variant="outline" 
