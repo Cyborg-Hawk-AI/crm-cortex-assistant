@@ -1,3 +1,4 @@
+
 import React, { forwardRef, useEffect, useState, useImperativeHandle } from 'react';
 import { ChevronLeft, Plus, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -8,6 +9,8 @@ import { ConversationList } from '@/components/ConversationList';
 import { ProjectGroupedConversations } from '@/components/ProjectGroupedConversations';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useChatMessages } from '@/hooks/useChatMessages';
+import { useQuery } from '@tanstack/react-query';
+import * as messageApi from '@/api/messages';
 
 // Add onOpenChange to props
 interface ConversationSidebarProps {
@@ -24,7 +27,12 @@ export const ConversationSidebar = forwardRef<
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const isMobile = useIsMobile();
-  const { conversations } = useChatMessages();
+  
+  // Fetch conversations directly using react-query
+  const { data: conversations = [] } = useQuery({
+    queryKey: ['conversations'],
+    queryFn: () => messageApi.getConversations(),
+  });
   
   // Update the imperative handle to expose setIsOpen method
   useImperativeHandle(ref, () => ({
@@ -76,10 +84,13 @@ export const ConversationSidebar = forwardRef<
     }
   };
   
+  // Mark the sidebar element with a data attribute for click-outside detection
+  const sidebarAttr = {"data-sidebar": "sidebar"};
+  
   // Desktop sidebar
   if (!isMobile) {
     return (
-      <div className="flex-shrink-0 w-64 border-r border-border bg-slate-800">
+      <div className="flex-shrink-0 w-64 border-r border-border bg-slate-800" {...sidebarAttr}>
         <div className="h-14 flex items-center justify-between px-4 border-b border-border">
           <h2 className="font-semibold text-sm">Your Conversations</h2>
           <Button size="sm" variant="ghost" onClick={startNewChat}>
@@ -139,6 +150,7 @@ export const ConversationSidebar = forwardRef<
         <SheetContent 
           side="left" 
           className="w-72 p-0 border-r border-border bg-slate-800"
+          {...sidebarAttr}
         >
           <div className="h-14 flex items-center justify-between px-4 border-b border-border">
             <h2 className="font-semibold text-sm">Your Conversations</h2>
