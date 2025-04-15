@@ -2,8 +2,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { MindBlock } from '@/utils/types';
 import BlockRenderer from './BlockRenderer';
-import { Button } from '@/components/ui/button';
-import { Plus, Type } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import debounce from 'lodash.debounce';
 
@@ -34,7 +32,6 @@ export function BlockEditor({
         }
         return a.id.localeCompare(b.id);
       });
-      
       setOrderedBlocks(sorted);
     } else {
       setOrderedBlocks([]);
@@ -89,45 +86,11 @@ export function BlockEditor({
     await onCreateBlock('text', { text: '' }, newBlockPosition);
   };
 
-  const handleEditorClick = async (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!editorRef.current || e.defaultPrevented) return;
-
-    // Get click coordinates relative to the editor
-    const editorRect = editorRef.current.getBoundingClientRect();
-    const clickY = e.clientY - editorRect.top;
-
-    // Find the closest block to the click
-    let insertPosition = 0;
-    let clickedInBlock = false;
-
-    const blockElements = editorRef.current.querySelectorAll('[data-block-id]');
-    blockElements.forEach((blockEl) => {
-      const rect = blockEl.getBoundingClientRect();
-      const blockTop = rect.top - editorRect.top;
-      const blockBottom = blockTop + rect.height;
-
-      if (clickY >= blockTop && clickY <= blockBottom) {
-        clickedInBlock = true;
-      } else if (clickY > blockBottom) {
-        const block = orderedBlocks.find(b => b.id === blockEl.getAttribute('data-block-id'));
-        if (block) {
-          insertPosition = (block.position || 0) + 1;
-        }
-      }
-    });
-
-    // Only create a new block if we clicked in empty space
-    if (!clickedInBlock) {
-      await handleAddTextBlock(insertPosition);
-    }
-  };
-
   return (
     <div className="w-full h-full max-w-4xl mx-auto px-4 py-6 overflow-y-auto">
       <div 
         ref={editorRef}
-        className="space-y-1 min-h-full"
-        onClick={handleEditorClick}
+        className="space-y-1 min-h-[calc(100vh-8rem)]"
       >
         {orderedBlocks.map((block) => (
           <div 
@@ -156,26 +119,27 @@ export function BlockEditor({
             />
           </div>
         ))}
-      </div>
-      
-      <div className="mt-4 flex gap-2 opacity-50 hover:opacity-100 transition-opacity">
-        <Button 
-          variant="outline" 
-          onClick={() => handleAddTextBlock()}
-          className="flex items-center gap-1 text-sm hover:bg-background/10"
-        >
-          <Type className="h-4 w-4" />
-          <span>Add Text</span>
-        </Button>
-        
-        <Button 
-          variant="outline" 
-          onClick={() => onCreateBlock('todo', { checked: false })}
-          className="flex items-center gap-1 text-sm hover:bg-background/10"
-        >
-          <span>Add Todo</span>
-        </Button>
+        {(!orderedBlocks || orderedBlocks.length === 0) && (
+          <div className="h-full flex items-center justify-center">
+            <BlockRenderer
+              block={{
+                id: 'new',
+                content: { text: '' },
+                content_type: 'text',
+                position: 0,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                page_id: pageId,
+              }}
+              onUpdate={(content) => handleAddTextBlock()}
+              onTypeChange={(newType: string, content: any) => handleAddTextBlock()}
+              onDelete={() => {}}
+              onEnterPress={(content) => handleAddTextBlock()}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
