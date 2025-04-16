@@ -1,3 +1,4 @@
+
 @keyframes blink {
   0% { opacity: 0.2; }
   20% { opacity: 1; }
@@ -64,6 +65,7 @@
   width: 100%;
   max-width: 100%;
   overflow-wrap: break-word;
+  box-sizing: border-box;
 }
 
 .markdown-content code {
@@ -81,6 +83,7 @@
   margin: 0.5em 0;
   border: 1px solid rgba(168, 85, 247, 0.2);
   background: rgba(15, 23, 42, 0.7);
+  box-sizing: border-box;
 }
 
 .markdown-content pre code {
@@ -91,6 +94,8 @@
   font-size: 0.9em;
   line-height: 1.5;
   tab-size: 2;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .markdown-content pre::-webkit-scrollbar {
@@ -152,4 +157,33 @@
 .action-button-enhanced:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
+}
+
+/* Ensure code blocks fit within the message container */
+.max-w-[75%] .markdown-content pre {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Ensure proper width containment for messages */
+.max-w-[75%] {
+  width: 75%;
+  box-sizing: border-box;
+}
+
+/* Force code blocks to respect parent container width */
+.markdown-content pre,
+.markdown-content pre code {
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+/* Enhanced scrollbar styling for better visibility */
+.markdown-content pre::-webkit-scrollbar {
+  height: 6px;
+}
+
+.markdown-content pre:hover::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.7);
 }

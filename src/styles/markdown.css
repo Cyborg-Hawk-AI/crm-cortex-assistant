@@ -1,3 +1,4 @@
+
 /* Markdown styling for task descriptions */
 
 .prose {
@@ -72,6 +73,8 @@
   overflow-x: auto;
   margin-bottom: 0.75em;
   max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
   white-space: pre;
   -webkit-overflow-scrolling: touch;
 }
@@ -80,6 +83,9 @@
   background-color: transparent;
   padding: 0;
   border-radius: 0;
+  width: 100%;
+  display: block;
+  overflow-x: auto;
 }
 
 .prose a {

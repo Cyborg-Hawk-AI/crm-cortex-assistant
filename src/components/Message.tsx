@@ -1,3 +1,4 @@
+
 import { motion } from 'framer-motion';
 import { Message as MessageType } from '@/utils/types';
 import { User, Bot } from 'lucide-react';
@@ -158,7 +159,7 @@ export function Message({ message }: MessageProps) {
         </div>
         
         <div className={cn(
-          'rounded-lg px-4 py-3 shadow-md',
+          'rounded-lg px-4 py-3 shadow-md flex-1',
           isUser 
             ? 'bg-[#25384D] text-neon-aqua border border-neon-aqua/30' 
             : isSystem
