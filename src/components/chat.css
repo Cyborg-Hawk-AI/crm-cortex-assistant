@@ -84,6 +84,7 @@
   border: 1px solid rgba(168, 85, 247, 0.2);
   background: rgba(15, 23, 42, 0.7);
   box-sizing: border-box;
+  overflow-x: auto;
 }
 
 .markdown-content pre code {
@@ -159,17 +160,29 @@
   box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
 }
 
-/* Ensure code blocks fit within the message container */
-.max-w-[75%] .markdown-content pre {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
+/* Message container width customization */
+@media (min-width: 768px) {
+  .max-w-[75%] {
+    width: 75%;
+    max-width: 75%;
+    box-sizing: border-box;
+  }
 }
 
-/* Ensure proper width containment for messages */
-.max-w-[75%] {
-  width: 75%;
+/* Mobile-specific adjustments */
+@media (max-width: 767px) {
+  .max-w-[75%] {
+    width: 90%;
+    max-width: 90%;
+    box-sizing: border-box;
+  }
+}
+
+/* Ensure code blocks fit within the message container */
+.message-bubble {
+  width: 100%;
   box-sizing: border-box;
+  overflow-wrap: break-word;
 }
 
 /* Force code blocks to respect parent container width */
@@ -177,6 +190,7 @@
 .markdown-content pre code {
   max-width: 100% !important;
   width: 100% !important;
+  overflow-x: auto;
 }
 
 /* Enhanced scrollbar styling for better visibility */
@@ -186,4 +200,17 @@
 
 .markdown-content pre:hover::-webkit-scrollbar-thumb {
   background: rgba(168, 85, 247, 0.7);
+}
+
+/* Improve chat interface on mobile */
+@media (max-width: 640px) {
+  .chat-container {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  
+  .chat-input-container {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
 }

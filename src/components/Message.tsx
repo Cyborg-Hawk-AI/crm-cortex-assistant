@@ -140,7 +140,7 @@ export function Message({ message }: MessageProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className={cn(
-        'flex',
+        'flex w-full',
         isUser ? 'justify-end' : 'justify-start'
       )}
       key={message.id}
@@ -150,7 +150,7 @@ export function Message({ message }: MessageProps) {
         isUser ? 'flex-row-reverse' : 'flex-row'
       )}>
         <div className={cn(
-          'w-8 h-8 rounded-full flex items-center justify-center',
+          'w-8 h-8 rounded-full flex items-center justify-center shrink-0',
           isUser 
             ? 'bg-[#1C2A3A] text-neon-aqua' 
             : 'bg-[#25384D] text-neon-purple'
@@ -159,7 +159,7 @@ export function Message({ message }: MessageProps) {
         </div>
         
         <div className={cn(
-          'rounded-lg px-4 py-3 shadow-md flex-1',
+          'rounded-lg px-4 py-3 shadow-md message-bubble',
           isUser 
             ? 'bg-[#25384D] text-neon-aqua border border-neon-aqua/30' 
             : isSystem

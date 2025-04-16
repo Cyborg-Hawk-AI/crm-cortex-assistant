@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2, AlertTriangle, Folder, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -457,11 +458,11 @@ export function ChatSection({
       {renderNavigationDebug()}
       
       <ScrollArea 
-        className="flex-1 p-4 space-y-5 bg-gradient-to-br from-[#1C2A3A] to-[#25384D]"
+        className="flex-1 p-4 space-y-5 chat-container bg-gradient-to-br from-[#1C2A3A] to-[#25384D]"
         autoScroll={false}
         hideScrollbar={false}
       >
-        <div ref={messagesContainerRef} className="flex flex-col space-y-5">
+        <div ref={messagesContainerRef} className="flex flex-col space-y-5 w-full">
           {messages.map((message: Message) => (
             <MessageComponent key={message.id} message={message} />
           ))}
@@ -469,7 +470,7 @@ export function ChatSection({
         </div>
       </ScrollArea>
       
-      <div className="border-t border-gray-200 p-4 bg-slate-700">
+      <div className="border-t border-gray-200 p-4 bg-slate-700 chat-input-container">
         <QuickActions activeConversationId={activeConversationId} />
         
         {apiError && (
@@ -479,7 +480,7 @@ export function ChatSection({
           </Alert>
         )}
         
-        <div className="flex justify-between items-center mb-2">
+        <div className="flex justify-between items-center mb-2 flex-wrap gap-2">
           <div className="flex space-x-2">
             <Button 
               variant="outline" 
@@ -487,16 +488,19 @@ export function ChatSection({
               className="text-muted-foreground hover:text-neon-red hover:border-neon-red/30 hover:shadow-[0_0_8px_rgba(244,63,94,0.2)]" 
               onClick={handleClearChat} 
               disabled={!activeConversationId}
+              title="Clear conversation"
             >
-              <Trash2 className="h-4 w-4 mr-1" />
-              Clear conversation
+              <Trash2 className="h-4 w-4" />
+              {!isMobile && <span className="ml-1">Clear</span>}
             </Button>
           </div>
           
           <div className="flex items-center space-x-2">
-            <div className="text-xs text-muted-foreground mr-2">
-              Using {modelSelection.name}
-            </div>
+            {!isMobile && (
+              <div className="text-xs text-muted-foreground mr-2">
+                Using {modelSelection.name}
+              </div>
+            )}
             <div className="model-toggle">
               <ModelToggle currentModel={selectedModel} onToggle={toggleModel} />
             </div>
