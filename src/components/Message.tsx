@@ -1,3 +1,4 @@
+
 import { motion } from 'framer-motion';
 import { Message as MessageType } from '@/utils/types';
 import { User, Bot } from 'lucide-react';
@@ -150,7 +151,9 @@ export function Message({ message }: MessageProps) {
               ? 'bg-[#1C2A3A] text-foreground border border-neon-purple/30'
               : 'bg-[#1C2A3A] text-foreground border border-neon-purple/30'
         )}>
-          {processedContent}
+          <div className="message-content-wrapper overflow-hidden">
+            {processedContent}
+          </div>
         </div>
       </div>
     </motion.div>

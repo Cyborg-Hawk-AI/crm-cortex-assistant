@@ -1,3 +1,4 @@
+
 @keyframes blink {
   0% { opacity: 0.2; }
   20% { opacity: 1; }
@@ -76,6 +77,7 @@
   max-width: 100%;
   white-space: pre-wrap;
   word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .markdown-content pre {
@@ -87,7 +89,6 @@
   background: rgba(15, 23, 42, 0.7);
   box-sizing: border-box;
   overflow-x: auto;
-  white-space: pre;
 }
 
 .markdown-content pre code {
@@ -104,7 +105,7 @@
 }
 
 .markdown-content pre::-webkit-scrollbar {
-  height: 4px;
+  height: 6px;
 }
 
 .markdown-content pre::-webkit-scrollbar-track {
@@ -176,8 +177,8 @@
 /* Mobile-specific adjustments */
 @media (max-width: 767px) {
   .max-w-[75%] {
-    width: 95%;
-    max-width: 95%;
+    width: 92%;
+    max-width: 92%;
     box-sizing: border-box;
   }
   
@@ -187,6 +188,8 @@
   
   .message-bubble {
     padding: 0.75rem !important;
+    max-width: 100% !important;
+    width: 100% !important;
   }
   
   /* Hide text on clear button for mobile */
@@ -201,6 +204,7 @@
   box-sizing: border-box;
   overflow-wrap: break-word;
   max-width: 100%;
+  overflow: hidden;
 }
 
 /* Force code blocks to respect parent container width */
@@ -231,4 +235,20 @@
     padding-left: 0.5rem;
     padding-right: 0.5rem;
   }
+}
+
+/* Ensure consistent message bubble width and prevent overflow */
+.message-content-wrapper {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Better horizontal constraints for code blocks */
+.markdown-content {
+  overflow-x: hidden;
+}
+
+.markdown-content pre {
+  margin-left: 0;
+  margin-right: 0;
 }

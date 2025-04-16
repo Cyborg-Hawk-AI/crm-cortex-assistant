@@ -457,7 +457,7 @@ export function ChatSection({
       {renderNavigationDebug()}
       
       <ScrollArea 
-        className="flex-1 p-4 space-y-5 chat-container bg-gradient-to-br from-[#1C2A3A] to-[#25384D]"
+        className="flex-1 p-4 space-y-5 chat-container bg-gradient-to-br from-[#1C2A3A] to-[#25384D] overflow-hidden"
         autoScroll={false}
         hideScrollbar={false}
       >

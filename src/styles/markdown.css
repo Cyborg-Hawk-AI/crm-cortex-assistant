@@ -3,6 +3,8 @@
 
 .prose {
   color: #F1F5F9;
+  max-width: 100%;
+  width: 100%;
 }
 
 .prose p {
@@ -64,18 +66,20 @@
   font-size: 0.9em;
   word-break: break-word;
   white-space: pre-wrap;
+  max-width: 100%;
+  display: inline-block;
+  overflow-wrap: anywhere;
 }
 
 .prose pre {
   background-color: rgba(15, 23, 42, 0.7);
   padding: 0.75em;
   border-radius: 0.375em;
-  overflow-x: auto;
   margin-bottom: 0.75em;
   max-width: 100%;
   width: 100%;
   box-sizing: border-box;
-  white-space: pre;
+  overflow: auto;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -86,6 +90,7 @@
   width: 100%;
   display: block;
   overflow-x: auto;
+  white-space: pre;
 }
 
 .prose a {
