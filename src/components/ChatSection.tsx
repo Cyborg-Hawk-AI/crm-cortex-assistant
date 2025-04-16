@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { Send, Trash2, AlertTriangle, Folder, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,6 +15,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useConversationScroll } from '@/hooks/useConversationScroll';
 
 interface ChatSectionProps {
   activeConversationId: string | null;
@@ -379,6 +380,13 @@ export function ChatSection({
     );
   }
 
+  const { scrollToBottom, isAutoScrollEnabled } = useConversationScroll({
+    containerRef: messagesContainerRef,
+    messages,
+    isStreaming,
+    isSending
+  });
+
   if (messages.length === 0) {
     return (
       <div className="flex flex-col h-full justify-center items-center p-4 text-center">
@@ -481,10 +489,20 @@ export function ChatSection({
         
         <div className="flex justify-between items-center mb-2">
           <div className="flex space-x-2">
+            {!isAutoScrollEnabled && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={scrollToBottom}
+                className="text-muted-foreground hover:text-neon-purple hover:border-neon-purple/30"
+              >
+                Scroll to bottom
+              </Button>
+            )}
             <Button 
               variant="outline" 
               size="sm" 
-              className="text-muted-foreground hover:text-neon-red hover:border-neon-red/30 hover:shadow-[0_0_8px_rgba(244,63,94,0.2)]" 
+              className="text-muted-foreground hover:text-neon-red hover:border-neon-red/30" 
               onClick={handleClearChat} 
               disabled={!activeConversationId}
             >
