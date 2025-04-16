@@ -126,6 +126,57 @@ export function ChatSection({
     isSending
   });
 
+  const renderNavigationDebug = () => {
+    if (process.env.NODE_ENV !== 'production') {
+      return (
+        <div className="bg-slate-900 text-xs p-2 rounded-md text-slate-300 mb-2">
+          <div>Active Conversation: {activeConversationId || 'none'}</div>
+          <div>Navigation History: {navigationHistoryRef.current.length} entries</div>
+          <div>Latest Entry: {navigationHistoryRef.current.length > 0 
+            ? navigationHistoryRef.current[navigationHistoryRef.current.length-1].action 
+            : 'none'}</div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const handleSendMessage = async () => {
+    if (!inputValue.trim() || isSending || isStreaming) return;
+    
+    try {
+      await sendMessage(inputValue);
+      setInputValue('');
+    } catch (error) {
+      console.error("Error sending message:", error);
+      setApiError("Failed to send message. Please try again.");
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (isComposing) return;
+    
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const handleClearChat = async () => {
+    if (!activeConversationId) return;
+    
+    try {
+      await clearMessages();
+    } catch (error) {
+      console.error("Error clearing messages:", error);
+      toast({
+        title: "Error",
+        description: "Failed to clear conversation",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (messages.length === 0) {
     return (
       <div className="flex flex-col h-full justify-center items-center p-4 text-center">
