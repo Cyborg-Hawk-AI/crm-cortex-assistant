@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2, AlertTriangle, Folder, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,7 +15,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useConversationScroll } from '@/hooks/useConversationScroll';
 
 interface ChatSectionProps {
   activeConversationId: string | null;
@@ -60,65 +59,325 @@ export function ChatSection({
   const [isOnChatTab, setIsOnChatTab] = useState(false);
   const navigationTimerRef = useRef<number | null>(null);
   const latestCreatedConversationRef = useRef<string | null>(null);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   
-  const { scrollToBottom, isAutoScrollEnabled } = useConversationScroll({
-    containerRef: messagesContainerRef,
-    messages,
-    isStreaming,
-    isSending
-  });
+  const lastScrollPosition = useRef<number>(0);
+  const isManuallyScrolling = useRef<boolean>(false);
 
-  const renderNavigationDebug = () => {
-    if (process.env.NODE_ENV !== 'production') {
-      return (
-        <div className="bg-slate-900 text-xs p-2 rounded-md text-slate-300 mb-2">
-          <div>Active Conversation: {activeConversationId || 'none'}</div>
-          <div>Navigation History: {navigationHistoryRef.current.length} entries</div>
-          <div>Latest Entry: {navigationHistoryRef.current.length > 0 
-            ? navigationHistoryRef.current[navigationHistoryRef.current.length-1].action 
-            : 'none'}</div>
-        </div>
-      );
-    }
-    return null;
+  const forceNavigation = (path: string, state?: any) => {
+    console.log(`🚀 ChatSection: Forcing navigation to ${path}`, state);
+    navigate(path, {
+      state: {
+        ...state,
+        forceReload: Date.now()
+      },
+      replace: true
+    });
   };
 
+  useEffect(() => {
+    const state = location.state as { activeTab?: string } | undefined;
+    const onChatTab = state?.activeTab === 'chat';
+    console.log(`Navigation state check: isOnChatTab=${onChatTab}, path=${location.pathname}, state=`, state);
+    setIsOnChatTab(onChatTab);
+    
+    navigationHistoryRef.current.push({
+      timestamp: Date.now(),
+      action: 'location_change',
+      path: location.pathname + (state ? `(activeTab: ${state.activeTab})` : '')
+    });
+    
+    if (navigationHistoryRef.current.length > 10) {
+      navigationHistoryRef.current.shift();
+    }
+
+    if (onChatTab && latestCreatedConversationRef.current && !activeConversationId) {
+      console.log(`🔄 ChatSection: Setting active conversation to ${latestCreatedConversationRef.current} after navigation to chat tab`);
+      setActiveConversationId(latestCreatedConversationRef.current);
+    }
+  }, [location, setActiveConversationId, activeConversationId]);
+
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
+      
+      if (Math.abs(scrollTop - lastScrollPosition.current) > 10) {
+        isManuallyScrolling.current = true;
+        setShouldAutoScroll(isAtBottom);
+      }
+      
+      lastScrollPosition.current = scrollTop;
+    };
+    
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToBottom = () => {
+    if (shouldAutoScroll && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  useEffect(() => {
+    if ((isStreaming || isSending || messages.length > 0) && shouldAutoScroll) {
+      scrollToBottom();
+    }
+  }, [messages, isStreaming, isSending, shouldAutoScroll]);
+
+  useEffect(() => {
+    if (isSending) {
+      setShouldAutoScroll(true);
+      isManuallyScrolling.current = false;
+    }
+  }, [isSending]);
+  
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || isSending || isStreaming) return;
+    if (!inputValue.trim()) return;
+    setApiError(null);
+    
+    setShouldAutoScroll(true);
+    isManuallyScrolling.current = false;
     
     try {
-      await sendMessage(inputValue);
+      if (!activeConversationId) {
+        console.log("🔍 ChatSection: Starting new chat creation process...");
+        
+        const userMessage = inputValue;
+        setInputValue('');
+        setIsNavigating(true);
+        
+        console.log("🔍 ChatSection: Creating new conversation...");
+        const newConversationId = await startConversation('New conversation', selectedProjectId);
+        console.log(`✅ ChatSection: New chat created with ID: ${newConversationId}`);
+        
+        latestCreatedConversationRef.current = newConversationId;
+        
+        console.log(`✅ ChatSection: Setting ${newConversationId} as active conversation`);
+        setActiveConversationId(newConversationId);
+        
+        console.log("🔄 ChatSection: Refreshing conversations list immediately");
+        await refetchConversations();
+        
+        console.log("⏱️ ChatSection: Scheduling navigation to chat tab after delay");
+        
+        forceNavigation('/', { 
+          activeTab: 'chat',
+          newConversationId: newConversationId
+        });
+        
+        setTimeout(async () => {
+          try {
+            console.log(`✉️ ChatSection: Sending first message to conversation ${newConversationId}`);
+            console.log(`🤖 Using ${selectedModel} model for this message`);
+            await sendMessage(userMessage, 'user', newConversationId);
+            console.log(`✅ ChatSection: Successfully sent first message to ${newConversationId}`);
+            
+            if (!activeConversationId) {
+              console.log(`🔄 ChatSection: Resetting active conversation to ${newConversationId} before ending navigation`);
+              setActiveConversationId(newConversationId);
+            }
+            
+            setIsNavigating(false);
+          } catch (delayedError: any) {
+            console.error("❌ Error in delayed operations:", delayedError);
+            setIsNavigating(false);
+            toast({
+              title: 'Error',
+              description: 'Failed to complete chat initialization',
+              variant: 'destructive'
+            });
+          }
+        }, 800);
+      } else {
+        console.log(`✉️ ChatSection: Sending message to existing conversation: ${activeConversationId}`);
+        console.log(`🤖 Using ${selectedModel} model for this message`);
+        await sendMessage(inputValue, 'user', activeConversationId);
+        setInputValue('');
+      }
+    } catch (error: any) {
+      console.error('❌ Error in send message flow:', error);
+      setIsNavigating(false);
+      
+      if (error.message?.includes('API key') && selectedModel === 'deepseek') {
+        setApiError('DeepSeek API key is missing or invalid. The service requires configuration.');
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to send message. Please try again.',
+          variant: 'destructive'
+        });
+      }
+    }
+  };
+
+  const handleNewChat = async () => {
+    try {
+      console.log("🔍 ChatSection: handleNewChat - Creating new conversation");
+      setIsNavigating(true);
+      
+      const newConversationId = await startConversation('New conversation', selectedProjectId);
+      
+      latestCreatedConversationRef.current = newConversationId;
+      
+      console.log(`✅ ChatSection: handleNewChat - Setting active conversation to ${newConversationId}`);
+      setActiveConversationId(newConversationId);
+      
+      console.log("🔄 ChatSection: handleNewChat - Refetching conversations");
+      await refetchConversations();
+      
       setInputValue('');
+      setApiError(null);
+      
+      console.log("🚀 ChatSection: handleNewChat - Initiating navigation to chat tab");
+      forceNavigation('/', { 
+        activeTab: 'chat',
+        newConversationId: newConversationId
+      });
+      
+      setTimeout(() => {
+        setIsNavigating(false);
+        
+        toast({
+          title: 'New chat started',
+          description: 'You can now start a new conversation'
+        });
+      }, 800);
     } catch (error) {
-      console.error("Error sending message:", error);
-      setApiError("Failed to send message. Please try again.");
+      console.error('❌ Error creating new chat:', error);
+      setIsNavigating(false);
+      
+      toast({
+        title: 'Error',
+        description: 'Failed to create a new chat',
+        variant: 'destructive'
+      });
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (isComposing) return;
-    
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !isComposing) {
       e.preventDefault();
       handleSendMessage();
     }
   };
 
   const handleClearChat = async () => {
-    if (!activeConversationId) return;
-    
-    try {
-      await clearMessages();
-    } catch (error) {
-      console.error("Error clearing messages:", error);
+    if (window.confirm('Are you sure you want to clear this conversation?')) {
+      await clearMessages(activeConversationId);
       toast({
-        title: "Error",
-        description: "Failed to clear conversation",
-        variant: "destructive"
+        title: 'Chat cleared',
+        description: 'All messages have been cleared from this conversation'
       });
     }
   };
+
+  const navigateToDashboard = () => {
+    navigate('/', {
+      state: {
+        activeTab: 'main'
+      }
+    });
+  };
+
+  const MoveToProjectDialog = ({ isOpen, onClose, onMove, selectedConversation, projects }: any) => {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Move to Project</DialogTitle>
+            <DialogDescription>
+              Select a project to move this conversation to.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-80 overflow-y-auto space-y-2">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start"
+              onClick={() => onMove('')}
+            >
+              <span className="flex-1 text-left">Open Chats</span>
+            </Button>
+            {projects && projects.map((project: any) => (
+              <Button 
+                key={project.id} 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => onMove(project.id)}
+              >
+                <Folder className="mr-2 h-4 w-4" />
+                <span className="flex-1 text-left">{project.name}</span>
+              </Button>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={onClose}>Cancel</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  };
+
+  const renderNavigationDebug = () => {
+    if (process.env.NODE_ENV !== 'production') {
+      return (
+        <div className="text-xs text-gray-400 border-t border-gray-700 mt-4 pt-2">
+          <div>{`🧭 Path: ${location.pathname}`}</div>
+          <div>{`🏷️ Active Tab: ${(location.state as any)?.activeTab || 'none'}`}</div>
+          <div>{`💬 Active Conv: ${activeConversationId || 'none'}`}</div>
+          <div>{`💬 Latest Conv: ${latestCreatedConversationRef.current || 'none'}`}</div>
+          <div>{`🔄 Force Reload: ${(location.state as any)?.forceReload || 'none'}`}</div>
+          <div>{`🔄 Pending Conv: ${(location.state as any)?.pendingConversationId || 'none'}`}</div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col h-full justify-center items-center text-muted-foreground">
+        <div className="loading-dots flex items-center">
+          <div className="h-3 w-3 bg-neon-purple rounded-full mx-1 animate-pulse"></div>
+          <div className="h-3 w-3 bg-neon-purple rounded-full mx-1 animate-pulse" style={{
+            animationDelay: '0.2s'
+          }}></div>
+          <div className="h-3 w-3 bg-neon-purple rounded-full mx-1 animate-pulse" style={{
+            animationDelay: '0.4s'
+          }}></div>
+        </div>
+        <p className="mt-4 font-medium">Initializing ActionBot...</p>
+        {renderNavigationDebug()}
+      </div>
+    );
+  }
+
+  if (isNavigating) {
+    return (
+      <div className="flex flex-col h-full justify-center items-center text-muted-foreground">
+        <Loader2 className="h-8 w-8 text-neon-purple animate-spin" />
+        <p className="mt-4 font-medium">Preparing your conversation...</p>
+        {renderNavigationDebug()}
+      </div>
+    );
+  }
+
+  if (activeConversationId && messages.length === 0 && retryCount > 0 && retryCount < 3) {
+    return (
+      <div className="flex flex-col h-full justify-center items-center text-muted-foreground">
+        <Loader2 className="h-8 w-8 text-neon-purple animate-spin" />
+        <p className="mt-4 font-medium">Loading conversation...</p>
+        {renderNavigationDebug()}
+      </div>
+    );
+  }
 
   if (messages.length === 0) {
     return (
@@ -222,20 +481,10 @@ export function ChatSection({
         
         <div className="flex justify-between items-center mb-2">
           <div className="flex space-x-2">
-            {!isAutoScrollEnabled && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={scrollToBottom}
-                className="text-muted-foreground hover:text-neon-purple hover:border-neon-purple/30"
-              >
-                Scroll to bottom
-              </Button>
-            )}
             <Button 
               variant="outline" 
               size="sm" 
-              className="text-muted-foreground hover:text-neon-red hover:border-neon-red/30" 
+              className="text-muted-foreground hover:text-neon-red hover:border-neon-red/30 hover:shadow-[0_0_8px_rgba(244,63,94,0.2)]" 
               onClick={handleClearChat} 
               disabled={!activeConversationId}
             >
