@@ -65,6 +65,17 @@ export function ChatSection({
   const lastScrollPosition = useRef<number>(0);
   const isManuallyScrolling = useRef<boolean>(false);
 
+  const forceNavigation = (path: string, state?: any) => {
+    console.log(`🚀 ChatSection: Forcing navigation to ${path}`, state);
+    navigate(path, {
+      state: {
+        ...state,
+        forceReload: Date.now()
+      },
+      replace: true
+    });
+  };
+
   useEffect(() => {
     const state = location.state as { activeTab?: string } | undefined;
     const onChatTab = state?.activeTab === 'chat';
