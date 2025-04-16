@@ -60,65 +60,8 @@ export function ChatSection({
   const [isOnChatTab, setIsOnChatTab] = useState(false);
   const navigationTimerRef = useRef<number | null>(null);
   const latestCreatedConversationRef = useRef<string | null>(null);
-  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   
-  const lastScrollPosition = useRef<number>(0);
-  const isManuallyScrolling = useRef<boolean>(false);
-
-  const forceNavigation = (path: string, state?: any) => {
-    console.log(`🚀 ChatSection: Forcing navigation to ${path}`, state);
-    navigate(path, {
-      state: {
-        ...state,
-        forceReload: Date.now()
-      },
-      replace: true
-    });
-  };
-
-  useEffect(() => {
-    const state = location.state as { activeTab?: string } | undefined;
-    const onChatTab = state?.activeTab === 'chat';
-    console.log(`Navigation state check: isOnChatTab=${onChatTab}, path=${location.pathname}, state=`, state);
-    setIsOnChatTab(onChatTab);
-    
-    navigationHistoryRef.current.push({
-      timestamp: Date.now(),
-      action: 'location_change',
-      path: location.pathname + (state ? `(activeTab: ${state.activeTab})` : '')
-    });
-    
-    if (navigationHistoryRef.current.length > 10) {
-      navigationHistoryRef.current.shift();
-    }
-
-    if (onChatTab && latestCreatedConversationRef.current && !activeConversationId) {
-      console.log(`🔄 ChatSection: Setting active conversation to ${latestCreatedConversationRef.current} after navigation to chat tab`);
-      setActiveConversationId(latestCreatedConversationRef.current);
-    }
-  }, [location, setActiveConversationId, activeConversationId]);
-
-  useEffect(() => {
-    const container = messagesContainerRef.current;
-    if (!container) return;
-    
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container;
-      const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
-      
-      if (Math.abs(scrollTop - lastScrollPosition.current) > 10) {
-        isManuallyScrolling.current = true;
-        setShouldAutoScroll(isAtBottom);
-      }
-      
-      lastScrollPosition.current = scrollTop;
-    };
-    
-    container.addEventListener('scroll', handleScroll, { passive: true });
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, []);
-
   const { scrollToBottom, isAutoScrollEnabled } = useConversationScroll({
     containerRef: messagesContainerRef,
     messages,
