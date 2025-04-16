@@ -1,4 +1,3 @@
-
 import { motion } from 'framer-motion';
 import { Message as MessageType } from '@/utils/types';
 import { User, Bot } from 'lucide-react';
@@ -15,28 +14,23 @@ export function Message({ message }: MessageProps) {
   const isUser = message.sender === 'user';
   const isSystem = message.isSystem;
   
-  // Function to render markdown to safe HTML
   const renderMarkdownToSafeHtml = (content: string) => {
-    // Handle empty content more gracefully
     if (!content || content.trim() === '') {
       return '<p class="text-muted-foreground">Thinking...</p>';
     }
     
     try {
-      // Use marked.parse synchronously
       const html = marked.parse(content, { async: false }) as string;
       return DOMPurify.sanitize(html);
     } catch (error) {
       console.error('Error parsing markdown:', error);
-      return `<p>${content}</p>`; // Fallback to original content if parsing fails
+      return `<p>${content}</p>`;
     }
   };
   
-  // Format ticket content
   const formatTicketContent = (content: string) => {
     if (!content.startsWith('TICKETCONTENTS-')) return content;
     
-    // Extract and format the ticket content
     const ticketContent = content.replace('TICKETCONTENTS-', '');
     
     try {
@@ -58,7 +52,6 @@ export function Message({ message }: MessageProps) {
     } catch (error) {
       console.error('Error parsing ticket content:', error);
       
-      // Fallback to simple display if JSON parsing fails
       const lines = ticketContent.split('\n');
       
       return (
@@ -83,31 +76,24 @@ export function Message({ message }: MessageProps) {
     }
   };
 
-  // Process message content with memoization for performance
   const processedContent = useMemo(() => {
-    // Completely skip rendering empty messages
     if (!message.content && !message.isStreaming) {
       return null;
     }
     
-    // Handle ticket content special case
     if (message.content && message.content.startsWith('TICKETCONTENTS-')) {
       return formatTicketContent(message.content);
     }
     
-    // Only apply markdown parsing to assistant and system messages
     if (isUser) {
       return <p className="text-sm whitespace-pre-wrap">{message.content}</p>;
     }
     
-    // Special handling for streaming messages
     if (message.isStreaming) {
-      // If content is empty while streaming, show thinking indicator
       if (!message.content || message.content.trim() === '') {
         return <p className="text-sm animate-pulse">Thinking...</p>;
       }
       
-      // Otherwise show the partial content with a blinking cursor
       return (
         <div 
           className="text-sm markdown-content after:content-['▋'] after:ml-0.5 after:animate-blink"
@@ -118,7 +104,6 @@ export function Message({ message }: MessageProps) {
       );
     }
     
-    // Regular assistant/system message with content
     return (
       <div 
         className="text-sm markdown-content"
@@ -129,7 +114,6 @@ export function Message({ message }: MessageProps) {
     );
   }, [message.content, message.isStreaming, isUser]);
 
-  // If processedContent is null, don't render the message at all
   if (processedContent === null) {
     return null;
   }
@@ -159,7 +143,7 @@ export function Message({ message }: MessageProps) {
         </div>
         
         <div className={cn(
-          'rounded-lg px-4 py-3 shadow-md message-bubble',
+          'rounded-lg px-4 py-3 shadow-md message-bubble overflow-hidden',
           isUser 
             ? 'bg-[#25384D] text-neon-aqua border border-neon-aqua/30' 
             : isSystem

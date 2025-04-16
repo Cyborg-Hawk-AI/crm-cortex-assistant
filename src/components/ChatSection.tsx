@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2, AlertTriangle, Folder, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -485,13 +484,13 @@ export function ChatSection({
             <Button 
               variant="outline" 
               size="sm" 
-              className="text-muted-foreground hover:text-neon-red hover:border-neon-red/30 hover:shadow-[0_0_8px_rgba(244,63,94,0.2)]" 
+              className="text-muted-foreground hover:text-neon-red hover:border-neon-red/30 hover:shadow-[0_0_8px_rgba(244,63,94,0.2)] clear-chat-button" 
               onClick={handleClearChat} 
               disabled={!activeConversationId}
               title="Clear conversation"
             >
               <Trash2 className="h-4 w-4" />
-              {!isMobile && <span className="ml-1">Clear</span>}
+              <span className="ml-1">Clear</span>
             </Button>
           </div>
           

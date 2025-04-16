@@ -1,4 +1,3 @@
-
 @keyframes blink {
   0% { opacity: 0.2; }
   20% { opacity: 1; }
@@ -74,6 +73,9 @@
   padding: 0.2em 0.4em;
   border-radius: 3px;
   font-size: 85%;
+  max-width: 100%;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .markdown-content pre {
@@ -85,6 +87,7 @@
   background: rgba(15, 23, 42, 0.7);
   box-sizing: border-box;
   overflow-x: auto;
+  white-space: pre;
 }
 
 .markdown-content pre code {
@@ -97,6 +100,7 @@
   tab-size: 2;
   width: 100%;
   box-sizing: border-box;
+  white-space: pre;
 }
 
 .markdown-content pre::-webkit-scrollbar {
@@ -172,9 +176,22 @@
 /* Mobile-specific adjustments */
 @media (max-width: 767px) {
   .max-w-[75%] {
-    width: 90%;
-    max-width: 90%;
+    width: 95%;
+    max-width: 95%;
     box-sizing: border-box;
+  }
+  
+  .chat-container {
+    padding: 0.5rem;
+  }
+  
+  .message-bubble {
+    padding: 0.75rem !important;
+  }
+  
+  /* Hide text on clear button for mobile */
+  .clear-chat-button span {
+    display: none;
   }
 }
 
@@ -183,6 +200,7 @@
   width: 100%;
   box-sizing: border-box;
   overflow-wrap: break-word;
+  max-width: 100%;
 }
 
 /* Force code blocks to respect parent container width */
