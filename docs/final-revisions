@@ -23,3 +23,7 @@ notebook section has to be optimized for mobile view
 
 
 the icons on recent tasks on the command view, need to either have chat linking and notelinking working, then be used to navigate to the corresponding linked note/actionbot, or removed entirely 
+
+
+package as an extension and submit to google, package as working application, create sysdaemon for service persistence, sms notifications for service outage, cloudwatch lambda eventbridge fule for monitoring https/http connection to the application. 
+refactor use of keys with aws sdk, use secrets manager, configure ec2 role for secrets manager access, lock down policy. 
