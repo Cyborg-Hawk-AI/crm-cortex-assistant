@@ -3,7 +3,6 @@
 @tailwind utilities;
 
 @layer base {
-  /* Theme transition for smooth color changes */
   .theme-transition {
     transition: background-color 0.3s ease, 
                 color 0.3s ease,
@@ -11,7 +10,7 @@
                 box-shadow 0.3s ease;
   }
 
-  /* Light Theme (New) */
+  /* Light Theme */
   [data-theme="light"] {
     --background: 60 30% 98%; /* #F9F9F9 - Soft Ivory */
     --foreground: 0 0% 25%; /* #404040 - Charcoal Gray */
@@ -44,7 +43,6 @@
     --radius: 0.75rem;
   }
 
-  :root,
   [data-theme="steel"] {
     --background: 210 40% 98%;
     --foreground: 222 47% 11%;
@@ -126,6 +124,29 @@
     --destructive: 0 92% 38%;
     --destructive-foreground: 210 40% 98%;
     --ring: 291 70% 60%;
+    --radius: 0.75rem;
+  }
+
+  [data-theme="natural"] {
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --muted: 215 16% 90%;
+    --muted-foreground: 215 25% 40%;
+    --popover: 210 40% 98%;
+    --popover-foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --primary: 173 80% 40%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --accent: 176 80% 67%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 346 84% 61%;
+    --destructive-foreground: 210 40% 98%;
+    --ring: 173 80% 40%;
     --radius: 0.75rem;
   }
 
