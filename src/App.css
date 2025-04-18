@@ -11,35 +11,35 @@
                 box-shadow 0.3s ease;
   }
 
-  /* Natural Light Theme (New) */
-  [data-theme="natural"] {
-    --background: 60 20% 96%; /* #F4F3ED - Soft taupe */
-    --foreground: 200 30% 20%; /* #1F333D - Deep teal */
+  /* Light Theme (New) */
+  [data-theme="light"] {
+    --background: 60 30% 98%; /* #F9F9F9 - Soft Ivory */
+    --foreground: 0 0% 25%; /* #404040 - Charcoal Gray */
     
-    --card: 60 30% 98%; /* #F9F8F4 - Lighter taupe */
-    --card-foreground: 200 30% 20%; /* #1F333D - Deep teal */
+    --card: 210 20% 98%; /* #F5F7FA - Cool Mist */
+    --card-foreground: 0 0% 25%; /* #404040 - Charcoal Gray */
     
-    --popover: 60 30% 98%; /* #F9F8F4 - Lighter taupe */
-    --popover-foreground: 200 30% 20%; /* #1F333D - Deep teal */
+    --popover: 210 20% 98%; /* #F5F7FA - Cool Mist */
+    --popover-foreground: 0 0% 25%; /* #404040 - Charcoal Gray */
     
-    --primary: 180 40% 50%; /* #4BA3A3 - Sage teal */
-    --primary-foreground: 60 30% 98%; /* #F9F8F4 - Light taupe */
+    --primary: 174 47% 69%; /* #88D9CE - Teal Green */
+    --primary-foreground: 173 36% 23%; /* #264E46 - Dark Forest Green */
     
-    --secondary: 150 30% 85%; /* #D3E4D7 - Soft sage */
-    --secondary-foreground: 200 30% 20%; /* #1F333D - Deep teal */
+    --secondary: 180 48% 85%; /* #C1EDEA - Aqua Tint */
+    --secondary-foreground: 173 36% 23%; /* #264E46 - Dark Forest Green */
     
-    --muted: 60 15% 90%; /* #E5E4DF - Muted taupe */
-    --muted-foreground: 200 20% 40%; /* #4D6B7A - Muted teal */
+    --muted: 34 13% 91%; /* #ECEAE3 - Warm Sand */
+    --muted-foreground: 0 0% 75%; /* #BFBFBF - Medium Gray */
     
-    --accent: 160 40% 70%; /* #8CD0B9 - Soft mint */
-    --accent-foreground: 200 30% 20%; /* #1F333D - Deep teal */
+    --accent: 173 36% 23%; /* #264E46 - Dark Forest Green */
+    --accent-foreground: 60 30% 98%; /* #F9F9F9 - Soft Ivory */
     
-    --destructive: 0 60% 50%; /* #D94545 - Muted red */
-    --destructive-foreground: 60 30% 98%; /* #F9F8F4 - Light taupe */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 60 30% 98%; /* #F9F9F9 - Soft Ivory */
     
-    --border: 180 20% 85%; /* #D5E0E0 - Cool gray border */
-    --input: 180 20% 85%; /* #D5E0E0 - Cool gray input */
-    --ring: 180 40% 50%; /* #4BA3A3 - Sage teal ring */
+    --border: 10 5% 65%; /* #A8A29E - Deep Taupe */
+    --input: 10 5% 65%; /* #A8A29E - Deep Taupe */
+    --ring: 174 47% 69%; /* #88D9CE - Teal Green */
     
     --radius: 0.75rem;
   }
@@ -159,7 +159,6 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
-    background-image: radial-gradient(circle at 50% 50%, hsl(var(--background)) 0%, hsl(210, 40%, 95%) 100%);
   }
 }
 
