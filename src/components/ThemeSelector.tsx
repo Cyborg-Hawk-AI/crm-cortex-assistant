@@ -11,11 +11,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const themes = [
-  { id: 'light', name: 'Light Mode', description: 'Clean, modern light interface' },
-  { id: 'midnight', name: 'Midnight', description: 'Deep, dark, and focused' },
-  { id: 'steel', name: 'Steel Blue', description: 'Our signature futuristic look' },
-  { id: 'vibrant', name: 'Vibrant', description: 'Bold and energetic' },
   { id: 'natural', name: 'Natural Light', description: 'Soft, nature-inspired tones' },
+  { id: 'steel', name: 'Steel Blue', description: 'Our signature futuristic look' },
+  { id: 'midnight', name: 'Midnight', description: 'Deep, dark, and focused' },
+  { id: 'vibrant', name: 'Vibrant', description: 'Bold and energetic' },
 ] as const;
 
 export function ThemeSelector() {
@@ -28,11 +27,7 @@ export function ThemeSelector() {
       {theme !== 'steel' && (
         <div className="ml-auto">
           <div className="h-4 w-4 rounded-full border border-[#3A4D62]" 
-               style={{ 
-                 background: theme === 'midnight' ? '#171C24' : 
-                           theme === 'light' ? '#F9F9F9' :
-                           theme === 'natural' ? '#F4F3ED' : '#4A1FA7'
-               }} 
+               style={{ background: theme === 'midnight' ? '#171C24' : '#4A1FA7' }} 
           />
         </div>
       )}

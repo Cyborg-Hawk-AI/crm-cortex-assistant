@@ -1,7 +1,6 @@
 Cursor + LLM troubleshooting:
 Implement streaming functionality on chat
 add loading animation when a quick action icon is selected from the actionbot, regardless of model used. 
-implement light theme (see actionit whatsapp chat for theme description)
 
 
 
@@ -9,6 +8,7 @@ implement light theme (see actionit whatsapp chat for theme description)
 Lovable changes
 projects selector from the top must firt navigate to projet list view, and if no project exists, then show the add project view.
 Adjust default theme, 
+implement light theme (see actionit whatsapp chat for theme description)
 
 figure out the bare minimum settings you want users to adjust. 
 remove the / feature in the notebooks/blocks, using slash cancels out text input
