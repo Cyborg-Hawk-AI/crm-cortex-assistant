@@ -34,7 +34,7 @@ export function TodaySyncUps() {
 
   return (
     <>
-      <Card className="border border-[#C1EDEA] bg-gradient-to-br from-white to-[#F5F7FA]/70 shadow-lg hover:shadow-xl transition-all duration-300 shadow-[0_0_20px_rgba(136,217,206,0.2)]">
+      <Card className="border border-[#C1EDEA] bg-gradient-to-br from-white to-[#F2FCE2]/70 shadow-lg hover:shadow-xl transition-all duration-300 shadow-[0_0_20px_rgba(136,217,206,0.2)]">
         <CardHeader className="pb-2 border-b border-[#C1EDEA]/50">
           <CardTitle className="text-xl text-[#264E46] flex items-center justify-between">
             <div className="flex items-center">
@@ -45,7 +45,7 @@ export function TodaySyncUps() {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="h-8 px-2 text-[#264E46] hover:text-[#88D9CE] hover:bg-[#F5F7FA]/50"
+                className="h-8 px-2 text-[#264E46] hover:text-[#88D9CE] hover:bg-[#F2FCE2]/50"
                 onClick={() => setShowJoinModal(true)}
               >
                 <Video className="h-4 w-4 mr-1" />
@@ -54,7 +54,7 @@ export function TodaySyncUps() {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="h-8 px-2 text-[#264E46] hover:text-[#88D9CE] hover:bg-[#F5F7FA]/50"
+                className="h-8 px-2 text-[#264E46] hover:text-[#88D9CE] hover:bg-[#F2FCE2]/50"
                 onClick={() => setShowCreateModal(true)}
               >
                 <CalendarIcon className="h-4 w-4 mr-1" />
@@ -100,7 +100,7 @@ export function TodaySyncUps() {
                   transition={{ delay: index * 0.05 }}
                   whileHover={{ scale: 1.02, y: -2 }}
                 >
-                  <div className="p-3 rounded-lg border border-[#C1EDEA] bg-white hover:bg-[#F5F7FA] hover:shadow-[0_0_10px_rgba(136,217,206,0.15)] transition-all duration-300">
+                  <div className="p-3 rounded-lg border border-[#C1EDEA] bg-white hover:bg-[#F2FCE2] hover:shadow-[0_0_10px_rgba(136,217,206,0.15)] transition-all duration-300">
                     <div className="flex justify-between items-start">
                       <div>
                         <h4 className="text-sm font-medium text-[#404040]">{meeting.title}</h4>
@@ -140,7 +140,7 @@ export function TodaySyncUps() {
                       </div>
                       
                       {meeting.attendees && (
-                        <Badge variant="outline" className="text-xs bg-[#F5F7FA] text-[#264E46] border-[#C1EDEA]">
+                        <Badge variant="outline" className="text-xs bg-[#F2FCE2] text-[#264E46] border-[#C1EDEA]">
                           {meeting.attendees.length} attendee{meeting.attendees.length !== 1 ? 's' : ''}
                         </Badge>
                       )}

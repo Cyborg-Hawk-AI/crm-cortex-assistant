@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardTitle, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,12 +18,10 @@ interface RecentTicketsProps {
 export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsProps) {
   const navigate = useNavigate();
   
-  // Use React Query to fetch the most recently updated tasks
   const { data: tickets = [], isLoading } = useQuery({
     queryKey: ['recent-mission-tasks'],
     queryFn: async () => {
       try {
-        // Fetch tasks ordered by updated_at in descending order
         const { data, error } = await supabase
           .from('tasks')
           .select('*')
@@ -36,7 +33,6 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
           return [];
         }
 
-        // Transform the data to match the Ticket interface
         return data.map((task) => ({
           id: task.id,
           title: task.title,
@@ -59,10 +55,9 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
         return [];
       }
     },
-    refetchInterval: 60000 // Refetch every minute
+    refetchInterval: 60000
   });
 
-  // Stats for the dashboard view
   const { 
     data: taskStats = { open: 0, inProgress: 0, completed: 0 },
     isLoading: isLoadingStats
@@ -101,15 +96,13 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
       }
     }
   });
-  
+
   const handleOpenChat = () => {
     console.log("Open chat");
-    // Implementation would go here
   };
   
   const handleOpenScratchpad = () => {
     console.log("Open scratchpad");
-    // Implementation would go here
   };
   
   const handleViewAll = () => {
@@ -117,7 +110,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
   };
   
   return (
-    <Card>
+    <Card className="border border-[#C1EDEA] bg-gradient-to-br from-white to-[#F2FCE2]/70 shadow-lg hover:shadow-xl transition-all duration-300 shadow-[0_0_20px_rgba(136,217,206,0.2)]">
       <CardHeader className="pb-2 flex flex-row justify-between items-center">
         <div className="flex items-center">
           <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-[#88D9CE] to-[#264E46] mr-2"></div>
@@ -137,7 +130,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
           <Button 
             variant="outline" 
             size="sm" 
-            className="border-[#C1EDEA] hover:border-[#88D9CE] hover:bg-[#F5F7FA] text-sm text-[#264E46]"
+            className="border-[#C1EDEA] hover:border-[#88D9CE] hover:bg-[#F2FCE2] text-sm text-[#264E46]"
             onClick={() => navigate('/', { state: { activeTab: 'tasks', openCreateTask: true } })}
           >
             <PlusCircle className="h-3.5 w-3.5 mr-1" />
@@ -188,9 +181,8 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
               ))}
             </div>
             
-            {/* Summary Statistics */}
             <div className="mt-6 grid grid-cols-3 gap-2">
-              <div className="bg-gradient-to-br from-[#F5F7FA] to-[#ECEAE3]/30 rounded-md p-3 flex items-center">
+              <div className="bg-gradient-to-br from-[#F2FCE2] to-[#F2FCE2]/30 rounded-md p-3 flex items-center">
                 <div className="rounded-full bg-[#88D9CE]/20 w-8 h-8 flex items-center justify-center mr-3">
                   <Layers className="h-4 w-4 text-[#264E46]" />
                 </div>
@@ -199,7 +191,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
                   <div className="text-lg font-bold text-[#264E46]">{isLoadingStats ? '...' : taskStats.open}</div>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-[#F5F7FA] to-[#ECEAE3]/30 rounded-md p-3 flex items-center">
+              <div className="bg-gradient-to-br from-[#F2FCE2] to-[#F2FCE2]/30 rounded-md p-3 flex items-center">
                 <div className="rounded-full bg-[#C1EDEA]/20 w-8 h-8 flex items-center justify-center mr-3">
                   <BarChart2 className="h-4 w-4 text-[#88D9CE]" />
                 </div>
@@ -208,7 +200,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
                   <div className="text-lg font-bold text-[#264E46]">{isLoadingStats ? '...' : taskStats.inProgress}</div>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-[#F5F7FA] to-[#ECEAE3]/30 rounded-md p-3 flex items-center">
+              <div className="bg-gradient-to-br from-[#F2FCE2] to-[#F2FCE2]/30 rounded-md p-3 flex items-center">
                 <div className="rounded-full bg-[#88D9CE]/20 w-8 h-8 flex items-center justify-center mr-3">
                   <BarChart2 className="h-4 w-4 text-[#264E46]" />
                 </div>

@@ -30,6 +30,7 @@ export default {
 				'teal-green': '#54C7B7', // Primary accent - more saturated
 				'forest-green': '#1B3C36', // Secondary accent - darker for better contrast
 				'aqua-tint': '#A5E8E4', // Light accent for hover effects - more vibrant
+				'soft-green': '#F2FCE2', // Soft green for dashboard backgrounds
 				
 				// Enhanced Neutral Supporting Colors
 				'warm-sand': '#E5E1D8', // Alternate neutral - slightly darker

@@ -45,16 +45,16 @@
 .model-toggle {
   display: inline-flex;
   align-items: center;
-  background: #F5F7FA;
+  background: #F2FCE2;
   border-radius: 14px;
   padding: 2px;
-  border: 1px solid #ECEAE3;
+  border: 1px solid #C1EDEA;
   transition: all 0.2s ease;
 }
 
 .model-toggle:hover {
-  border-color: #BFBFBF;
-  box-shadow: 0 0 8px rgba(191, 191, 191, 0.2);
+  border-color: #88D9CE;
+  box-shadow: 0 0 8px rgba(136, 217, 206, 0.2);
 }
 
 .model-toggle-button {
