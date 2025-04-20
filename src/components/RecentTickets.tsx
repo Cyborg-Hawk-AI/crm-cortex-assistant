@@ -141,15 +141,15 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
       <CardContent className="pt-4">
         {isLoading ? (
           <div className="flex justify-center py-8">
-            <div className="animate-pulse bg-[#F5F7FA] h-32 w-full rounded-md"></div>
+            <div className="animate-pulse bg-[#F2FCE2] h-32 w-full rounded-md"></div>
           </div>
         ) : tickets.length === 0 ? (
-          <div className="text-center py-8 text-[#A8A29E]">
+          <div className="text-center py-8 text-[#264E46]">
             <p>No mission tasks found</p>
             <Button 
               variant="outline" 
               size="sm" 
-              className="mt-4 border-[#C1EDEA] hover:border-[#88D9CE] hover:bg-[#F5F7FA] text-[#264E46]"
+              className="mt-4 border-[#C1EDEA] hover:border-[#88D9CE] hover:bg-[#F2FCE2] text-[#264E46]"
               onClick={() => navigate('/', { state: { activeTab: 'tasks', openCreateTask: true } })}
             >
               Create your first mission
@@ -187,7 +187,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
                   <Layers className="h-4 w-4 text-[#264E46]" />
                 </div>
                 <div>
-                  <div className="text-xs text-[#A8A29E]">Open</div>
+                  <div className="text-xs text-[#264E46]/70">Open</div>
                   <div className="text-lg font-bold text-[#264E46]">{isLoadingStats ? '...' : taskStats.open}</div>
                 </div>
               </div>
@@ -196,7 +196,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
                   <BarChart2 className="h-4 w-4 text-[#88D9CE]" />
                 </div>
                 <div>
-                  <div className="text-xs text-[#A8A29E]">In Progress</div>
+                  <div className="text-xs text-[#264E46]/70">In Progress</div>
                   <div className="text-lg font-bold text-[#264E46]">{isLoadingStats ? '...' : taskStats.inProgress}</div>
                 </div>
               </div>
@@ -205,7 +205,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
                   <BarChart2 className="h-4 w-4 text-[#264E46]" />
                 </div>
                 <div>
-                  <div className="text-xs text-[#A8A29E]">Completed</div>
+                  <div className="text-xs text-[#264E46]/70">Completed</div>
                   <div className="text-lg font-bold text-[#88D9CE]">{isLoadingStats ? '...' : taskStats.completed}</div>
                 </div>
               </div>
