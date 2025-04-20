@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardTitle, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -119,7 +120,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
     <Card>
       <CardHeader className="pb-2 flex flex-row justify-between items-center">
         <div className="flex items-center">
-          <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-neon-red to-neon-purple mr-2"></div>
+          <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-[#88D9CE] to-[#264E46] mr-2"></div>
           <CardTitle className="text-lg font-bold">Recent Tasks</CardTitle>
         </div>
         <div className="flex items-center space-x-2">
@@ -127,7 +128,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
             <Button 
               variant="ghost" 
               size="sm" 
-              className="text-sm px-2 text-[#CBD5E1] hover:text-[#F1F5F9]"
+              className="text-sm px-2 text-[#A8A29E] hover:text-[#404040]"
               onClick={handleViewAll}
             >
               View all
@@ -136,7 +137,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
           <Button 
             variant="outline" 
             size="sm" 
-            className="border-neon-purple/40 hover:border-neon-purple/70 hover:bg-neon-purple/10 text-sm"
+            className="border-[#C1EDEA] hover:border-[#88D9CE] hover:bg-[#F5F7FA] text-sm text-[#264E46]"
             onClick={() => navigate('/', { state: { activeTab: 'tasks', openCreateTask: true } })}
           >
             <PlusCircle className="h-3.5 w-3.5 mr-1" />
@@ -147,15 +148,15 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
       <CardContent className="pt-4">
         {isLoading ? (
           <div className="flex justify-center py-8">
-            <div className="animate-pulse bg-gray-700/50 h-32 w-full rounded-md"></div>
+            <div className="animate-pulse bg-[#F5F7FA] h-32 w-full rounded-md"></div>
           </div>
         ) : tickets.length === 0 ? (
-          <div className="text-center py-8 text-gray-400">
+          <div className="text-center py-8 text-[#A8A29E]">
             <p>No mission tasks found</p>
             <Button 
               variant="outline" 
               size="sm" 
-              className="mt-4 border-neon-purple/40 hover:border-neon-purple/70 hover:bg-neon-purple/10"
+              className="mt-4 border-[#C1EDEA] hover:border-[#88D9CE] hover:bg-[#F5F7FA] text-[#264E46]"
               onClick={() => navigate('/', { state: { activeTab: 'tasks', openCreateTask: true } })}
             >
               Create your first mission
@@ -189,31 +190,31 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
             
             {/* Summary Statistics */}
             <div className="mt-6 grid grid-cols-3 gap-2">
-              <div className="bg-gradient-to-br from-gray-800/50 to-gray-700/30 rounded-md p-3 flex items-center">
-                <div className="rounded-full bg-neon-purple/20 w-8 h-8 flex items-center justify-center mr-3">
-                  <Layers className="h-4 w-4 text-neon-purple" />
+              <div className="bg-gradient-to-br from-[#F5F7FA] to-[#ECEAE3]/30 rounded-md p-3 flex items-center">
+                <div className="rounded-full bg-[#88D9CE]/20 w-8 h-8 flex items-center justify-center mr-3">
+                  <Layers className="h-4 w-4 text-[#264E46]" />
                 </div>
                 <div>
-                  <div className="text-xs text-[#CBD5E1]">Open</div>
-                  <div className="text-lg font-bold">{isLoadingStats ? '...' : taskStats.open}</div>
+                  <div className="text-xs text-[#A8A29E]">Open</div>
+                  <div className="text-lg font-bold text-[#264E46]">{isLoadingStats ? '...' : taskStats.open}</div>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-gray-800/50 to-gray-700/30 rounded-md p-3 flex items-center">
-                <div className="rounded-full bg-neon-blue/20 w-8 h-8 flex items-center justify-center mr-3">
-                  <BarChart2 className="h-4 w-4 text-neon-blue" />
+              <div className="bg-gradient-to-br from-[#F5F7FA] to-[#ECEAE3]/30 rounded-md p-3 flex items-center">
+                <div className="rounded-full bg-[#C1EDEA]/20 w-8 h-8 flex items-center justify-center mr-3">
+                  <BarChart2 className="h-4 w-4 text-[#88D9CE]" />
                 </div>
                 <div>
-                  <div className="text-xs text-[#CBD5E1]">In Progress</div>
-                  <div className="text-lg font-bold">{isLoadingStats ? '...' : taskStats.inProgress}</div>
+                  <div className="text-xs text-[#A8A29E]">In Progress</div>
+                  <div className="text-lg font-bold text-[#264E46]">{isLoadingStats ? '...' : taskStats.inProgress}</div>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-gray-800/50 to-gray-700/30 rounded-md p-3 flex items-center">
-                <div className="rounded-full bg-neon-green/20 w-8 h-8 flex items-center justify-center mr-3">
-                  <BarChart2 className="h-4 w-4 text-neon-green" />
+              <div className="bg-gradient-to-br from-[#F5F7FA] to-[#ECEAE3]/30 rounded-md p-3 flex items-center">
+                <div className="rounded-full bg-[#88D9CE]/20 w-8 h-8 flex items-center justify-center mr-3">
+                  <BarChart2 className="h-4 w-4 text-[#264E46]" />
                 </div>
                 <div>
-                  <div className="text-xs text-[#CBD5E1]">Completed</div>
-                  <div className="text-lg font-bold">{isLoadingStats ? '...' : taskStats.completed}</div>
+                  <div className="text-xs text-[#A8A29E]">Completed</div>
+                  <div className="text-lg font-bold text-[#88D9CE]">{isLoadingStats ? '...' : taskStats.completed}</div>
                 </div>
               </div>
             </div>
