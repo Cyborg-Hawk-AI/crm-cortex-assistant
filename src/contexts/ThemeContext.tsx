@@ -1,8 +1,8 @@
 
-// Only provide a single 'light' theme
+// Support switching between "light" and "dark" themes ONLY
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-type ThemeType = 'light';
+type ThemeType = 'light' | 'dark';
 
 interface ThemeContextType {
   theme: ThemeType;
@@ -12,23 +12,27 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme] = useState<ThemeType>('light');
+  const [theme, setThemeState] = useState<ThemeType>(() => {
+    const saved = localStorage.getItem('theme');
+    return saved === 'dark' ? 'dark' : 'light';
+  });
 
   useEffect(() => {
-    localStorage.setItem('theme', 'light');
-    document.documentElement.setAttribute('data-theme', 'light');
+    localStorage.setItem('theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
     document.documentElement.classList.add('theme-transition');
     const timer = setTimeout(() => {
       document.documentElement.classList.remove('theme-transition');
     }, 300);
     return () => clearTimeout(timer);
-  }, []);
+  }, [theme]);
 
-  // Do nothing on setTheme—theme is always 'light'
-  const setTheme = () => {};
+  const setTheme = (newTheme: ThemeType) => {
+    setThemeState(newTheme);
+  };
 
   return (
-    <ThemeContext.Provider value={{ theme: 'light', setTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );

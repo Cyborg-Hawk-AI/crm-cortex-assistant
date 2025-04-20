@@ -36,113 +36,50 @@
     --ring: 174 47% 69%; /* #88D9CE - Teal green */
     
     --radius: 0.75rem;
+
+    /* Neon Colors - convert all to teal/green */
+    --neon-red: 0 84% 60%;
+    --neon-purple: 174 47% 69%; /* Changed to #88D9CE - Teal green */
+    --neon-blue: 174 47% 69%; /* Changed to #88D9CE - Teal green */
+    --neon-aqua: 181 100% 48%; /* #00F7EF - Bright aqua */
+    --neon-green: 142 100% 68%; /* Original green */
+    --neon-yellow: 41 100% 70%; /* Original yellow */
   }
 
-  :root,
-  [data-theme="steel"] {
-    --background: 210 40% 98%;
-    --foreground: 222 47% 11%;
-    --muted: 215 16% 90%;
-    --muted-foreground: 215 25% 40%;
-    --popover: 210 40% 98%;
-    --popover-foreground: 222 47% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --primary: 173 80% 40%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --accent: 176 80% 67%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 346 84% 61%;
-    --destructive-foreground: 210 40% 98%;
-    --ring: 173 80% 40%;
+  /* Dark Theme (Mode 2): strong, clean, teal/forest futuristic vibes */
+  [data-theme="dark"] {
+    --background: 220 40% 8%;    /* deep steel/charcoal bg */
+    --foreground: 180 22% 92%;   /* very light teal-gray */
+    --card: 220 38% 13%;         /* glassy card bg */
+    --card-foreground: 180 10% 95%;
+    --popover: 220 38% 13%;
+    --popover-foreground: 180 10% 95%;
+    --primary: 174 47% 69%;      /* #88D9CE - neon teal */
+    --primary-foreground: 168 33% 23%; /* forest green */
+    --secondary: 171 64% 24%;    /* #183e34 - deep teal/green */
+    --secondary-foreground: 180 32% 90%;
+    --muted: 215 24% 28%;        /* dark grayish stone */
+    --muted-foreground: 180 22% 80%;
+    --accent: 174 47% 41%;       /* deeper teal overlay */
+    --accent-foreground: 180 10% 92%;
+    --destructive: 0 84% 62%;
+    --destructive-foreground: 216 38% 20%;
+    --border: 178 15% 28%;       /* border deep teal/gray */
+    --input: 178 15% 28%;
+    --ring: 174 47% 69%;
     --radius: 0.75rem;
-    
-    /* Neon Colors - Light Theme */
-    --neon-red: 346 84% 61%;
-    --neon-purple: 265 90% 65%;
-    --neon-blue: 206 95% 50%;
-    --neon-aqua: 181 100% 50%;
-    --neon-green: 142 100% 68%;
+
+    --neon-red: 0 84% 62%;
+    --neon-purple: 174 47% 69%; /* neon teal */
+    --neon-blue: 174 47% 69%;
+    --neon-aqua: 181 100% 55%;
+    --neon-green: 142 100% 64%;
     --neon-yellow: 41 100% 70%;
-    
-    /* Alert Colors */
-    --alert-red: 346 84% 61%;
-    --alert-orange: 25 95% 65%;
-    --alert-yellow: 41 100% 70%;
-    --alert-green: 142 70% 45%;
-    --alert-blue: 199 98% 48%;
-  }
-
-  [data-theme="midnight"] {
-    --background: 222 47% 11%;
-    --foreground: 213 31% 91%;
-    --muted: 223 47% 11%;
-    --muted-foreground: 215.4 16.3% 56.9%;
-    --popover: 224 71% 4%;
-    --popover-foreground: 215 20.2% 65.1%;
-    --card: 222 47% 11%;
-    --card-foreground: 213 31% 91%;
-    --border: 216 34% 17%;
-    --input: 216 34% 17%;
-    --primary: 265 90% 65%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 222 47% 11%;
-    --secondary-foreground: 210 40% 98%;
-    --accent: 216 34% 17%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 92% 38%;
-    --destructive-foreground: 210 40% 98%;
-    --ring: 216 34% 17%;
-    --radius: 0.75rem;
-  }
-
-  [data-theme="vibrant"] {
-    --background: 260 40% 14%;
-    --foreground: 213 31% 91%;
-    --muted: 260 40% 17%;
-    --muted-foreground: 215.4 16.3% 56.9%;
-    --popover: 260 40% 14%;
-    --popover-foreground: 215 20.2% 65.1%;
-    --card: 260 40% 14%;
-    --card-foreground: 213 31% 91%;
-    --border: 260 40% 20%;
-    --input: 260 40% 20%;
-    --primary: 291 70% 60%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 260 40% 14%;
-    --secondary-foreground: 210 40% 98%;
-    --accent: 291 70% 60%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 92% 38%;
-    --destructive-foreground: 210 40% 98%;
-    --ring: 291 70% 60%;
-    --radius: 0.75rem;
   }
 
   .dark {
-    --background: 224 71% 4%;
-    --foreground: 213 31% 91%;
-    --muted: 223 47% 11%;
-    --muted-foreground: 215.4 16.3% 56.9%;
-    --popover: 224 71% 4%;
-    --popover-foreground: 215 20.2% 65.1%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 47.4% 11.2%;
-    --border: 216 34% 17%;
-    --input: 216 34% 17%;
-    --primary: 142.1 70.6% 45.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 222.2 47.4% 11.2%;
-    --secondary-foreground: 210 40% 98%;
-    --accent: 216 34% 17%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 92% 38%;
-    --destructive-foreground: 210 40% 98%;
-    --ring: 142.1 76.2% 36.3%;
+    --background: 220 40% 8%;
+    --foreground: 180 22% 92%;
   }
 
   * {
@@ -156,6 +93,11 @@
 
   [data-theme="light"] body {
     background-color: #F9F9F9;
+    background-image: none;
+  }
+
+  [data-theme="dark"] body {
+    background-color: #10161A;
     background-image: none;
   }
 }
