@@ -96,8 +96,8 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
   });
 
   return (
-    <Card className="border-none bg-transparent shadow-none">
-      <CardHeader className="pb-2 flex flex-row justify-between items-center">
+    <Card className="border-[#88D9CE] bg-transparent shadow-[0_0_15px_rgba(136,217,206,0.15)]">
+      <CardHeader className="pb-2 flex flex-row justify-between items-center bg-transparent">
         <div className="flex items-center">
           <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-[#88D9CE] to-[#264E46] mr-2"></div>
           <CardTitle className="text-lg font-bold text-[#264E46]">Recent Tasks</CardTitle>
@@ -116,7 +116,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
           <Button 
             variant="outline" 
             size="sm" 
-            className="border-transparent hover:bg-transparent text-[#264E46]"
+            className="border-[#88D9CE] hover:bg-[#C1EDEA]/20 text-[#264E46]"
             onClick={() => navigate('/', { state: { activeTab: 'tasks', openCreateTask: true } })}
           >
             <PlusCircle className="h-3.5 w-3.5 mr-1" />
@@ -127,7 +127,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
       <CardContent className="pt-4 bg-transparent">
         {isLoading ? (
           <div className="flex justify-center py-8">
-            <div className="animate-pulse bg-transparent h-32 w-full rounded-md"></div>
+            <div className="animate-pulse bg-[#C1EDEA]/20 h-32 w-full rounded-md"></div>
           </div>
         ) : tickets.length === 0 ? (
           <div className="text-center py-8 text-[#264E46]">
@@ -135,7 +135,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
             <Button 
               variant="outline" 
               size="sm" 
-              className="mt-4 border-transparent hover:bg-transparent text-[#264E46]"
+              className="mt-4 border-[#88D9CE] hover:bg-[#C1EDEA]/20 text-[#264E46]"
               onClick={() => navigate('/', { state: { activeTab: 'tasks', openCreateTask: true } })}
             >
               Create your first mission
