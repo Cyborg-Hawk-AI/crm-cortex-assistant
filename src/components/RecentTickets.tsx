@@ -110,7 +110,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
   };
   
   return (
-    <Card className="border border-[#C1EDEA] bg-gradient-to-br from-white to-[#F2FCE2]/70 shadow-lg hover:shadow-xl transition-all duration-300 shadow-[0_0_20px_rgba(136,217,206,0.2)]">
+    <Card className="border-none bg-transparent shadow-none">
       <CardHeader className="pb-2 flex flex-row justify-between items-center">
         <div className="flex items-center">
           <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-[#88D9CE] to-[#264E46] mr-2"></div>
@@ -130,7 +130,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
           <Button 
             variant="outline" 
             size="sm" 
-            className="border-[#C1EDEA] hover:border-[#88D9CE] hover:bg-[#F2FCE2] text-sm text-[#264E46]"
+            className="border-[#C1EDEA] hover:border-[#88D9CE] hover:bg-[#F2FCE2] text-[#264E46]"
             onClick={() => navigate('/', { state: { activeTab: 'tasks', openCreateTask: true } })}
           >
             <PlusCircle className="h-3.5 w-3.5 mr-1" />
@@ -138,7 +138,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="pt-4">
+      <CardContent className="pt-4 bg-transparent">
         {isLoading ? (
           <div className="flex justify-center py-8">
             <div className="animate-pulse bg-[#F2FCE2] h-32 w-full rounded-md"></div>
@@ -182,7 +182,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
             </div>
             
             <div className="mt-6 grid grid-cols-3 gap-2">
-              <div className="bg-gradient-to-br from-[#F2FCE2] to-[#F2FCE2]/30 rounded-md p-3 flex items-center">
+              <div className="bg-transparent border border-[#C1EDEA] rounded-md p-3 flex items-center">
                 <div className="rounded-full bg-[#88D9CE]/20 w-8 h-8 flex items-center justify-center mr-3">
                   <Layers className="h-4 w-4 text-[#264E46]" />
                 </div>
@@ -191,7 +191,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
                   <div className="text-lg font-bold text-[#264E46]">{isLoadingStats ? '...' : taskStats.open}</div>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-[#F2FCE2] to-[#F2FCE2]/30 rounded-md p-3 flex items-center">
+              <div className="bg-transparent border border-[#C1EDEA] rounded-md p-3 flex items-center">
                 <div className="rounded-full bg-[#C1EDEA]/20 w-8 h-8 flex items-center justify-center mr-3">
                   <BarChart2 className="h-4 w-4 text-[#88D9CE]" />
                 </div>
@@ -200,7 +200,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
                   <div className="text-lg font-bold text-[#264E46]">{isLoadingStats ? '...' : taskStats.inProgress}</div>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-[#F2FCE2] to-[#F2FCE2]/30 rounded-md p-3 flex items-center">
+              <div className="bg-transparent border border-[#C1EDEA] rounded-md p-3 flex items-center">
                 <div className="rounded-full bg-[#88D9CE]/20 w-8 h-8 flex items-center justify-center mr-3">
                   <BarChart2 className="h-4 w-4 text-[#264E46]" />
                 </div>
