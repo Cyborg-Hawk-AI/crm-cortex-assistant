@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardTitle, CardHeader } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { TicketInfo } from '@/components/TicketInfo';
-import { TicketQuickActions } from '@/components/TicketQuickActions';
-import { PlusCircle, BarChart2, Layers } from 'lucide-react';
+import { PlusCircle, Layers, BarChart2 } from 'lucide-react';
 import { Ticket } from '@/utils/types';
 import { supabase } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
@@ -97,18 +95,6 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
     }
   });
 
-  const handleOpenChat = () => {
-    console.log("Open chat");
-  };
-  
-  const handleOpenScratchpad = () => {
-    console.log("Open scratchpad");
-  };
-  
-  const handleViewAll = () => {
-    navigate('/', { state: { activeTab: 'tasks' } });
-  };
-  
   return (
     <Card className="border-none bg-transparent shadow-none">
       <CardHeader className="pb-2 flex flex-row justify-between items-center">
@@ -122,7 +108,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
               variant="ghost" 
               size="sm" 
               className="text-sm px-2 text-[#264E46] hover:text-[#264E46]/80"
-              onClick={handleViewAll}
+              onClick={() => navigate('/', { state: { activeTab: 'tasks' } })}
             >
               View all
             </Button>
@@ -130,7 +116,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
           <Button 
             variant="outline" 
             size="sm" 
-            className="border-[#C1EDEA] hover:border-[#88D9CE] hover:bg-[#F2FCE2] text-[#264E46]"
+            className="border-transparent hover:bg-transparent text-[#264E46]"
             onClick={() => navigate('/', { state: { activeTab: 'tasks', openCreateTask: true } })}
           >
             <PlusCircle className="h-3.5 w-3.5 mr-1" />
@@ -141,7 +127,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
       <CardContent className="pt-4 bg-transparent">
         {isLoading ? (
           <div className="flex justify-center py-8">
-            <div className="animate-pulse bg-[#F2FCE2] h-32 w-full rounded-md"></div>
+            <div className="animate-pulse bg-transparent h-32 w-full rounded-md"></div>
           </div>
         ) : tickets.length === 0 ? (
           <div className="text-center py-8 text-[#264E46]">
@@ -149,7 +135,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
             <Button 
               variant="outline" 
               size="sm" 
-              className="mt-4 border-[#C1EDEA] hover:border-[#88D9CE] hover:bg-[#F2FCE2] text-[#264E46]"
+              className="mt-4 border-transparent hover:bg-transparent text-[#264E46]"
               onClick={() => navigate('/', { state: { activeTab: 'tasks', openCreateTask: true } })}
             >
               Create your first mission
@@ -161,8 +147,8 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
               <div key={ticket.id} className="flex flex-col" onClick={() => onTaskClick && onTaskClick(ticket.id)}>
                 <TicketInfo 
                   ticket={ticket} 
-                  onOpenChat={handleOpenChat}
-                  onOpenScratchpad={handleOpenScratchpad}
+                  onOpenChat={() => console.log("Open chat")}
+                  onOpenScratchpad={() => console.log("Open scratchpad")}
                 />
               </div>
             ))}
@@ -174,15 +160,15 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
                 <div key={ticket.id} onClick={() => onTaskClick && onTaskClick(ticket.id)}>
                   <TicketInfo 
                     ticket={ticket}
-                    onOpenChat={handleOpenChat}
-                    onOpenScratchpad={handleOpenScratchpad}
+                    onOpenChat={() => console.log("Open chat")}
+                    onOpenScratchpad={() => console.log("Open scratchpad")}
                   />
                 </div>
               ))}
             </div>
             
             <div className="mt-6 grid grid-cols-3 gap-2">
-              <div className="bg-transparent border border-[#C1EDEA] rounded-md p-3 flex items-center">
+              <div className="bg-transparent border-none rounded-md p-3 flex items-center">
                 <div className="rounded-full bg-[#88D9CE]/20 w-8 h-8 flex items-center justify-center mr-3">
                   <Layers className="h-4 w-4 text-[#264E46]" />
                 </div>
@@ -191,7 +177,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
                   <div className="text-lg font-bold text-[#264E46]">{isLoadingStats ? '...' : taskStats.open}</div>
                 </div>
               </div>
-              <div className="bg-transparent border border-[#C1EDEA] rounded-md p-3 flex items-center">
+              <div className="bg-transparent border-none rounded-md p-3 flex items-center">
                 <div className="rounded-full bg-[#C1EDEA]/20 w-8 h-8 flex items-center justify-center mr-3">
                   <BarChart2 className="h-4 w-4 text-[#88D9CE]" />
                 </div>
@@ -200,7 +186,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
                   <div className="text-lg font-bold text-[#264E46]">{isLoadingStats ? '...' : taskStats.inProgress}</div>
                 </div>
               </div>
-              <div className="bg-transparent border border-[#C1EDEA] rounded-md p-3 flex items-center">
+              <div className="bg-transparent border-none rounded-md p-3 flex items-center">
                 <div className="rounded-full bg-[#88D9CE]/20 w-8 h-8 flex items-center justify-center mr-3">
                   <BarChart2 className="h-4 w-4 text-[#264E46]" />
                 </div>
