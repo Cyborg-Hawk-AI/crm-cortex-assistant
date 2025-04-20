@@ -25,7 +25,7 @@ const AppContent = () => {
   const [activeTab, setActiveTab] = useState("main");
 
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'dark' : ''}`}>
+    <div className={`min-h-screen bg-background text-foreground ${theme === 'dark' ? 'dark' : ''}`}>
       <Header activeTab={activeTab} setActiveTab={setActiveTab} />
       <div className="pt-[60px] pb-[70px]">
         <Routes>
