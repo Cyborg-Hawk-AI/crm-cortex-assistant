@@ -37,36 +37,52 @@
   }
 
   [data-theme="dark"] {
-    --background: 220 40% 8%;    /* #10161A deep steel/charcoal bg */
-    --foreground: 180 22% 92%;   /* very light teal-gray */
-    --card: 220 38% 13%;         
-    --card-foreground: 180 10% 95%;
-    --popover: 220 38% 13%;
-    --popover-foreground: 180 10% 95%;
+    /* 1. Base: deep charcoal for bg, blending with muted accents, softer text */
+    --background: 220 40% 9%;    /* #13191F deep charcoal */
+    --foreground: 180 10% 92%;   /* very light teal-gray #D9E9E7 */
+
+    /* 2. Elevated Surfaces: glassy, slightly lighter but still cool */
+    --card: 220 28% 15%;         /* #203244 slightly raised from bg */
+    --card-foreground: 180 10% 92%;
+
+    --popover: 220 28% 13%;      /* #1b2533 popover */
+    --popover-foreground: 180 10% 92%;
+
     --primary: 174 47% 69%;      /* #88D9CE - teal neon */
-    --primary-foreground: 168 33% 23%;
-    --secondary: 171 64% 24%;    /* #183e34 - deep teal/green */
-    --secondary-foreground: 180 32% 90%;
-    --muted: 215 24% 28%;
-    --muted-foreground: 180 22% 80%;
-    --accent: 174 47% 41%;       /* deeper teal for hover/focus */
+    --primary-foreground: 220 40% 13%; /* #1d232c surface behind accent */
+
+    --secondary: 180 24% 18%;    /* #193238 dark aqua shadow */
+    --secondary-foreground: 180 10% 92%;
+
+    /* 3. Muted/Neutral: even softer, for input bg/placeholder */
+    --muted: 210 18% 20%;        /* #232b34 deep steel */
+    --muted-foreground: 183 8% 60%; /* #5A7370 medium gray */
+
+    /* 4. Accent for outlines and effects */
+    --accent: 175 47% 24%;       /* #1b3a38 gradient border/glow */
     --accent-foreground: 180 10% 92%;
-    --destructive: 0 84% 62%;
-    --destructive-foreground: 216 38% 20%;
-    --border: 178 15% 28%;
-    --input: 178 15% 28%;
-    --ring: 174 47% 69%;
+
+    /* 5. Alerts and status, match brand intents */
+    --destructive: 0 80% 55%;    /* #E05252 v. red/pink for errors */
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 220 16% 18%;       /* #222e36 slightly lighter than bg */
+    --input: 220 18% 21%;        /* #26303b muted but visible */
+    --ring: 174 47% 59%;         /* #63A8A2 pale teal */
     --radius: 0.75rem;
-    --neon-red: 0 84% 62%;
-    --neon-purple: 174 47% 69%;
-    --neon-blue: 174 47% 69%;
-    --neon-aqua: 181 100% 55%;
-    --neon-green: 142 100% 64%;
-    --neon-yellow: 41 100% 70%;
+
+    /* 6. Neon blend for highlights/glow */
+    --neon-red: 0 84% 60%;
+    --neon-purple: 268 90% 72%;   /* #9b87f5 - vibrant purple highlight */
+    --neon-blue: 204 100% 65%;    /* #53c6f5 - vivid blue accent */
+    --neon-aqua: 181 100% 55%;    /* #00f7ef - cyan glow */
+    --neon-green: 142 100% 64%;   /* #b6ff5d - green highlight */
+    --neon-yellow: 41 100% 70%;   /* #ffe066 - yellow status */
   }
+
   .dark {
-    --background: 220 40% 8%;
-    --foreground: 180 22% 92%;
+    --background: 220 40% 9%;
+    --foreground: 180 10% 92%;
   }
 
   body {
@@ -74,13 +90,13 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
+  /* Light/dark backgrounds for initial load */
   [data-theme="light"] body {
     background-color: #F9F9F9;
     background-image: none;
   }
   [data-theme="dark"] body {
-    background-color: #10161A;
+    background-color: #13191F;
     background-image: none;
   }
 }
-
