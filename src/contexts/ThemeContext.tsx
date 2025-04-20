@@ -1,6 +1,7 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-type ThemeType = 'steel' | 'midnight' | 'vibrant' | 'natural';
+type ThemeType = 'light' | 'steel' | 'midnight' | 'vibrant' | 'natural';
 
 interface ThemeContextType {
   theme: ThemeType;
@@ -12,8 +13,8 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<ThemeType>(() => {
     const savedTheme = localStorage.getItem('theme') as ThemeType;
-    const validThemes: ThemeType[] = ['steel', 'midnight', 'vibrant', 'natural'];
-    return validThemes.includes(savedTheme as ThemeType) ? savedTheme : 'natural';
+    const validThemes: ThemeType[] = ['light', 'steel', 'midnight', 'vibrant', 'natural'];
+    return validThemes.includes(savedTheme as ThemeType) ? savedTheme : 'midnight';
   });
 
   useEffect(() => {
