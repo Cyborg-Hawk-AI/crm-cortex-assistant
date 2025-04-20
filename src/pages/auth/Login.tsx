@@ -23,9 +23,9 @@ export default function LoginPage() {
 
   return (
     <div className="flex flex-col min-h-screen items-center justify-center px-4 py-12 bg-[#F9F9F9]">
-      <div className="mb-8 text-center">
+      <div className="mb-8 text-center flex flex-col items-center">
         <Logo className="mb-4" />
-        <h1 className="text-[#404040] text-3xl font-bold">Welcome Back</h1>
+        <h1 className="text-[#404040] text-3xl font-bold mt-2">Welcome Back</h1>
         <p className="text-[#BFBFBF] mt-2">Sign in to access your account</p>
       </div>
       
@@ -38,4 +38,4 @@ export default function LoginPage() {
       <LoginForm />
     </div>
   );
-}
+};
