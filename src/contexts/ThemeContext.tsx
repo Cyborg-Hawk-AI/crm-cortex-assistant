@@ -21,6 +21,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('theme', theme);
     document.documentElement.setAttribute('data-theme', theme);
     
+    // Add transition class for smooth theme changes
     document.documentElement.classList.add('theme-transition');
     
     const timer = setTimeout(() => {
