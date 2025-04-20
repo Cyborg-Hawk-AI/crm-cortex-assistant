@@ -1,3 +1,4 @@
+
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { Button } from '@/components/ui/button';
@@ -10,13 +11,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, LogOut, Settings, Sun } from 'lucide-react';
+import { User, LogOut, Settings, Sun, Moon } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 
 export function UserMenu() {
   const { signOut } = useAuth();
   const { profile, loading } = useProfile();
-  const { theme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   if (loading) {
     return (
@@ -64,9 +65,18 @@ export function UserMenu() {
           <span>Settings</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem disabled>
-          <Sun className="mr-2 h-4 w-4" />
-          <span>Light Mode</span>
+        <DropdownMenuItem onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
+          {theme === 'light' ? (
+            <>
+              <Moon className="mr-2 h-4 w-4" />
+              <span>Dark Mode</span>
+            </>
+          ) : (
+            <>
+              <Sun className="mr-2 h-4 w-4" />
+              <span>Light Mode</span>
+            </>
+          )}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => signOut()}>

@@ -1,8 +1,7 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
-	darkMode: ["class"],
+	darkMode: ["class", '[data-theme="dark"]'],
 	content: [
 		"./pages/**/*.{ts,tsx}",
 		"./components/**/*.{ts,tsx}",
@@ -89,11 +88,11 @@ export default {
 				},
                 // Neon colors - updated to teal/green theme
                 'neon-red': 'hsl(var(--neon-red))',
-                'neon-purple': '#88D9CE', // Changed to teal
-                'neon-blue': '#88D9CE', // Changed to teal
-                'neon-aqua': '#00F7EF', // Bright aqua
-                'neon-green': '#B6FF5D', // Original green
-                'neon-yellow': '#FBBF24', // Original yellow
+                'neon-purple': 'hsl(var(--neon-purple))',
+                'neon-blue': 'hsl(var(--neon-blue))',
+                'neon-aqua': 'hsl(var(--neon-aqua))',
+                'neon-green': 'hsl(var(--neon-green))',
+                'neon-yellow': 'hsl(var(--neon-yellow))',
 			},
 			fontFamily: {
 				sans: ['SF Pro Display', 'system-ui', 'sans-serif'],
@@ -175,11 +174,11 @@ export default {
 				'button': '0 2px 4px rgba(0, 0, 0, 0.1)',
 				'button-hover': '0 4px 8px rgba(0, 0, 0, 0.15)',
 				'alert': '0 2px 8px rgba(0, 0, 0, 0.15)',
-				'neon-purple': '0 0 12px rgba(136, 217, 206, 0.5)', // Changed to teal
+				'neon-purple': '0 0 12px rgba(136, 217, 206, 0.5)',
 				'neon-green': '0 0 12px rgba(182, 255, 93, 0.5)',
 				'neon-aqua': '0 0 12px rgba(0, 247, 239, 0.5)',
 				'neon-red': '0 0 12px rgba(244, 63, 94, 0.5)',
-				'neon-blue': '0 0 12px rgba(136, 217, 206, 0.5)', // Changed to teal
+				'neon-blue': '0 0 12px rgba(136, 217, 206, 0.5)',
 				'neon-yellow': '0 0 12px rgba(251, 191, 36, 0.5)'
 			}
 		}
