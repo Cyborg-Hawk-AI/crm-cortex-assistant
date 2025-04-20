@@ -1,4 +1,3 @@
-
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { Button } from '@/components/ui/button';
@@ -9,39 +8,15 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, LogOut, Settings, Palette, Check } from 'lucide-react';
+import { User, LogOut, Settings, Sun } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useToast } from '@/hooks/use-toast';
-
-const themes = [
-  { id: 'light', name: 'Light Mode', description: 'Clean, teal and green theme' },
-  { id: 'natural', name: 'Natural Light', description: 'Soft, nature-inspired tones' },
-  { id: 'steel', name: 'Steel Blue', description: 'Our signature futuristic look' },
-  { id: 'midnight', name: 'Midnight', description: 'Deep, dark, and focused' }
-] as const;
 
 export function UserMenu() {
   const { signOut } = useAuth();
   const { profile, loading } = useProfile();
-  const { theme, setTheme } = useTheme();
-  const { toast } = useToast();
-
-  const handleThemeChange = (newTheme: string) => {
-    if (theme === newTheme) return; // Skip if theme is already selected
-    
-    console.log(`Changing theme from ${theme} to ${newTheme}`);
-    setTheme(newTheme as any);
-    
-    toast({
-      title: "Theme Updated",
-      description: `Switched to ${themes.find(t => t.id === newTheme)?.name}`,
-    });
-  };
+  const { theme } = useTheme();
 
   if (loading) {
     return (
@@ -88,46 +63,11 @@ export function UserMenu() {
           <Settings className="mr-2 h-4 w-4" />
           <span>Settings</span>
         </DropdownMenuItem>
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger>
-            <Palette className="mr-2 h-4 w-4" />
-            <span>Theme</span>
-            {theme !== 'light' && (
-              <div className="ml-auto">
-                <div 
-                  className="h-4 w-4 rounded-full border border-[#C1EDEA]" 
-                  style={{ 
-                    background: theme === 'midnight' ? '#171C24' : 
-                              theme === 'natural' ? '#F9F9F9' : 
-                              '#F0F4F8' 
-                  }} 
-                />
-              </div>
-            )}
-          </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent>
-            <DropdownMenuLabel className="font-normal">
-              <span className="block text-xs text-muted-foreground">
-                Select a theme
-              </span>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {themes.map((t) => (
-              <DropdownMenuItem
-                key={t.id}
-                onClick={() => handleThemeChange(t.id)}
-              >
-                <div className="flex items-center justify-between w-full">
-                  <div>
-                    <p className="text-sm font-medium leading-none mb-1">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.description}</p>
-                  </div>
-                  {theme === t.id && <Check className="h-4 w-4 ml-2" />}
-                </div>
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem disabled>
+          <Sun className="mr-2 h-4 w-4" />
+          <span>Light Mode</span>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => signOut()}>
           <LogOut className="mr-2 h-4 w-4" />
