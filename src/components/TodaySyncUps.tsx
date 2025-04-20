@@ -22,8 +22,6 @@ export function TodaySyncUps() {
     return isToday(meetingDate);
   });
 
-  console.log('Today\'s meetings:', todaysMeetings);
-
   const handleCreateMeeting = (meetingData: Partial<Meeting>) => {
     createMeeting(meetingData);
   };

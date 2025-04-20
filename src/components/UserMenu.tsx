@@ -19,10 +19,10 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/use-toast';
 
 const themes = [
+  { id: 'light', name: 'Light Mode', description: 'Clean, teal and green theme' },
   { id: 'natural', name: 'Natural Light', description: 'Soft, nature-inspired tones' },
   { id: 'steel', name: 'Steel Blue', description: 'Our signature futuristic look' },
-  { id: 'midnight', name: 'Midnight', description: 'Deep, dark, and focused' },
-  { id: 'vibrant', name: 'Vibrant', description: 'Bold and energetic' }
+  { id: 'midnight', name: 'Midnight', description: 'Deep, dark, and focused' }
 ] as const;
 
 export function UserMenu() {
@@ -31,11 +31,11 @@ export function UserMenu() {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
 
-  const handleThemeChange = (newTheme: 'steel' | 'midnight' | 'vibrant' | 'natural') => {
+  const handleThemeChange = (newTheme: string) => {
     if (theme === newTheme) return; // Skip if theme is already selected
     
     console.log(`Changing theme from ${theme} to ${newTheme}`);
-    setTheme(newTheme);
+    setTheme(newTheme as any);
     
     toast({
       title: "Theme Updated",
@@ -92,12 +92,14 @@ export function UserMenu() {
           <DropdownMenuSubTrigger>
             <Palette className="mr-2 h-4 w-4" />
             <span>Theme</span>
-            {theme !== 'steel' && (
+            {theme !== 'light' && (
               <div className="ml-auto">
                 <div 
-                  className="h-4 w-4 rounded-full border border-[#3A4D62]" 
+                  className="h-4 w-4 rounded-full border border-[#C1EDEA]" 
                   style={{ 
-                    background: theme === 'midnight' ? '#171C24' : '#4A1FA7'
+                    background: theme === 'midnight' ? '#171C24' : 
+                              theme === 'natural' ? '#F9F9F9' : 
+                              '#F0F4F8' 
                   }} 
                 />
               </div>
