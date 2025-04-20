@@ -114,14 +114,14 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
       <CardHeader className="pb-2 flex flex-row justify-between items-center">
         <div className="flex items-center">
           <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-[#88D9CE] to-[#264E46] mr-2"></div>
-          <CardTitle className="text-lg font-bold">Recent Tasks</CardTitle>
+          <CardTitle className="text-lg font-bold text-[#264E46]">Recent Tasks</CardTitle>
         </div>
         <div className="flex items-center space-x-2">
           {!fullView && (
             <Button 
               variant="ghost" 
               size="sm" 
-              className="text-sm px-2 text-[#A8A29E] hover:text-[#404040]"
+              className="text-sm px-2 text-[#264E46] hover:text-[#264E46]/80"
               onClick={handleViewAll}
             >
               View all

@@ -26,11 +26,11 @@ export const Logo: React.FC<LogoProps> = ({ className = '', showText = true, onC
     >
       <img 
         src="/lovable-uploads/48915536-c181-43e9-b281-a32b0297ba8d.png" 
-        alt="Action.it Logo" 
+        alt="action.it Logo" 
         className="h-8 w-8"
       />
       {showText && (
-        <span className="text-[#264E46] font-bold text-lg ml-2">Action.it</span>
+        <span className="text-[#264E46] font-bold text-lg ml-2">action.it</span>
       )}
     </div>
   );
