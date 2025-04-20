@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -9,6 +8,7 @@ import {
   Menu,
   LayoutDashboard
 } from 'lucide-react';
+import { Logo } from '@/components/Logo';
 import { UserMenu } from '@/components/UserMenu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -100,11 +100,7 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
     <header className="bg-white fixed top-0 left-0 right-0 z-50 border-b border-[#ECEAE3]">
       <div className="container flex justify-between items-center h-[60px]">
         <div className="flex items-center">
-          <div className="text-xl font-bold mr-8 cursor-pointer" onClick={() => handleTabChange('dashboard')}>
-            <span className="text-[#264E46]">
-              action.it
-            </span>
-          </div>
+          <Logo className="mr-8" onClick={() => handleTabChange('dashboard')} />
         </div>
         
         {!isMobile && (
