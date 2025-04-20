@@ -1,3 +1,4 @@
+
 import { motion } from 'framer-motion';
 import { BookOpen, Clock, Plus, ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -34,17 +35,17 @@ export function RecentMindboardNotes() {
 
   return (
     <>
-      <Card className="border border-neon-purple/70 bg-gradient-to-br from-purple-900/50 to-purple-800/70 shadow-lg hover:shadow-xl transition-all duration-300 shadow-[0_0_20px_rgba(168,85,247,0.2)]">
-        <CardHeader className="pb-2 border-b border-purple-500/50">
-          <CardTitle className="text-xl text-white flex items-center justify-between">
+      <Card className="border border-[#C1EDEA] bg-gradient-to-br from-white to-[#F5F7FA]/70 shadow-lg hover:shadow-xl transition-all duration-300 shadow-[0_0_20px_rgba(136,217,206,0.2)]">
+        <CardHeader className="pb-2 border-b border-[#C1EDEA]/50">
+          <CardTitle className="text-xl text-[#264E46] flex items-center justify-between">
             <div className="flex items-center">
-              <BookOpen className="mr-2 h-6 w-6 text-neon-purple glow-text" />
+              <BookOpen className="mr-2 h-6 w-6 text-[#88D9CE] glow-text" />
               Recent Notes
             </div>
             <Button 
               variant="ghost" 
               size="sm" 
-              className="h-8 px-2 text-neon-purple hover:text-neon-purple/80 hover:bg-[#3A4D62]/50"
+              className="h-8 px-2 text-[#264E46] hover:text-[#88D9CE] hover:bg-[#F5F7FA]/50"
               onClick={() => setShowCreateModal(true)}
             >
               <Plus className="h-4 w-4 mr-1" />
@@ -54,20 +55,20 @@ export function RecentMindboardNotes() {
         </CardHeader>
         <CardContent className="space-y-3 pt-4">
           {isLoading ? (
-            <div className="text-center py-6 text-[#CBD5E1]">
+            <div className="text-center py-6 text-[#A8A29E]">
               <p>Loading recent notes...</p>
             </div>
           ) : error ? (
-            <div className="text-center py-6 text-[#CBD5E1]">
+            <div className="text-center py-6 text-[#A8A29E]">
               <p>Error loading notes. Please try again.</p>
             </div>
           ) : recentNotes.length === 0 ? (
-            <div className="text-center py-6 text-[#CBD5E1]">
+            <div className="text-center py-6 text-[#A8A29E]">
               <p>No recent notes found</p>
               <Button 
                 variant="link" 
                 size="sm" 
-                className="mt-2 text-neon-purple"
+                className="mt-2 text-[#88D9CE]"
                 onClick={() => setShowCreateModal(true)}
               >
                 Create a note
@@ -83,22 +84,22 @@ export function RecentMindboardNotes() {
                   transition={{ delay: index * 0.05 }}
                   whileHover={{ scale: 1.02, y: -2 }}
                 >
-                  <div className="p-3 rounded-lg border border-[#3A4D62] bg-[#1C2A3A]/70 hover:bg-[#1C2A3A] hover:shadow-[0_0_10px_rgba(168,85,247,0.15)] transition-all duration-300">
+                  <div className="p-3 rounded-lg border border-[#C1EDEA] bg-white hover:bg-[#F5F7FA] hover:shadow-[0_0_10px_rgba(136,217,206,0.15)] transition-all duration-300">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h4 className="text-sm font-medium text-[#F1F5F9]">{note.title}</h4>
-                        <div className="mt-1 text-xs text-[#CBD5E1] line-clamp-2">
+                        <h4 className="text-sm font-medium text-[#404040]">{note.title}</h4>
+                        <div className="mt-1 text-xs text-[#A8A29E] line-clamp-2">
                           {note.snippet || 'No content'}
                         </div>
-                        <div className="flex items-center mt-2 text-xs text-[#CBD5E1]">
-                          <Clock className="h-3 w-3 mr-1 text-neon-purple" />
+                        <div className="flex items-center mt-2 text-xs text-[#A8A29E]">
+                          <Clock className="h-3 w-3 mr-1 text-[#88D9CE]" />
                           <span>{formatTime(note.updatedAt)}</span>
                         </div>
                       </div>
                       
                       <Badge 
                         variant="outline" 
-                        className="text-xs bg-neon-purple/10 text-neon-purple border-neon-purple/20"
+                        className="text-xs bg-[#F5F7FA] text-[#264E46] border-[#C1EDEA]"
                         title={`${note.boardName} → ${note.sectionName}`}
                       >
                         {note.sectionName}
@@ -110,11 +111,11 @@ export function RecentMindboardNotes() {
             </div>
           )}
         </CardContent>
-        <CardFooter className="pt-1 pb-2 border-t border-purple-500/50">
+        <CardFooter className="pt-1 pb-2 border-t border-[#C1EDEA]/50">
           <Button 
             variant="ghost" 
             size="sm" 
-            className="text-neon-purple hover:text-neon-purple/80 w-full justify-center text-xs"
+            className="text-[#264E46] hover:text-[#88D9CE] w-full justify-center text-xs"
             onClick={handleViewMindboard}
           >
             Open Mindboard <ArrowRight className="ml-1 h-3 w-3" />

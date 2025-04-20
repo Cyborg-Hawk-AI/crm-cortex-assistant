@@ -10,18 +10,18 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default:
-          "border-neon-aqua bg-gradient-to-r from-neon-aqua to-neon-aqua/80 text-black hover:shadow-[0_0_10px_rgba(0,247,239,0.3)] hover:brightness-110",
+          "border-[#88D9CE] bg-gradient-to-r from-[#88D9CE] to-[#88D9CE]/80 text-[#264E46] hover:shadow-[0_0_10px_rgba(136,217,206,0.3)] hover:brightness-110",
         secondary:
-          "border-neon-purple bg-gradient-to-r from-neon-purple to-neon-purple/80 text-white hover:shadow-[0_0_10px_rgba(168,85,247,0.3)] hover:brightness-110",
+          "border-[#264E46] bg-gradient-to-r from-[#264E46] to-[#264E46]/80 text-white hover:shadow-[0_0_10px_rgba(38,78,70,0.3)] hover:brightness-110",
         destructive:
-          "border-neon-red bg-gradient-to-r from-neon-red to-neon-red/80 text-white hover:shadow-[0_0_10px_rgba(244,63,94,0.3)] hover:brightness-110",
+          "border-[#E05252] bg-gradient-to-r from-[#E05252] to-[#E05252]/80 text-white hover:shadow-[0_0_10px_rgba(224,82,82,0.3)] hover:brightness-110",
         outline: "text-foreground border-current hover:bg-secondary/10",
         success: 
-          "border-neon-green bg-gradient-to-r from-neon-green to-neon-green/80 text-black hover:shadow-[0_0_10px_rgba(182,255,93,0.3)] hover:brightness-110",
+          "border-[#10B981] bg-gradient-to-r from-[#10B981] to-[#10B981]/80 text-white hover:shadow-[0_0_10px_rgba(16,185,129,0.3)] hover:brightness-110",
         info: 
-          "border-neon-blue bg-gradient-to-r from-neon-blue to-neon-blue/80 text-black hover:shadow-[0_0_10px_rgba(56,189,248,0.3)] hover:brightness-110",
+          "border-[#3B82F6] bg-gradient-to-r from-[#3B82F6] to-[#3B82F6]/80 text-white hover:shadow-[0_0_10px_rgba(59,130,246,0.3)] hover:brightness-110",
         warning: 
-          "border-neon-yellow bg-gradient-to-r from-neon-yellow to-neon-yellow/80 text-black hover:shadow-[0_0_10px_rgba(251,191,36,0.3)] hover:brightness-110",
+          "border-[#FBBF24] bg-gradient-to-r from-[#FBBF24] to-[#FBBF24]/80 text-[#264E46] hover:shadow-[0_0_10px_rgba(251,191,36,0.3)] hover:brightness-110",
       },
     },
     defaultVariants: {

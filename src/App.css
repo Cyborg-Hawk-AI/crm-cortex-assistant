@@ -41,6 +41,14 @@
     --ring: 174 47% 69%; /* #88D9CE - Teal green */
     
     --radius: 0.75rem;
+    
+    /* Neon Colors - convert all to teal/green */
+    --neon-red: 0 84% 60%;
+    --neon-purple: 174 47% 69%; /* Changed to #88D9CE - Teal green */
+    --neon-blue: 174 47% 69%; /* Changed to #88D9CE - Teal green */
+    --neon-aqua: 181 100% 48%; /* #00F7EF - Bright aqua */
+    --neon-green: 142 100% 68%; /* Original green */
+    --neon-yellow: 41 100% 70%; /* Original yellow */
   }
 
   :root,
@@ -214,7 +222,7 @@
   }
   
   .action-button {
-    @apply bg-gradient-to-r from-neon-aqua to-neon-aqua/80 text-foreground font-medium px-4 py-2 rounded-md shadow-md hover:shadow-[0_0_12px_rgba(0,247,239,0.5)] hover:brightness-110 transition-all duration-300;
+    @apply bg-gradient-to-r from-[#88D9CE] to-[#88D9CE]/80 text-foreground font-medium px-4 py-2 rounded-md shadow-md hover:shadow-[0_0_12px_rgba(136,217,206,0.5)] hover:brightness-110 transition-all duration-300;
   }
   
   .tab-button {
@@ -226,11 +234,11 @@
   }
   
   .ai-message {
-    @apply bg-gradient-to-r from-neon-purple to-neon-purple/80 text-white p-4 rounded-lg shadow-md;
+    @apply bg-gradient-to-r from-[#88D9CE] to-[#88D9CE]/80 text-[#264E46] p-4 rounded-lg shadow-md;
   }
   
   .user-message {
-    @apply bg-gradient-to-r from-neon-aqua to-neon-aqua/80 text-foreground p-4 rounded-lg shadow-md;
+    @apply bg-gradient-to-r from-[#C1EDEA] to-[#C1EDEA]/80 text-foreground p-4 rounded-lg shadow-md;
   }
   
   .status-badge {
@@ -254,7 +262,7 @@
   }
   
   .actionbot-card {
-    @apply bg-gradient-to-r from-white to-gray-50 border border-neon-purple/20 rounded-lg shadow-md hover:shadow-[0_0_15px_rgba(168,85,247,0.3)] transition-all;
+    @apply bg-gradient-to-r from-white to-gray-50 border border-[#88D9CE]/20 rounded-lg shadow-md hover:shadow-[0_0_15px_rgba(136,217,206,0.3)] transition-all;
   }
 }
 
@@ -289,7 +297,7 @@
   }
   
   .neon-glow-purple {
-    box-shadow: 0 0 10px rgba(168, 85, 247, 0.6);
+    box-shadow: 0 0 10px rgba(136, 217, 206, 0.6);
   }
   
   .neon-glow-aqua {
