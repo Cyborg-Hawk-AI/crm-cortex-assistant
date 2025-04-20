@@ -1,0 +1,95 @@
+
+@layer utilities {
+  .loading-dots::after {
+    content: '.';
+    animation: loading-dots 1.5s infinite;
+  }
+  @keyframes loading-dots {
+    0%, 20% { content: '.'; }
+    40% { content: '..'; }
+    60% { content: '...'; }
+    90%, 100% { content: ''; }
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+  .animate-blink {
+    animation: blink 0.8s infinite;
+  }
+  .glow-text {
+    text-shadow: 0 0 10px currentColor;
+  }
+  .glow-border {
+    box-shadow: 0 0 5px 1px currentColor;
+  }
+  .neon-glow-purple {
+    box-shadow: 0 0 10px rgba(136, 217, 206, 0.6);
+  }
+  .neon-glow-aqua {
+    box-shadow: 0 0 10px rgba(0, 247, 239, 0.6);
+  }
+  .neon-glow-green {
+    box-shadow: 0 0 10px rgba(182, 255, 93, 0.6);
+  }
+  .neon-glow-red {
+    box-shadow: 0 0 10px rgba(244, 63, 94, 0.6);
+  }
+  .accent-line {
+    position: relative;
+  }
+  .accent-line::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, hsl(var(--primary)), transparent);
+    border-radius: var(--radius) 0 0 var(--radius);
+  }
+  .grid-pattern {
+    background-image: 
+      linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+  .typing-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 14px;
+    background: hsl(var(--neon-purple));
+    margin-left: 2px;
+    animation: typingCursor 0.8s infinite;
+  }
+  @keyframes pulseBorder {
+    0%, 100% {
+      border-color: rgba(168, 85, 247, 0.7);
+    }
+    50% {
+      border-color: rgba(168, 85, 247, 0.3);
+    }
+  }
+  .hover-scale {
+    transition: transform 0.2s ease;
+  }
+  .hover-scale:hover {
+    transform: scale(1.03);
+  }
+  .animate-progress {
+    animation: fillProgress 1s ease-out forwards;
+  }
+  .avatar-border {
+    border: 2px solid transparent;
+    background: linear-gradient(white, white) padding-box,
+                linear-gradient(to right, hsl(var(--neon-aqua)), hsl(var(--neon-purple))) border-box;
+  }
+  .mobile-text-balance {
+    text-wrap: balance;
+  }
+  .mobile-button-text {
+    @apply text-xs sm:text-sm md:text-base;
+    line-height: 1.3;
+  }
+}
+

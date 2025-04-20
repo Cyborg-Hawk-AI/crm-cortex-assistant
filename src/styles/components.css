@@ -1,0 +1,40 @@
+
+@layer components {
+  .command-card {
+    @apply bg-white rounded-lg border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300;
+  }
+  .action-button {
+    @apply bg-gradient-to-r from-[#88D9CE] to-[#88D9CE]/80 text-foreground font-medium px-4 py-2 rounded-md shadow-md hover:shadow-[0_0_12px_rgba(136,217,206,0.5)] hover:brightness-110 transition-all duration-300;
+  }
+  .tab-button {
+    @apply px-4 py-2 rounded-md transition-colors;
+  }
+  .tab-button.active {
+    @apply bg-white shadow-md;
+  }
+  .ai-message {
+    @apply bg-gradient-to-r from-[#88D9CE] to-[#88D9CE]/80 text-[#264E46] p-4 rounded-lg shadow-md;
+  }
+  .user-message {
+    @apply bg-gradient-to-r from-[#C1EDEA] to-[#C1EDEA]/80 text-foreground p-4 rounded-lg shadow-md;
+  }
+  .status-badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+  .pulse-border {
+    animation: pulseBorder 2s infinite;
+  }
+  .missions-card {
+    @apply bg-white border border-gray-200 rounded-lg shadow-md hover:shadow-lg transition-all p-4;
+  }
+  .mindboard-card {
+    @apply bg-white border border-gray-200 rounded-lg shadow-md hover:shadow-lg transition-all p-4;
+  }
+  .syncup-card {
+    @apply bg-white border border-gray-200 rounded-lg shadow-md hover:shadow-lg transition-all p-4;
+  }
+  .actionbot-card {
+    @apply bg-gradient-to-r from-white to-gray-50 border border-[#88D9CE]/20 rounded-lg shadow-md hover:shadow-[0_0_15px_rgba(136,217,206,0.3)] transition-all;
+  }
+}
+
