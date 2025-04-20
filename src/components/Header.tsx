@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -67,40 +68,40 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
       id: 'dashboard',
       label: 'Dashboard',
       icon: <LayoutDashboard className="h-5 w-5" />,
-      activeColor: 'text-neon-aqua'
+      activeColor: 'text-[#88D9CE]'
     },
     {
       id: 'chat',
       label: 'ActionBot',
       icon: <MessageSquare className="h-5 w-5" />,
-      activeColor: 'text-purple-400'
+      activeColor: 'text-[#264E46]'
     },
     {
       id: 'projects',
       label: 'Projects',
       icon: <ClipboardCheck className="h-5 w-5" />,
-      activeColor: 'text-green-400'
+      activeColor: 'text-[#88D9CE]'
     },
     {
       id: 'notebooks',
       label: 'Notebooks',
       icon: <BookOpen className="h-5 w-5" />,
-      activeColor: 'text-blue-400'
+      activeColor: 'text-[#88D9CE]'
     },
     {
       id: 'settings',
       label: 'Control Deck',
       icon: <Settings className="h-5 w-5" />,
-      activeColor: 'text-orange-400'
+      activeColor: 'text-[#264E46]'
     }
   ];
   
   return (
-    <header className="bg-[#141F2A] fixed top-0 left-0 right-0 z-50">
+    <header className="bg-white fixed top-0 left-0 right-0 z-50 border-b border-[#ECEAE3]">
       <div className="container flex justify-between items-center h-[60px]">
         <div className="flex items-center">
           <div className="text-xl font-bold mr-8 cursor-pointer" onClick={() => handleTabChange('dashboard')}>
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-neon-aqua to-teal-400">
+            <span className="text-[#264E46]">
               action.it
             </span>
           </div>
@@ -112,8 +113,8 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
               <button
                 key={item.id}
                 className={`py-4 px-3 lg:px-6 flex items-center justify-center transition-all duration-300 ${
-                  activeTab === item.id ? item.activeColor : 'text-[#CBD5E1]'
-                } hover:bg-[#1C2A3A]`}
+                  activeTab === item.id ? item.activeColor : 'text-[#404040]'
+                } hover:bg-[#F5F7FA]`}
                 onClick={() => handleTabChange(item.id)}
               >
                 {item.icon}
@@ -127,17 +128,17 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden">
-                <Menu className="h-5 w-5 text-[#CBD5E1]" />
+                <Menu className="h-5 w-5 text-[#404040]" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="bg-[#141F2A] border-r border-[#3A4D62] pt-12">
+            <SheetContent side="left" className="bg-white border-r border-[#ECEAE3] pt-12">
               <nav className="flex flex-col space-y-2">
                 {navItems.map(item => (
                   <button
                     key={item.id}
                     className={`py-3 px-4 flex items-center ${
-                      activeTab === item.id ? item.activeColor : 'text-[#CBD5E1]'
-                    } hover:bg-[#1C2A3A] rounded-md transition-colors`}
+                      activeTab === item.id ? item.activeColor : 'text-[#404040]'
+                    } hover:bg-[#F5F7FA] rounded-md transition-colors`}
                     onClick={() => handleTabChange(item.id)}
                   >
                     {item.icon}
@@ -150,7 +151,7 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
         )}
         
         <div className="flex items-center">
-          <div className="text-sm font-medium text-orange-400 mr-4 hidden sm:block">
+          <div className="text-sm font-medium text-[#A8A29E] mr-4 hidden sm:block">
             v1.0.0
           </div>
           <UserMenu />

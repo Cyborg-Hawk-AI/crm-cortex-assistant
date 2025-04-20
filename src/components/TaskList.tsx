@@ -37,26 +37,26 @@ const tasks = [
 const getStatusIcon = (status: string) => {
   switch(status) {
     case 'completed':
-      return <CheckCircle2 className="h-5 w-5 text-emerald-500" />;
+      return <CheckCircle2 className="h-5 w-5 text-[#88D9CE]" />;
     case 'in-progress':
-      return <Clock className="h-5 w-5 text-amber-500" />;
+      return <Clock className="h-5 w-5 text-[#88D9CE]" />;
     case 'blocked':
-      return <AlertCircle className="h-5 w-5 text-red-500" />;
+      return <AlertCircle className="h-5 w-5 text-[#264E46]" />;
     default:
-      return <Circle className="h-5 w-5 text-slate-400" />;
+      return <Circle className="h-5 w-5 text-[#BFBFBF]" />;
   }
 };
 
 const getPriorityClass = (priority: string) => {
   switch(priority) {
     case 'urgent':
-      return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
+      return 'bg-[#C1EDEA] text-[#264E46]';
     case 'high':
-      return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300';
+      return 'bg-[#ECEAE3] text-[#264E46]';
     case 'medium':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+      return 'bg-[#F5F7FA] text-[#404040]';
     default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300';
+      return 'bg-[#F5F7FA] text-[#BFBFBF]';
   }
 };
 
@@ -82,7 +82,7 @@ export const TaskList = () => {
           key={task.id}
           className={cn(
             "p-3 rounded-md border flex items-start gap-3",
-            task.status === 'completed' ? 'bg-gray-50 border-gray-200' : 'bg-white border-indigo-100'
+            task.status === 'completed' ? 'bg-[#F5F7FA] border-[#BFBFBF]' : 'bg-white border-[#C1EDEA]'
           )}
         >
           <div className="mt-0.5">
@@ -91,11 +91,11 @@ export const TaskList = () => {
           <div className="flex-1 min-w-0">
             <p className={cn(
               "font-medium truncate",
-              task.status === 'completed' ? 'text-gray-500 line-through' : ''
+              task.status === 'completed' ? 'text-[#BFBFBF] line-through' : 'text-[#404040]'
             )}>
               {task.title}
             </p>
-            <div className="flex items-center mt-1 text-xs text-gray-500">
+            <div className="flex items-center mt-1 text-xs text-[#A8A29E]">
               <span className="mr-2">Due: {formatDate(task.dueDate)}</span>
               <span className={cn(
                 "px-1.5 py-0.5 rounded text-xs font-medium",

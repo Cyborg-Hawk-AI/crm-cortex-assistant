@@ -38,7 +38,7 @@ const App = () => {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <ThemeProvider>
-            <div className="min-h-screen bg-background">
+            <div className="min-h-screen bg-[#F9F9F9]">
               <Header activeTab={activeTab} setActiveTab={setActiveTab} />
               <div className="pt-[60px] pb-[70px]">
                 <Routes>

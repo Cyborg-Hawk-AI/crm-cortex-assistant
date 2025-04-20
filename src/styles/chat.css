@@ -24,44 +24,37 @@
   transform: scale(1.02);
 }
 
-.neon-glow-purple {
-  box-shadow: 0 0 10px 0 rgba(168, 85, 247, 0.2);
-}
-
 .project-card {
   transition: all 0.2s ease-in-out;
-  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
-  border: 1px solid rgba(168, 85, 247, 0.1);
+  background: #FFFFFF;
+  border: 1px solid #C1EDEA;
   backdrop-filter: blur(10px);
 }
 
 .project-card:hover {
-  border: 1px solid rgba(168, 85, 247, 0.3);
-  box-shadow: 0 0 15px 0 rgba(168, 85, 247, 0.15);
+  border: 1px solid #88D9CE;
+  box-shadow: 0 0 15px 0 rgba(136, 217, 206, 0.15);
 }
 
 .project-title {
   font-weight: 600;
-  background: linear-gradient(90deg, #C084FC 0%, #D946EF 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #264E46;
 }
 
 /* Enhanced model toggle styling */
 .model-toggle {
   display: inline-flex;
   align-items: center;
-  background: rgba(15, 23, 42, 0.3);
+  background: #F5F7FA;
   border-radius: 14px;
   padding: 2px;
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  border: 1px solid #ECEAE3;
   transition: all 0.2s ease;
 }
 
 .model-toggle:hover {
-  border-color: rgba(148, 163, 184, 0.4);
-  box-shadow: 0 0 8px rgba(148, 163, 184, 0.2);
+  border-color: #BFBFBF;
+  box-shadow: 0 0 8px rgba(191, 191, 191, 0.2);
 }
 
 .model-toggle-button {
@@ -75,8 +68,8 @@
 }
 
 .model-toggle-button.selected {
-  background: rgba(20, 184, 166, 0.2);
-  box-shadow: 0 0 8px rgba(20, 184, 166, 0.2);
+  background: rgba(136, 217, 206, 0.2);
+  box-shadow: 0 0 8px rgba(136, 217, 206, 0.2);
   font-weight: 600;
 }
 
@@ -94,5 +87,5 @@
   width: 60%;
   height: 2px;
   border-radius: 1px;
-  background: currentColor;
+  background: #88D9CE;
 }
