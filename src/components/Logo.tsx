@@ -14,8 +14,7 @@ export const Logo: React.FC<LogoProps> = ({ className = '' }) => {
       className={`cursor-pointer flex items-center ${className}`}
       onClick={() => navigate('/')}
     >
-      <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from 
-        from-[#88D9CE] to-[#264E46]">
+      <span className="text-2xl font-bold text-[#264E46]">
         Action.it
       </span>
     </div>

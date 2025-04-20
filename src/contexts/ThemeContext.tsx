@@ -12,9 +12,9 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<ThemeType>(() => {
+    // Default to 'light' theme (Mode 1)
     const savedTheme = localStorage.getItem('theme') as ThemeType;
-    const validThemes: ThemeType[] = ['light', 'steel', 'midnight', 'vibrant', 'natural'];
-    return validThemes.includes(savedTheme as ThemeType) ? savedTheme : 'light';
+    return savedTheme || 'light';
   });
 
   useEffect(() => {
