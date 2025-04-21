@@ -102,7 +102,7 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
   const isDark = theme === 'dark';
   
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 border-b ${
+    <header className={`fixed top-0 left-0 right-0 z-50 border-b header ${
       isDark ? 'bg-background border-[#1d2730]' : 'bg-white border-[#ECEAE3]'
     }`}>
       <div className="container flex justify-between items-center h-[60px]">
@@ -153,8 +153,8 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
           </Sheet>
         )}
         
-        <div className="flex items-center">
-          <div className={`text-sm font-medium ${isDark ? 'text-muted-foreground' : 'text-[#A8A29E]'} mr-4 hidden sm:block`}>
+        <div className="flex items-center gap-3">
+          <div className={`text-xs font-medium ${isDark ? 'text-muted-foreground/70' : 'text-[#A8A29E]'} hidden sm:block`}>
             v1.0.0
           </div>
           <UserMenu />

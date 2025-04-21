@@ -21,31 +21,24 @@ export const Logo: React.FC<LogoProps> = ({ className = '', showText = true, onC
     }
   };
 
-  // Refined PhD-level text color, glass drop shadow and logo surround
-  const textColor =
-    theme === 'dark'
-      ? 'text-[#E3FCF9] drop-shadow-[0_0_7px_#00f7ef99]'
-      : 'text-[#264E46] drop-shadow-[0_0_2px_#88D9CE]';
+  const isDark = theme === 'dark';
 
   return (
     <div 
       className={`cursor-pointer flex items-center select-none ${className}`}
       onClick={handleClick}
       style={{
-        // Entire logo row floats above glass in dark, soft shadow
-        filter: theme === 'dark'
-          ? 'drop-shadow(0 0 12px #00f7ef99)'
+        // Glass container for logo in dark mode
+        background: isDark 
+          ? 'linear-gradient(100deg, rgba(38, 60, 84, 0.95) 70%, rgba(21, 30, 39, 0.85) 100%)'
+          : 'transparent',
+        borderRadius: isDark ? 14 : 0,
+        padding: isDark ? '2.5px 8px 2.5px 2.5px' : '0',
+        boxShadow: isDark
+          ? '0 0 15px 0px rgba(0, 247, 239, 0.25), 0 2px 13px rgba(40, 60, 80, 0.2)'
           : 'none',
-        background:
-          theme === 'dark'
-            ? 'linear-gradient(100deg, #263c54EE 70%, #151e2785 100%)'
-            : 'transparent',
-        borderRadius: theme === 'dark' ? 14 : 0,
-        padding: theme === 'dark' ? '2.5px 7px 2.5px 2.5px' : undefined,
-        boxShadow: theme === 'dark'
-          ? '0 0 15px 0px #00f7ef50, 0 2px 13px rgba(40,60,80,0.19)'
-          : undefined,
-        transition: 'background 0.32s, box-shadow 0.32s, filter 0.32s'
+        transition: 'all 0.32s cubic-bezier(0.4, 0, 0.2, 1)',
+        border: isDark ? '1px solid rgba(58, 243, 239, 0.15)' : 'none',
       }}
     >
       <img 
@@ -53,36 +46,37 @@ export const Logo: React.FC<LogoProps> = ({ className = '', showText = true, onC
         alt="action.it Logo" 
         className="h-8 w-8"
         style={{
-          // Neon blending and glass effect for dark mode logo
-          filter:
-            theme === 'dark'
-              ? 'drop-shadow(0 0 8px #00f7efbb) drop-shadow(0 0 3px #25384D)'
-              : 'none',
-          background: theme === 'dark'
+          // Neon effect for logo icon
+          filter: isDark
+            ? 'drop-shadow(0 0 8px rgba(0, 247, 239, 0.7)) drop-shadow(0 0 3px rgba(37, 56, 77, 1))'
+            : 'none',
+          background: isDark
             ? 'rgba(36, 62, 84, 0.97)'
             : 'transparent',
-          borderRadius: theme === 'dark' ? 12 : 0,
-          padding: theme === 'dark' ? '1.5px' : undefined,
-          border: theme === 'dark' ? '1.5px solid #3AF3EF55' : undefined,
-          boxShadow: theme === 'dark'
-            ? '0 0 10px #00f7ef40'
-            : undefined,
-          transition: 'background 0.32s, border 0.24s, box-shadow 0.32s, filter 0.32s'
+          borderRadius: isDark ? 12 : 0,
+          padding: isDark ? '1.5px' : '0',
+          border: isDark ? '1.5px solid rgba(58, 243, 239, 0.33)' : 'none',
+          boxShadow: isDark
+            ? '0 0 10px rgba(0, 247, 239, 0.25)'
+            : 'none',
+          transition: 'all 0.32s cubic-bezier(0.4, 0, 0.2, 1)'
         }}
       />
       {showText && (
-        <span className={`font-bold text-lg ml-2 ${textColor} transition-colors duration-300`}
+        <span 
+          className={`font-bold text-lg ml-2 transition-all duration-300`}
           style={{
-            letterSpacing: theme === 'dark' ? '0.03em' : undefined,
-            background:
-              theme === 'dark'
-                ? 'linear-gradient(97deg, #00f7ef 0%, #d9e9e7 80%)'
-                : undefined,
-            WebkitBackgroundClip: theme === 'dark' ? 'text' : undefined,
-            WebkitTextFillColor: theme === 'dark' ? 'transparent' : undefined,
-            filter: theme === 'dark'
-              ? 'drop-shadow(0 0 8px #00f7ef90)'
-              : undefined
+            letterSpacing: isDark ? '0.03em' : 'normal',
+            background: isDark
+              ? 'linear-gradient(97deg, rgba(0, 247, 239, 1) 0%, rgba(217, 233, 231, 1) 80%)'
+              : '',
+            WebkitBackgroundClip: isDark ? 'text' : 'unset',
+            WebkitTextFillColor: isDark ? 'transparent' : 'unset',
+            color: !isDark ? '#264E46' : undefined,
+            filter: isDark
+              ? 'drop-shadow(0 0 8px rgba(0, 247, 239, 0.5))'
+              : 'drop-shadow(0 0 2px #88D9CE)',
+            textShadow: isDark ? '0 0 20px rgba(0, 247, 239, 0.3)' : 'none'
           }}
         >
           action.it

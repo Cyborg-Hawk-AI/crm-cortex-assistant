@@ -41,18 +41,26 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="p-0 h-8 w-8 rounded-full">
+        <Button 
+          variant="ghost" 
+          className={`p-0 h-8 w-8 rounded-full ${isDark ? 'hover:bg-muted/50' : ''}`}
+        >
           <Avatar className="h-8 w-8">
             {profile?.avatar_url ? (
               <AvatarImage src={profile.avatar_url} alt={profile?.full_name || ''} />
             ) : null}
-            <AvatarFallback className={isDark ? 'bg-muted text-foreground' : ''}>
+            <AvatarFallback 
+              className={`${isDark ? 'bg-muted text-foreground border border-border/50' : ''}`}
+            >
               {initials}
             </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent 
+        align="end" 
+        className="w-56 dropdown-menu profile-menu"
+      >
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{profile?.full_name || 'User'}</p>
@@ -60,17 +68,17 @@ export function UserMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="cursor-pointer">
+        <DropdownMenuItem className="cursor-pointer hover-button">
           <User className="mr-2 h-4 w-4" />
           <span>Profile</span>
         </DropdownMenuItem>
-        <DropdownMenuItem className="cursor-pointer">
+        <DropdownMenuItem className="cursor-pointer hover-button">
           <Settings className="mr-2 h-4 w-4" />
           <span>Settings</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem 
-          className="cursor-pointer"
+          className="cursor-pointer hover-button"
           onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
         >
           {theme === 'light' ? (
@@ -87,7 +95,7 @@ export function UserMenu() {
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem 
-          className="cursor-pointer"
+          className="cursor-pointer hover-button"
           onClick={() => signOut()}
         >
           <LogOut className="mr-2 h-4 w-4" />

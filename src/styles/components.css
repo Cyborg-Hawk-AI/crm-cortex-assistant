@@ -1,3 +1,4 @@
+
 @layer components {
   .command-card {
     @apply bg-card rounded-lg border border-border shadow-md hover:shadow-lg transition-all duration-300;
@@ -55,51 +56,46 @@
   [data-theme="dark"] .dropdown-menu,
   [data-theme="dark"] .dropdown-menu-content,
   [data-theme="dark"] .radix-dropdown-menu__content {
-    /* Neo-glass blend: deep blue-teal + glass, subtle neon glow, crisp border */
+    /* Pro-grade glass effect with perfect blending */
     @apply bg-gradient-to-br from-[#212e3e]/90 via-[#25384d]/95 to-[#314968]/88
-           border border-[#3AF3EF]/30 shadow-[0_4px_28px_8px_rgba(0,247,239,0.20)]
+           border border-[#3AF3EF]/30 shadow-[0_4px_28px_8px_rgba(0,247,239,0.15)]
            backdrop-blur-xl text-foreground;
     z-index: 9999;
-    /* Stronger glass blur, accent neon border glow, spacing/padding fix */
     box-shadow: 0 2px 24px 4px rgba(0,247,239,0.14), 0 4px 38px 0px rgba(33, 46, 62, 0.58);
     border-width: 1.5px;
     border-radius: 1rem;
     background-blend-mode: lighten;
-    /* Remove artifacts from opaque backgrounds */
     background-color: transparent !important;
-    /* Smoother transition */
-    transition: background 0.38s cubic-bezier(0.41,0.1,0.59,1), box-shadow 0.38s, border 0.22s;
+    transition: all 0.38s cubic-bezier(0.41,0.1,0.59,1);
   }
 
-  /* General card and popover blending for dark mode (reuse menu consistency) */
+  /* Card and popover blending for dark mode */
   [data-theme="dark"] .card,
   [data-theme="dark"] .mindboard-card,
   [data-theme="dark"] .missions-card,
   [data-theme="dark"] .actionbot-card,
   [data-theme="dark"] .syncup-card {
-    @apply bg-gradient-to-br from-[#25384D]/90 via-[#314968]/92 to-[#1b2635]/87
-           border border-[#3A4D62]/70 shadow-[0_2px_8px_rgba(0,0,0,0.45)] backdrop-blur-lg;
+    @apply bg-gradient-to-br from-[#25384D]/95 via-[#314968]/95 to-[#1b2635]/90
+           border border-[#3A4D62]/70 shadow-[0_2px_8px_rgba(0,0,0,0.45)] backdrop-blur-md;
   }
 
-  /* Glassmorphism Popover/Dropdown for Dark Mode (override for menu overlays, popoves) */
+  /* Glassmorphism Popover/Dropdown for Dark Mode */
   [data-theme="dark"] .popover,
   [data-theme="dark"] .sheet-content,
-  [data-theme="dark"] .dropdown-menu,
-  [data-theme="dark"] .dropdown-menu-content,
   [data-theme="dark"] .profile-menu {
     @apply bg-gradient-to-br from-[#232f43]/97 via-[#25384D]/92 to-[#314968]/85
            border border-[#3AF3EF]/25 shadow-[0_4px_32px_4px_rgba(0,247,239,0.14)]
            backdrop-blur-xl text-foreground;
     border-radius: 1rem !important;
     background-blend-mode: lighten;
-    transition: background 0.38s, box-shadow 0.36s, border 0.21s;
+    transition: all 0.38s cubic-bezier(0.41,0.1,0.59,1);
   }
 
   /* Focus state for selection (neon/bright glass highlight) */
   [data-theme="dark"] .dropdown-menu [data-highlighted],
   [data-theme="dark"] .dropdown-menu-content [data-highlighted] {
-    @apply bg-[#00f7ef]/30 text-neon-aqua;
-    box-shadow: 0 0 8px 0 #00f7ef50;
+    @apply bg-[#00f7ef]/20 text-neon-aqua;
+    box-shadow: 0 0 8px 0 rgba(0, 247, 239, 0.3);
     border-radius: 0.5rem;
   }
   
@@ -109,36 +105,38 @@
     background-color: transparent !important;
   }
   
-  /* Remove overlap with heavier padding */
+  /* Better padding for dropdown menus */
   [data-theme="dark"] .dropdown-menu,
   [data-theme="dark"] .dropdown-menu-content,
-  [data-theme="dark"] .radix-dropdown-menu__content {
-    padding: 0.7rem 0.35rem 0.7rem 0.35rem !important;
-    min-width: 8.5rem;
-    max-width: 20rem;
+  [data-theme="dark"] .radix-dropdown-menu__content,
+  [data-theme="dark"] .profile-menu {
+    padding: 0.75rem 0.5rem !important;
+    min-width: 12rem;
   }
   
   /* No transparency for menu overlay */
   [data-theme="dark"] .DropdownMenu__overlay {
-    background: rgba(28,38,52,0.015) !important;
-    backdrop-filter: blur(1.5px);
-    z-index: 99999;
+    background: rgba(28,38,52,0.01) !important;
+    backdrop-filter: blur(2px);
+    z-index: 9998;
   }
 
   /* Smooth transitions for menus */
   .dropdown-menu,
   .dropdown-menu-content {
-    transition: background 0.38s, box-shadow 0.38s, border 0.22s;
+    transition: all 0.32s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   /* Transition improvements */
   .theme-transition * {
-    @apply transition-colors duration-300;
+    @apply transition-all duration-300;
   }
 
   /* Button hover effect for dark mode */
   [data-theme="dark"] .hover-button {
-    @apply hover:bg-muted/50 transition-colors duration-200;
+    @apply hover:bg-[#00f7ef]/10 rounded-md transition-colors duration-200;
+    padding: 0.5rem !important;
+    margin: 0 0.25rem !important;
   }
 
   /* Modal and dropdown transitions for dark mode */
@@ -151,48 +149,44 @@
     @apply shadow-[0_0_15px_rgba(0,247,239,0.15)] hover:shadow-[0_0_20px_rgba(0,247,239,0.25)] transition-shadow duration-300;
   }
 
-  /* Glassmorphism Popover/Dropdown for Dark Mode */
-  [data-theme="dark"] .dropdown-menu,
-  [data-theme="dark"] .popover,
-  [data-theme="dark"] .sheet-content,
-  [data-theme="dark"] .card,
-  [data-theme="dark"] .header,
-  [data-theme="dark"] .profile-menu {
-    @apply bg-[#25384D]/90 bg-gradient-to-br from-[#25384D]/95 via-[#314968]/90 to-[#2c4057]/90 border border-[#3A4D62]/80 shadow-[0_4px_24px_4px_rgba(20,40,80,0.20)] backdrop-blur-lg !important;
-    z-index: 100;
-  }
-
-  /* Force dropdown menus to blend even if radix or shadcn adds classes */
-  [data-theme="dark"] .dropdown-menu,
-  [data-theme="dark"] .dropdown-menu-content,
-  [data-theme="dark"] .radix-dropdown-menu__content {
-    @apply bg-[#25384D]/95 border border-[#3A4D62]/80 shadow-[0_4px_18px_3px_rgba(0,0,0,0.29)] backdrop-blur-md text-foreground;
-    z-index: 9999;
-  }
-
-  /* General card blending for dark mode */
-  [data-theme="dark"] .card,
-  [data-theme="dark"] .mindboard-card,
-  [data-theme="dark"] .missions-card,
-  [data-theme="dark"] .actionbot-card,
-  [data-theme="dark"] .syncup-card {
-    @apply bg-gradient-to-br from-[#2c4057]/90 via-[#25384D]/90 to-[#314968]/90 border border-[#3A4D62]/70 shadow-[0_2px_8px_rgba(0,0,0,0.45)] backdrop-blur;
-  }
-
-  /* Buttons: subtle neon-on-glass effect in dark mode */
-  [data-theme="dark"] .action-button {
-    @apply hover:shadow-[0_0_12px_rgba(0,247,239,0.5)] hover:bg-[#33455e]/85;
+  /* Glassmorphism header for Dark Mode */
+  [data-theme="dark"] .header {
+    background: linear-gradient(to bottom, rgba(37, 56, 77, 0.95), rgba(37, 56, 77, 0.9));
+    border-bottom: 1px solid rgba(58, 77, 98, 0.5);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 1px 10px 0 rgba(0, 0, 0, 0.1);
   }
 
   /* Theme smooth transitions for all interactive components */
-  .theme-transition *, .theme-transition {
-    @apply transition-colors transition-shadow transition-[background,box-shadow,border] duration-300;
+  .theme-transition, .theme-transition * {
+    transition: background-color 0.3s ease, 
+                color 0.3s ease, 
+                border-color 0.3s ease, 
+                box-shadow 0.3s ease,
+                filter 0.3s ease,
+                backdrop-filter 0.3s ease;
   }
 
-  /* Modal, sheet transitions and overlays for blend */
-  [data-theme="dark"] .modal-overlay,
-  [data-theme="dark"] .sheet-overlay {
-    @apply bg-black/70 backdrop-blur-lg transition-opacity duration-300;
-    z-index: 1000;
+  /* Custom avatar styling for dark mode */
+  [data-theme="dark"] .avatar-fallback {
+    background: linear-gradient(135deg, rgba(36, 62, 84, 0.9), rgba(49, 73, 104, 0.8)) !important;
+    border: 1px solid rgba(58, 243, 239, 0.2);
+    color: rgba(217, 233, 231, 0.9);
   }
+
+  /* Fix z-index stacking issues for dropdown menus */
+  .dropdown-menu-content {
+    z-index: 9999 !important;
+  }
+}
+
+/* Fix for dropdown menu positioning */
+[data-radix-popper-content-wrapper] {
+  z-index: 9999 !important; 
+}
+
+/* Fix for dropdown menu hover effects */
+.dropdown-menu-item:hover {
+  background-color: rgba(0, 247, 239, 0.1);
+  border-radius: 0.375rem;
 }
