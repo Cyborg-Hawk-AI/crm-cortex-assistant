@@ -52,10 +52,85 @@
   }
 
   /* Dropdown menu dark mode improvements */
-  [data-theme="dark"] .dropdown-menu {
-    @apply bg-popover border border-border shadow-[0_4px_12px_rgba(0,0,0,0.3)] backdrop-blur-sm;
+  [data-theme="dark"] .dropdown-menu,
+  [data-theme="dark"] .dropdown-menu-content,
+  [data-theme="dark"] .radix-dropdown-menu__content {
+    /* Neo-glass blend: deep blue-teal + glass, subtle neon glow, crisp border */
+    @apply bg-gradient-to-br from-[#212e3e]/90 via-[#25384d]/95 to-[#314968]/88
+           border border-[#3AF3EF]/30 shadow-[0_4px_28px_8px_rgba(0,247,239,0.20)]
+           backdrop-blur-xl text-foreground;
+    z-index: 9999;
+    /* Stronger glass blur, accent neon border glow, spacing/padding fix */
+    box-shadow: 0 2px 24px 4px rgba(0,247,239,0.14), 0 4px 38px 0px rgba(33, 46, 62, 0.58);
+    border-width: 1.5px;
+    border-radius: 1rem;
+    background-blend-mode: lighten;
+    /* Remove artifacts from opaque backgrounds */
+    background-color: transparent !important;
+    /* Smoother transition */
+    transition: background 0.38s cubic-bezier(0.41,0.1,0.59,1), box-shadow 0.38s, border 0.22s;
+  }
+
+  /* General card and popover blending for dark mode (reuse menu consistency) */
+  [data-theme="dark"] .card,
+  [data-theme="dark"] .mindboard-card,
+  [data-theme="dark"] .missions-card,
+  [data-theme="dark"] .actionbot-card,
+  [data-theme="dark"] .syncup-card {
+    @apply bg-gradient-to-br from-[#25384D]/90 via-[#314968]/92 to-[#1b2635]/87
+           border border-[#3A4D62]/70 shadow-[0_2px_8px_rgba(0,0,0,0.45)] backdrop-blur-lg;
+  }
+
+  /* Glassmorphism Popover/Dropdown for Dark Mode (override for menu overlays, popoves) */
+  [data-theme="dark"] .popover,
+  [data-theme="dark"] .sheet-content,
+  [data-theme="dark"] .dropdown-menu,
+  [data-theme="dark"] .dropdown-menu-content,
+  [data-theme="dark"] .profile-menu {
+    @apply bg-gradient-to-br from-[#232f43]/97 via-[#25384D]/92 to-[#314968]/85
+           border border-[#3AF3EF]/25 shadow-[0_4px_32px_4px_rgba(0,247,239,0.14)]
+           backdrop-blur-xl text-foreground;
+    border-radius: 1rem !important;
+    background-blend-mode: lighten;
+    transition: background 0.38s, box-shadow 0.36s, border 0.21s;
+  }
+
+  /* Focus state for selection (neon/bright glass highlight) */
+  [data-theme="dark"] .dropdown-menu [data-highlighted],
+  [data-theme="dark"] .dropdown-menu-content [data-highlighted] {
+    @apply bg-[#00f7ef]/30 text-neon-aqua;
+    box-shadow: 0 0 8px 0 #00f7ef50;
+    border-radius: 0.5rem;
   }
   
+  /* Remove any hard borders or solid fills in popover dropdowns */
+  [data-theme="dark"] .dropdown-menu *,
+  [data-theme="dark"] .dropdown-menu-content * {
+    background-color: transparent !important;
+  }
+  
+  /* Remove overlap with heavier padding */
+  [data-theme="dark"] .dropdown-menu,
+  [data-theme="dark"] .dropdown-menu-content,
+  [data-theme="dark"] .radix-dropdown-menu__content {
+    padding: 0.7rem 0.35rem 0.7rem 0.35rem !important;
+    min-width: 8.5rem;
+    max-width: 20rem;
+  }
+  
+  /* No transparency for menu overlay */
+  [data-theme="dark"] .DropdownMenu__overlay {
+    background: rgba(28,38,52,0.015) !important;
+    backdrop-filter: blur(1.5px);
+    z-index: 99999;
+  }
+
+  /* Smooth transitions for menus */
+  .dropdown-menu,
+  .dropdown-menu-content {
+    transition: background 0.38s, box-shadow 0.38s, border 0.22s;
+  }
+
   /* Transition improvements */
   .theme-transition * {
     @apply transition-colors duration-300;
