@@ -176,7 +176,7 @@
 
 /* Fix for dropdown menu positioning - ensure highest z-index */
 [data-radix-popper-content-wrapper] {
-  z-index: 9999 !important; 
+  z-index: 99999 !important; 
   position: fixed !important;
 }
 
@@ -188,7 +188,7 @@
 
 /* Extra fixes for stacking context and positioning */
 .radix-dropdown-menu {
-  z-index: 9999;
+  z-index: 99999;
 }
 
 /* Fix for profile menu position to avoid overlaps */
@@ -196,4 +196,15 @@
   margin-top: 5px !important;
   transform: translateY(0) !important;
   border-radius: 14px !important;
+}
+
+/* Prevent overlap with Open in Notion button */
+.DropdownMenuContent {
+  margin-top: 8px !important;
+}
+
+/* Explicitly set the dropdown menu position */
+[data-radix-popper-content-wrapper] {
+  top: auto !important;
+  transform: none !important;
 }
