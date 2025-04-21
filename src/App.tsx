@@ -21,13 +21,24 @@ import "./App.css";
 
 const AppContent = () => {
   const { theme } = useTheme();
-  // Default to "main" tab for Command View
   const [activeTab, setActiveTab] = useState("main");
 
-  // Apply the theme class to both html and body for complete coverage
+  // Ensure absolute zero color mismatch for dark mode, full harmony for light mode
   useEffect(() => {
-    document.body.className = theme === "dark" ? "dark" : "light";
-    document.body.style.backgroundColor = theme === "dark" ? "#25384D" : "#F9F9F9";
+    if (theme === "dark") {
+      document.body.className = "dark";
+      document.body.style.background =
+        "linear-gradient(120deg,#25384D 0%,#314968 40%,#2c4057 100%)";
+      document.body.style.backgroundAttachment = "fixed";
+      document.body.style.backgroundRepeat = "no-repeat";
+      document.body.style.backgroundSize = "cover";
+      document.body.style.color = "#D9E9E7"; // soft teal-gray foreground
+    } else {
+      document.body.className = "light";
+      document.body.style.backgroundColor = "#F9F9F9";
+      document.body.style.backgroundImage = "none";
+      document.body.style.color = "#404040";
+    }
   }, [theme]);
 
   return (

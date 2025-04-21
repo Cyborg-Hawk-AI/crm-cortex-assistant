@@ -1,12 +1,13 @@
 
 @layer base {
   .theme-transition {
-    transition: background-color 0.3s ease, 
-                color 0.3s ease,
-                border-color 0.3s ease,
-                box-shadow 0.3s ease;
+    transition: background-color 0.3s cubic-bezier(0.45,0,0.55,1), 
+                color 0.3s cubic-bezier(0.45,0,0.55,1),
+                border-color 0.3s cubic-bezier(0.45,0,0.55,1),
+                box-shadow 0.3s cubic-bezier(0.45,0,0.55,1);
   }
 
+  /* --- LIGHT MODE --- */
   [data-theme="light"] {
     --background: 0 0% 98%; /* #F9F9F9 - Soft ivory */
     --foreground: 0 0% 25%; /* #404040 - Charcoal gray */
@@ -24,82 +25,77 @@
     --accent-foreground: 168 33% 23%; /* #264E46 - Dark forest green */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 75%; /* #BFBFBF - Medium gray */
-    --input: 0 0% 75%; /* #BFBFBF - Medium gray */
-    --ring: 174 47% 69%; /* #88D9CE - Teal green */
+    --border: 0 0% 75%; /* #BFBFBF */
+    --input: 0 0% 75%; /* #BFBFBF */
+    --ring: 174 47% 69%; /* #88D9CE */
     --radius: 0.75rem;
     --neon-red: 0 84% 60%;
-    --neon-purple: 174 47% 69%; 
-    --neon-blue: 174 47% 69%; 
-    --neon-aqua: 181 100% 48%; 
+    --neon-purple: 268 90% 72%;
+    --neon-blue: 204 100% 65%;
+    --neon-aqua: 181 100% 48%;
     --neon-green: 142 100% 68%;
     --neon-yellow: 41 100% 70%;
   }
 
+  /* --- DARK MODE: Dashboard, Dropdown, All Surfaces Harmonized! --- */
   [data-theme="dark"] {
-    /* Matching the background to the dropdown menu's #25384D color */
-    --background: 210 35% 22%;    /* #25384D - dropdown menu background */
-    --foreground: 180 10% 92%;   /* very light teal-gray #D9E9E7 */
-
-    /* Elevated Surfaces: matching dropdown's slightly lighter shade */
-    --card: 210 28% 25%;         /* #2c4057 - slightly lighter than background */
+    --background: 210 35% 22%;    /* #25384D - Unified dark background */
+    --foreground: 180 10% 92%;    /* #D9E9E7 - light teal-gray */
+    --card: 210 28% 27%;          /* #314968 - slightly lighter than bg */
     --card-foreground: 180 10% 92%;
-
-    --popover: 210 35% 22%;      /* #25384D - matching dropdown */
+    --popover: 210 35% 22%;       /* #25384D - EXACT dropdown bg */
     --popover-foreground: 180 10% 92%;
-
-    /* Keep our accent colors */
-    --primary: 174 47% 69%;      /* #88D9CE - teal neon */
-    --primary-foreground: 220 40% 10%; /* #171c23 surface behind accent - darker */
-
-    --secondary: 210 25% 25%;    /* #2c4057 - slightly lighter than background */
+    --primary: 178 53% 69%;       /* #86e5d6 - cyan/teal neon accent */
+    --primary-foreground: 220 40% 10%; /* #171c23 for accent contrast */
+    --secondary: 210 23% 30%;     /* #374f6b - a touch more contrast for cards/lists */
     --secondary-foreground: 180 10% 92%;
-
-    /* Muted/Neutral: even softer, for input bg/placeholder */
-    --muted: 210 30% 30%;        /* #33455e - slightly lighter than secondary */
-    --muted-foreground: 183 8% 60%; /* #5A7370 medium gray */
-
-    /* Accent for outlines and effects */
-    --accent: 175 47% 20%;       /* #183231 gradient border/glow - darker */
+    --muted: 210 28% 31%;         /* #3A4D62 - input fields, muted surfaces */
+    --muted-foreground: 183 8% 60%; /* #5A7370 - medium-muted text */
+    --accent: 181 100% 55%;       /* #00F7EF - vibrant aqua for outlines/glow */
     --accent-foreground: 180 10% 92%;
-
-    /* Alerts and status */
-    --destructive: 0 80% 55%;    /* #E05252 v. red/pink for errors */
+    --destructive: 0 80% 55%;     /* #E05252 red for errors */
     --destructive-foreground: 0 0% 98%;
-
-    /* Border matching dropdown's #3A4D62 border */
-    --border: 210 25% 31%;       /* #3A4D62 - dropdown menu border */
-    --input: 210 25% 31%;        /* #3A4D62 - matching border for consistency */
-    --ring: 174 47% 59%;         /* #63A8A2 pale teal */
+    --border: 210 25% 31%;        /* #3A4D62 - dropdown border */
+    --input: 210 25% 31%;         /* #3A4D62 */
+    --ring: 174 47% 59%;          /* #63A8A2 pale teal */
     --radius: 0.75rem;
 
-    /* Neon blend for highlights/glow */
+    /* Neon palette for highlights and glows */
     --neon-red: 0 84% 60%;
-    --neon-purple: 268 90% 72%;   /* #9b87f5 - vibrant purple highlight */
-    --neon-blue: 204 100% 65%;    /* #53c6f5 - vivid blue accent */
-    --neon-aqua: 181 100% 55%;    /* #00f7ef - cyan glow */
-    --neon-green: 142 100% 64%;   /* #b6ff5d - green highlight */
-    --neon-yellow: 41 100% 70%;   /* #ffe066 - yellow status */
+    --neon-purple: 268 90% 72%;
+    --neon-blue: 204 100% 65%;
+    --neon-aqua: 181 100% 55%;   /* dropdown focus/active glows */
+    --neon-green: 142 100% 64%;
+    --neon-yellow: 41 100% 70%;
   }
 
+  /* For Tailwind 'dark' class fallback */
   .dark {
-    --background: 210 35% 22%;    /* #25384D - consistent with dropdown menu */
+    --background: 210 35% 22%;
     --foreground: 180 10% 92%;
   }
 
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    transition: background-color 0.3s cubic-bezier(0.45,0,0.55,1), color 0.3s cubic-bezier(0.45,0,0.55,1);
   }
 
-  /* Light/dark backgrounds for initial load */
   [data-theme="light"] body {
     background-color: #F9F9F9;
     background-image: none;
   }
   
   [data-theme="dark"] body {
-    background-color: #25384D; /* Matching dropdown menu's background */
-    background-image: none;
+    background: linear-gradient(
+      120deg,
+      #25384D 0%, 
+      #314968 40%, 
+      #2c4057 100%
+    ); /* Teal steel-glass blend */
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-size: cover;
   }
 }
+
