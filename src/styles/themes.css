@@ -37,26 +37,26 @@
   }
 
   [data-theme="dark"] {
-    /* Deep black background */
-    --background: 220 40% 3%;    /* #05070B very dark background - adjusted to be darker */
+    /* Matching the background to the dropdown menu's #25384D color */
+    --background: 210 35% 22%;    /* #25384D - dropdown menu background */
     --foreground: 180 10% 92%;   /* very light teal-gray #D9E9E7 */
 
-    /* Elevated Surfaces: glassy, slightly lighter but still dark */
-    --card: 220 28% 8%;         /* #101723 darker elevated card */
+    /* Elevated Surfaces: matching dropdown's slightly lighter shade */
+    --card: 210 28% 25%;         /* #2c4057 - slightly lighter than background */
     --card-foreground: 180 10% 92%;
 
-    --popover: 220 28% 6%;       /* #0c111a darker popover */
+    --popover: 210 35% 22%;      /* #25384D - matching dropdown */
     --popover-foreground: 180 10% 92%;
 
     /* Keep our accent colors */
     --primary: 174 47% 69%;      /* #88D9CE - teal neon */
     --primary-foreground: 220 40% 10%; /* #171c23 surface behind accent - darker */
 
-    --secondary: 180 24% 16%;    /* #172a2e darker aqua shadow */
+    --secondary: 210 25% 25%;    /* #2c4057 - slightly lighter than background */
     --secondary-foreground: 180 10% 92%;
 
     /* Muted/Neutral: even softer, for input bg/placeholder */
-    --muted: 210 18% 12%;        /* #151b20 dark steel - darker */
+    --muted: 210 30% 30%;        /* #33455e - slightly lighter than secondary */
     --muted-foreground: 183 8% 60%; /* #5A7370 medium gray */
 
     /* Accent for outlines and effects */
@@ -67,8 +67,9 @@
     --destructive: 0 80% 55%;    /* #E05252 v. red/pink for errors */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 220 16% 15%;       /* #1d2730 slightly lighter than bg - darker */
-    --input: 220 18% 18%;        /* #212933 muted but visible - darker */
+    /* Border matching dropdown's #3A4D62 border */
+    --border: 210 25% 31%;       /* #3A4D62 - dropdown menu border */
+    --input: 210 25% 31%;        /* #3A4D62 - matching border for consistency */
     --ring: 174 47% 59%;         /* #63A8A2 pale teal */
     --radius: 0.75rem;
 
@@ -82,7 +83,7 @@
   }
 
   .dark {
-    --background: 220 40% 3%;
+    --background: 210 35% 22%;    /* #25384D - consistent with dropdown menu */
     --foreground: 180 10% 92%;
   }
 
@@ -96,8 +97,9 @@
     background-color: #F9F9F9;
     background-image: none;
   }
+  
   [data-theme="dark"] body {
-    background-color: #05070B;
+    background-color: #25384D; /* Matching dropdown menu's background */
     background-image: none;
   }
 }

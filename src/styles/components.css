@@ -54,7 +54,7 @@
 
   /* Dropdown menu dark mode improvements */
   [data-theme="dark"] .dropdown-menu {
-    @apply bg-card border border-border shadow-[0_4px_12px_rgba(0,0,0,0.3)] backdrop-blur-sm;
+    @apply bg-popover border border-border shadow-[0_4px_12px_rgba(0,0,0,0.3)] backdrop-blur-sm;
   }
   
   /* Transition improvements */

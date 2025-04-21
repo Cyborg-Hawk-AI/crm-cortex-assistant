@@ -24,15 +24,16 @@ const AppContent = () => {
   // Default to "main" tab for Command View
   const [activeTab, setActiveTab] = useState("main");
 
-  // Add this effect to apply the theme class to body
+  // Apply the theme class to both html and body for complete coverage
   useEffect(() => {
     document.body.className = theme === "dark" ? "dark" : "light";
+    document.body.style.backgroundColor = theme === "dark" ? "#25384D" : "#F9F9F9";
   }, [theme]);
 
   return (
     <div className={`min-h-screen bg-background text-foreground transition-colors duration-300`}>
       <Header activeTab={activeTab} setActiveTab={setActiveTab} />
-      <div className="pt-[60px] pb-[70px]">
+      <div className="pt-[60px] pb-[70px] bg-background">
         <Routes>
           <Route path="/login" element={<Login key="login" />} />
           <Route path="/signup" element={<Signup key="signup" />} />

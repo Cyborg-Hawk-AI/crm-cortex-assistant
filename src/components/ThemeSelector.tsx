@@ -24,7 +24,7 @@ export function ThemeSelector() {
       <button
         className={`flex items-center gap-2 px-2 py-1.5 rounded transition-all duration-300 ${
           theme === 'dark' 
-            ? 'bg-secondary text-secondary-foreground font-bold shadow-[0_0_8px_rgba(0,247,239,0.2)]' 
+            ? 'bg-accent text-accent-foreground font-bold shadow-[0_0_8px_rgba(0,247,239,0.2)]' 
             : 'hover:bg-muted/50 opacity-70'
         }`}
         aria-label="Switch to dark mode"
