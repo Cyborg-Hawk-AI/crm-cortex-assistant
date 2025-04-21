@@ -43,14 +43,14 @@ export function UserMenu() {
       <DropdownMenuTrigger asChild>
         <Button 
           variant="ghost" 
-          className={`p-0 h-8 w-8 rounded-full ${isDark ? 'hover:bg-muted/50' : ''}`}
+          className={`relative p-0 h-8 w-8 rounded-full ${isDark ? 'hover:bg-muted/50' : ''}`}
         >
           <Avatar className="h-8 w-8">
             {profile?.avatar_url ? (
               <AvatarImage src={profile.avatar_url} alt={profile?.full_name || ''} />
             ) : null}
             <AvatarFallback 
-              className={`${isDark ? 'bg-muted text-foreground border border-border/50' : ''}`}
+              className={`${isDark ? 'bg-muted text-foreground border border-border/50 avatar-fallback' : ''}`}
             >
               {initials}
             </AvatarFallback>
@@ -60,6 +60,7 @@ export function UserMenu() {
       <DropdownMenuContent 
         align="end" 
         className="w-56 dropdown-menu profile-menu"
+        sideOffset={8}
       >
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
