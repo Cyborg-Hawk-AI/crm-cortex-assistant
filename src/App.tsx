@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
@@ -24,8 +24,13 @@ const AppContent = () => {
   // Default to "main" tab for Command View
   const [activeTab, setActiveTab] = useState("main");
 
+  // Add this effect to apply the theme class to body
+  useEffect(() => {
+    document.body.className = theme === "dark" ? "dark" : "light";
+  }, [theme]);
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className={`min-h-screen bg-background text-foreground transition-colors duration-300`}>
       <Header activeTab={activeTab} setActiveTab={setActiveTab} />
       <div className="pt-[60px] pb-[70px]">
         <Routes>

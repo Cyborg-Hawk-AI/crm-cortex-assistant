@@ -9,7 +9,11 @@ export function ThemeSelector() {
   return (
     <div className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground">
       <button
-        className={`flex items-center gap-2 px-2 py-1 rounded transition-colors ${theme === 'light' ? 'bg-secondary text-secondary-foreground font-bold shadow' : 'hover:bg-muted/40 opacity-60'}`}
+        className={`flex items-center gap-2 px-2 py-1.5 rounded transition-all duration-300 ${
+          theme === 'light' 
+            ? 'bg-secondary text-secondary-foreground font-bold shadow-md' 
+            : 'hover:bg-muted/50 opacity-70'
+        }`}
         aria-label="Switch to light mode"
         onClick={() => setTheme('light')}
         type="button"
@@ -18,7 +22,11 @@ export function ThemeSelector() {
         <span>Light Mode</span>
       </button>
       <button
-        className={`flex items-center gap-2 px-2 py-1 rounded transition-colors ${theme === 'dark' ? 'bg-secondary text-secondary-foreground font-bold shadow' : 'hover:bg-muted/40 opacity-60'}`}
+        className={`flex items-center gap-2 px-2 py-1.5 rounded transition-all duration-300 ${
+          theme === 'dark' 
+            ? 'bg-secondary text-secondary-foreground font-bold shadow-[0_0_8px_rgba(0,247,239,0.2)]' 
+            : 'hover:bg-muted/50 opacity-70'
+        }`}
         aria-label="Switch to dark mode"
         onClick={() => setTheme('dark')}
         type="button"

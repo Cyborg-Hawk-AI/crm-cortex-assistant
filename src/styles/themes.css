@@ -38,37 +38,37 @@
 
   [data-theme="dark"] {
     /* Deep black background */
-    --background: 220 40% 5%;    /* #080C12 very dark background */
+    --background: 220 40% 3%;    /* #05070B very dark background - adjusted to be darker */
     --foreground: 180 10% 92%;   /* very light teal-gray #D9E9E7 */
 
     /* Elevated Surfaces: glassy, slightly lighter but still dark */
-    --card: 220 28% 10%;         /* #141F2D dark elevated card */
+    --card: 220 28% 8%;         /* #101723 darker elevated card */
     --card-foreground: 180 10% 92%;
 
-    --popover: 220 28% 8%;       /* #101724 dark popover */
+    --popover: 220 28% 6%;       /* #0c111a darker popover */
     --popover-foreground: 180 10% 92%;
 
     /* Keep our accent colors */
     --primary: 174 47% 69%;      /* #88D9CE - teal neon */
-    --primary-foreground: 220 40% 13%; /* #1d232c surface behind accent */
+    --primary-foreground: 220 40% 10%; /* #171c23 surface behind accent - darker */
 
-    --secondary: 180 24% 18%;    /* #193238 dark aqua shadow */
+    --secondary: 180 24% 16%;    /* #172a2e darker aqua shadow */
     --secondary-foreground: 180 10% 92%;
 
     /* Muted/Neutral: even softer, for input bg/placeholder */
-    --muted: 210 18% 15%;        /* #1A2229 dark steel */
+    --muted: 210 18% 12%;        /* #151b20 dark steel - darker */
     --muted-foreground: 183 8% 60%; /* #5A7370 medium gray */
 
     /* Accent for outlines and effects */
-    --accent: 175 47% 24%;       /* #1b3a38 gradient border/glow */
+    --accent: 175 47% 20%;       /* #183231 gradient border/glow - darker */
     --accent-foreground: 180 10% 92%;
 
     /* Alerts and status */
     --destructive: 0 80% 55%;    /* #E05252 v. red/pink for errors */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 220 16% 18%;       /* #222e36 slightly lighter than bg */
-    --input: 220 18% 21%;        /* #26303b muted but visible */
+    --border: 220 16% 15%;       /* #1d2730 slightly lighter than bg - darker */
+    --input: 220 18% 18%;        /* #212933 muted but visible - darker */
     --ring: 174 47% 59%;         /* #63A8A2 pale teal */
     --radius: 0.75rem;
 
@@ -82,7 +82,7 @@
   }
 
   .dark {
-    --background: 220 40% 5%;
+    --background: 220 40% 3%;
     --foreground: 180 10% 92%;
   }
 
@@ -97,7 +97,7 @@
     background-image: none;
   }
   [data-theme="dark"] body {
-    background-color: #080C12;
+    background-color: #05070B;
     background-image: none;
   }
 }

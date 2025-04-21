@@ -36,6 +36,8 @@ export function UserMenu() {
         .substring(0, 2)
     : 'U';
 
+  const isDark = theme === 'dark';
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -44,11 +46,13 @@ export function UserMenu() {
             {profile?.avatar_url ? (
               <AvatarImage src={profile.avatar_url} alt={profile?.full_name || ''} />
             ) : null}
-            <AvatarFallback>{initials}</AvatarFallback>
+            <AvatarFallback className={isDark ? 'bg-muted text-foreground' : ''}>
+              {initials}
+            </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="bg-popover border-border text-popover-foreground">
+      <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{profile?.full_name || 'User'}</p>
@@ -56,16 +60,19 @@ export function UserMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem className="cursor-pointer">
           <User className="mr-2 h-4 w-4" />
           <span>Profile</span>
         </DropdownMenuItem>
-        <DropdownMenuItem>
+        <DropdownMenuItem className="cursor-pointer">
           <Settings className="mr-2 h-4 w-4" />
           <span>Settings</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
+        <DropdownMenuItem 
+          className="cursor-pointer"
+          onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+        >
           {theme === 'light' ? (
             <>
               <Moon className="mr-2 h-4 w-4" />
@@ -79,7 +86,10 @@ export function UserMenu() {
           )}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => signOut()}>
+        <DropdownMenuItem 
+          className="cursor-pointer"
+          onClick={() => signOut()}
+        >
           <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>
         </DropdownMenuItem>

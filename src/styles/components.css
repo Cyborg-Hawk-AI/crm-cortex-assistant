@@ -41,7 +41,7 @@
   [data-theme="dark"] .missions-card,
   [data-theme="dark"] .mindboard-card,
   [data-theme="dark"] .syncup-card {
-    @apply shadow-[0_2px_8px_rgba(0,0,0,0.3)];
+    @apply shadow-[0_2px_8px_rgba(0,0,0,0.4)];
   }
   
   [data-theme="dark"] .action-button {
@@ -50,5 +50,30 @@
   
   [data-theme="dark"] .actionbot-card {
     @apply shadow-[0_2px_8px_rgba(0,0,0,0.4)] hover:shadow-[0_0_15px_rgba(0,247,239,0.2)];
+  }
+
+  /* Dropdown menu dark mode improvements */
+  [data-theme="dark"] .dropdown-menu {
+    @apply bg-card border border-border shadow-[0_4px_12px_rgba(0,0,0,0.3)] backdrop-blur-sm;
+  }
+  
+  /* Transition improvements */
+  .theme-transition * {
+    @apply transition-colors duration-300;
+  }
+
+  /* Button hover effect for dark mode */
+  [data-theme="dark"] .hover-button {
+    @apply hover:bg-muted/50 transition-colors duration-200;
+  }
+
+  /* Modal and dropdown transitions for dark mode */
+  [data-theme="dark"] .modal-overlay {
+    @apply bg-black/60 backdrop-blur-sm transition-opacity duration-300;
+  }
+  
+  /* Improved glow effects for dark mode */
+  [data-theme="dark"] .glow-effect {
+    @apply shadow-[0_0_15px_rgba(0,247,239,0.15)] hover:shadow-[0_0_20px_rgba(0,247,239,0.25)] transition-shadow duration-300;
   }
 }

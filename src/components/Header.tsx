@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -13,6 +14,7 @@ import { UserMenu } from '@/components/UserMenu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface HeaderProps {
   activeTab: string;
@@ -25,6 +27,7 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const isMobile = useIsMobile();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { theme } = useTheme();
   
   useEffect(() => {
     const handleResize = () => {
@@ -68,36 +71,40 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
       id: 'dashboard',
       label: 'Dashboard',
       icon: <LayoutDashboard className="h-5 w-5" />,
-      activeColor: 'text-[#88D9CE]'
+      activeColor: theme === 'dark' ? 'text-neon-aqua' : 'text-[#88D9CE]'
     },
     {
       id: 'chat',
       label: 'ActionBot',
       icon: <MessageSquare className="h-5 w-5" />,
-      activeColor: 'text-[#264E46]'
+      activeColor: theme === 'dark' ? 'text-neon-aqua' : 'text-[#264E46]'
     },
     {
       id: 'projects',
       label: 'Projects',
       icon: <ClipboardCheck className="h-5 w-5" />,
-      activeColor: 'text-[#88D9CE]'
+      activeColor: theme === 'dark' ? 'text-neon-aqua' : 'text-[#88D9CE]'
     },
     {
       id: 'notebooks',
       label: 'Notebooks',
       icon: <BookOpen className="h-5 w-5" />,
-      activeColor: 'text-[#88D9CE]'
+      activeColor: theme === 'dark' ? 'text-neon-aqua' : 'text-[#88D9CE]'
     },
     {
       id: 'settings',
       label: 'Control Deck',
       icon: <Settings className="h-5 w-5" />,
-      activeColor: 'text-[#264E46]'
+      activeColor: theme === 'dark' ? 'text-neon-aqua' : 'text-[#264E46]'
     }
   ];
   
+  const isDark = theme === 'dark';
+  
   return (
-    <header className="bg-white fixed top-0 left-0 right-0 z-50 border-b border-[#ECEAE3]">
+    <header className={`fixed top-0 left-0 right-0 z-50 border-b ${
+      isDark ? 'bg-background border-[#1d2730]' : 'bg-white border-[#ECEAE3]'
+    }`}>
       <div className="container flex justify-between items-center h-[60px]">
         <div className="flex items-center">
           <Logo className="mr-8" onClick={() => handleTabChange('dashboard')} />
@@ -109,8 +116,8 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
               <button
                 key={item.id}
                 className={`py-4 px-3 lg:px-6 flex items-center justify-center transition-all duration-300 ${
-                  activeTab === item.id ? item.activeColor : 'text-[#404040]'
-                } hover:bg-[#F5F7FA]`}
+                  activeTab === item.id ? item.activeColor : isDark ? 'text-foreground' : 'text-[#404040]'
+                } ${isDark ? 'hover:bg-muted/70' : 'hover:bg-[#F5F7FA]'}`}
                 onClick={() => handleTabChange(item.id)}
               >
                 {item.icon}
@@ -124,17 +131,17 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden">
-                <Menu className="h-5 w-5 text-[#404040]" />
+                <Menu className={`h-5 w-5 ${isDark ? 'text-foreground' : 'text-[#404040]'}`} />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="bg-white border-r border-[#ECEAE3] pt-12">
+            <SheetContent side="left" className={`${isDark ? 'bg-card border-[#1d2730]' : 'bg-white border-[#ECEAE3]'} pt-12`}>
               <nav className="flex flex-col space-y-2">
                 {navItems.map(item => (
                   <button
                     key={item.id}
                     className={`py-3 px-4 flex items-center ${
-                      activeTab === item.id ? item.activeColor : 'text-[#404040]'
-                    } hover:bg-[#F5F7FA] rounded-md transition-colors`}
+                      activeTab === item.id ? item.activeColor : isDark ? 'text-foreground' : 'text-[#404040]'
+                    } ${isDark ? 'hover:bg-muted/70' : 'hover:bg-[#F5F7FA]'} rounded-md transition-colors`}
                     onClick={() => handleTabChange(item.id)}
                   >
                     {item.icon}
@@ -147,7 +154,7 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
         )}
         
         <div className="flex items-center">
-          <div className="text-sm font-medium text-[#A8A29E] mr-4 hidden sm:block">
+          <div className={`text-sm font-medium ${isDark ? 'text-muted-foreground' : 'text-[#A8A29E]'} mr-4 hidden sm:block`}>
             v1.0.0
           </div>
           <UserMenu />
