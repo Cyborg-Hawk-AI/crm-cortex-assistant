@@ -2,6 +2,7 @@
 import React from 'react';
 import { CheckCircle2, Circle, Clock, AlertCircle } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { useTheme } from '@/contexts/ThemeContext';
 
 const tasks = [
   {
@@ -37,26 +38,39 @@ const tasks = [
 const getStatusIcon = (status: string) => {
   switch(status) {
     case 'completed':
-      return <CheckCircle2 className="h-5 w-5 text-[#88D9CE]" />;
+      return <CheckCircle2 className="h-5 w-5 text-primary" />;
     case 'in-progress':
-      return <Clock className="h-5 w-5 text-[#88D9CE]" />;
+      return <Clock className="h-5 w-5 text-primary" />;
     case 'blocked':
-      return <AlertCircle className="h-5 w-5 text-[#264E46]" />;
+      return <AlertCircle className="h-5 w-5 text-primary-foreground" />;
     default:
-      return <Circle className="h-5 w-5 text-[#BFBFBF]" />;
+      return <Circle className="h-5 w-5 text-muted-foreground" />;
   }
 };
 
-const getPriorityClass = (priority: string) => {
-  switch(priority) {
-    case 'urgent':
-      return 'bg-[#C1EDEA] text-[#264E46]';
-    case 'high':
-      return 'bg-[#ECEAE3] text-[#264E46]';
-    case 'medium':
-      return 'bg-[#F5F7FA] text-[#404040]';
-    default:
-      return 'bg-[#F5F7FA] text-[#BFBFBF]';
+const getPriorityClass = (priority: string, isDark: boolean) => {
+  if (isDark) {
+    switch(priority) {
+      case 'urgent':
+        return 'bg-accent text-accent-foreground';
+      case 'high':
+        return 'bg-muted text-muted-foreground';
+      case 'medium':
+        return 'bg-secondary text-secondary-foreground';
+      default:
+        return 'bg-secondary/50 text-muted-foreground';
+    }
+  } else {
+    switch(priority) {
+      case 'urgent':
+        return 'bg-[#C1EDEA] text-[#264E46]';
+      case 'high':
+        return 'bg-[#ECEAE3] text-[#264E46]';
+      case 'medium':
+        return 'bg-[#F5F7FA] text-[#404040]';
+      default:
+        return 'bg-[#F5F7FA] text-[#BFBFBF]';
+    }
   }
 };
 
@@ -75,6 +89,9 @@ const formatDate = (date: Date) => {
 };
 
 export const TaskList = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  
   return (
     <div className="space-y-3">
       {tasks.map(task => (
@@ -82,7 +99,9 @@ export const TaskList = () => {
           key={task.id}
           className={cn(
             "p-3 rounded-md border flex items-start gap-3",
-            task.status === 'completed' ? 'bg-[#F5F7FA] border-[#BFBFBF]' : 'bg-white border-[#C1EDEA]'
+            task.status === 'completed' 
+              ? isDark ? 'bg-secondary/30 border-muted' : 'bg-[#F5F7FA] border-[#BFBFBF]' 
+              : isDark ? 'bg-card border-accent/30' : 'bg-white border-[#C1EDEA]'
           )}
         >
           <div className="mt-0.5">
@@ -91,15 +110,17 @@ export const TaskList = () => {
           <div className="flex-1 min-w-0">
             <p className={cn(
               "font-medium truncate",
-              task.status === 'completed' ? 'text-[#BFBFBF] line-through' : 'text-[#404040]'
+              task.status === 'completed' 
+                ? isDark ? 'text-muted-foreground line-through' : 'text-[#BFBFBF] line-through' 
+                : isDark ? 'text-foreground' : 'text-[#404040]'
             )}>
               {task.title}
             </p>
-            <div className="flex items-center mt-1 text-xs text-[#A8A29E]">
+            <div className="flex items-center mt-1 text-xs text-muted-foreground">
               <span className="mr-2">Due: {formatDate(task.dueDate)}</span>
               <span className={cn(
                 "px-1.5 py-0.5 rounded text-xs font-medium",
-                getPriorityClass(task.priority)
+                getPriorityClass(task.priority, isDark)
               )}>
                 {task.priority}
               </span>

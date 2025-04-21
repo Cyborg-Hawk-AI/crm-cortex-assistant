@@ -36,4 +36,19 @@
   .actionbot-card {
     @apply bg-gradient-to-r from-card to-background border border-border/20 rounded-lg shadow-md hover:shadow-[0_0_15px_rgba(136,217,206,0.3)] transition-all;
   }
+  
+  /* Dark mode specific adjustments */
+  [data-theme="dark"] .missions-card,
+  [data-theme="dark"] .mindboard-card,
+  [data-theme="dark"] .syncup-card {
+    @apply shadow-[0_2px_8px_rgba(0,0,0,0.3)];
+  }
+  
+  [data-theme="dark"] .action-button {
+    @apply hover:shadow-[0_0_12px_rgba(0,247,239,0.4)];
+  }
+  
+  [data-theme="dark"] .actionbot-card {
+    @apply shadow-[0_2px_8px_rgba(0,0,0,0.4)] hover:shadow-[0_0_15px_rgba(0,247,239,0.2)];
+  }
 }

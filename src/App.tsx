@@ -17,7 +17,7 @@ import Index from "@/pages/Index";
 import { ProjectsPageWrapper } from "@/components/projects/ProjectsPageWrapper";
 import { Mindboard } from "@/components/mindboard/Mindboard";
 
-import "./components/chat.css";
+import "./App.css";
 
 const AppContent = () => {
   const { theme } = useTheme();
@@ -25,7 +25,7 @@ const AppContent = () => {
   const [activeTab, setActiveTab] = useState("main");
 
   return (
-    <div className={`min-h-screen bg-background text-foreground ${theme === 'dark' ? 'dark' : ''}`}>
+    <div className="min-h-screen bg-background text-foreground">
       <Header activeTab={activeTab} setActiveTab={setActiveTab} />
       <div className="pt-[60px] pb-[70px]">
         <Routes>

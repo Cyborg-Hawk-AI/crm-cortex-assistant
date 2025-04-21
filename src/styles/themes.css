@@ -37,32 +37,33 @@
   }
 
   [data-theme="dark"] {
-    /* 1. Base: deep charcoal for bg, blending with muted accents, softer text */
-    --background: 220 40% 9%;    /* #13191F deep charcoal */
+    /* Deep black background */
+    --background: 220 40% 5%;    /* #080C12 very dark background */
     --foreground: 180 10% 92%;   /* very light teal-gray #D9E9E7 */
 
-    /* 2. Elevated Surfaces: glassy, slightly lighter but still cool */
-    --card: 220 28% 15%;         /* #203244 slightly raised from bg */
+    /* Elevated Surfaces: glassy, slightly lighter but still dark */
+    --card: 220 28% 10%;         /* #141F2D dark elevated card */
     --card-foreground: 180 10% 92%;
 
-    --popover: 220 28% 13%;      /* #1b2533 popover */
+    --popover: 220 28% 8%;       /* #101724 dark popover */
     --popover-foreground: 180 10% 92%;
 
+    /* Keep our accent colors */
     --primary: 174 47% 69%;      /* #88D9CE - teal neon */
     --primary-foreground: 220 40% 13%; /* #1d232c surface behind accent */
 
     --secondary: 180 24% 18%;    /* #193238 dark aqua shadow */
     --secondary-foreground: 180 10% 92%;
 
-    /* 3. Muted/Neutral: even softer, for input bg/placeholder */
-    --muted: 210 18% 20%;        /* #232b34 deep steel */
+    /* Muted/Neutral: even softer, for input bg/placeholder */
+    --muted: 210 18% 15%;        /* #1A2229 dark steel */
     --muted-foreground: 183 8% 60%; /* #5A7370 medium gray */
 
-    /* 4. Accent for outlines and effects */
+    /* Accent for outlines and effects */
     --accent: 175 47% 24%;       /* #1b3a38 gradient border/glow */
     --accent-foreground: 180 10% 92%;
 
-    /* 5. Alerts and status, match brand intents */
+    /* Alerts and status */
     --destructive: 0 80% 55%;    /* #E05252 v. red/pink for errors */
     --destructive-foreground: 0 0% 98%;
 
@@ -71,7 +72,7 @@
     --ring: 174 47% 59%;         /* #63A8A2 pale teal */
     --radius: 0.75rem;
 
-    /* 6. Neon blend for highlights/glow */
+    /* Neon blend for highlights/glow */
     --neon-red: 0 84% 60%;
     --neon-purple: 268 90% 72%;   /* #9b87f5 - vibrant purple highlight */
     --neon-blue: 204 100% 65%;    /* #53c6f5 - vivid blue accent */
@@ -81,7 +82,7 @@
   }
 
   .dark {
-    --background: 220 40% 9%;
+    --background: 220 40% 5%;
     --foreground: 180 10% 92%;
   }
 
@@ -96,7 +97,7 @@
     background-image: none;
   }
   [data-theme="dark"] body {
-    background-color: #13191F;
+    background-color: #080C12;
     background-image: none;
   }
 }
