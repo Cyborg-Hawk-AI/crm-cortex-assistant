@@ -60,7 +60,9 @@ export function UserMenu() {
       <DropdownMenuContent 
         align="end" 
         className="w-56 dropdown-menu profile-menu"
-        sideOffset={8}
+        sideOffset={12}
+        alignOffset={0}
+        avoidCollisions={true}
       >
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">

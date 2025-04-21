@@ -68,6 +68,7 @@ const DropdownMenuContent = React.forwardRef<
           "z-[9999] min-w-[8rem] max-w-[18rem] overflow-hidden rounded-xl border bg-popover p-2 text-popover-foreground shadow-lg dropdown-menu-content",
           className
         )}
+        collisionPadding={16}
         {...props}
       />
     </DropdownMenuPrimitive.Portal>

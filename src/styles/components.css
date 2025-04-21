@@ -60,14 +60,12 @@
     @apply bg-gradient-to-br from-[#212e3e]/95 via-[#25384d]/97 to-[#314968]/95
            border border-[#3AF3EF]/30 shadow-[0_4px_28px_8px_rgba(0,247,239,0.15)]
            backdrop-blur-xl text-foreground;
-    z-index: 50;
     box-shadow: 0 2px 24px 4px rgba(0,247,239,0.14), 0 4px 38px 0px rgba(33, 46, 62, 0.58);
     border-width: 1.5px;
     border-radius: 1rem;
     background-blend-mode: lighten;
     background-color: transparent !important;
     transition: all 0.38s cubic-bezier(0.41,0.1,0.59,1);
-    position: relative;
   }
 
   /* Card and popover blending for dark mode */
@@ -174,18 +172,12 @@
     border: 1px solid rgba(58, 243, 239, 0.2);
     color: rgba(217, 233, 231, 0.9);
   }
-
-  /* Fix z-index stacking issues for dropdown menus */
-  .dropdown-menu-content {
-    z-index: 9999 !important;
-    position: relative;
-  }
 }
 
 /* Fix for dropdown menu positioning - ensure highest z-index */
 [data-radix-popper-content-wrapper] {
   z-index: 9999 !important; 
-  position: relative;
+  position: fixed !important;
 }
 
 /* Fix for dropdown menu hover effects */
@@ -197,6 +189,11 @@
 /* Extra fixes for stacking context and positioning */
 .radix-dropdown-menu {
   z-index: 9999;
-  position: relative;
 }
 
+/* Fix for profile menu position to avoid overlaps */
+.profile-menu {
+  margin-top: 5px !important;
+  transform: translateY(0) !important;
+  border-radius: 14px !important;
+}
