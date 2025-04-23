@@ -4,5 +4,6 @@ import App from './App.tsx'
 import './index.css'
 import './components/chat.css'
 import './components/mindboard/editor.css'
+import './styles/extension.css'
 
 createRoot(document.getElementById("root")!).render(<App />);
