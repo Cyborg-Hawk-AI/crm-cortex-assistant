@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut } from 'lucide-react';
@@ -20,7 +19,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { MissionTaskEditor } from '@/components/mission/MissionTaskEditor';
 import { TasksPage } from '@/components/TasksPage';
-import { useTheme } from '@/contexts/ThemeContext';
 
 interface IndexProps {
   activeTab?: string;
@@ -33,7 +31,6 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
-  const { theme } = useTheme();
   
   const activeTab = propActiveTab || localActiveTab;
   const setActiveTab = propSetActiveTab || setLocalActiveTab;
@@ -191,7 +188,7 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
   const renderStateDebugger = () => {
     if (process.env.NODE_ENV !== 'production') {
       return (
-        <div className="bg-[#F5F7FA] text-xs p-2 rounded-md text-[#404040] mb-2">
+        <div className="bg-slate-900 text-xs p-2 rounded-md text-slate-300 mb-2">
           <div>Current Tab: {activeTab}</div>
           <div>Previous Tab: {previousTabRef.current}</div>
           <div>Location Path: {location.pathname}</div>
@@ -206,7 +203,7 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
+    <div className="min-h-screen flex flex-col bg-[#1C2A3A] text-[#F1F5F9]">
       {renderStateDebugger()}
       <main className="flex-1 container py-4 max-w-6xl">
         <AnimatePresence mode="wait">
@@ -220,10 +217,10 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
               className="space-y-6"
             >
               <div className="flex items-center justify-between mb-1">
-                <h1 className="text-2xl font-bold text-primary">Command View</h1>
+                <h1 className="text-2xl font-bold text-[#F1F5F9] bg-clip-text text-transparent bg-gradient-to-r from-neon-aqua to-neon-purple">Command View</h1>
                 <Button
                   variant="outline"
-                  className="border-secondary hover:border-primary hover:shadow-md"
+                  className="border-neon-aqua/30 hover:border-neon-aqua/50 hover:shadow-[0_0_15px_rgba(0,247,239,0.2)]"
                   onClick={() => window.open('https://notion.so', '_blank')}
                 >
                   Open in Notion
@@ -251,7 +248,7 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
               transition={{ duration: 0.3 }}
-              className="h-[calc(100vh-120px)] flex flex-col bg-card border border-border rounded-lg shadow-md overflow-hidden"
+              className="h-[calc(100vh-120px)] flex flex-col bg-[#25384D]/90 backdrop-blur-sm border border-[#3A4D62] rounded-lg shadow-md overflow-hidden"
             >
               <HomeButton />
               <ChatLayout key={`chat-${pendingConversationIdRef.current || 'default'}-${(location.state as any)?.forceReload || 'default'}`} />
@@ -265,7 +262,7 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.3 }}
-              className="h-[calc(100vh-120px)] flex flex-col bg-card border border-border rounded-lg shadow-md overflow-hidden"
+              className="h-[calc(100vh-120px)] flex flex-col bg-[#25384D]/90 backdrop-blur-sm border border-[#3A4D62] rounded-lg shadow-md overflow-hidden"
             >
               <HomeButton />
               <ScratchpadNotes />
@@ -279,7 +276,7 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className="h-[calc(100vh-120px)] flex flex-col bg-card border border-border rounded-lg shadow-md overflow-hidden"
+              className="h-[calc(100vh-120px)] flex flex-col bg-[#25384D]/90 backdrop-blur-sm border border-[#3A4D62] rounded-lg shadow-md overflow-hidden"
             >
               <HomeButton />
               <TasksPage 
@@ -300,7 +297,7 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
               transition={{ duration: 0.3 }}
-              className="h-[calc(100vh-120px)] flex flex-col bg-card border border-border rounded-lg shadow-md overflow-hidden"
+              className="h-[calc(100vh-120px)] flex flex-col bg-[#25384D]/90 backdrop-blur-sm border border-[#3A4D62] rounded-lg shadow-md overflow-hidden"
             >
               <Mindboard />
             </motion.div>
@@ -313,33 +310,33 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
               transition={{ duration: 0.3 }}
-              className="h-[calc(100vh-120px)] flex flex-col items-center justify-center bg-card border border-border rounded-lg shadow-md p-8 text-center"
+              className="h-[calc(100vh-120px)] flex flex-col items-center justify-center bg-[#25384D]/90 backdrop-blur-sm border border-[#3A4D62] rounded-lg shadow-md p-8 text-center"
             >
               <HomeButton />
               <div className="max-w-md">
-                <h2 className="text-2xl font-semibold mb-4 text-primary">Control Deck</h2>
-                <p className="text-muted-foreground mb-6">
+                <h2 className="text-2xl font-semibold mb-4 text-[#F1F5F9] bg-clip-text text-transparent bg-gradient-to-r from-neon-aqua to-neon-purple">Control Deck</h2>
+                <p className="text-[#CBD5E1] mb-6">
                   Control Deck will be implemented in the next version. Here you'll be able to:
                 </p>
                 <ul className="text-left space-y-2 mb-6">
                   <li className="flex items-center">
-                    <span className="inline-block w-2 h-2 rounded-full bg-primary mr-2"></span>
+                    <span className="inline-block w-2 h-2 rounded-full bg-neon-aqua mr-2"></span>
                     Configure Notion integrations
                   </li>
                   <li className="flex items-center">
-                    <span className="inline-block w-2 h-2 rounded-full bg-primary/60 mr-2"></span>
+                    <span className="inline-block w-2 h-2 rounded-full bg-neon-purple mr-2"></span>
                     Set up AI response preferences
                   </li>
                   <li className="flex items-center">
-                    <span className="inline-block w-2 h-2 rounded-full bg-primary mr-2"></span>
+                    <span className="inline-block w-2 h-2 rounded-full bg-neon-aqua mr-2"></span>
                     Manage workspace connections
                   </li>
                   <li className="flex items-center">
-                    <span className="inline-block w-2 h-2 rounded-full bg-primary/60 mr-2"></span>
+                    <span className="inline-block w-2 h-2 rounded-full bg-neon-purple mr-2"></span>
                     Customize UI appearance
                   </li>
                 </ul>
-                <div className="text-sm text-muted-foreground p-3 rounded-lg bg-muted border border-border">
+                <div className="text-sm text-[#CBD5E1] p-3 rounded-lg bg-[#1C2A3A] border border-[#3A4D62]">
                   Version 1.0.0 • action.it • Notion Assistant
                 </div>
                 
@@ -359,7 +356,7 @@ export default function Index({ activeTab: propActiveTab, setActiveTab: propSetA
 
       {activeTab !== 'tasks' && selectedTaskId && (
         <Dialog open={isTaskEditorOpen} onOpenChange={setIsTaskEditorOpen}>
-          <DialogContent className="sm:max-w-[700px] p-0 bg-card border-border">
+          <DialogContent className="sm:max-w-[700px] p-0 bg-[#25384D] border-[#3A4D62]">
             <MissionTaskEditor 
               taskId={selectedTaskId}
               onClose={handleCloseTaskEditor}

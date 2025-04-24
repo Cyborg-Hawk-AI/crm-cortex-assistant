@@ -1,7 +1,8 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
-	darkMode: ["class", '[data-theme="dark"]'],
+	darkMode: ["class"],
 	content: [
 		"./pages/**/*.{ts,tsx}",
 		"./components/**/*.{ts,tsx}",
@@ -29,7 +30,6 @@ export default {
 				'teal-green': '#54C7B7', // Primary accent - more saturated
 				'forest-green': '#1B3C36', // Secondary accent - darker for better contrast
 				'aqua-tint': '#A5E8E4', // Light accent for hover effects - more vibrant
-				'soft-green': '#F2FCE2', // Soft green for dashboard backgrounds
 				
 				// Enhanced Neutral Supporting Colors
 				'warm-sand': '#E5E1D8', // Alternate neutral - slightly darker
@@ -86,7 +86,7 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-                // Neon colors - updated to teal/green theme
+                // Neon colors
                 'neon-red': 'hsl(var(--neon-red))',
                 'neon-purple': 'hsl(var(--neon-purple))',
                 'neon-blue': 'hsl(var(--neon-blue))',
@@ -174,11 +174,11 @@ export default {
 				'button': '0 2px 4px rgba(0, 0, 0, 0.1)',
 				'button-hover': '0 4px 8px rgba(0, 0, 0, 0.15)',
 				'alert': '0 2px 8px rgba(0, 0, 0, 0.15)',
-				'neon-purple': '0 0 12px rgba(136, 217, 206, 0.5)',
+				'neon-purple': '0 0 12px rgba(168, 85, 247, 0.5)',
 				'neon-green': '0 0 12px rgba(182, 255, 93, 0.5)',
 				'neon-aqua': '0 0 12px rgba(0, 247, 239, 0.5)',
 				'neon-red': '0 0 12px rgba(244, 63, 94, 0.5)',
-				'neon-blue': '0 0 12px rgba(136, 217, 206, 0.5)',
+				'neon-blue': '0 0 12px rgba(56, 189, 248, 0.5)',
 				'neon-yellow': '0 0 12px rgba(251, 191, 36, 0.5)'
 			}
 		}

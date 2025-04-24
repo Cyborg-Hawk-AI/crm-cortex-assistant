@@ -37,17 +37,17 @@ export function UpcomingMeetings() {
 
   return (
     <>
-      <Card className="border border-[#C1EDEA] bg-white shadow-[0_0_15px_rgba(136,217,206,0.15)] hover:shadow-[0_0_20px_rgba(136,217,206,0.25)]">
-        <CardHeader className="pb-2 border-b border-[#C1EDEA]">
-          <CardTitle className="text-lg text-[#264E46] flex items-center justify-between">
+      <Card className="border border-[#3A4D62] bg-[#25384D] shadow-[0_0_15px_rgba(0,247,239,0.15)] hover:shadow-[0_0_20px_rgba(0,247,239,0.25)]">
+        <CardHeader className="pb-2 border-b border-[#3A4D62]">
+          <CardTitle className="text-lg text-[#F1F5F9] flex items-center justify-between">
             <div className="flex items-center">
-              <Calendar className="mr-2 h-5 w-5 text-[#88D9CE]" />
+              <Calendar className="mr-2 h-5 w-5 text-neon-aqua" />
               Upcoming SyncUps
             </div>
             <Button 
               variant="ghost" 
               size="sm" 
-              className="h-8 px-2 text-[#264E46] hover:text-[#88D9CE] hover:bg-[#F5F7FA]/50"
+              className="h-8 px-2 text-neon-aqua hover:text-neon-aqua/80 hover:bg-[#3A4D62]/50"
               onClick={() => setShowCreateModal(true)}
             >
               <CalendarIcon className="h-4 w-4 mr-1" />
@@ -57,12 +57,12 @@ export function UpcomingMeetings() {
         </CardHeader>
         <CardContent className="space-y-3 pt-4">
           {upcomingMeetings.length === 0 ? (
-            <div className="text-center py-6 text-[#A8A29E]">
+            <div className="text-center py-6 text-[#CBD5E1]">
               <p>No upcoming SyncUps scheduled</p>
               <Button 
                 variant="link" 
                 size="sm" 
-                className="mt-2 text-[#88D9CE]"
+                className="mt-2 text-neon-aqua"
                 onClick={() => setShowCreateModal(true)}
               >
                 Schedule a SyncUp
@@ -78,19 +78,19 @@ export function UpcomingMeetings() {
                   transition={{ delay: index * 0.05 }}
                   whileHover={{ scale: 1.02, y: -2 }}
                 >
-                  <div className="p-3 rounded-lg border border-[#C1EDEA] bg-[#F5F7FA]/70 hover:bg-[#F5F7FA] hover:shadow-[0_0_10px_rgba(136,217,206,0.15)] transition-all duration-300">
+                  <div className="p-3 rounded-lg border border-[#3A4D62] bg-[#1C2A3A]/70 hover:bg-[#1C2A3A] hover:shadow-[0_0_10px_rgba(0,247,239,0.15)] transition-all duration-300">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h4 className="text-sm font-medium text-[#404040]">{meeting.title}</h4>
-                        <div className="flex items-center mt-1 text-xs text-[#A8A29E]">
-                          <Clock className="h-3 w-3 mr-1 text-[#88D9CE]" />
+                        <h4 className="text-sm font-medium text-[#F1F5F9]">{meeting.title}</h4>
+                        <div className="flex items-center mt-1 text-xs text-[#CBD5E1]">
+                          <Clock className="h-3 w-3 mr-1 text-neon-aqua" />
                           <span>
                             {getRelativeDateLabel(meeting.date)} at {formatTime(meeting.date)}
                             {meeting.duration && ` · ${meeting.duration} min`}
                           </span>
                         </div>
-                        <div className="flex items-center mt-1 text-xs text-[#A8A29E]">
-                          <Users className="h-3 w-3 mr-1 text-[#264E46]" />
+                        <div className="flex items-center mt-1 text-xs text-[#CBD5E1]">
+                          <Users className="h-3 w-3 mr-1 text-neon-purple" />
                           <span>{meeting.clientName}</span>
                         </div>
                         
@@ -99,7 +99,7 @@ export function UpcomingMeetings() {
                             href={meeting.meetingLink}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-[#88D9CE] underline flex items-center text-xs mt-2"
+                            className="text-neon-aqua underline flex items-center text-xs mt-2"
                           >
                             <Video className="h-3 w-3 mr-1" />
                             Join SyncUp
@@ -107,17 +107,17 @@ export function UpcomingMeetings() {
                         ) : null}
                       </div>
                       
-                      <Badge variant="outline" className="text-xs bg-[#F5F7FA] text-[#264E46] border-[#C1EDEA]">
+                      <Badge variant="outline" className="text-xs bg-neon-purple/10 text-neon-purple border-neon-purple/20">
                         {meeting.attendees.length} attendee{meeting.attendees.length !== 1 ? 's' : ''}
                       </Badge>
                     </div>
                     
                     {meeting.attendees.length > 0 && (
                       <div className="mt-2">
-                        <h4 className="text-xs font-medium text-[#88D9CE] mb-1">Attendees</h4>
+                        <h4 className="text-xs font-medium text-neon-aqua mb-1">Attendees</h4>
                         <div className="flex flex-wrap gap-1">
                           {meeting.attendees.map((attendee, index) => (
-                            <Badge key={index} variant="outline" className="text-xs bg-[#F5F7FA]/30 text-[#404040] border-[#C1EDEA]">
+                            <Badge key={index} variant="outline" className="text-xs bg-[#3A4D62]/30 text-[#F1F5F9] border-[#3A4D62]">
                               {typeof attendee === 'string' 
                                 ? attendee 
                                 : ((attendee as any).name || 'Unnamed')}
@@ -129,8 +129,8 @@ export function UpcomingMeetings() {
                     
                     {meeting.agenda && (
                       <div className="mt-2">
-                        <h4 className="text-xs font-medium text-[#88D9CE] mb-1">Agenda</h4>
-                        <p className="text-xs text-[#A8A29E] whitespace-pre-line line-clamp-2">
+                        <h4 className="text-xs font-medium text-neon-aqua mb-1">Agenda</h4>
+                        <p className="text-xs text-[#CBD5E1] whitespace-pre-line line-clamp-2">
                           {meeting.agenda}
                         </p>
                       </div>
@@ -141,8 +141,8 @@ export function UpcomingMeetings() {
             </div>
           )}
         </CardContent>
-        <CardFooter className="pt-1 pb-2 border-t border-[#C1EDEA]">
-          <Button variant="ghost" size="sm" className="text-[#264E46] hover:text-[#88D9CE] w-full justify-center text-xs">
+        <CardFooter className="pt-1 pb-2 border-t border-[#3A4D62]">
+          <Button variant="ghost" size="sm" className="text-neon-aqua hover:text-neon-aqua/80 w-full justify-center text-xs">
             View All SyncUps <ArrowRight className="ml-1 h-3 w-3" />
           </Button>
         </CardFooter>

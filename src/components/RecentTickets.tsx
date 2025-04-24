@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardTitle, CardHeader } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { TicketInfo } from '@/components/TicketInfo';
-import { PlusCircle, Layers, BarChart2 } from 'lucide-react';
+import { TicketQuickActions } from '@/components/TicketQuickActions';
+import { PlusCircle, BarChart2, Layers } from 'lucide-react';
 import { Ticket } from '@/utils/types';
 import { supabase } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
@@ -16,10 +18,12 @@ interface RecentTicketsProps {
 export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsProps) {
   const navigate = useNavigate();
   
+  // Use React Query to fetch the most recently updated tasks
   const { data: tickets = [], isLoading } = useQuery({
     queryKey: ['recent-mission-tasks'],
     queryFn: async () => {
       try {
+        // Fetch tasks ordered by updated_at in descending order
         const { data, error } = await supabase
           .from('tasks')
           .select('*')
@@ -31,6 +35,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
           return [];
         }
 
+        // Transform the data to match the Ticket interface
         return data.map((task) => ({
           id: task.id,
           title: task.title,
@@ -53,9 +58,10 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
         return [];
       }
     },
-    refetchInterval: 60000
+    refetchInterval: 60000 // Refetch every minute
   });
 
+  // Stats for the dashboard view
   const { 
     data: taskStats = { open: 0, inProgress: 0, completed: 0 },
     isLoading: isLoadingStats
@@ -94,21 +100,35 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
       }
     }
   });
-
+  
+  const handleOpenChat = () => {
+    console.log("Open chat");
+    // Implementation would go here
+  };
+  
+  const handleOpenScratchpad = () => {
+    console.log("Open scratchpad");
+    // Implementation would go here
+  };
+  
+  const handleViewAll = () => {
+    navigate('/', { state: { activeTab: 'tasks' } });
+  };
+  
   return (
-    <Card className="border-[#88D9CE] bg-transparent shadow-[0_0_15px_rgba(136,217,206,0.15)]">
-      <CardHeader className="pb-2 flex flex-row justify-between items-center bg-transparent">
+    <Card>
+      <CardHeader className="pb-2 flex flex-row justify-between items-center">
         <div className="flex items-center">
-          <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-[#88D9CE] to-[#264E46] mr-2"></div>
-          <CardTitle className="text-lg font-bold text-[#264E46]">Recent Tasks</CardTitle>
+          <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-neon-red to-neon-purple mr-2"></div>
+          <CardTitle className="text-lg font-bold">Recent Tasks</CardTitle>
         </div>
         <div className="flex items-center space-x-2">
           {!fullView && (
             <Button 
               variant="ghost" 
               size="sm" 
-              className="text-sm px-2 text-[#264E46] hover:text-[#264E46]/80"
-              onClick={() => navigate('/', { state: { activeTab: 'tasks' } })}
+              className="text-sm px-2 text-[#CBD5E1] hover:text-[#F1F5F9]"
+              onClick={handleViewAll}
             >
               View all
             </Button>
@@ -116,7 +136,7 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
           <Button 
             variant="outline" 
             size="sm" 
-            className="border-[#88D9CE] hover:bg-[#C1EDEA]/20 text-[#264E46]"
+            className="border-neon-purple/40 hover:border-neon-purple/70 hover:bg-neon-purple/10 text-sm"
             onClick={() => navigate('/', { state: { activeTab: 'tasks', openCreateTask: true } })}
           >
             <PlusCircle className="h-3.5 w-3.5 mr-1" />
@@ -124,18 +144,18 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="pt-4 bg-transparent">
+      <CardContent className="pt-4">
         {isLoading ? (
           <div className="flex justify-center py-8">
-            <div className="animate-pulse bg-[#C1EDEA]/20 h-32 w-full rounded-md"></div>
+            <div className="animate-pulse bg-gray-700/50 h-32 w-full rounded-md"></div>
           </div>
         ) : tickets.length === 0 ? (
-          <div className="text-center py-8 text-[#264E46]">
+          <div className="text-center py-8 text-gray-400">
             <p>No mission tasks found</p>
             <Button 
               variant="outline" 
               size="sm" 
-              className="mt-4 border-[#88D9CE] hover:bg-[#C1EDEA]/20 text-[#264E46]"
+              className="mt-4 border-neon-purple/40 hover:border-neon-purple/70 hover:bg-neon-purple/10"
               onClick={() => navigate('/', { state: { activeTab: 'tasks', openCreateTask: true } })}
             >
               Create your first mission
@@ -147,8 +167,8 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
               <div key={ticket.id} className="flex flex-col" onClick={() => onTaskClick && onTaskClick(ticket.id)}>
                 <TicketInfo 
                   ticket={ticket} 
-                  onOpenChat={() => console.log("Open chat")}
-                  onOpenScratchpad={() => console.log("Open scratchpad")}
+                  onOpenChat={handleOpenChat}
+                  onOpenScratchpad={handleOpenScratchpad}
                 />
               </div>
             ))}
@@ -160,39 +180,40 @@ export function RecentTickets({ fullView = false, onTaskClick }: RecentTicketsPr
                 <div key={ticket.id} onClick={() => onTaskClick && onTaskClick(ticket.id)}>
                   <TicketInfo 
                     ticket={ticket}
-                    onOpenChat={() => console.log("Open chat")}
-                    onOpenScratchpad={() => console.log("Open scratchpad")}
+                    onOpenChat={handleOpenChat}
+                    onOpenScratchpad={handleOpenScratchpad}
                   />
                 </div>
               ))}
             </div>
             
+            {/* Summary Statistics */}
             <div className="mt-6 grid grid-cols-3 gap-2">
-              <div className="bg-transparent border-none rounded-md p-3 flex items-center">
-                <div className="rounded-full bg-[#88D9CE]/20 w-8 h-8 flex items-center justify-center mr-3">
-                  <Layers className="h-4 w-4 text-[#264E46]" />
+              <div className="bg-gradient-to-br from-gray-800/50 to-gray-700/30 rounded-md p-3 flex items-center">
+                <div className="rounded-full bg-neon-purple/20 w-8 h-8 flex items-center justify-center mr-3">
+                  <Layers className="h-4 w-4 text-neon-purple" />
                 </div>
                 <div>
-                  <div className="text-xs text-[#264E46]/70">Open</div>
-                  <div className="text-lg font-bold text-[#264E46]">{isLoadingStats ? '...' : taskStats.open}</div>
+                  <div className="text-xs text-[#CBD5E1]">Open</div>
+                  <div className="text-lg font-bold">{isLoadingStats ? '...' : taskStats.open}</div>
                 </div>
               </div>
-              <div className="bg-transparent border-none rounded-md p-3 flex items-center">
-                <div className="rounded-full bg-[#C1EDEA]/20 w-8 h-8 flex items-center justify-center mr-3">
-                  <BarChart2 className="h-4 w-4 text-[#88D9CE]" />
+              <div className="bg-gradient-to-br from-gray-800/50 to-gray-700/30 rounded-md p-3 flex items-center">
+                <div className="rounded-full bg-neon-blue/20 w-8 h-8 flex items-center justify-center mr-3">
+                  <BarChart2 className="h-4 w-4 text-neon-blue" />
                 </div>
                 <div>
-                  <div className="text-xs text-[#264E46]/70">In Progress</div>
-                  <div className="text-lg font-bold text-[#264E46]">{isLoadingStats ? '...' : taskStats.inProgress}</div>
+                  <div className="text-xs text-[#CBD5E1]">In Progress</div>
+                  <div className="text-lg font-bold">{isLoadingStats ? '...' : taskStats.inProgress}</div>
                 </div>
               </div>
-              <div className="bg-transparent border-none rounded-md p-3 flex items-center">
-                <div className="rounded-full bg-[#88D9CE]/20 w-8 h-8 flex items-center justify-center mr-3">
-                  <BarChart2 className="h-4 w-4 text-[#264E46]" />
+              <div className="bg-gradient-to-br from-gray-800/50 to-gray-700/30 rounded-md p-3 flex items-center">
+                <div className="rounded-full bg-neon-green/20 w-8 h-8 flex items-center justify-center mr-3">
+                  <BarChart2 className="h-4 w-4 text-neon-green" />
                 </div>
                 <div>
-                  <div className="text-xs text-[#264E46]/70">Completed</div>
-                  <div className="text-lg font-bold text-[#88D9CE]">{isLoadingStats ? '...' : taskStats.completed}</div>
+                  <div className="text-xs text-[#CBD5E1]">Completed</div>
+                  <div className="text-lg font-bold">{isLoadingStats ? '...' : taskStats.completed}</div>
                 </div>
               </div>
             </div>

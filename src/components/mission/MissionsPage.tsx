@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -123,12 +122,12 @@ export function MissionsPage() {
   if (isAuthenticated === false) {
     return (
       <div className="h-full flex items-center justify-center p-4">
-        <Card className="w-full max-w-lg bg-card border-border">
+        <Card className="w-full max-w-lg bg-[#25384D] border-[#3A4D62]">
           <CardContent className="pt-6 flex flex-col items-center">
             <div className="text-center">
               <LogIn className="h-12 w-12 text-neon-aqua/50 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">Authentication Required</h3>
-              <p className="text-sm text-muted-foreground mb-6">
+              <h3 className="text-lg font-medium text-[#F1F5F9] mb-2">Authentication Required</h3>
+              <p className="text-sm text-[#CBD5E1] mb-6">
                 Please sign in to view your missions
               </p>
             </div>
@@ -143,8 +142,8 @@ export function MissionsPage() {
       <div className="h-full flex items-center justify-center p-4">
         <div className="w-full max-w-lg p-6">
           <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-muted rounded-md w-1/3"></div>
-            <div className="h-40 bg-muted rounded-md"></div>
+            <div className="h-8 bg-gray-700/50 rounded-md w-1/3"></div>
+            <div className="h-40 bg-gray-700/50 rounded-md"></div>
           </div>
         </div>
       </div>
@@ -157,8 +156,8 @@ export function MissionsPage() {
       <div className="p-4 pb-0">
         <div className="flex justify-between items-center mb-6">
           <Tabs defaultValue="missions">
-            <TabsList className="bg-muted/50">
-              <TabsTrigger value="missions" className="data-[state=active]:bg-card">
+            <TabsList className="bg-[#1C2A3A]">
+              <TabsTrigger value="missions" className="data-[state=active]:bg-[#3A4D62]">
                 <Zap className="h-4 w-4 mr-2" />
                 Missions
               </TabsTrigger>
@@ -166,12 +165,12 @@ export function MissionsPage() {
           </Tabs>
           
           <div className="flex items-center gap-2">
-            <div className="bg-muted/50 rounded-md p-1 flex">
+            <div className="bg-[#1C2A3A] rounded-md p-1 flex">
               <Button 
                 variant={viewMode === 'table' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('table')}
-                className={`rounded-sm ${viewMode === 'table' ? 'bg-neon-aqua text-black' : 'text-muted-foreground'}`}
+                className={`rounded-sm ${viewMode === 'table' ? 'bg-neon-aqua text-black' : 'text-[#CBD5E1]'}`}
               >
                 <Table className="h-4 w-4 mr-1" />
                 Table
@@ -180,7 +179,7 @@ export function MissionsPage() {
                 variant={viewMode === 'list' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('list')}
-                className={`rounded-sm ${viewMode === 'list' ? 'bg-neon-aqua text-black' : 'text-muted-foreground'}`}
+                className={`rounded-sm ${viewMode === 'list' ? 'bg-neon-aqua text-black' : 'text-[#CBD5E1]'}`}
               >
                 <List className="h-4 w-4 mr-1" />
                 List
@@ -212,14 +211,14 @@ export function MissionsPage() {
             ))}
 
             {(!missions || missions.length === 0) && (
-              <div className="text-sm text-muted-foreground p-2">
+              <div className="text-sm text-[#64748B] p-2">
                 No missions found. Create one using the button above.
               </div>
             )}
           </div>
         </div>
 
-        <Card className="w-full bg-card border-border shadow-[0_0_15px_rgba(0,247,239,0.1)]">
+        <Card className="w-full bg-[#25384D] border-[#3A4D62] shadow-[0_0_15px_rgba(0,247,239,0.1)]">
           <CardContent className="p-6">
             {missionId && (
               <motion.div
@@ -233,7 +232,7 @@ export function MissionsPage() {
                     onTaskClick={handleTaskClick}
                   />
                 ) : (
-                  <div className="p-4 text-center text-muted-foreground">
+                  <div className="p-4 text-center text-[#CBD5E1]">
                     <p>List view coming soon</p>
                   </div>
                 )}
@@ -241,7 +240,7 @@ export function MissionsPage() {
             )}
 
             {!missionId && (
-              <div className="p-4 text-center text-muted-foreground">
+              <div className="p-4 text-center text-[#CBD5E1]">
                 <p>Select a mission to view tasks</p>
               </div>
             )}
@@ -251,7 +250,7 @@ export function MissionsPage() {
         {/* Task Editor Dialog for Missions view */}
         {selectedTaskId && (
           <Dialog open={isTaskEditorOpen} onOpenChange={handleCloseTaskEditor}>
-            <DialogContent className="sm:max-w-[700px] p-0 bg-card border-border">
+            <DialogContent className="sm:max-w-[700px] p-0 bg-[#25384D] border-[#3A4D62]">
               <MissionTaskEditor 
                 taskId={selectedTaskId}
                 onClose={handleCloseTaskEditor}

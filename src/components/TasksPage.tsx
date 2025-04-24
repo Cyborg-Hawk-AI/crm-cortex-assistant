@@ -115,8 +115,8 @@ export function TasksPage({
       <div className="h-full flex items-center justify-center p-4">
         <div className="w-full max-w-lg p-6">
           <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-[#F5F7FA] rounded-md w-1/3"></div>
-            <div className="h-40 bg-[#F5F7FA] rounded-md"></div>
+            <div className="h-8 bg-gray-700/50 rounded-md w-1/3"></div>
+            <div className="h-40 bg-gray-700/50 rounded-md"></div>
           </div>
         </div>
       </div>
@@ -132,12 +132,12 @@ export function TasksPage({
             value={activeView}
             onValueChange={setActiveView}
           >
-            <TabsList className="bg-[#F5F7FA]">
-              <TabsTrigger value="projects" className="data-[state=active]:bg-[#C1EDEA] data-[state=active]:text-[#264E46]">
+            <TabsList className="bg-[#1C2A3A]">
+              <TabsTrigger value="projects" className="data-[state=active]:bg-[#3A4D62]">
                 <Grid3X3 className="h-4 w-4 mr-2" />
                 Projects
               </TabsTrigger>
-              <TabsTrigger value="missions" className="data-[state=active]:bg-[#C1EDEA] data-[state=active]:text-[#264E46]">
+              <TabsTrigger value="missions" className="data-[state=active]:bg-[#3A4D62]">
                 <Zap className="h-4 w-4 mr-2" />
                 Missions
               </TabsTrigger>
@@ -146,12 +146,12 @@ export function TasksPage({
           
           {activeView === 'missions' && (
             <div className="flex items-center gap-2">
-              <div className="bg-[#F5F7FA] rounded-md p-1 flex">
+              <div className="bg-[#1C2A3A] rounded-md p-1 flex">
                 <Button 
                   variant={viewMode === 'table' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('table')}
-                  className={`rounded-sm ${viewMode === 'table' ? 'bg-[#88D9CE] text-[#264E46]' : 'text-[#A8A29E]'}`}
+                  className={`rounded-sm ${viewMode === 'table' ? 'bg-neon-aqua text-black' : 'text-[#CBD5E1]'}`}
                 >
                   <Table className="h-4 w-4 mr-1" />
                   Table
@@ -160,7 +160,7 @@ export function TasksPage({
                   variant={viewMode === 'list' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('list')}
-                  className={`rounded-sm ${viewMode === 'list' ? 'bg-[#88D9CE] text-[#264E46]' : 'text-[#A8A29E]'}`}
+                  className={`rounded-sm ${viewMode === 'list' ? 'bg-neon-aqua text-black' : 'text-[#CBD5E1]'}`}
                 >
                   <List className="h-4 w-4 mr-1" />
                   List
@@ -186,7 +186,7 @@ export function TasksPage({
                   size="sm"
                   className={`whitespace-nowrap ${
                     effectiveSelectedTaskId === mission.id 
-                    ? "bg-[#C1EDEA]/20 border-[#88D9CE] text-[#264E46]" 
+                    ? "bg-neon-green/20 border-neon-green text-neon-green" 
                     : "bg-transparent"
                   }`}
                   onClick={() => handleMissionSelect(mission.id)}
@@ -196,14 +196,14 @@ export function TasksPage({
               ))}
               
               {(!missions || missions.length === 0) && (
-                <div className="text-sm text-[#A8A29E] p-2">
+                <div className="text-sm text-[#64748B] p-2">
                   No missions found. Create one using the button above.
                 </div>
               )}
             </div>
           </div>
 
-          <Card className="w-full bg-white border-[#C1EDEA] shadow-[0_0_15px_rgba(136,217,206,0.1)]">
+          <Card className="w-full bg-[#25384D] border-[#3A4D62] shadow-[0_0_15px_rgba(0,247,239,0.1)]">
             <CardContent className="p-6">
               {effectiveSelectedTaskId && (
                 <motion.div
@@ -217,7 +217,7 @@ export function TasksPage({
                       onTaskClick={handleTaskClick}
                     />
                   ) : (
-                    <div className="p-4 text-center text-[#A8A29E]">
+                    <div className="p-4 text-center text-[#CBD5E1]">
                       <p>List view coming soon</p>
                     </div>
                   )}
@@ -225,7 +225,7 @@ export function TasksPage({
               )}
               
               {!effectiveSelectedTaskId && (
-                <div className="p-4 text-center text-[#A8A29E]">
+                <div className="p-4 text-center text-[#CBD5E1]">
                   <p>Select a mission to view tasks</p>
                 </div>
               )}
@@ -235,7 +235,7 @@ export function TasksPage({
           {/* Task Editor Dialog for Missions view */}
           {effectiveSelectedTaskId && (
             <Dialog open={effectiveIsTaskEditorOpen} onOpenChange={handleCloseTaskEditor}>
-              <DialogContent className="sm:max-w-[700px] p-0 bg-white border-[#C1EDEA]">
+              <DialogContent className="sm:max-w-[700px] p-0 bg-[#25384D] border-[#3A4D62]">
                 <MissionTaskEditor 
                   taskId={effectiveSelectedTaskId}
                   onClose={handleCloseTaskEditor}

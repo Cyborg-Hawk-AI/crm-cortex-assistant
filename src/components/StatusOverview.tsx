@@ -30,38 +30,38 @@ export function StatusOverview() {
     {
       name: "Today's SyncUps",
       value: todayMeetingsCount,
-      icon: <Clock className="h-6 w-6 text-[#88D9CE]" />,
-      bgColor: "bg-white",
-      textColor: "text-[#404040]",
-      borderColor: "border-[#C1EDEA]",
-      glowColor: "shadow-md"
+      icon: <Clock className="h-6 w-6 text-neon-blue glow-text" />,
+      bgColor: "bg-gradient-to-r from-blue-900/60 to-blue-800/80",
+      textColor: "text-white",
+      borderColor: "border-neon-blue",
+      glowColor: "shadow-[0_0_15px_rgba(14,165,233,0.4)]"
     },
     {
       name: "Missions w/o Notes",
       value: missionsWithoutNotes,
-      icon: <AlertTriangle className="h-6 w-6 text-[#264E46]" />,
-      bgColor: "bg-white",
-      textColor: "text-[#404040]",
-      borderColor: "border-[#C1EDEA]",
-      glowColor: "shadow-md"
+      icon: <AlertTriangle className="h-6 w-6 text-orange-400 glow-text" />,
+      bgColor: "bg-gradient-to-r from-orange-900/60 to-orange-700/80",
+      textColor: "text-white",
+      borderColor: "border-orange-400",
+      glowColor: "shadow-[0_0_15px_rgba(249,115,22,0.4)]"
     },
     {
       name: "Hours Since Update",
       value: hoursSinceUpdate,
-      icon: <AlertCircle className="h-6 w-6 text-[#264E46]" />,
-      bgColor: "bg-white",
-      textColor: "text-[#404040]",
-      borderColor: "border-[#C1EDEA]",
-      glowColor: "shadow-md"
+      icon: <AlertCircle className="h-6 w-6 text-neon-purple glow-text" />,
+      bgColor: "bg-gradient-to-r from-purple-900/60 to-purple-800/80",
+      textColor: "text-white",
+      borderColor: "border-neon-purple",
+      glowColor: "shadow-[0_0_15px_rgba(168,85,247,0.4)]"
     },
     {
       name: "Daily Action Score",
       value: dailyActionScore,
-      icon: <CheckCircle className="h-6 w-6 text-[#88D9CE]" />,
-      bgColor: "bg-white",
-      textColor: "text-[#404040]", 
-      borderColor: "border-[#C1EDEA]",
-      glowColor: "shadow-md"
+      icon: <CheckCircle className="h-6 w-6 text-neon-green glow-text" />,
+      bgColor: "bg-gradient-to-r from-green-900/60 to-green-800/80",
+      textColor: "text-white", 
+      borderColor: "border-neon-green",
+      glowColor: "shadow-[0_0_15px_rgba(16,185,129,0.4)]"
     }
   ];
 
@@ -75,14 +75,14 @@ export function StatusOverview() {
           transition={{ delay: index * 0.1 }}
           whileHover={{ y: -5, scale: 1.03 }}
         >
-          <Card className={`${status.bgColor} border-2 ${status.borderColor} ${status.glowColor} hover:shadow-lg transition-all duration-300`}>
+          <Card className={`${status.bgColor} border-2 ${status.borderColor} ${status.glowColor} hover:${status.glowColor.replace('0.4', '0.7')} transition-all duration-300`}>
             <CardContent className="p-4 flex items-center space-x-4">
-              <div className="bg-[#F5F7FA] p-3 rounded-full shadow-inner border border-[#ECEAE3]">
+              <div className="bg-black/40 p-3 rounded-full shadow-inner border border-white/20">
                 {status.icon}
               </div>
               <div>
-                <p className="text-sm font-medium text-[#A8A29E]">{status.name}</p>
-                <p className={`text-2xl font-bold ${status.textColor}`}>{status.value}</p>
+                <p className="text-sm font-medium text-white/90">{status.name}</p>
+                <p className={`text-2xl font-bold ${status.textColor} glow-text`}>{status.value}</p>
               </div>
             </CardContent>
           </Card>

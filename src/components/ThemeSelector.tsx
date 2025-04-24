@@ -1,39 +1,36 @@
 
-// Theme switcher with Light and Dark Mode
-import { Sun, Moon } from 'lucide-react';
+import { Check, Palette } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+
+const themes = [
+  { id: 'natural', name: 'Natural Light', description: 'Soft, nature-inspired tones' },
+  { id: 'steel', name: 'Steel Blue', description: 'Our signature futuristic look' },
+  { id: 'midnight', name: 'Midnight', description: 'Deep, dark, and focused' },
+  { id: 'vibrant', name: 'Vibrant', description: 'Bold and energetic' },
+] as const;
 
 export function ThemeSelector() {
   const { theme, setTheme } = useTheme();
-
+  
   return (
-    <div className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground">
-      <button
-        className={`flex items-center gap-2 px-2 py-1.5 rounded transition-all duration-300 ${
-          theme === 'light' 
-            ? 'bg-secondary text-secondary-foreground font-bold shadow-md' 
-            : 'hover:bg-muted/50 opacity-70'
-        }`}
-        aria-label="Switch to light mode"
-        onClick={() => setTheme('light')}
-        type="button"
-      >
-        <Sun className="h-5 w-5" />
-        <span>Light Mode</span>
-      </button>
-      <button
-        className={`flex items-center gap-2 px-2 py-1.5 rounded transition-all duration-300 ${
-          theme === 'dark' 
-            ? 'bg-accent text-accent-foreground font-bold shadow-[0_0_8px_rgba(0,247,239,0.2)]' 
-            : 'hover:bg-muted/50 opacity-70'
-        }`}
-        aria-label="Switch to dark mode"
-        onClick={() => setTheme('dark')}
-        type="button"
-      >
-        <Moon className="h-5 w-5" />
-        <span>Dark Mode</span>
-      </button>
+    <div className="flex items-center">
+      <Palette className="mr-2 h-4 w-4" />
+      <span>Theme</span>
+      {theme !== 'steel' && (
+        <div className="ml-auto">
+          <div className="h-4 w-4 rounded-full border border-[#3A4D62]" 
+               style={{ background: theme === 'midnight' ? '#171C24' : '#4A1FA7' }} 
+          />
+        </div>
+      )}
     </div>
   );
 }

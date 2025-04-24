@@ -1,9 +1,130 @@
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@import './styles/themes.css';
-@import './styles/components.css';
-@import './styles/utilities.css';
 @import './styles/markdown.css';
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+@layer base {
+  /* Steel Blue Futurism Theme (Default) */
+  [data-theme="steel"] {
+    --background: 212 35% 15%; /* #1C2A3A - Steel Blue */
+    --foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --card: 213 33% 18%; /* #25384D - Slightly lighter steel */
+    --card-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --popover: 213 33% 18%; /* #25384D - Lighter steel */
+    --popover-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --primary: 181 100% 50%; /* #00F7EF - Neon Aqua */
+    --primary-foreground: 222 47% 11%; /* #111827 - Deep Navy */
+
+    --secondary: 265 90% 65%; /* #A855F7 - Electric Purple */
+    --secondary-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --muted: 215 25% 40%; /* #557092 - Muted Blue Steel */
+    --muted-foreground: 214 32% 91%; /* #CBD5E1 - Cool Gray */
+
+    --accent: 142 100% 68%; /* #B6FF5D - Lime Green */
+    --accent-foreground: 222 47% 11%; /* #111827 - Deep Navy */
+
+    --destructive: 346 84% 61%; /* #F43F5E - Rose Red */
+    --destructive-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --border: 213 28% 29%; /* #3A4D62 - Border color with better definition */
+    --input: 213 28% 29%; /* #3A4D62 - Input borders with better definition */
+    --ring: 181 100% 50%; /* #00F7EF - Neon Aqua ring */
+
+    --radius: 0.75rem;
+
+    /* Neon Colors */
+    --neon-red: 346 84% 61%; /* #F43F5E - Rose Red */
+    --neon-purple: 265 90% 65%; /* #A855F7 - Electric Purple */
+    --neon-blue: 199 98% 48%; /* #38BDF8 - Bright Blue */
+    --neon-aqua: 181 100% 50%; /* #00F7EF - Neon Aqua */
+    --neon-green: 142 100% 68%; /* #B6FF5D - Lime Green */
+    --neon-yellow: 41 100% 70%; /* #FBBF24 - Amber Yellow */
+  }
+
+  /* Midnight Dark Theme */
+  [data-theme="midnight"] {
+    --background: 222 47% 7%; /* #0A111D - Deeper Navy */
+    --foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --card: 221 40% 10%; /* #121C2E - Dark card */
+    --card-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --popover: 221 40% 10%; /* #121C2E - Dark popover */
+    --popover-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --primary: 265 90% 65%; /* #A855F7 - Electric Purple */
+    --primary-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --secondary: 221 40% 15%; /* #1B2A4A - Subtle secondary */
+    --secondary-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --muted: 221 40% 20%; /* #243658 - Muted dark blue */
+    --muted-foreground: 213 25% 65%; /* #A0B2C8 - Subdued text */
+
+    --accent: 265 90% 65%; /* #A855F7 - Electric Purple */
+    --accent-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --destructive: 0 84% 50%; /* #E11D48 - Darker red */
+    --destructive-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --border: 221 40% 25%; /* #2D4271 - Subdued border */
+    --input: 221 40% 25%; /* #2D4271 - Subdued input */
+    --ring: 265 90% 65%; /* #A855F7 - Electric Purple ring */
+
+    --radius: 0.75rem;
+  }
+
+  /* Vibrant Theme */
+  [data-theme="vibrant"] {
+    --background: 260 40% 14%; /* #291E47 - Deep Purple */
+    --foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --card: 260 40% 18%; /* #342559 - Deeper purple card */
+    --card-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --popover: 260 40% 18%; /* #342559 - Deeper purple popover */
+    --popover-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --primary: 291 70% 60%; /* #D04BE2 - Vibrant Pink */
+    --primary-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --secondary: 260 40% 28%; /* #513B8A - Rich purple */
+    --secondary-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --muted: 260 30% 40%; /* #7460A3 - Muted purple */
+    --muted-foreground: 213 25% 80%; /* #C7D5E8 - Light text */
+
+    --accent: 31 100% 65%; /* #FF9937 - Vibrant Orange */
+    --accent-foreground: 222 47% 11%; /* #111827 - Deep Navy */
+
+    --destructive: 346 84% 61%; /* #F43F5E - Rose Red */
+    --destructive-foreground: 213 31% 91%; /* #F1F5F9 - Ice White */
+
+    --border: 260 40% 35%; /* #644AA6 - Vibrant border */
+    --input: 260 40% 35%; /* #644AA6 - Vibrant input */
+    --ring: 291 70% 60%; /* #D04BE2 - Vibrant Pink ring */
+
+    --radius: 0.75rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ... keep existing code (body, heading styles, etc.) */
+}
+
+@layer components {
+  /* ... keep existing code (component styling) */
+}

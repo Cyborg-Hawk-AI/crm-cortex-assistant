@@ -22,6 +22,8 @@ export function TodaySyncUps() {
     return isToday(meetingDate);
   });
 
+  console.log('Today\'s meetings:', todaysMeetings);
+
   const handleCreateMeeting = (meetingData: Partial<Meeting>) => {
     createMeeting(meetingData);
   };
@@ -32,18 +34,18 @@ export function TodaySyncUps() {
 
   return (
     <>
-      <Card className="border border-[#C1EDEA] bg-gradient-to-br from-white to-[#F2FCE2]/70 shadow-lg hover:shadow-xl transition-all duration-300 shadow-[0_0_20px_rgba(136,217,206,0.2)]">
-        <CardHeader className="pb-2 border-b border-[#C1EDEA]/50">
-          <CardTitle className="text-xl text-[#264E46] flex items-center justify-between">
+      <Card className="border border-neon-blue/70 bg-gradient-to-br from-blue-900/50 to-blue-800/70 shadow-lg hover:shadow-xl transition-all duration-300 shadow-[0_0_20px_rgba(14,165,233,0.2)]">
+        <CardHeader className="pb-2 border-b border-blue-500/50">
+          <CardTitle className="text-xl text-white flex items-center justify-between">
             <div className="flex items-center">
-              <Calendar className="mr-2 h-6 w-6 text-[#88D9CE] glow-text" />
+              <Calendar className="mr-2 h-6 w-6 text-neon-blue glow-text" />
               Today's SyncUps
             </div>
             <div className="flex space-x-2">
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="h-8 px-2 text-[#264E46] hover:text-[#88D9CE] hover:bg-[#F2FCE2]/50"
+                className="h-8 px-2 text-neon-blue hover:text-neon-blue/80 hover:bg-[#3A4D62]/50"
                 onClick={() => setShowJoinModal(true)}
               >
                 <Video className="h-4 w-4 mr-1" />
@@ -52,7 +54,7 @@ export function TodaySyncUps() {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="h-8 px-2 text-[#264E46] hover:text-[#88D9CE] hover:bg-[#F2FCE2]/50"
+                className="h-8 px-2 text-neon-blue hover:text-neon-blue/80 hover:bg-[#3A4D62]/50"
                 onClick={() => setShowCreateModal(true)}
               >
                 <CalendarIcon className="h-4 w-4 mr-1" />
@@ -63,17 +65,17 @@ export function TodaySyncUps() {
         </CardHeader>
         <CardContent className="space-y-3 pt-4">
           {isLoading ? (
-            <div className="text-center py-6 text-[#A8A29E]">
+            <div className="text-center py-6 text-[#CBD5E1]">
               <p>Loading SyncUps...</p>
             </div>
           ) : todaysMeetings.length === 0 ? (
-            <div className="text-center py-6 text-[#A8A29E]">
+            <div className="text-center py-6 text-[#CBD5E1]">
               <p>No SyncUps scheduled for today</p>
               <div className="flex justify-center mt-2 space-x-2">
                 <Button 
                   variant="link" 
                   size="sm" 
-                  className="text-[#88D9CE]"
+                  className="text-neon-blue"
                   onClick={() => setShowJoinModal(true)}
                 >
                   Join a SyncUp
@@ -81,7 +83,7 @@ export function TodaySyncUps() {
                 <Button 
                   variant="link" 
                   size="sm" 
-                  className="text-[#88D9CE]"
+                  className="text-neon-blue"
                   onClick={() => setShowCreateModal(true)}
                 >
                   Schedule a SyncUp
@@ -98,18 +100,18 @@ export function TodaySyncUps() {
                   transition={{ delay: index * 0.05 }}
                   whileHover={{ scale: 1.02, y: -2 }}
                 >
-                  <div className="p-3 rounded-lg border border-[#C1EDEA] bg-white hover:bg-[#F2FCE2] hover:shadow-[0_0_10px_rgba(136,217,206,0.15)] transition-all duration-300">
+                  <div className="p-3 rounded-lg border border-[#3A4D62] bg-[#1C2A3A]/70 hover:bg-[#1C2A3A] hover:shadow-[0_0_10px_rgba(14,165,233,0.15)] transition-all duration-300">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h4 className="text-sm font-medium text-[#404040]">{meeting.title}</h4>
-                        <div className="flex items-center mt-1 text-xs text-[#A8A29E]">
-                          <Clock className="h-3 w-3 mr-1 text-[#88D9CE]" />
+                        <h4 className="text-sm font-medium text-[#F1F5F9]">{meeting.title}</h4>
+                        <div className="flex items-center mt-1 text-xs text-[#CBD5E1]">
+                          <Clock className="h-3 w-3 mr-1 text-neon-blue" />
                           <span>
                             {formatTime(meeting.date)}
                           </span>
                         </div>
-                        <div className="flex items-center mt-1 text-xs text-[#A8A29E]">
-                          <Users className="h-3 w-3 mr-1 text-[#88D9CE]" />
+                        <div className="flex items-center mt-1 text-xs text-[#CBD5E1]">
+                          <Users className="h-3 w-3 mr-1 text-neon-blue" />
                           <span>{meeting.client_name}</span>
                         </div>
                         
@@ -119,7 +121,7 @@ export function TodaySyncUps() {
                               href={meeting.meeting_link}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-[#88D9CE] underline flex items-center text-xs"
+                              className="text-neon-blue underline flex items-center text-xs"
                             >
                               <Video className="h-3 w-3 mr-1" />
                               Join SyncUp
@@ -127,7 +129,7 @@ export function TodaySyncUps() {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="h-6 text-xs border-[#C1EDEA] hover:border-[#88D9CE] text-[#264E46]"
+                              className="h-6 text-xs border-neon-purple/30 hover:border-neon-purple/50"
                               onClick={() => console.log('View summary clicked for:', meeting.id)}
                             >
                               <FileText className="h-3 w-3 mr-1" />
@@ -138,7 +140,7 @@ export function TodaySyncUps() {
                       </div>
                       
                       {meeting.attendees && (
-                        <Badge variant="outline" className="text-xs bg-[#F2FCE2] text-[#264E46] border-[#C1EDEA]">
+                        <Badge variant="outline" className="text-xs bg-neon-blue/10 text-neon-blue border-neon-blue/20">
                           {meeting.attendees.length} attendee{meeting.attendees.length !== 1 ? 's' : ''}
                         </Badge>
                       )}
@@ -146,8 +148,8 @@ export function TodaySyncUps() {
                     
                     {meeting.agenda && (
                       <div className="mt-2">
-                        <h4 className="text-xs font-medium text-[#264E46] mb-1">Agenda</h4>
-                        <p className="text-xs text-[#A8A29E] whitespace-pre-line line-clamp-2">
+                        <h4 className="text-xs font-medium text-neon-blue mb-1">Agenda</h4>
+                        <p className="text-xs text-[#CBD5E1] whitespace-pre-line line-clamp-2">
                           {meeting.agenda}
                         </p>
                       </div>
@@ -158,8 +160,8 @@ export function TodaySyncUps() {
             </div>
           )}
         </CardContent>
-        <CardFooter className="pt-1 pb-2 border-t border-[#C1EDEA]/50">
-          <Button variant="ghost" size="sm" className="text-[#264E46] hover:text-[#88D9CE] w-full justify-center text-xs">
+        <CardFooter className="pt-1 pb-2 border-t border-blue-500/50">
+          <Button variant="ghost" size="sm" className="text-neon-blue hover:text-neon-blue/80 w-full justify-center text-xs">
             View All SyncUps <ArrowRight className="ml-1 h-3 w-3" />
           </Button>
         </CardFooter>

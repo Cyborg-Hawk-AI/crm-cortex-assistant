@@ -18,7 +18,7 @@ export const NotionSync = () => {
   };
   
   return (
-    <div className="rounded-lg border border-indigo-100 bg-indigo-50/50 p-4 relative z-20">
+    <div className="rounded-lg border border-indigo-100 bg-indigo-50/50 p-4">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <Database className="h-5 w-5 text-indigo-600" />
